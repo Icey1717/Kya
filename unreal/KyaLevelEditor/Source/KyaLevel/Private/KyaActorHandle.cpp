@@ -3,6 +3,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "KyaActorEditService.h"
+#include "KyaActorCatalog.h"
 #include "KyaActorTransform.h"
 #include "KyaLevelBank.h"
 #include "KyaLevelPreview.h"
@@ -12,6 +13,8 @@
 #include "UObject/ConstructorHelpers.h"
 #include "Editor.h"
 #include "ScopedTransaction.h"
+#include "Misc/App.h"
+#include "Misc/MessageDialog.h"
 
 #include "Engine/World.h"
 
@@ -222,7 +225,86 @@ bool AKyaActorHandle::CanDeleteSelectedActor(FText& OutReason) const
     return false;
 }
 
-void AKyaActorHandle::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent){
+bool AKyaActorHandle::IsSelectable() const
+{
+    if (bSelectionLocked) return false;
+    return !(IsValid(Preview) && Preview->bLockGeneratedActorSelection);
+}
+
+void AKyaActorHandle::SetGeneratedLabel(const FString& Label)
+{
+    TGuardValue<bool> Guard(bApplyingGeneratedLabel, true);
+    if (GetActorLabel() != Label) SetActorLabel(Label);
+}
+
+bool AKyaActorHandle::RenameActorRecord(const FString& DesiredLabel, FString& OutError)
+{
+#if WITH_EDITOR
+    UKyaLevelBank* EditedBank = Bank;
+    if (!EditedBank || !EditedBank->SceneEnvironment.Actors.IsValidIndex(ActorIndex))
+    {
+        OutError = TEXT("The bank record no longer exists.");
+        return false;
+    }
+    // Duplicated/pasted copies can be relabeled before the command-end sweep; they
+    // must never rename the source record through their copied identity.
+    if (!IsValid(Preview) || !Preview->OwnsGeneratedActor(this))
+    {
+        OutError = TEXT("Only the preview-owned representation of a bank record can rename it.");
+        return false;
+    }
+    const FKyaActorPlacement& Record = EditedBank->SceneEnvironment.Actors[ActorIndex];
+    FString Desired = DesiredLabel.TrimStartAndEnd();
+
+    // The Outliner label is derived as "<name> [class <id>]" with an optional
+    // " [<index>]" suffix for duplicate names. Strip the index only as part of that
+    // complete generated ending, then the class suffix, so authored text such as
+    // "B [1]" is never mistaken for a generated suffix.
+    const FString IndexSuffix = FString::Printf(TEXT(" [%d]"), ActorIndex);
+    const FString ClassSuffix = FString::Printf(TEXT(" [class %lld]"), Record.ClassId);
+    const bool bHasFullEnding = Desired.EndsWith(IndexSuffix, ESearchCase::CaseSensitive) &&
+        Desired.Len() > IndexSuffix.Len() &&
+        Desired.LeftChop(IndexSuffix.Len()).EndsWith(ClassSuffix, ESearchCase::CaseSensitive);
+    if (bHasFullEnding)
+    {
+        Desired.LeftChopInline(IndexSuffix.Len());
+        Desired.LeftChopInline(ClassSuffix.Len());
+    }
+    else if (Desired.EndsWith(ClassSuffix, ESearchCase::CaseSensitive))
+    {
+        Desired.LeftChopInline(ClassSuffix.Len());
+    }
+    Desired.TrimEndInline();
+
+    if (!ValidateKyaActorNameChange(Record.Name, Desired, OutError)) return false;
+    if (Desired == Record.Name)
+    {
+        if (IsValid(Preview)) SetGeneratedLabel(Preview->GetActorDisplayLabel(ActorIndex));
+        return true;
+    }
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    FKyaActorEditPatch Patch;
+    Patch.Name = Desired;
+    FString Error;
+    // Deferred: a rename can arrive from inside PostEditChangeProperty while the
+    // details panel is notifying; the preview refresh happens at the end of the frame.
+    if (!Service.Apply(Service.MakeKey(EditedBank, ActorIndex), Patch, EKyaEditNotify::Deferred, &Error))
+    {
+        OutError = Error;
+        return false;
+    }
+    if (IsValid(Preview)) SetGeneratedLabel(Preview->GetActorDisplayLabel(ActorIndex));
+    else SetGeneratedLabel(FString::Printf(TEXT("%s [class %lld]"), *Desired, Record.ClassId));
+    return true;
+#else
+    OutError = TEXT("Renaming bank records requires the editor.");
+    return false;
+#endif
+}
+
+void AKyaActorHandle::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
     const FName CandidateNames[2] = {
         PropertyChangedEvent.MemberProperty ? PropertyChangedEvent.MemberProperty->GetFName() : NAME_None,
         PropertyChangedEvent.Property ? PropertyChangedEvent.Property->GetFName() : NAME_None };
@@ -232,6 +314,33 @@ void AKyaActorHandle::PostEditChangeProperty(FPropertyChangedEvent& PropertyChan
     {
         return CandidateNames[0] == Name || CandidateNames[1] == Name;
     };
+
+    // Outliner rename policy: the label is presentation, the serialized name is the
+    // edit. A same-bucket rename is written through the edit service; anything else is
+    // rejected, explained and reverted to the derived label (never truncated).
+    if (!bApplyingGeneratedLabel && Matches(TEXT("ActorLabel")))
+    {
+        FString Error;
+        const FString DesiredLabel = GetActorLabel(false);
+        if (!RenameActorRecord(DesiredLabel, Error))
+        {
+            const FString Reverted = IsValid(Preview) && Preview->Bank == Bank
+                ? Preview->GetActorDisplayLabel(ActorIndex)
+                : FString::Printf(TEXT("%s [class %lld]"), *ActorName, ClassId);
+            SetGeneratedLabel(Reverted);
+            UE_LOG(LogTemp, Warning, TEXT("KYA_ACTOR_RENAME_REJECTED bank=%s index=%d name=%s reason=%s"),
+                *GetNameSafe(Bank), ActorIndex, *DesiredLabel, *Error);
+            if (!FApp::IsUnattended())
+            {
+                FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(FString::Printf(
+                    TEXT("The name '%s' cannot be stored in this bank record.\n\n%s\n\n"
+                        "The Outliner label was restored; the bank was not modified."),
+                    *DesiredLabel, *Error)));
+            }
+        }
+        Super::PostEditChangeProperty(PropertyChangedEvent);
+        return;
+    }
     if (!bSyncing && Preview && Bank && Preview->OwnsGeneratedActor(this) &&
         Bank->SceneEnvironment.Actors.IsValidIndex(ActorIndex))
     {

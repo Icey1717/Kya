@@ -193,6 +193,13 @@ public:
     bool bShowActorIcons = true;
 
     /**
+     * Lock generated representations against viewport picking. Presentation state
+     * only: the actors stay visible and editable through the bank record.
+     */
+    UPROPERTY(EditAnywhere, Category="Kya|Selection")
+    bool bLockGeneratedActorSelection = false;
+
+    /**
      * Spawn selectable handles for waypoints. When enabled, the diagnostic waypoint
      * arrows are suppressed to avoid drawing two markers per record.
      */
@@ -228,6 +235,25 @@ public:
      * Returns the number of actors destroyed.
      */
     int32 DestroyStrayGeneratedActors();
+    /** Derived Outliner label for one actor record (name + class + duplicate index). */
+    FString GetActorDisplayLabel(int32 ActorIndex) const;
+    /**
+     * Temporarily hide one generated representation in this editor only. Uses
+     * SetIsTemporarilyHiddenInEditor, so game visibility and bank data are untouched.
+     */
+    UFUNCTION(BlueprintCallable, Category="Kya|Selection")
+    void SetGeneratedActorTemporarilyHidden(AActor* Actor, bool bInHidden);
+    UFUNCTION(BlueprintCallable, Category="Kya|Selection")
+    bool IsGeneratedActorTemporarilyHidden(const AActor* Actor) const;
+    /** Hide every generated representation except Actors, until isolation is cleared. */
+    UFUNCTION(BlueprintCallable, Category="Kya|Selection")
+    void IsolateGeneratedActors(const TArray<AActor*>& Actors);
+    UFUNCTION(BlueprintCallable, Category="Kya|Selection")
+    void ClearGeneratedActorIsolation();
+    UFUNCTION(BlueprintCallable, Category="Kya|Selection")
+    bool IsGeneratedActorIsolated(const AActor* Actor) const;
+    /** Reapply temporary visibility and selection-lock state after a build. */
+    void ApplyGeneratedActorPresentation();
 #endif
 
     /** True when actor geometry belongs to the actor handles and must not enter the shared mesh. */
@@ -384,6 +410,14 @@ private:
     /** Editor-only waypoint/path-point handles, keyed by "W:<index>" or "P:<path>:<point>". */
     UPROPERTY(Transient)
     TMap<FString, TObjectPtr<AKyaSpatialRecordHandle>> SpatialHandles;
+    /** Editor-only temporary hiding of generated representations (per preview). */
+    UPROPERTY(Transient)
+    TSet<TWeakObjectPtr<AActor>> TemporarilyHiddenGeneratedActors;
+    /** Editor-only isolation set; when active, every other representation is hidden. */
+    UPROPERTY(Transient)
+    TSet<TWeakObjectPtr<AActor>> IsolatedGeneratedActors;
+    UPROPERTY(Transient)
+    bool bIsolationActive = false;
     UPROPERTY(Transient)
     TObjectPtr<UKyaActorMarkerComponent> ActorMarker;
     UPROPERTY(Transient)

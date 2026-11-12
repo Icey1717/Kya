@@ -268,6 +268,27 @@ actors mirror bank records and must be edited through the original handle or the
 bank asset. Rebuilding or reloading the map recreates exactly one representation per
 bank record.
 
+Generated representations support the usual Outliner organization: labels and
+per-sector groups give multi-selection and search, and focusing works on the handle
+bounds. `Hide Selected Generated Actors` temporarily hides the selection in the
+editor only (`SetIsTemporarilyHiddenInEditor`, never game visibility), `Isolate
+Selected Generated Actors` hides every other representation, and `Clear Generated
+Isolation` restores them; the state survives rebuilds. The same actions are
+available as `Kya.HideSelected`, `Kya.ShowSelected`, `Kya.IsolateSelected` and
+`Kya.ClearIsolation`. Selection locking (`Kya.LockGeneratedSelection`, or the
+preview's `Lock Generated Actor Selection` / a handle's `Selection Locked`) keeps
+representations visible but stops viewport picking.
+
+Renaming follows an explicit policy: the Outliner label is presentation and the
+serialized actor name is the edit. A rename strips the generated `[class <id>]` and
+duplicate `[<index>]` suffixes, then validates the result: single-byte ASCII, at
+most 63 characters, and the writer's `Align(length + 1, 4)` must still fit this
+record's fixed name slot. Accepted renames write through the shared edit service
+(one undo step) and reapply the derived label; rejected renames leave the bank
+untouched, restore the label and explain the limit — names are never silently
+truncated. Waypoint, path, hierarchy and sector-group labels are generated from
+their records and a rename attempt is reverted with an explanation.
+
 Waypoints and path points have the same treatment. `Spawn Waypoint Handles` creates
 one transient `AKyaSpatialRecordHandle` per waypoint (position, stored rotation and
 `CWayPoint` parameter triple) and suppresses the diagnostic waypoint arrows while

@@ -43,11 +43,15 @@ public:
     virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
     /** Generated representations cannot be deleted; they mirror bank records. */
     virtual bool CanDeleteSelectedActor(FText& OutReason) const override;
+    /** Locked representations stay visible but cannot be picked in the viewport. */
+    virtual bool IsSelectable() const override;
 #endif
 
     void Initialize(AKyaLevelPreview* InPreview, UKyaLevelBank* InBank, EKyaSpatialRecordKind InKind,
         int32 InRecordIndex, int32 InPointIndex);
     void SyncFromBank();
+    /** Set the Outliner label without treating it as a user rename. */
+    void SetGeneratedLabel(const FString& Label);
     /** Apply the current mirrored fields (used by scripts and the Details panel). */
     void ApplyToBank();
 
@@ -133,8 +137,14 @@ public:
     UPROPERTY(VisibleAnywhere, Category="Kya|Path point")
     bool bHasExtraWordRecord = false;
 
+    /** Locked representations stay visible but cannot be picked in the viewport. */
+    UPROPERTY(EditAnywhere, Category="Kya|Selection")
+    bool bSelectionLocked = false;
+
 private:
     bool bSyncing = false;
+    /** Set while the preview assigns the derived label, so it is not treated as a rename. */
+    bool bApplyingGeneratedLabel = false;
     void CommitFromActor();
     void MirrorFromBank();
 };

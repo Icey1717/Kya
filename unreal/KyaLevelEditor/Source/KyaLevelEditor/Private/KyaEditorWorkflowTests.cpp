@@ -1182,6 +1182,189 @@ bool FKyaStructuralCommandsTest::RunTest(const FString& Parameters)
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaOutlinerPolicyTest, "Kya.Editor.OutlinerPolicy",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaOutlinerPolicyTest::RunTest(const FString& Parameters)
+{
+    UKyaLevelBank* Bank = MakeKyaTestBank(GetTransientPackage());
+    Bank->SceneEnvironment.Waypoints.AddDefaulted();
+    UWorld* World = UWorld::CreateWorld(EWorldType::EditorPreview, false);
+    if (!TestNotNull(TEXT("Create outliner world"), World)) return false;
+    AKyaLevelPreview* Preview = World->SpawnActor<AKyaLevelPreview>();
+    if (!TestNotNull(TEXT("Spawn outliner preview"), Preview))
+    {
+        World->DestroyWorld(false);
+        return false;
+    }
+    Preview->Bank = Bank;
+    Preview->bSpawnWaypointHandles = true;
+    Preview->OnConstruction(FTransform::Identity);
+
+    AKyaActorHandle* First = Cast<AKyaActorHandle>(Preview->GetActorHandle(0));
+    AKyaActorHandle* Second = Cast<AKyaActorHandle>(Preview->GetActorHandle(1));
+    AKyaSpatialRecordHandle* Waypoint = Cast<AKyaSpatialRecordHandle>(Preview->GetWaypointHandle(0));
+    if (!TestNotNull(TEXT("First handle exists"), First) || !TestNotNull(TEXT("Second handle exists"), Second) ||
+        !TestNotNull(TEXT("Waypoint handle exists"), Waypoint))
+    {
+        Preview->Destroy();
+        World->DestroyWorld(false);
+        return false;
+    }
+
+    // --- Rename policy: the label is presentation, the serialized name is the edit ---
+    FString Error;
+    TestFalse(TEXT("Rename crossing the 4-byte slot is rejected"),
+        ValidateKyaActorNameChange(TEXT("FIRST"), TEXT("FIR"), Error));
+    TestTrue(TEXT("Slot rejection explains the alignment"), Error.Contains(TEXT("4-byte")));
+    TestFalse(TEXT("Empty rename is rejected"),
+        ValidateKyaActorNameChange(TEXT("FIRST"), TEXT(""), Error));
+    TestFalse(TEXT("Non-ASCII rename is rejected"),
+        ValidateKyaActorNameChange(TEXT("FIRST"), TEXT("FIRST\u00e9"), Error));
+    TestTrue(TEXT("Same-bucket rename is accepted"),
+        ValidateKyaActorNameChange(TEXT("FIRST"), TEXT("FIRS"), Error));
+
+    TestTrue(TEXT("Direct same-bucket rename applies"), First->RenameActorRecord(TEXT("FIRS"), Error));
+    TestEqual(TEXT("Rename writes the serialized name"), Bank->SceneEnvironment.Actors[0].Name, FString(TEXT("FIRS")));
+    TestTrue(TEXT("Rename reapplies the class suffix"),
+        First->GetActorLabel().StartsWith(TEXT("FIRS [class 0]")));
+    TestFalse(TEXT("Direct boundary-crossing rename is rejected"),
+        First->RenameActorRecord(TEXT("FIRSTX12"), Error));
+    TestEqual(TEXT("Rejected rename leaves the bank untouched"),
+        Bank->SceneEnvironment.Actors[0].Name, FString(TEXT("FIRS")));
+
+    // An Outliner rename goes through SetActorLabel -> PostEditChangeProperty.
+    First->SetActorLabel(TEXT("FIRSX [class 0]"));
+    TestEqual(TEXT("Outliner rename strips the class suffix and writes the bank"),
+        Bank->SceneEnvironment.Actors[0].Name, FString(TEXT("FIRSX")));
+    First->SetActorLabel(TEXT("NO"));
+    TestEqual(TEXT("Rejected Outliner rename leaves the bank untouched"),
+        Bank->SceneEnvironment.Actors[0].Name, FString(TEXT("FIRSX")));
+    TestTrue(TEXT("Rejected Outliner rename restores the derived label"),
+        First->GetActorLabel().StartsWith(TEXT("FIRSX [class 0]")));
+
+    // Non-actor representations have generated labels that cannot diverge from records.
+    const FString WaypointLabel = Waypoint->GetActorLabel();
+    Waypoint->SetActorLabel(TEXT("Renamed waypoint"));
+    TestEqual(TEXT("Waypoint rename is reverted"), Waypoint->GetActorLabel(), WaypointLabel);
+    if (AActor* Group = First->GetAttachParentActor())
+    {
+        const FString GroupLabel = Group->GetActorLabel();
+        Group->SetActorLabel(TEXT("Renamed group"));
+        TestEqual(TEXT("Group rename is reverted"), Group->GetActorLabel(), GroupLabel);
+    }
+
+    // --- Editor-only temporary hide and isolate ------------------------------------
+    Preview->SetGeneratedActorTemporarilyHidden(First, true);
+    TestTrue(TEXT("Hidden representation reports hidden"), First->IsTemporarilyHiddenInEditor());
+    TestFalse(TEXT("Other representation stays visible"), Second->IsTemporarilyHiddenInEditor());
+    TestFalse(TEXT("Temporary hiding does not use game visibility"), First->IsHidden());
+    Preview->OnConstruction(FTransform::Identity);
+    TestTrue(TEXT("Temporary hiding survives a rebuild"), First->IsTemporarilyHiddenInEditor());
+    Preview->SetGeneratedActorTemporarilyHidden(First, false);
+    TestFalse(TEXT("Showing a representation restores it"), First->IsTemporarilyHiddenInEditor());
+
+    Preview->IsolateGeneratedActors({First});
+    TestTrue(TEXT("Isolation reports the isolated actor"), Preview->IsGeneratedActorIsolated(First));
+    TestFalse(TEXT("Isolated actor is visible"), First->IsTemporarilyHiddenInEditor());
+    TestTrue(TEXT("Isolation hides other representations"), Second->IsTemporarilyHiddenInEditor());
+    Preview->OnConstruction(FTransform::Identity);
+    TestTrue(TEXT("Isolation survives a rebuild"), Second->IsTemporarilyHiddenInEditor());
+    Preview->ClearGeneratedActorIsolation();
+    TestFalse(TEXT("Clearing isolation shows every representation"), Second->IsTemporarilyHiddenInEditor());
+
+    // Generated duplicate suffixes are stripped in the correct order (index first,
+    // then class) and only when they match this record.
+    Bank->SceneEnvironment.Actors[0].Name = TEXT("DUP");
+    Bank->SceneEnvironment.Actors[1].Name = TEXT("DUP");
+    Preview->OnConstruction(FTransform::Identity);
+    if (AKyaActorHandle* DupFirst = Cast<AKyaActorHandle>(Preview->GetActorHandle(0)))
+    {
+        TestTrue(TEXT("Duplicate label carries both generated suffixes"),
+            DupFirst->GetActorLabel() == TEXT("DUP [class 0] [0]"));
+        DupFirst->SetActorLabel(TEXT("DU [class 0] [0]"));
+        TestEqual(TEXT("Rename strips the index suffix before the class suffix"),
+            Bank->SceneEnvironment.Actors[0].Name, FString(TEXT("DU")));
+    }
+    // Bracketed text that is not this record's generated suffix is authored content.
+    Bank->SceneEnvironment.Actors[1].Name = TEXT("FIRST");
+    Preview->OnConstruction(FTransform::Identity);
+    if (AKyaActorHandle* BracketHandle = Cast<AKyaActorHandle>(Preview->GetActorHandle(1)))
+    {
+        TestTrue(TEXT("Literal bracket name is accepted"),
+            BracketHandle->RenameActorRecord(TEXT("B [9]"), Error));
+        TestEqual(TEXT("Literal bracket text is preserved"),
+            Bank->SceneEnvironment.Actors[1].Name, FString(TEXT("B [9]")));
+        TestTrue(TEXT("Authored text matching the record index is accepted"),
+            BracketHandle->RenameActorRecord(TEXT("B [1]"), Error));
+        TestEqual(TEXT("Authored index-like text is not stripped"),
+            Bank->SceneEnvironment.Actors[1].Name, FString(TEXT("B [1]")));
+    }
+    // A duplicated copy cannot rename the source record.
+    {
+        FActorSpawnParameters Params;
+        Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        Params.ObjectFlags |= RF_Transient | RF_Transactional;
+        AKyaActorHandle* Clone = World->SpawnActor<AKyaActorHandle>(
+            AKyaActorHandle::StaticClass(), FTransform::Identity, Params);
+        if (TestNotNull(TEXT("Rename clone spawns"), Clone))
+        {
+            Clone->Initialize(Preview, Bank, 1, true);
+            const FString BeforeRename = Bank->SceneEnvironment.Actors[1].Name;
+            TestFalse(TEXT("Unowned copy cannot rename the record"),
+                Clone->RenameActorRecord(TEXT("CLONE"), Error));
+            TestEqual(TEXT("Unowned rename leaves the bank untouched"),
+                Bank->SceneEnvironment.Actors[1].Name, BeforeRename);
+            Clone->Destroy();
+        }
+    }
+
+    // Grouping actors inherit hide/isolate state to their handles.
+    Bank->SceneEnvironment.Actors[1].SectorId = 1;
+    Preview->OnConstruction(FTransform::Identity);
+    if (AKyaActorHandle* GroupedFirst = Cast<AKyaActorHandle>(Preview->GetActorHandle(0)))
+    {
+        if (AKyaActorHandle* GroupedSecond = Cast<AKyaActorHandle>(Preview->GetActorHandle(1)))
+        {
+            AActor* Group0 = GroupedFirst->GetAttachParentActor();
+            AActor* Group1 = GroupedSecond->GetAttachParentActor();
+            if (TestNotNull(TEXT("First sector group exists"), Group0) &&
+                TestNotNull(TEXT("Second sector group exists"), Group1) && Group0 != Group1)
+            {
+                Preview->SetGeneratedActorTemporarilyHidden(Group0, true);
+                TestTrue(TEXT("Hiding a group hides its handle"), GroupedFirst->IsTemporarilyHiddenInEditor());
+                TestFalse(TEXT("Hiding a group leaves other handles visible"),
+                    GroupedSecond->IsTemporarilyHiddenInEditor());
+                Preview->SetGeneratedActorTemporarilyHidden(Group0, false);
+
+                Preview->IsolateGeneratedActors({Group0});
+                TestFalse(TEXT("Isolating a group keeps its handle visible"),
+                    GroupedFirst->IsTemporarilyHiddenInEditor());
+                TestTrue(TEXT("Isolating a group hides other groups' handles"),
+                    GroupedSecond->IsTemporarilyHiddenInEditor());
+                Preview->ClearGeneratedActorIsolation();
+                TestFalse(TEXT("Clearing group isolation restores everything"),
+                    GroupedSecond->IsTemporarilyHiddenInEditor());
+            }
+        }
+    }
+
+    // --- Selection locking ---------------------------------------------------------
+    TestTrue(TEXT("Unlocked representations are selectable"), First->IsSelectable());
+    Preview->bLockGeneratedActorSelection = true;
+    TestFalse(TEXT("Preview lock disables picking"), First->IsSelectable());
+    TestFalse(TEXT("Preview lock also covers spatial records"), Waypoint->IsSelectable());
+    Preview->bLockGeneratedActorSelection = false;
+    First->bSelectionLocked = true;
+    TestFalse(TEXT("Per-representation lock disables picking"), First->IsSelectable());
+    TestTrue(TEXT("Other representations remain selectable"), Second->IsSelectable());
+    First->bSelectionLocked = false;
+
+    Preview->Destroy();
+    World->DestroyWorld(false);
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaMultiEditBaselineTest, "Kya.Editor.MultiEditBaseline",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 

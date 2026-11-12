@@ -32,11 +32,15 @@ public:
     virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
     /** Generated hierarchy handles cannot be deleted independently of the preview. */
     virtual bool CanDeleteSelectedActor(FText& OutReason) const override;
+    /** Locked representations stay visible but cannot be picked in the viewport. */
+    virtual bool IsSelectable() const override;
 #endif
 
     void Initialize(AKyaLevelPreview* InPreview, UKyaLevelBank* InBank, int32 InSectorId,
         int32 InHierarchyOffset, const FVector& InWorldOrigin, int32 InStripCount, int32 InTriangleCount,
         bool bInVisible);
+    /** Set the Outliner label without treating it as a user rename. */
+    void SetGeneratedLabel(const FString& Label);
 
     UPROPERTY(VisibleAnywhere, Category="Kya|Hierarchy")
     TObjectPtr<UStaticMeshComponent> Marker;
@@ -63,4 +67,11 @@ public:
     /** Hide this hierarchy in the preview; bank geometry is not modified. */
     UPROPERTY(EditAnywhere, Category="Kya|Hierarchy")
     bool bVisible = true;
+
+    /** Locked representations stay visible but cannot be picked in the viewport. */
+    UPROPERTY(EditAnywhere, Category="Kya|Selection")
+    bool bSelectionLocked = false;
+
+private:
+    bool bApplyingGeneratedLabel = false;
 };

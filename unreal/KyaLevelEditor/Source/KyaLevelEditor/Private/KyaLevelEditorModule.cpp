@@ -144,6 +144,65 @@ void AddKyaMenuEntries(FToolMenuSection& Section)
         FText::FromString(TEXT("Save the bank packages used by the selected level preview.")),
         FSlateIcon(),
         FUIAction(FExecuteAction::CreateLambda([]() { KyaSaveCommand({}); })));
+    Section.AddMenuEntry("KyaHideGenerated",
+        FText::FromString(TEXT("Hide Selected Generated Actors")),
+        FText::FromString(TEXT("Temporarily hide the selected Kya representations in the editor only.")),
+        FSlateIcon(),
+        FUIAction(FExecuteAction::CreateLambda([]()
+        {
+            int32 Affected = 0;
+            KyaSetSelectedGeneratedActorsHidden(true, Affected);
+            KyaShowSummary(TEXT("Kya Hide"), FString::Printf(
+                TEXT("%d generated actor(s) hidden in the editor. Game visibility and bank data are unchanged."),
+                Affected));
+        })));
+    Section.AddMenuEntry("KyaShowGenerated",
+        FText::FromString(TEXT("Show Selected Generated Actors")),
+        FText::FromString(TEXT("Reveal the selected Kya representations (isolation must be cleared).")),
+        FSlateIcon(),
+        FUIAction(FExecuteAction::CreateLambda([]()
+        {
+            int32 Affected = 0;
+            KyaSetSelectedGeneratedActorsHidden(false, Affected);
+            KyaShowSummary(TEXT("Kya Show"), FString::Printf(TEXT("%d generated actor(s) shown."), Affected));
+        })));
+    Section.AddMenuEntry("KyaIsolateGenerated",
+        FText::FromString(TEXT("Isolate Selected Generated Actors")),
+        FText::FromString(TEXT("Hide every other generated representation until isolation is cleared.")),
+        FSlateIcon(),
+        FUIAction(FExecuteAction::CreateLambda([]()
+        {
+            int32 Affected = 0;
+            KyaIsolateSelectedGeneratedActors(Affected);
+            KyaShowSummary(TEXT("Kya Isolate"), Affected > 0
+                ? FString::Printf(TEXT("Isolated %d generated actor(s). Use Clear Generated Isolation to restore."),
+                    Affected)
+                : FString(TEXT("Select at least one generated actor to isolate it.")));
+        })));
+    Section.AddMenuEntry("KyaClearIsolation",
+        FText::FromString(TEXT("Clear Generated Isolation")),
+        FText::FromString(TEXT("Clear temporary hiding and isolation on every Kya level preview.")),
+        FSlateIcon(),
+        FUIAction(FExecuteAction::CreateLambda([]()
+        {
+            KyaClearGeneratedActorIsolation();
+            KyaShowSummary(TEXT("Kya Isolation"), TEXT("All generated representations are visible again."));
+        })));
+    Section.AddMenuEntry("KyaLockGenerated",
+        FText::FromString(TEXT("Toggle Generated Actor Selection Lock")),
+        FText::FromString(TEXT("Prevent viewport picking of generated actors (they stay visible and editable).")),
+        FSlateIcon(),
+        FUIAction(FExecuteAction::CreateLambda([]()
+        {
+            const bool bLocked = KyaGetTargetPreviews().ContainsByPredicate([](const AKyaLevelPreview* Preview)
+            {
+                return Preview && Preview->bLockGeneratedActorSelection;
+            });
+            KyaSetGeneratedActorSelectionLocked(!bLocked);
+            KyaShowSummary(TEXT("Kya Selection Lock"), !bLocked
+                ? TEXT("Generated actors are selection-locked; they remain visible and editable through the bank.")
+                : TEXT("Generated actors can be picked in the viewport again."));
+        })));
 }
 }
 
@@ -293,6 +352,57 @@ FAutoConsoleCommand KyaCreateLevelSetConsoleCommand(
     TEXT("Kya.CreateLevelSet"),
     TEXT("Create or update the persisted level-set asset for the selected preview."),
     FConsoleCommandWithArgsDelegate::CreateStatic(&KyaCreateLevelSetCommand));
+
+FAutoConsoleCommand KyaHideSelectedConsoleCommand(
+    TEXT("Kya.HideSelected"),
+    TEXT("Temporarily hide the selected generated Kya actors in the editor."),
+    FConsoleCommandWithArgsDelegate::CreateLambda([](const TArray<FString>&)
+    {
+        int32 Affected = 0;
+        KyaSetSelectedGeneratedActorsHidden(true, Affected);
+        UE_LOG(LogTemp, Display, TEXT("KYA_HIDE_SELECTED affected=%d"), Affected);
+    }));
+
+FAutoConsoleCommand KyaShowSelectedConsoleCommand(
+    TEXT("Kya.ShowSelected"),
+    TEXT("Reveal the selected generated Kya actors (clear isolation to reveal everything)."),
+    FConsoleCommandWithArgsDelegate::CreateLambda([](const TArray<FString>&)
+    {
+        int32 Affected = 0;
+        KyaSetSelectedGeneratedActorsHidden(false, Affected);
+        UE_LOG(LogTemp, Display, TEXT("KYA_SHOW_SELECTED affected=%d"), Affected);
+    }));
+
+FAutoConsoleCommand KyaIsolateSelectedConsoleCommand(
+    TEXT("Kya.IsolateSelected"),
+    TEXT("Isolate the selected generated Kya actors, hiding the other representations."),
+    FConsoleCommandWithArgsDelegate::CreateLambda([](const TArray<FString>&)
+    {
+        int32 Affected = 0;
+        KyaIsolateSelectedGeneratedActors(Affected);
+        UE_LOG(LogTemp, Display, TEXT("KYA_ISOLATE_SELECTED affected=%d"), Affected);
+    }));
+
+FAutoConsoleCommand KyaClearIsolationConsoleCommand(
+    TEXT("Kya.ClearIsolation"),
+    TEXT("Clear temporary hiding and isolation on every Kya level preview."),
+    FConsoleCommandWithArgsDelegate::CreateLambda([](const TArray<FString>&)
+    {
+        KyaClearGeneratedActorIsolation();
+    }));
+
+FAutoConsoleCommand KyaLockGeneratedSelectionConsoleCommand(
+    TEXT("Kya.LockGeneratedSelection"),
+    TEXT("Toggle viewport picking of generated actors on every Kya level preview."),
+    FConsoleCommandWithArgsDelegate::CreateLambda([](const TArray<FString>&)
+    {
+        const bool bLocked = KyaGetTargetPreviews().ContainsByPredicate([](const AKyaLevelPreview* Preview)
+        {
+            return Preview && Preview->bLockGeneratedActorSelection;
+        });
+        KyaSetGeneratedActorSelectionLocked(!bLocked);
+        UE_LOG(LogTemp, Display, TEXT("KYA_LOCK_GENERATED_SELECTION locked=%d"), bLocked ? 0 : 1);
+    }));
 
 FAutoConsoleCommand ViewportTonemapperCommand(
     TEXT("Kya.ViewportTonemapper"),

@@ -1,6 +1,11 @@
 #include "KyaActorGroup.h"
 
 #include "Components/SceneComponent.h"
+#include "KyaLevelPreview.h"
+#if WITH_EDITOR
+#include "Misc/App.h"
+#include "Misc/MessageDialog.h"
+#endif
 
 AKyaActorGroup::AKyaActorGroup()
 {
@@ -19,6 +24,38 @@ AKyaActorGroup::AKyaActorGroup()
 void AKyaActorGroup::ResetToLevelRoot()
 {
     SetActorRelativeTransform(FTransform::Identity, false, nullptr, ETeleportType::TeleportPhysics);
+}
+
+bool AKyaActorGroup::IsSelectable() const
+{
+    if (bSelectionLocked) return false;
+    if (const AKyaLevelPreview* Preview = Cast<AKyaLevelPreview>(GetAttachParentActor()))
+        return !Preview->bLockGeneratedActorSelection;
+    return true;
+}
+
+void AKyaActorGroup::SetGeneratedLabel(const FString& Label)
+{
+    GeneratedLabel = Label;
+    TGuardValue<bool> Guard(bApplyingGeneratedLabel, true);
+    if (GetActorLabel() != Label) SetActorLabel(Label);
+}
+
+void AKyaActorGroup::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+    const FName PropertyName = PropertyChangedEvent.MemberProperty
+        ? PropertyChangedEvent.MemberProperty->GetFName()
+        : PropertyChangedEvent.Property ? PropertyChangedEvent.Property->GetFName() : NAME_None;
+    if (!bApplyingGeneratedLabel && PropertyName == TEXT("ActorLabel"))
+    {
+        SetGeneratedLabel(GeneratedLabel);
+        UE_LOG(LogTemp, Warning, TEXT("KYA_GROUP_RENAME_REJECTED group=%s: labels are generated"), *GetNameSafe(this));
+        if (!FApp::IsUnattended())
+            FMessageDialog::Open(EAppMsgType::Ok, NSLOCTEXT("KyaLevel", "GroupRenameRejected",
+                "Sector grouping labels are generated from the level preview and cannot be renamed. "
+                "The label was restored."));
+    }
+    Super::PostEditChangeProperty(PropertyChangedEvent);
 }
 
 bool AKyaActorGroup::CanDeleteSelectedActor(FText& OutReason) const

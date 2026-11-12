@@ -189,6 +189,7 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
         RefreshActorHandles();
         RefreshSpatialHandles();
         RefreshHierarchyHandles();
+        ApplyGeneratedActorPresentation();
 #endif
     };
 #if WITH_EDITOR
@@ -1496,6 +1497,7 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
     RefreshActorHandles();
     RefreshSpatialHandles();
     RefreshHierarchyHandles();
+    ApplyGeneratedActorPresentation();
 #endif
 }
 
@@ -1721,7 +1723,7 @@ void AKyaLevelPreview::RefreshActorHandles()
                 AKyaActorGroup* Existing = *Found;
                 // The preview can be reassigned to another bank; keep the label and the
                 // level-root transform authoritative on every refresh.
-                if (Existing->GetActorLabel() != ExpectedLabel) Existing->SetActorLabel(ExpectedLabel);
+                if (Existing->GetActorLabel() != ExpectedLabel) Existing->SetGeneratedLabel(ExpectedLabel);
                 if (!Existing->GetRootComponent()->GetRelativeTransform().Equals(FTransform::Identity))
                     Existing->SetActorRelativeTransform(FTransform::Identity, false, nullptr, ETeleportType::TeleportPhysics);
                 return Existing;
@@ -1735,7 +1737,7 @@ void AKyaLevelPreview::RefreshActorHandles()
         if (!Group) return nullptr;
         Group->SetFlags(RF_Transient | RF_Transactional);
         Group->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
-        Group->SetActorLabel(ExpectedLabel);
+        Group->SetGeneratedLabel(ExpectedLabel);
         ActorSectorGroups.Add(SectorId, Group);
         return Group;
     };
@@ -1767,7 +1769,7 @@ void AKyaLevelPreview::RefreshActorHandles()
             Handle->SetIconEnabled(bShowIcon);
             if (Sections) Handle->SetActorMeshSections(*Sections);
             else Handle->SetActorMeshSections(TArray<FKyaActorMeshSection>());
-            if (Handle->GetActorLabel() != Labels[Index]) Handle->SetActorLabel(Labels[Index]);
+            if (Handle->GetActorLabel() != Labels[Index]) Handle->SetGeneratedLabel(Labels[Index]);
             continue;
         }
         FActorSpawnParameters Params;
@@ -1785,7 +1787,7 @@ void AKyaLevelPreview::RefreshActorHandles()
         Handle->SetFlags(RF_Transient | RF_Transactional);
         if (Group) Handle->AttachToActor(Group, FAttachmentTransformRules::KeepRelativeTransform);
         Handle->Initialize(this, Bank, Index, bShowIcon);
-        Handle->SetActorLabel(Labels[Index]);
+        Handle->SetGeneratedLabel(Labels[Index]);
         if (Sections) Handle->SetActorMeshSections(*Sections);
         ActorHandles.Add(Index, Handle);
     }
@@ -1867,6 +1869,91 @@ int32 AKyaLevelPreview::DestroyStrayGeneratedActors()
         Stray->Destroy();
     }
     return Strays.Num();
+}
+
+FString AKyaLevelPreview::GetActorDisplayLabel(int32 ActorIndex) const
+{
+    if (!Bank || !Bank->SceneEnvironment.Actors.IsValidIndex(ActorIndex)) return FString();
+    const FKyaActorPlacement& Placement = Bank->SceneEnvironment.Actors[ActorIndex];
+    const FString Base = Placement.Name.IsEmpty()
+        ? FString::Printf(TEXT("Actor %d"), ActorIndex) : Placement.Name;
+    // Duplicate names are disambiguated from the whole bank, exactly like the
+    // refresh path, so a rename revert always restores the correct label.
+    int32 Occurrences = 0;
+    for (const FKyaActorPlacement& Other : Bank->SceneEnvironment.Actors)
+    {
+        const FString OtherBase = Other.Name.IsEmpty() ? FString() : Other.Name;
+        if (OtherBase == Base) ++Occurrences;
+    }
+    FString Label = FString::Printf(TEXT("%s [class %lld]"), *Base, Placement.ClassId);
+    if (Occurrences > 1) Label += FString::Printf(TEXT(" [%d]"), ActorIndex);
+    return Label;
+}
+
+void AKyaLevelPreview::SetGeneratedActorTemporarilyHidden(AActor* Actor, bool bInHidden)
+{
+    if (!OwnsGeneratedActor(Actor)) return;
+    if (bInHidden) TemporarilyHiddenGeneratedActors.Add(Actor);
+    else TemporarilyHiddenGeneratedActors.Remove(Actor);
+    ApplyGeneratedActorPresentation();
+}
+
+bool AKyaLevelPreview::IsGeneratedActorTemporarilyHidden(const AActor* Actor) const
+{
+    for (const AActor* Current = Actor; Current; Current = Current->GetAttachParentActor())
+        if (TemporarilyHiddenGeneratedActors.Contains(Current)) return true;
+    return false;
+}
+
+void AKyaLevelPreview::IsolateGeneratedActors(const TArray<AActor*>& Actors)
+{
+    IsolatedGeneratedActors.Reset();
+    for (AActor* Actor : Actors)
+        if (OwnsGeneratedActor(Actor)) IsolatedGeneratedActors.Add(Actor);
+    bIsolationActive = !IsolatedGeneratedActors.IsEmpty();
+    ApplyGeneratedActorPresentation();
+}
+
+void AKyaLevelPreview::ClearGeneratedActorIsolation()
+{
+    bIsolationActive = false;
+    IsolatedGeneratedActors.Reset();
+    ApplyGeneratedActorPresentation();
+}
+
+bool AKyaLevelPreview::IsGeneratedActorIsolated(const AActor* Actor) const
+{
+    if (!bIsolationActive) return false;
+    for (const AActor* Current = Actor; Current; Current = Current->GetAttachParentActor())
+        if (IsolatedGeneratedActors.Contains(Current)) return true;
+    return false;
+}
+
+void AKyaLevelPreview::ApplyGeneratedActorPresentation()
+{
+    // Editor-only: SetIsTemporarilyHiddenInEditor never changes game visibility, and
+    // the bank data is untouched. Isolation hides every representation except the
+    // isolated set; explicit hiding applies when isolation is not active. Membership
+    // is inherited through the sector grouping actors, so hiding a group hides its
+    // handles and isolating a group keeps its handles visible.
+    const auto ContainsOrAncestor = [](const TSet<TWeakObjectPtr<AActor>>& Set, const AActor* Actor)
+    {
+        for (const AActor* Current = Actor; Current; Current = Current->GetAttachParentActor())
+            if (Set.Contains(Current)) return true;
+        return false;
+    };
+    const auto Apply = [this, &ContainsOrAncestor](AActor* Actor)
+    {
+        if (!IsValid(Actor)) return;
+        const bool bShouldHide = bIsolationActive
+            ? !ContainsOrAncestor(IsolatedGeneratedActors, Actor)
+            : ContainsOrAncestor(TemporarilyHiddenGeneratedActors, Actor);
+        if (Actor->IsTemporarilyHiddenInEditor() != bShouldHide) Actor->SetIsTemporarilyHiddenInEditor(bShouldHide);
+    };
+    for (const TPair<int32, TObjectPtr<AKyaActorHandle>>& Pair : ActorHandles) Apply(Pair.Value);
+    for (const TPair<FString, TObjectPtr<AKyaSpatialRecordHandle>>& Pair : SpatialHandles) Apply(Pair.Value);
+    for (const TObjectPtr<AKyaHierarchyHandle>& Handle : HierarchyHandles) Apply(Handle);
+    for (const TPair<int32, TObjectPtr<AKyaActorGroup>>& Pair : ActorSectorGroups) Apply(Pair.Value);
 }
 
 void AKyaLevelPreview::RefreshSpatialHandles()

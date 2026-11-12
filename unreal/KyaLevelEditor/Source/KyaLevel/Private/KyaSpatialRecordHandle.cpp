@@ -10,6 +10,8 @@
 #if WITH_EDITOR
 #include "Editor.h"
 #include "ScopedTransaction.h"
+#include "Misc/App.h"
+#include "Misc/MessageDialog.h"
 #endif
 
 AKyaSpatialRecordHandle::AKyaSpatialRecordHandle()
@@ -117,8 +119,20 @@ void AKyaSpatialRecordHandle::SyncFromBank()
         Label = FString::Printf(TEXT("Waypoint %d"), RecordIndex);
     else
         Label = FString::Printf(TEXT("Path %d Point %d"), RecordIndex, PointIndex);
-    if (GetActorLabel() != Label) SetActorLabel(Label);
+    SetGeneratedLabel(Label);
 #endif
+}
+
+void AKyaSpatialRecordHandle::SetGeneratedLabel(const FString& Label)
+{
+    TGuardValue<bool> Guard(bApplyingGeneratedLabel, true);
+    if (GetActorLabel() != Label) SetActorLabel(Label);
+}
+
+bool AKyaSpatialRecordHandle::IsSelectable() const
+{
+    if (bSelectionLocked) return false;
+    return !(IsValid(Preview) && Preview->bLockGeneratedActorSelection);
 }
 
 #if WITH_EDITOR
@@ -197,6 +211,24 @@ void AKyaSpatialRecordHandle::PostEditChangeProperty(FPropertyChangedEvent& Prop
     {
         return CandidateNames[0] == Name || CandidateNames[1] == Name;
     };
+
+    // Labels for spatial records are generated from the record kind and indices; an
+    // Outliner rename is reverted and explained instead of silently diverging.
+    if (!bApplyingGeneratedLabel && Matches(TEXT("ActorLabel")))
+    {
+        FString Label = Kind == EKyaSpatialRecordKind::Waypoint
+            ? FString::Printf(TEXT("Waypoint %d"), RecordIndex)
+            : FString::Printf(TEXT("Path %d Point %d"), RecordIndex, PointIndex);
+        SetGeneratedLabel(Label);
+        UE_LOG(LogTemp, Warning, TEXT("KYA_SPATIAL_RENAME_REJECTED bank=%s kind=%d index=%d: labels are generated"),
+            *GetNameSafe(Bank), int32(Kind), RecordIndex);
+        if (!FApp::IsUnattended())
+            FMessageDialog::Open(EAppMsgType::Ok, NSLOCTEXT("KyaLevel", "SpatialRenameRejected",
+                "This label is generated from the bank record and cannot be renamed. "
+                "The label was restored; the bank was not modified."));
+        Super::PostEditChangeProperty(PropertyChangedEvent);
+        return;
+    }
 
     FKyaLevelEditService& Service = FKyaLevelEditService::Get();
     FString Error;

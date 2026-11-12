@@ -180,6 +180,20 @@ Last updated: 2026-11-12.
 - `CanDeleteSelectedActor` blocks delete for every generated class with a
   class-specific explanation, and the module explains duplicate/cut/paste/Alt-drag
   behaviour in a dialog after removing the generated copies.
+- Generated representations support editor-only presentation controls: temporary
+  hide and isolate use `SetIsTemporarilyHiddenInEditor` (game visibility and bank
+  data are untouched) and are reapplied after each build; selection locking is a
+  preview-wide toggle plus a per-representation flag exposed through
+  `IsSelectable`. Menu entries and `Kya.HideSelected`/`Kya.ShowSelected`/
+  `Kya.IsolateSelected`/`Kya.ClearIsolation`/`Kya.LockGeneratedSelection` commands
+  operate on the current selection.
+- Renaming follows an explicit policy: the Outliner label is presentation and the
+  serialized actor name is the edit. Generated `[class <id>]`/duplicate suffixes are
+  stripped, then the name is validated (ASCII, 63-character limit, and the writer's
+  `Align(length + 1, 4)` slot capacity) before it is written through the edit
+  service. Rejected renames leave the bank unchanged, restore the derived label and
+  explain the limit without truncating; spatial, hierarchy and group labels are
+  generated and rename attempts are reverted.
 - Generated actors are grouped in the Outliner under one transient grouping actor  per sector, attached to the preview. Labels are `<serialized name> [class <id>]`,
   disambiguated with the record index for duplicate names; labels are derived from
   the whole bank so sector load/unload cannot rename them, and serialized names are
@@ -227,8 +241,8 @@ Results: `Kya.Bank.LevelOneRoundTrip`, `Kya.Bank.SmallBankRoundTrip`,
 `Kya.Editor.ActorHandleTransform`, `Kya.Editor.ActorOwnedGeometry`,
 `Kya.Editor.ExportValidation`, `Kya.Editor.LevelPreviewPlacement`,
 `Kya.Editor.LevelSet`, `Kya.Editor.SpatialRecords`, `Kya.Editor.ActorCatalog`,
-`Kya.Editor.MultiEditBaseline`, `Kya.Editor.GeneratedActorLifecycle` and
-`Kya.Editor.StructuralCommands` all `Success`.
+`Kya.Editor.MultiEditBaseline`, `Kya.Editor.GeneratedActorLifecycle`,
+`Kya.Editor.StructuralCommands` and `Kya.Editor.OutlinerPolicy` all `Success`.
 
 Coverage added by the new tests:
 
@@ -284,9 +298,6 @@ These remain open in [the checklist](EDITOR_WORKFLOW_PLAN.md):
 - Targeted per-actor invalidation: a committed transform edit still rebuilds the
   preview once (the drag itself is live and does not rebuild).
 - Hierarchy transforms, waypoint orientation visualization, path playback.
-- Outliner rename policy: deleting, duplicating, cutting and pasting generated
-  actors is blocked or cleaned up with an explanation, but renaming has no explicit
-  policy yet.
 - Interactive viewport acceptance pass (click a mesh, W/E/R, save/reopen,
   export/reimport) in a live editor session, and Milestone A–E gates.
 

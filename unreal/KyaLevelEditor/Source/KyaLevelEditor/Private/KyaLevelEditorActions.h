@@ -75,3 +75,14 @@ bool KyaSelectionContainsGeneratedActor();
  * and generated actors whose preview is gone. Returns the number of orphans removed.
  */
 int32 KyaDestroyStrayGeneratedActors(UWorld* World);
+
+// --- Generated representation presentation (editor-only, never game state) --------
+
+/** Temporarily hide or show the selected generated representations. */
+void KyaSetSelectedGeneratedActorsHidden(bool bHidden, int32& OutAffected);
+/** Isolate the selected generated representations; everything else is hidden. */
+void KyaIsolateSelectedGeneratedActors(int32& OutAffected);
+/** Clear temporary hiding and isolation on every level preview. */
+void KyaClearGeneratedActorIsolation();
+/** Lock or unlock viewport picking for generated representations on every preview. */
+void KyaSetGeneratedActorSelectionLocked(bool bLocked);

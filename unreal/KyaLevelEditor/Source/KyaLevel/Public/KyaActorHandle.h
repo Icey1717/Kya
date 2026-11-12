@@ -37,6 +37,8 @@ public:
     virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
     /** Generated representations cannot be deleted; they mirror bank records. */
     virtual bool CanDeleteSelectedActor(FText& OutReason) const override;
+    /** Locked representations stay visible but cannot be picked in the viewport. */
+    virtual bool IsSelectable() const override;
 #endif
 
     /** Bind this handle to one bank actor placement and copy its fields. */
@@ -45,6 +47,17 @@ public:
     void SyncFromBank();
     /** Show or hide the meshless-record icon (diagnostic/capture modes hide it). */
     void SetIconEnabled(bool bEnabled);
+    /** Set the Outliner label without treating it as a user rename. */
+    void SetGeneratedLabel(const FString& Label);
+    /**
+     * Rename the serialized actor record from an Outliner label edit.
+     *
+     * The generated class suffix and duplicate-index suffix are removed, the
+     * remaining text is validated against the record's fixed name slot, and the
+     * change goes through the edit service. Rejected names never truncate or
+     * partially write; OutError explains the limit.
+     */
+    bool RenameActorRecord(const FString& DesiredLabel, FString& OutError);
     /** Replace the rendered actor mesh with sections captured by the owning preview. */
     void SetActorMeshSections(const TArray<FKyaActorMeshSection>& Sections);
     void ClearActorMesh();
@@ -117,6 +130,10 @@ public:
     UPROPERTY(EditAnywhere, Category="Kya|Gameplay", meta=(EditCondition="ActorIndex >= 0"))
     int64 ActorLightingFlags = 0;
 
+    /** Locked representations stay visible but cannot be picked in the viewport. */
+    UPROPERTY(EditAnywhere, Category="Kya|Selection")
+    bool bSelectionLocked = false;
+
     /** Number of rendered material sections (0 for meshless records). */
     UPROPERTY(VisibleAnywhere, Category="Kya|Diagnostics")
     int32 RenderSectionCount = 0;
@@ -124,6 +141,8 @@ public:
 private:
     bool bSyncing = false;
     bool bShowIcon = true;
+    /** Set while the preview assigns the derived label, so it is not treated as a rename. */
+    bool bApplyingGeneratedLabel = false;
     /** Materials are owned by the preview; keep explicit references for GC safety. */
     UPROPERTY()
     TArray<TObjectPtr<UMaterialInterface>> SectionMaterials;

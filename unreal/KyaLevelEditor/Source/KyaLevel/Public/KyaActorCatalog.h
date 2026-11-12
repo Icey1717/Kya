@@ -127,3 +127,14 @@ KYALEVEL_API bool BuildKyaActorFieldResetPatch(const UKyaLevelBank& Bank, int32 
 KYALEVEL_API bool CanCopyKyaActorField(const FKyaActorPlacement& Source, const FKyaActorPlacement& Dest,
     FName PropertyName, FString& OutError);
 
+/**
+ * Validate an Outliner rename before it becomes the serialized actor name.
+ *
+ * The bank stores names in a fixed slot: the writer requires
+ * Align(Length + 1, 4) to equal the original capacity. Renames that change that
+ * 4-byte bucket, exceed the character limit or contain non-ASCII characters are
+ * rejected with an explanation; they are never silently truncated.
+ */
+KYALEVEL_API bool ValidateKyaActorNameChange(const FString& CurrentName, const FString& NewName,
+    FString& OutError);
+

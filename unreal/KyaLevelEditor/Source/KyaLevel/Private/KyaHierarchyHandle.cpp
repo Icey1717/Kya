@@ -5,6 +5,10 @@
 #include "KyaLevelBank.h"
 #include "KyaLevelPreview.h"
 #include "UObject/ConstructorHelpers.h"
+#if WITH_EDITOR
+#include "Misc/App.h"
+#include "Misc/MessageDialog.h"
+#endif
 
 AKyaHierarchyHandle::AKyaHierarchyHandle()
 {
@@ -46,11 +50,23 @@ void AKyaHierarchyHandle::Initialize(AKyaLevelPreview* InPreview, UKyaLevelBank*
     SetActorLocation(InWorldOrigin, false, nullptr, ETeleportType::TeleportPhysics);
 #if WITH_EDITOR
     if (Bank)
-        SetActorLabel(FString::Printf(TEXT("%s hierarchy %d"), *Bank->GetName(), HierarchyOffset));
+        SetGeneratedLabel(FString::Printf(TEXT("%s hierarchy %d"), *Bank->GetName(), HierarchyOffset));
 #endif
 }
 
 #if WITH_EDITOR
+void AKyaHierarchyHandle::SetGeneratedLabel(const FString& Label)
+{
+    TGuardValue<bool> Guard(bApplyingGeneratedLabel, true);
+    if (GetActorLabel() != Label) SetActorLabel(Label);
+}
+
+bool AKyaHierarchyHandle::IsSelectable() const
+{
+    if (bSelectionLocked) return false;
+    return !(IsValid(Preview) && Preview->bLockGeneratedActorSelection);
+}
+
 bool AKyaHierarchyHandle::CanDeleteSelectedActor(FText& OutReason) const
 {
     OutReason = NSLOCTEXT("KyaLevel", "CannotDeleteHierarchyHandle",
@@ -61,7 +77,23 @@ bool AKyaHierarchyHandle::CanDeleteSelectedActor(FText& OutReason) const
 
 void AKyaHierarchyHandle::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
-    const FName PropertyName = PropertyChangedEvent.GetPropertyName();
+    const FName PropertyName = PropertyChangedEvent.MemberProperty
+        ? PropertyChangedEvent.MemberProperty->GetFName()
+        : PropertyChangedEvent.Property ? PropertyChangedEvent.Property->GetFName() : NAME_None;
+    if (!bApplyingGeneratedLabel && PropertyName == TEXT("ActorLabel"))
+    {
+        FString Label = Bank
+            ? FString::Printf(TEXT("%s hierarchy %d"), *Bank->GetName(), HierarchyOffset)
+            : FString::Printf(TEXT("Hierarchy %d"), HierarchyOffset);
+        SetGeneratedLabel(Label);
+        UE_LOG(LogTemp, Warning, TEXT("KYA_HIERARCHY_RENAME_REJECTED handle=%s: labels are generated"),
+            *GetNameSafe(this));
+        if (!FApp::IsUnattended())
+            FMessageDialog::Open(EAppMsgType::Ok, NSLOCTEXT("KyaLevel", "HierarchyRenameRejected",
+                "Hierarchy labels are generated from the bank and cannot be renamed. The label was restored."));
+        Super::PostEditChangeProperty(PropertyChangedEvent);
+        return;
+    }
     if (PropertyName == GET_MEMBER_NAME_CHECKED(AKyaHierarchyHandle, bVisible) && Preview && Bank &&
         Preview->OwnsGeneratedActor(this))
         Preview->SetHierarchyVisible(Bank, HierarchyOffset, bVisible);

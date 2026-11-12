@@ -169,6 +169,92 @@ int32 KyaDestroyStrayGeneratedActors(UWorld* World)
     return Destroyed + Orphans.Num();
 }
 
+namespace
+{
+void CollectSelectionPreviews(TArray<AKyaLevelPreview*>& OutPreviews)
+{
+    if (!GEditor) return;
+    TArray<AActor*> Selected;
+    GEditor->GetSelectedActors()->GetSelectedObjects(Selected);
+    for (AActor* Actor : Selected)
+    {
+        AKyaLevelPreview* Preview = Cast<AKyaLevelPreview>(Actor);
+        if (!Preview)
+        {
+            if (const AKyaActorHandle* Handle = Cast<AKyaActorHandle>(Actor))
+                Preview = Handle->Preview.Get();
+            else if (const AKyaSpatialRecordHandle* Spatial = Cast<AKyaSpatialRecordHandle>(Actor))
+                Preview = Spatial->Preview.Get();
+            else if (const AKyaHierarchyHandle* Hierarchy = Cast<AKyaHierarchyHandle>(Actor))
+                Preview = Hierarchy->Preview.Get();
+            else if (const AKyaActorGroup* Group = Cast<AKyaActorGroup>(Actor))
+                Preview = Cast<AKyaLevelPreview>(Group->GetAttachParentActor());
+        }
+        if (Preview) OutPreviews.AddUnique(Preview);
+    }
+}
+}
+
+void KyaSetSelectedGeneratedActorsHidden(bool bHidden, int32& OutAffected)
+{
+    OutAffected = 0;
+    if (!GEditor) return;
+    TArray<AActor*> Selected;
+    GEditor->GetSelectedActors()->GetSelectedObjects(Selected);
+    TArray<AKyaLevelPreview*> Previews;
+    CollectSelectionPreviews(Previews);
+    for (AKyaLevelPreview* Preview : Previews)
+    {
+        for (AActor* Actor : Selected)
+        {
+            if (!Preview->OwnsGeneratedActor(Actor)) continue;
+            Preview->SetGeneratedActorTemporarilyHidden(Actor, bHidden);
+            ++OutAffected;
+        }
+    }
+}
+
+void KyaIsolateSelectedGeneratedActors(int32& OutAffected)
+{
+    OutAffected = 0;
+    if (!GEditor) return;
+    TArray<AActor*> Selected;
+    GEditor->GetSelectedActors()->GetSelectedObjects(Selected);
+    TArray<AKyaLevelPreview*> Previews;
+    CollectSelectionPreviews(Previews);
+    for (AKyaLevelPreview* Preview : Previews)
+    {
+        TArray<AActor*> OwnedSelection;
+        for (AActor* Actor : Selected)
+            if (Preview->OwnsGeneratedActor(Actor)) OwnedSelection.Add(Actor);
+        if (OwnedSelection.IsEmpty()) continue;
+        Preview->ClearGeneratedActorIsolation();
+        Preview->IsolateGeneratedActors(OwnedSelection);
+        OutAffected += OwnedSelection.Num();
+    }
+}
+
+void KyaClearGeneratedActorIsolation()
+{
+    if (!GEditor) return;
+    UWorld* World = GEditor->GetEditorWorldContext().World();
+    if (!World) return;
+    for (TActorIterator<AKyaLevelPreview> It(World); It; ++It)
+        It->ClearGeneratedActorIsolation();
+}
+
+void KyaSetGeneratedActorSelectionLocked(bool bLocked)
+{
+    if (!GEditor) return;
+    UWorld* World = GEditor->GetEditorWorldContext().World();
+    if (!World) return;
+    for (TActorIterator<AKyaLevelPreview> It(World); It; ++It)
+    {
+        It->Modify();
+        It->bLockGeneratedActorSelection = bLocked;
+    }
+}
+
 TArray<UKyaLevelBank*> KyaCollectLevelBanks(const TArray<AKyaLevelPreview*>& Previews)
 {
     TArray<UKyaLevelBank*> Banks;

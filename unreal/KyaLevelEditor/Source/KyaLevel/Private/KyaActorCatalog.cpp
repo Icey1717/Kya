@@ -570,3 +570,34 @@ TArray<FKyaActorReferenceIssue> ValidateKyaActorReferences(const UKyaLevelBank& 
     }
     return Issues;
 }
+bool ValidateKyaActorNameChange(const FString& CurrentName, const FString& NewName, FString& OutError)
+{
+    const FString Trimmed = NewName.TrimStartAndEnd();
+    if (Trimmed.Len() > 63)
+    {
+        OutError = FString::Printf(TEXT("Actor name '%s' is %d characters; the serialized limit is 63."),
+            *Trimmed, Trimmed.Len());
+        return false;
+    }
+    for (const TCHAR Char : Trimmed)
+    {
+        if (Char < 1 || Char > 127)
+        {
+            OutError = TEXT("Actor names must use single-byte ASCII characters; the bank writer stores one byte "
+                "per character.");
+            return false;
+        }
+    }
+    const auto Align4 = [](int32 Value) { return (Value + 3) & ~3; };
+    const int32 CurrentCapacity = Align4(CurrentName.Len() + 1);
+    const int32 NewCapacity = Align4(Trimmed.Len() + 1);
+    if (NewCapacity != CurrentCapacity)
+    {
+        OutError = FString::Printf(
+            TEXT("Actor name '%s' needs %d serialized byte(s), but this record's fixed name slot holds %d. "
+                "Stay within the same 4-byte alignment bucket (the name is never truncated)."),
+            *Trimmed, NewCapacity, CurrentCapacity);
+        return false;
+    }
+    return true;
+}

@@ -5,6 +5,7 @@
 #include "KyaActorGroup.generated.h"
 
 class USceneComponent;
+class AKyaLevelPreview;
 
 /**
  * Editor-only transform parent used to group generated actor representations by
@@ -26,11 +27,24 @@ public:
     virtual void EditorApplyScale(const FVector& DeltaScale, const FVector* PivotLocation, bool bAltDown, bool bShiftDown, bool bCtrlDown) override;
     /** Organizational actors cannot be deleted independently of their handles. */
     virtual bool CanDeleteSelectedActor(FText& OutReason) const override;
+    /** Locked representations stay visible but cannot be picked in the viewport. */
+    virtual bool IsSelectable() const override;
+    virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
+
+    /** Set the Outliner label without treating it as a user rename. */
+    void SetGeneratedLabel(const FString& Label);
 
     UPROPERTY(VisibleAnywhere, Category="Kya|Group")
     TObjectPtr<USceneComponent> SceneRoot;
 
+    /** Locked representations stay visible but cannot be picked in the viewport. */
+    UPROPERTY(EditAnywhere, Category="Kya|Selection")
+    bool bSelectionLocked = false;
+
 private:
+    bool bApplyingGeneratedLabel = false;
+    /** Last label assigned by the preview, used to revert an Outliner rename. */
+    FString GeneratedLabel;
     void ResetToLevelRoot();
 };
