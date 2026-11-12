@@ -89,6 +89,11 @@ Last updated: 2026-11-12.
   stages every bank first, rejects duplicate destinations, then publishes; a failed
   staging write cancels publishing and leaves existing files untouched.
 - `UKyaLevelBank` carries `UAssetImportData` provenance; the factory records it.
+- Round-trip coverage distinguishes fixtures explicitly: the small bank is a
+  synthetic `FKyaSmallBankBuilder` fixture, while the real-bank tests cover
+  unedited byte identity, all-class edits with per-field offset checks, and a
+  selected-actor edit-service patch whose changed bytes are confined to that
+  actor's serialized record.
 - `FKyaLevelBankReimportHandler` implements `FReimportHandler`: parses into a
   temporary bank, only replaces the asset on success, asks before discarding dirty
   changes (refuses in unattended mode), updates provenance, bumps the edit
@@ -323,8 +328,8 @@ Results: `Kya.Bank.LevelOneRoundTrip`, `Kya.Bank.SmallBankRoundTrip`,
 `Kya.Editor.HierarchyGeometry`, `Kya.Editor.SceneVisualizers`,
 `Kya.Editor.LightExport`, `Kya.Editor.LevelSettings`, `Kya.Editor.AsyncDecode` and
 `Kya.Editor.MessageLogLinks`, `Kya.Editor.AuthoringVisibility`,
-`Kya.Editor.TargetedWorkflowAcceptance` and `Kya.Editor.LevelActionsReporting` all
-`Success`.
+`Kya.Editor.TargetedWorkflowAcceptance`, `Kya.Editor.LevelActionsReporting` and
+`Kya.Bank.SelectedActorRoundTrip` all `Success`.
 
 Coverage added by the new tests:
 

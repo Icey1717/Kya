@@ -7,6 +7,7 @@
 #include "KyaG3DChunks.h"
 #include "KyaG2D.h"
 #include "KyaCameraStream.h"
+#include "KyaActorEditService.h"
 #include "KyaLevelPreview.h"
 #include "KyaWaypointComponent.h"
 #include "KyaPathPointComponent.h"
@@ -243,6 +244,8 @@ bool FKyaSmallBankRoundTripTest::RunTest(const FString& Parameters)
 {
     FKyaSmallBankBuilder Builder;
     TArray<uint8> Input = Builder.Build();
+    AddInfo(TEXT("Synthetic fixture: bytes are built by FKyaSmallBankBuilder, not read from a real game bank. "
+        "Real-bank coverage is Kya.Bank.LevelOneRoundTrip and Kya.Bank.SelectedActorRoundTrip."));
     // Emit the constructed asset so it can be imported for manual inspection.
     const FString FixturePath = FPaths::ProjectSavedDir() / TEXT("KyaSmallBank.BNK");
     if (TestTrue(TEXT("Write small bank asset"), FFileHelper::SaveArrayToFile(Input, *FixturePath)))
@@ -6286,4 +6289,136 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Edited export preserves other bytes"), OtherBytesUnchanged);
     return true;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaSelectedActorRoundTripTest, "Kya.Bank.SelectedActorRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaSelectedActorRoundTripTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to run the selected-actor round-trip test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read selected-actor bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import selected-actor bank"), Bank)) return false;
+    AddInfo(TEXT("Real-bank coverage: edits go through FKyaLevelEditService on one selected actor."));
+    if (!TestTrue(TEXT("Real bank has actor records"), Bank->SceneEnvironment.Actors.Num() > 0)) return false;
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited real bank"), Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited real export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited real export preserves every byte"), Plain == Input);
+
+    // Locate actor 0's serialized record span for the unchanged-byte comparison.
+    auto ReadWord = [&Input](int64 Offset) -> uint32 {
+        return uint32(Input[Offset]) | (uint32(Input[Offset + 1]) << 8) |
+            (uint32(Input[Offset + 2]) << 16) | (uint32(Input[Offset + 3]) << 24);
+    };
+    const FKyaBankEntry* SceneData = Bank->Entries.FindByPredicate(
+        [](const FKyaBankEntry& Entry) { return Entry.Type == 6 && Entry.Subtype == 1; });
+    if (!TestNotNull(TEXT("Selected-actor scene data entry"), SceneData)) return false;
+    int64 SetupOffset = SceneData->Offset + 20;
+    if (ReadWord(SceneData->Offset + 16)) SetupOffset += 12;
+    const int32 BackgroundId = int32(ReadWord(SetupOffset));
+    SetupOffset += 4 + (BackgroundId != -1 ? 4 : 0);
+    int64 CameraConfigOffset = 0;
+    if (!TestTrue(TEXT("Locate selected-actor camera configuration"),
+        KyaFindCameraConfig(Input, SetupOffset, CameraConfigOffset))) return false;
+    int64 SceneValuesOffset = 0;
+    if (!TestTrue(TEXT("Locate selected-actor scene values"),
+        KyaFindSceneAfterCamera(Input, CameraConfigOffset, SceneValuesOffset))) return false;
+    int64 MapEndOffset = 0;
+    if (!TestTrue(TEXT("Locate selected-actor map end"),
+        KyaFindMapEnd(Input, SceneValuesOffset + 12, MapEndOffset))) return false;
+    TArray<FKyaConditionedOffsets> ScenarioOffsets;
+    int64 ScenarioEndOffset = 0;
+    if (!TestTrue(TEXT("Locate selected-actor scenario end"),
+        KyaReadConditionedOffsets(Input, MapEndOffset + 48, ScenarioOffsets, ScenarioEndOffset))) return false;
+    TArray<FKyaObjectiveOffsets> ObjectiveOffsets;
+    int64 ObjectiveEndOffset = 0;
+    if (!TestTrue(TEXT("Locate selected-actor objectives"),
+        KyaReadObjectiveOffsets(Input, ScenarioEndOffset, ObjectiveOffsets, ObjectiveEndOffset))) return false;
+    int64 WaypointOffset = 0;
+    int32 WaypointCount = 0;
+    if (!TestTrue(TEXT("Locate selected-actor waypoints"),
+        KyaFindWaypoints(Input, ObjectiveEndOffset, WaypointOffset, WaypointCount))) return false;
+    TArray<FKyaPathOffsets> PathOffsets;
+    if (!TestTrue(TEXT("Locate selected-actor paths"),
+        KyaReadPathOffsets(Input, WaypointOffset, WaypointCount, SceneData->Offset, PathOffsets))) return false;
+    TArray<FKyaActorOffsets> ActorOffsets;
+    if (!TestTrue(TEXT("Locate selected-actor records"),
+        KyaReadActorOffsets(Input, WaypointOffset, SceneData->Offset, ActorOffsets)) || ActorOffsets.IsEmpty()) return false;
+    int64 RecordLow = ActorOffsets[0].Chunk;
+    for (const int64 Candidate : {ActorOffsets[0].Name, ActorOffsets[0].Placement,
+        ActorOffsets[0].MacroAnimations, ActorOffsets[0].Common, ActorOffsets[0].Conditions})
+        if (Candidate > 0) RecordLow = FMath::Min(RecordLow, Candidate);
+    const int64 RecordHigh = ActorOffsets[0].ClassData + ActorOffsets[0].ClassDataSize;
+
+    const FKyaActorPlacement& Original = Bank->SceneEnvironment.Actors[0];
+    const FVector OriginalPosition = Original.Position;
+    const float OriginalVisibility = Original.VisibilityDistance;
+    const float OriginalCulling = Original.CullingDistance;
+    const FVector NeighbourPosition = Bank->SceneEnvironment.Actors.Num() > 1
+        ? Bank->SceneEnvironment.Actors[1].Position : FVector::ZeroVector;
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    FKyaActorEditPatch Patch;
+    Patch.Position = OriginalPosition + FVector(1.25, -2.5, 3.75);
+    Patch.VisibilityDistance = 4321.0f;
+    Patch.CullingDistance = 8765.0f;
+    FString Error;
+    TestTrue(TEXT("Selected-actor patch applies through the edit service"),
+        Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export selected-actor edit"), Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Selected-actor export keeps the file size"), Edited.Num(), Input.Num());
+
+    int32 ChangedBytes = 0;
+    int64 FirstOutside = INDEX_NONE;
+    for (int32 Index = 0; Index < Input.Num(); ++Index)
+    {
+        if (Input[Index] == Edited[Index]) continue;
+        ++ChangedBytes;
+        if ((Index < RecordLow || Index >= RecordHigh) && FirstOutside == INDEX_NONE)
+            FirstOutside = Index;
+    }
+    TestTrue(TEXT("Selected-actor edit changes serialized bytes"), ChangedBytes > 0);
+    TestTrue(TEXT("Selected-actor edit touches only its record"),
+        ChangedBytes <= 40 && FirstOutside == INDEX_NONE);
+    if (FirstOutside != INDEX_NONE)
+        AddError(FString::Printf(TEXT("Changed byte outside actor 0 record at offset %lld (record %lld..%lld)."),
+            FirstOutside, RecordLow, RecordHigh));
+
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport selected-actor bank"), Reimported)) return false;
+    const FKyaActorPlacement& EditedActor = Reimported->SceneEnvironment.Actors[0];
+    TestTrue(TEXT("Selected-actor position round trips"),
+        EditedActor.Position.Equals(OriginalPosition + FVector(1.25, -2.5, 3.75), 1.0e-4));
+    TestTrue(TEXT("Selected-actor visibility round trips"),
+        FMath::IsNearlyEqual(EditedActor.VisibilityDistance, 4321.0f, 1.0e-3f));
+    TestTrue(TEXT("Selected-actor culling round trips"),
+        FMath::IsNearlyEqual(EditedActor.CullingDistance, 8765.0f, 1.0e-3f));
+    TestEqual(TEXT("Selected-actor name is preserved"), EditedActor.Name, Original.Name);
+    if (Reimported->SceneEnvironment.Actors.Num() > 1)
+        TestTrue(TEXT("Neighbour actor is untouched"),
+            Reimported->SceneEnvironment.Actors[1].Position.Equals(NeighbourPosition));
+    Service.Reset();
+    return true;
+}
+
 #endif
