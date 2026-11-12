@@ -140,9 +140,8 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
     if (!KyaReadActorOffsets(MakeArrayView(Bytes.GetData(), int32(SceneEnd)), WaypointRecords, SceneData->Offset, Actors) ||
         Actors.Num() != Bank->SceneEnvironment.Actors.Num())
     {
-        Diagnostics.Errors.Add(TEXT("The serialized actor count differs from the asset. Creating, deleting or "
-            "duplicating actors requires relocation, allocation-count updates and reference remapping, which "
-            "the writer does not implement yet."));
+        Diagnostics.Errors.Add(TEXT("The serialized actor count differs from the asset. Apply structural actor "
+            "commands (create, duplicate, delete) so the bank's actor stream is rebuilt before exporting."));
         return false;
     }
     for (int32 Index = 0; Index < Actors.Num(); ++Index)

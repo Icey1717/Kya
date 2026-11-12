@@ -245,8 +245,8 @@ void AKyaActorHandle::CommitTransformFromActor()
 bool AKyaActorHandle::CanDeleteSelectedActor(FText& OutReason) const
 {
     OutReason = NSLOCTEXT("KyaLevel", "CannotDeleteActorHandle",
-        "Generated Kya actor handles represent bank records and cannot be deleted. "
-        "Edit the bank asset, or clear Spawn Actor Handles on the level preview.");
+        "Generated Kya actor handles represent bank records and cannot be deleted directly. "
+        "Use Kya Level > Delete Kya Actor (or Kya.DeleteActor) to remove the record and remap references.");
     return false;
 }
 

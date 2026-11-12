@@ -328,13 +328,18 @@ fixed layout; the baseline is separate from Unreal class defaults.
 
 Generated representations are editor-only and transient, so they are never saved
 into a map or cooked into a packaged game, and opening the level in PIE or a game
-world creates none of them. Deleting a generated actor is blocked with an
-explanation from `CanDeleteSelectedActor`. Duplicate, cut, paste and Alt-drag are
-not silently allowed to create free-floating copies: at the end of the command any
-generated copies that no preview owns are removed and a dialog explains that these
-actors mirror bank records and must be edited through the original handle or the
-bank asset. Rebuilding or reloading the map recreates exactly one representation per
-bank record.
+world creates none of them. Deleting a generated actor directly is blocked with an
+explanation from `CanDeleteSelectedActor`; use **Create Kya Actor**, **Duplicate Kya
+Actor** or **Delete Kya Actor** (or `Kya.CreateActor`/`Kya.DuplicateActor`/
+`Kya.DeleteActor`) to change the bank record itself. The structural writer appends
+copied record chunks for create/duplicate, renames them within the serialized name
+slot, rebuilds the scene actor stream and shifts the entry/type tables and class
+allocation counts. Delete shifts later actor indices and remaps typed actor and
+scene-level references; a delete that would leave a reference to the removed record
+is rejected with the referencing fields named. Duplicate, cut, paste and Alt-drag of
+the transient handles are still cleaned up at command end so they cannot create
+free-floating copies. Rebuilding or reloading the map recreates exactly one
+representation per bank record.
 
 Generated representations support the usual Outliner organization: labels and
 per-sector groups give multi-selection and search, and focusing works on the handle
@@ -444,6 +449,9 @@ actors, or on every preview in the level when nothing is selected.
 | `Kya.DiscoverSectors [0]` | Find sibling `SECT<digits>.BNK` files next to the main bank's source, reuse already-imported assets by source provenance, and import missing ones into `/Game/KyaLevels/<Level>`. `0` disables importing. Duplicate numeric IDs are reported as ambiguous, actor sector references with no file are reported as missing, destinations already occupied by a bank from a different source are rejected, and cancelling leaves a coherent partial result. |
 | `Kya.CreateLevelSet` | Create or update the persisted `UKyaLevelSet` asset for the selected preview (`/Game/KyaLevels/<Bank>/<Bank>LevelSet`). It records the main bank, sector associations with their source filenames, the source root and an import revision; the preview and `Refresh Sector Discovery` keep it in sync. Descriptor sector IDs are authoritative (a manually associated bank does not have to match its `SECT<number>` filename), and an existing descriptor that belongs to a different main bank is never overwritten. |
 | `Kya.SaveLevel` | Save the bank packages used by the preview (saving Unreal assets is separate from exporting game banks). |
+| `Kya.CreateActor` | Append a new bank actor record based on the selected actor's class and layout, with a unique name in its fixed slot. |
+| `Kya.DuplicateActor` | Append a copy of the selected bank actor record with a new identity; the actor stream and entry/type tables are rebuilt. |
+| `Kya.DeleteActor` | Delete the selected bank actor record, shift later indices, remap typed actor/scene references and reject dangling targets. |
 | `Kya.SelectAtCursor` | Pick the actor whose rendered mesh strip is under the level viewport cursor, select it (so Details follows) and highlight its whole mesh. Also available as **Select Actor Under Cursor** in the `Kya Level` menu. |
 
 The bank assets record `UAssetImportData` provenance, so they can be reimported

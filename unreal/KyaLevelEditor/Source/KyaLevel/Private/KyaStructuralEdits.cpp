@@ -9,14 +9,14 @@ FString GetKyaStructuralEditBlocker(EKyaStructuralEditKind Kind)
     switch (Kind)
     {
     case EKyaStructuralEditKind::CreateActor:
-        return TEXT("Creating actors requires scene-chunk relocation, allocation-count updates and "
-            "unknown-record preservation; the writer does not rebuild the actor stream yet.");
+        return TEXT("Creating actors requires a class allocation entry and a rebuildable actor stream; "
+            "use the Kya Level structural commands on a bank with a complete scene entry.");
     case EKyaStructuralEditKind::DeleteActor:
-        return TEXT("Deleting actors requires relocation (removing serialized bytes), updating allocation counts "
-            "and remapping actor references; that writer milestone is not implemented yet.");
+        return TEXT("Deleting actors requires a rebuildable actor stream and remapping every typed actor "
+            "reference; use the Kya Level structural commands. Untyped raw payload bytes are preserved unchanged.");
     case EKyaStructuralEditKind::DuplicateActor:
-        return TEXT("Duplicating actors requires appending a serialized record, relocation, allocation-count "
-            "updates and reference remapping; that writer milestone is not implemented yet.");
+        return TEXT("Duplicating actors requires a rebuildable actor stream and a class allocation entry; "
+            "use the Kya Level structural commands.");
     case EKyaStructuralEditKind::RenameActor:
         return TEXT("Variable-length names require rebuilding the record's name slot and relocating the "
             "serialized stream; only same-slot renames are supported.");
@@ -93,12 +93,28 @@ bool AnalyzeKyaStructuralEdit(const UKyaLevelBank& Bank, EKyaStructuralEditKind 
         break;
     }
 
-    OutAnalysis.BlockingReasons.Add(GetKyaStructuralEditBlocker(Kind));
-    if (OutAnalysis.ReferencesToRemovedActor > 0)
+    const bool bSceneStream = Bank.BankBytes.Num() > 0;
+    OutAnalysis.bWriterSupported = bSceneStream &&
+        (Kind == EKyaStructuralEditKind::CreateActor || Kind == EKyaStructuralEditKind::DuplicateActor ||
+         Kind == EKyaStructuralEditKind::DeleteActor);
+    if (bSceneStream && (Kind == EKyaStructuralEditKind::CreateActor ||
+        Kind == EKyaStructuralEditKind::DuplicateActor))
+    {
+        const int64 ClassId = bValidIndex ? Bank.SceneEnvironment.Actors[ActorIndex].ClassId : 0;
+        if (!Bank.SceneConfiguration.ActorClassAllocations.ContainsByPredicate(
+            [ClassId](const FKyaActorClassAllocation& Allocation) { return Allocation.ClassId == ClassId; }))
+        {
+            OutAnalysis.bWriterSupported = false;
+            OutAnalysis.BlockingReasons.Add(FString::Printf(
+                TEXT("Actor class %lld has no scene allocation entry."), ClassId));
+        }
+    }
+    if (!OutAnalysis.bWriterSupported)
+        OutAnalysis.BlockingReasons.Add(GetKyaStructuralEditBlocker(Kind));
+    else if (Kind == EKyaStructuralEditKind::DeleteActor && OutAnalysis.ReferencesToRemovedActor > 0)
         OutAnalysis.BlockingReasons.Add(FString::Printf(
-            TEXT("%d actor reference(s) would need remapping after removal."),
+            TEXT("%d typed actor reference(s) will be remapped by the structural writer."),
             OutAnalysis.ReferencesToRemovedActor));
-    OutAnalysis.bWriterSupported = false;
     return true;
 }
 

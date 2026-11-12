@@ -11,7 +11,9 @@
 #include "EngineUtils.h"
 #include "IAssetTools.h"
 #include "KyaBankExport.h"
+#include "KyaBankStructuralWriter.h"
 #include "KyaActorCatalog.h"
+#include "KyaActorEditService.h"
 #include "KyaActorGroup.h"
 #include "KyaActorHandle.h"
 #include "KyaHierarchyHandle.h"
@@ -28,6 +30,7 @@
 #include "Misc/PackageName.h"
 #include "Misc/Paths.h"
 #include "Misc/ScopedSlowTask.h"
+#include "ScopedTransaction.h"
 #include "UObject/SavePackage.h"
 
 FString FKyaBankValidationReport::Summary() const
@@ -853,4 +856,97 @@ bool KyaExportLevelBanks(const TArray<UKyaLevelBank*>& Banks, const FString& Des
     }
     if (!bAllPublished) Log.Open(EMessageSeverity::Error);
     return bAllPublished;
+}
+
+namespace
+{
+AKyaActorHandle* FindSelectedActorRecordHandle()
+{
+    if (!GEditor) return nullptr;
+    TArray<AActor*> SelectedActors;
+    GEditor->GetSelectedActors()->GetSelectedObjects(SelectedActors);
+    for (AActor* Actor : SelectedActors)
+    {
+        AKyaActorHandle* Handle = Cast<AKyaActorHandle>(Actor);
+        if (!Handle || !Handle->Bank || !Handle->Preview) continue;
+        if (!Handle->Preview->OwnsGeneratedActor(Handle)) continue;
+        if (!Handle->Bank->SceneEnvironment.Actors.IsValidIndex(Handle->ActorIndex)) continue;
+        return Handle;
+    }
+    return nullptr;
+}
+
+FKyaStructuralActionResult RunStructuralActorCommand(const FText& TransactionLabel,
+    TFunctionRef<FKyaStructuralWriteResult(UKyaLevelBank&, int32)> Operation, bool bSelectResult)
+{
+    FKyaStructuralActionResult Result;
+    AKyaActorHandle* Handle = FindSelectedActorRecordHandle();
+    if (!Handle)
+    {
+        Result.Error = TEXT("Select one generated Kya actor handle first.");
+        return Result;
+    }
+    UKyaLevelBank* Bank = Handle->Bank;
+    AKyaLevelPreview* Preview = Handle->Preview;
+    const int32 SourceIndex = Handle->ActorIndex;
+
+    TUniquePtr<FScopedTransaction> Transaction;
+    if (GEditor && !GIsTransacting)
+        Transaction = MakeUnique<FScopedTransaction>(TransactionLabel);
+    Bank->Modify();
+
+    const FKyaStructuralWriteResult Write = Operation(*Bank, SourceIndex);
+    if (!Write.bSuccess)
+    {
+        if (Transaction) Transaction->Cancel();
+        Result.Error = Write.Error;
+        return Result;
+    }
+
+    Bank->BumpEditGeneration();
+    if (UPackage* Package = Bank->GetOutermost()) Package->MarkPackageDirty();
+    FKyaLevelEditService::Get().NotifyBankChanged(Bank, true);
+
+    Result.bSuccess = true;
+    Result.ActorIndex = Write.ActorIndex;
+    if (bSelectResult && IsValid(Preview) && GEditor &&
+        Bank->SceneEnvironment.Actors.IsValidIndex(Write.ActorIndex))
+    {
+        GEditor->SelectNone(false, true, false);
+        if (AActor* Actor = Preview->GetActorHandle(Write.ActorIndex))
+            GEditor->SelectActor(Actor, true, true);
+    }
+    else if (!bSelectResult && GEditor)
+    {
+        GEditor->SelectNone(false, true, false);
+    }
+    return Result;
+}
+} // namespace
+
+FKyaStructuralActionResult KyaDuplicateSelectedActor()
+{
+    return RunStructuralActorCommand(NSLOCTEXT("KyaLevelEditor", "KyaDuplicateActor", "Duplicate Kya Actor"),
+        [](UKyaLevelBank& Bank, int32 SourceIndex)
+        {
+            return KyaDuplicateActorRecord(Bank, SourceIndex);
+        }, true);
+}
+
+FKyaStructuralActionResult KyaCreateSelectedActor()
+{
+    return RunStructuralActorCommand(NSLOCTEXT("KyaLevelEditor", "KyaCreateActor", "Create Kya Actor"),
+        [](UKyaLevelBank& Bank, int32 TemplateIndex)
+        {
+            return KyaCreateActorRecord(Bank, TemplateIndex);
+        }, true);
+}
+
+FKyaStructuralActionResult KyaDeleteSelectedActor()
+{
+    return RunStructuralActorCommand(NSLOCTEXT("KyaLevelEditor", "KyaDeleteActor", "Delete Kya Actor"),
+        [](UKyaLevelBank& Bank, int32 ActorIndex)
+        {
+            return KyaDeleteActorRecord(Bank, ActorIndex);
+        }, false);
 }

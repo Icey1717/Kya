@@ -19,10 +19,10 @@ enum class EKyaStructuralEditKind : uint8
 /**
  * Analysis of a proposed structural edit.
  *
- * The byte writer currently patches records in place and cannot relocate scene
- * chunks, so these operations remain disabled. This structure records what a future
- * writer milestone must handle: per-class allocation-count changes, actor-index
- * remapping for references, byte relocation, and preservation of unknown records.
+ * Create, duplicate and delete are implemented by the editor's structural writer:
+ * it rebuilds the scene actor stream, updates class allocation counts and remaps
+ * typed actor references. Unknown raw payload bytes are preserved unchanged.
+ * Class replacement, array resizing and variable-length names remain blocked.
  */
 struct KYALEVEL_API FKyaStructuralEditAnalysis
 {

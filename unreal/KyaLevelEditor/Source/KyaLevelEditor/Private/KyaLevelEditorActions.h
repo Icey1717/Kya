@@ -106,6 +106,23 @@ AKyaActorHandle* KyaSelectRenderedActorAtCursor(FString* OutError = nullptr);
 bool KyaExportLevelBanks(const TArray<UKyaLevelBank*>& Banks, const FString& DestinationDirectory,
     TArray<FString>& OutMessages);
 
+/** Result of a structural actor command (duplicate/create/delete). */
+struct FKyaStructuralActionResult
+{
+    bool bSuccess = false;
+    int32 ActorIndex = INDEX_NONE;
+    FString Error;
+};
+
+/** Duplicate the selected actor record and refresh every preview of its bank. */
+KYALEVELEDITOR_API FKyaStructuralActionResult KyaDuplicateSelectedActor();
+
+/** Add a new actor record based on the selected actor record. */
+KYALEVELEDITOR_API FKyaStructuralActionResult KyaCreateSelectedActor();
+
+/** Delete the selected actor record, remapping typed references and refreshing previews. */
+KYALEVELEDITOR_API FKyaStructuralActionResult KyaDeleteSelectedActor();
+
 /** True when the actor is a generated Kya editing representation (handle/group). */
 bool KyaIsGeneratedActor(const AActor* Actor);
 /** True when any actor in the list is a generated representation. */

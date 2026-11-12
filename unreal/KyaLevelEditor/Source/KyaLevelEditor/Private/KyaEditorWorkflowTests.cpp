@@ -8,6 +8,7 @@
 #include "KyaSceneVisualizer.h"
 #include "KyaActorTransform.h"
 #include "KyaBankExport.h"
+#include "KyaBankStructuralWriter.h"
 #include "KyaLevelActorFactory.h"
 #include "KyaLevelBank.h"
 #include "KyaLevelBankFactory.h"
@@ -1545,8 +1546,8 @@ bool FKyaStructuralEditGateTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Delete counts references to the removed actor"),
         Delete.ReferencesToRemovedActor, 1);
     TestEqual(TEXT("Delete preserves unrelated bank entries"), Delete.PreservedBankEntries, 1);
-    TestTrue(TEXT("Delete explains relocation"), Delete.BlockingReasons.Num() > 0 &&
-        Delete.BlockingReasons[0].Contains(TEXT("relocation")));
+    TestTrue(TEXT("Delete explains the rebuild requirement"), Delete.BlockingReasons.Num() > 0 &&
+        Delete.BlockingReasons[0].Contains(TEXT("actor stream")));
 
     FKyaStructuralEditAnalysis Duplicate;
     TestTrue(TEXT("Duplicate analysis runs"), AnalyzeKyaStructuralEdit(*Bank,
@@ -1627,21 +1628,265 @@ bool FKyaStructuralEditGateTest::RunTest(const FString& Parameters)
             if (TestNotNull(TEXT("Import structural bank"), RealBank) &&
                 RealBank->SceneEnvironment.Actors.Num() > 0)
             {
+                FString SupportReason;
+                TestTrue(TEXT("The real bank supports structural actor edits"),
+                    KyaBankSupportsStructuralEdit(*RealBank, SupportReason));
+                FKyaStructuralEditAnalysis RealDelete;
+                TestTrue(TEXT("Real-bank delete analysis runs"), AnalyzeKyaStructuralEdit(*RealBank,
+                    EKyaStructuralEditKind::DeleteActor, 0, RealDelete));
+                TestTrue(TEXT("Real-bank delete reports writer support"), RealDelete.bWriterSupported);
+
+                UWorld* World = UWorld::CreateWorld(EWorldType::EditorPreview, false);
+                AKyaLevelPreview* Preview = World ? World->SpawnActor<AKyaLevelPreview>() : nullptr;
+                if (TestNotNull(TEXT("Create the structural command preview"), Preview))
+                {
+                    Preview->Bank = RealBank;
+                    Preview->bShowRebuildProgress = false;
+                    Preview->bShowBackgroundMeshes = false;
+                    Preview->bSpawnActorHandles = true;
+                    Preview->bShowActorMeshesOnHandles = false;
+                    Preview->OnConstruction(FTransform::Identity);
+                    const int32 Before = RealBank->SceneEnvironment.Actors.Num();
+                    if (GEditor)
+                    {
+                        GEditor->SelectNone(false, true, false);
+                        GEditor->SelectActor(Preview->GetActorHandle(0), true, true);
+                    }
+                    const FKyaStructuralActionResult Created = KyaDuplicateSelectedActor();
+                    TestTrue(TEXT("The duplicate command succeeds"), Created.bSuccess);
+                    if (!Created.bSuccess) AddInfo(Created.Error);
+                    TestEqual(TEXT("The duplicate command appends a record"),
+                        RealBank->SceneEnvironment.Actors.Num(), Before + 1);
+                    if (Created.bSuccess)
+                    {
+                        const FKyaStructuralActionResult Deleted = KyaDeleteSelectedActor();
+                        TestTrue(TEXT("The delete command succeeds"), Deleted.bSuccess);
+                        if (!Deleted.bSuccess) AddInfo(Deleted.Error);
+                        TestEqual(TEXT("The delete command restores the actor count"),
+                            RealBank->SceneEnvironment.Actors.Num(), Before);
+                    }
+                    Preview->Destroy();
+                }
+                if (World) World->DestroyWorld(false);
+
                 FKyaActorPlacement Copy = RealBank->SceneEnvironment.Actors[0];
                 Copy.Name = TEXT("DUPLICATE");
                 RealBank->SceneEnvironment.Actors.Add(Copy);
                 FKyaBankExportDiagnostics Diagnostics;
                 TArray<uint8> Bytes;
-                TestFalse(TEXT("Writer rejects an actor-count change"),
+                TestFalse(TEXT("Writer rejects an unapplied actor-count change"),
                     KyaBuildBankExportBytes(RealBank, Bytes, Diagnostics));
-                TestTrue(TEXT("Writer rejection explains relocation/allocation"),
+                TestTrue(TEXT("Writer rejection points at the structural commands"),
                     Diagnostics.Errors.ContainsByPredicate([](const FString& Message)
                     {
-                        return Message.Contains(TEXT("actor count")) && Message.Contains(TEXT("relocation"));
+                        return Message.Contains(TEXT("actor count")) && Message.Contains(TEXT("structural"));
                     }));
+                RealBank->SceneEnvironment.Actors.RemoveAt(RealBank->SceneEnvironment.Actors.Num() - 1);
             }
         }
     }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaStructuralWriterTest, "Kya.Editor.StructuralWriter",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaStructuralWriterTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to run the structural writer test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read the structural writer bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient | RF_Transactional, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import the structural writer bank"), Bank)) return false;
+    if (!TestTrue(TEXT("The structural writer bank has actors"), Bank->SceneEnvironment.Actors.Num() > 0)) return false;
+
+    FString Reason;
+    if (!TestTrue(TEXT("The bank supports structural edits"), KyaBankSupportsStructuralEdit(*Bank, Reason)))
+    {
+        AddInfo(Reason);
+        return false;
+    }
+    const int32 OriginalCount = Bank->SceneEnvironment.Actors.Num();
+    const FKyaActorPlacement OriginalFirst = Bank->SceneEnvironment.Actors[0];
+
+    // Direct remap coverage for switch/platform camera targets and inactive fields.
+    {
+        TMap<int32, int32> Remap;
+        Remap.Add(5, 4);
+        FKyaActorPlacement Placement;
+        Placement.bHasSwitchData = true;
+        Placement.SwitchTarget.Targets.AddDefaulted();
+        Placement.SwitchTarget.Targets[0].TargetRef = 5;
+        Placement.bHasPlatformDetails = true;
+        Placement.PlatformCameras.AddDefaulted();
+        Placement.PlatformCameras[0].TargetRef = 5;
+        Placement.ActorFlags = 5;
+        TArray<FString> Dangling;
+        TestTrue(TEXT("Typed reference remap succeeds"), KyaRemapActorReferences(Placement, Remap, &Dangling));
+        TestEqual(TEXT("Switch-target references are remapped"),
+            Placement.SwitchTarget.Targets[0].TargetRef, 4);
+        TestEqual(TEXT("Platform-camera targets are remapped"), Placement.PlatformCameras[0].TargetRef, 4);
+        TestEqual(TEXT("Non-reference actor flags are untouched"), Placement.ActorFlags, 5);
+
+        FKyaActorPlacement Inactive;
+        TMap<int32, int32> RemoveFirst;
+        RemoveFirst.Add(0, -1);
+        TArray<FString> InactiveDangling;
+        TestTrue(TEXT("Inactive class defaults are ignored"),
+            KyaRemapActorReferences(Inactive, RemoveFirst, &InactiveDangling));
+        TestTrue(TEXT("Inactive defaults do not create false dangling references"),
+            InactiveDangling.IsEmpty());
+    }
+
+    // --- append a duplicate and verify the serialized result ----------------------
+    const FKyaStructuralWriteResult Duplicate = KyaDuplicateActorRecord(*Bank, 0);
+    if (!TestTrue(TEXT("Duplicating an actor succeeds"), Duplicate.bSuccess))
+    {
+        AddInfo(Duplicate.Error);
+        return false;
+    }
+    TestEqual(TEXT("Duplicate appends one record"), Bank->SceneEnvironment.Actors.Num(), OriginalCount + 1);
+    TestEqual(TEXT("Duplicate reports its new index"), Duplicate.ActorIndex, OriginalCount);
+    TestTrue(TEXT("Duplicate keeps the source class"),
+        Bank->SceneEnvironment.Actors[Duplicate.ActorIndex].ClassId == OriginalFirst.ClassId);
+    TestTrue(TEXT("Duplicate gets a distinct name"),
+        Bank->SceneEnvironment.Actors[Duplicate.ActorIndex].Name != OriginalFirst.Name);
+    TestEqual(TEXT("Duplicate gets the new serialized index"),
+        Bank->SceneEnvironment.Actors[Duplicate.ActorIndex].Index, Duplicate.ActorIndex);
+
+    auto Export = [&](TArray<uint8>& OutBytes) -> UKyaLevelBank*
+    {
+        FKyaBankExportDiagnostics Diagnostics;
+        OutBytes.Reset();
+        if (!KyaBuildBankExportBytes(Bank, OutBytes, Diagnostics))
+        {
+            for (const FString& Message : Diagnostics.Errors) AddInfo(Message);
+            return nullptr;
+        }
+        const uint8* OutCursor = OutBytes.GetData();
+        return Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+            GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), OutCursor,
+            OutBytes.GetData() + OutBytes.Num(), GWarn));
+    };
+
+    TArray<uint8> Exported;
+    UKyaLevelBank* Reimported = Export(Exported);
+    if (TestNotNull(TEXT("Exporting after duplicate succeeds"), Reimported))
+    {
+        TestEqual(TEXT("Reimport keeps the appended actor count"),
+            Reimported->SceneEnvironment.Actors.Num(), OriginalCount + 1);
+        TestTrue(TEXT("Reimport keeps the duplicate name"),
+            Reimported->SceneEnvironment.Actors[Duplicate.ActorIndex].Name ==
+                Bank->SceneEnvironment.Actors[Duplicate.ActorIndex].Name);
+        TestTrue(TEXT("Reimport keeps the duplicate position"),
+            Reimported->SceneEnvironment.Actors[Duplicate.ActorIndex].Position.Equals(OriginalFirst.Position, 1.0e-4));
+        TestEqual(TEXT("Reimport keeps the source actor count"),
+            Reimported->SceneEnvironment.Actors.Num() - 1, OriginalCount);
+    }
+
+    // --- typed reference remap on a middle delete --------------------------------
+    TArray<FKyaReferenceField> ActorRefFields;
+    for (const FKyaReferenceField& Field : GetKyaReferenceFields())
+        if (Field.Kind == EKyaReferenceKind::Actor) ActorRefFields.Add(Field);
+
+    int32 RefActorIndex = INDEX_NONE;
+    FKyaReferenceField RefField;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num() && RefActorIndex == INDEX_NONE; ++Index)
+    {
+        const FKyaActorPlacement& Placement = Bank->SceneEnvironment.Actors[Index];
+        for (const FKyaReferenceField& Field : ActorRefFields)
+        {
+            if (Field.ClassId != -1 && Field.ClassId != Placement.ClassId) continue;
+            if (GetKyaNumericField(Placement, Field.PropertyName) < 0) continue;
+            RefActorIndex = Index;
+            RefField = Field;
+            break;
+        }
+    }
+
+    if (TestTrue(TEXT("A typed actor reference is available"), RefActorIndex != INDEX_NONE))
+    {
+        const int32 FirstDuplicate = Duplicate.ActorIndex;
+        const FKyaStructuralWriteResult Second = KyaDuplicateActorRecord(*Bank, RefActorIndex);
+        if (TestTrue(TEXT("A second duplicate succeeds"), Second.bSuccess))
+        {
+            const int32 RemappedTarget = Second.ActorIndex;
+            const FString LastDuplicateName = Bank->SceneEnvironment.Actors[RemappedTarget].Name;
+            FKyaActorPlacement ReferenceSource = Bank->SceneEnvironment.Actors[RefActorIndex];
+            TestTrue(TEXT("The test can point a typed reference at the last duplicate"),
+                SetKyaNumericField(ReferenceSource, RefField.PropertyName, RemappedTarget));
+            Bank->SceneEnvironment.Actors[RefActorIndex] = ReferenceSource;
+            TestEqual(TEXT("The typed reference starts at the last duplicate"),
+                GetKyaNumericField(Bank->SceneEnvironment.Actors[RefActorIndex], RefField.PropertyName), int64(RemappedTarget));
+
+            const FKyaStructuralWriteResult DeleteMiddle = KyaDeleteActorRecord(*Bank, FirstDuplicate);
+            if (TestTrue(TEXT("Deleting a middle actor succeeds"), DeleteMiddle.bSuccess))
+            {
+                TestEqual(TEXT("Delete removes one record"), Bank->SceneEnvironment.Actors.Num(), OriginalCount + 1);
+                TestEqual(TEXT("Typed references shift with the deleted actor"),
+                    GetKyaNumericField(Bank->SceneEnvironment.Actors[RefActorIndex], RefField.PropertyName),
+                    int64(RemappedTarget - 1));
+                TestEqual(TEXT("The shifted record is the last duplicate"),
+                    Bank->SceneEnvironment.Actors[RemappedTarget - 1].Name, LastDuplicateName);
+                TestEqual(TEXT("All serialized indices are contiguous"),
+                    Bank->SceneEnvironment.Actors[RemappedTarget - 1].Index, RemappedTarget - 1);
+                TArray<uint8> RemapBytes;
+                UKyaLevelBank* RemapReimport = Export(RemapBytes);
+                if (TestNotNull(TEXT("Exporting after the remapped delete succeeds"), RemapReimport))
+                {
+                    TestEqual(TEXT("Reimport keeps the remapped reference"),
+                        GetKyaNumericField(RemapReimport->SceneEnvironment.Actors[RefActorIndex],
+                            RefField.PropertyName), int64(RemappedTarget - 1));
+                    TestEqual(TEXT("Reimport keeps the post-delete actor count"),
+                        RemapReimport->SceneEnvironment.Actors.Num(), OriginalCount + 1);
+                }
+            }
+            else
+            {
+                AddInfo(DeleteMiddle.Error);
+            }
+        }
+        else
+        {
+            AddInfo(Second.Error);
+        }
+    }
+
+    // --- delete the appended last record -----------------------------------------
+    if (RefActorIndex != INDEX_NONE)
+    {
+        FKyaActorPlacement ReferenceSource = Bank->SceneEnvironment.Actors[RefActorIndex];
+        SetKyaNumericField(ReferenceSource, RefField.PropertyName, 0);
+        Bank->SceneEnvironment.Actors[RefActorIndex] = ReferenceSource;
+    }
+    const FKyaStructuralWriteResult DeleteLast = KyaDeleteActorRecord(*Bank, Bank->SceneEnvironment.Actors.Num() - 1);
+    if (TestTrue(TEXT("Deleting the last actor succeeds"), DeleteLast.bSuccess))
+    {
+        TestEqual(TEXT("Delete restores the original actor count"),
+            Bank->SceneEnvironment.Actors.Num(), OriginalCount);
+        TestTrue(TEXT("Delete keeps the first record unchanged"),
+            Bank->SceneEnvironment.Actors[0].Position.Equals(OriginalFirst.Position, 1.0e-4) &&
+            Bank->SceneEnvironment.Actors[0].Name == OriginalFirst.Name);
+        TArray<uint8> FinalBytes;
+        UKyaLevelBank* FinalReimport = Export(FinalBytes);
+        if (TestNotNull(TEXT("Exporting after the final delete succeeds"), FinalReimport))
+            TestEqual(TEXT("Reimport keeps the final actor count"),
+                FinalReimport->SceneEnvironment.Actors.Num(), OriginalCount);
+    }
+    else
+    {
+        AddInfo(DeleteLast.Error);
+    }
+
     return true;
 }
 

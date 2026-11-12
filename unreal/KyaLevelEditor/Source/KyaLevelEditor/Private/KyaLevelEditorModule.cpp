@@ -190,6 +190,30 @@ void KyaSaveCommand(const TArray<FString>& Args){
         KyaShowSummary(TEXT("Save Kya Level"), Error);
 }
 
+void KyaDuplicateActorCommand(const TArray<FString>& Args)
+{
+    const FKyaStructuralActionResult Result = KyaDuplicateSelectedActor();
+    KyaShowSummary(TEXT("Duplicate Kya Actor"), Result.bSuccess
+        ? FString::Printf(TEXT("Duplicated the actor record at index %d."), Result.ActorIndex)
+        : Result.Error);
+}
+
+void KyaCreateActorCommand(const TArray<FString>& Args)
+{
+    const FKyaStructuralActionResult Result = KyaCreateSelectedActor();
+    KyaShowSummary(TEXT("Create Kya Actor"), Result.bSuccess
+        ? FString::Printf(TEXT("Created actor record at index %d from the selected template."), Result.ActorIndex)
+        : Result.Error);
+}
+
+void KyaDeleteActorCommand(const TArray<FString>& Args)
+{
+    const FKyaStructuralActionResult Result = KyaDeleteSelectedActor();
+    KyaShowSummary(TEXT("Delete Kya Actor"), Result.bSuccess
+        ? FString::Printf(TEXT("Deleted the actor record at index %d and remapped typed references."), Result.ActorIndex)
+        : Result.Error);
+}
+
 void AddKyaMenuEntries(FToolMenuSection& Section)
 {
     Section.AddMenuEntry("KyaValidateLevel",
@@ -222,6 +246,22 @@ void AddKyaMenuEntries(FToolMenuSection& Section)
         FText::FromString(TEXT("Save the bank packages used by the selected level preview.")),
         FSlateIcon(),
         FUIAction(FExecuteAction::CreateLambda([]() { KyaSaveCommand({}); })));
+    Section.AddSeparator("KyaStructuralSeparator");
+    Section.AddMenuEntry("KyaCreateActorRecord",
+        FText::FromString(TEXT("Create Kya Actor")),
+        FText::FromString(TEXT("Append a new bank actor record based on the selected actor's class and layout.")),
+        FSlateIcon(),
+        FUIAction(FExecuteAction::CreateLambda([]() { KyaCreateActorCommand({}); })));
+    Section.AddMenuEntry("KyaDuplicateActorRecord",
+        FText::FromString(TEXT("Duplicate Kya Actor")),
+        FText::FromString(TEXT("Append a copy of the selected bank actor record with a new identity.")),
+        FSlateIcon(),
+        FUIAction(FExecuteAction::CreateLambda([]() { KyaDuplicateActorCommand({}); })));
+    Section.AddMenuEntry("KyaDeleteActorRecord",
+        FText::FromString(TEXT("Delete Kya Actor")),
+        FText::FromString(TEXT("Delete the selected bank actor record, remapping typed actor references.")),
+        FSlateIcon(),
+        FUIAction(FExecuteAction::CreateLambda([]() { KyaDeleteActorCommand({}); })));
     Section.AddMenuEntry("KyaHideGenerated",
         FText::FromString(TEXT("Hide Selected Generated Actors")),
         FText::FromString(TEXT("Temporarily hide the selected Kya representations in the editor only.")),
@@ -489,6 +529,21 @@ FAutoConsoleCommand KyaSaveConsoleCommand(
     TEXT("Kya.SaveLevel"),
     TEXT("Save the bank packages used by the selected level preview."),
     FConsoleCommandWithArgsDelegate::CreateStatic(&KyaSaveCommand));
+
+FAutoConsoleCommand KyaCreateActorConsoleCommand(
+    TEXT("Kya.CreateActor"),
+    TEXT("Append a new bank actor record based on the selected actor's class and layout."),
+    FConsoleCommandWithArgsDelegate::CreateStatic(&KyaCreateActorCommand));
+
+FAutoConsoleCommand KyaDuplicateActorConsoleCommand(
+    TEXT("Kya.DuplicateActor"),
+    TEXT("Append a copy of the selected bank actor record with a new identity."),
+    FConsoleCommandWithArgsDelegate::CreateStatic(&KyaDuplicateActorCommand));
+
+FAutoConsoleCommand KyaDeleteActorConsoleCommand(
+    TEXT("Kya.DeleteActor"),
+    TEXT("Delete the selected bank actor record, remapping typed actor references."),
+    FConsoleCommandWithArgsDelegate::CreateStatic(&KyaDeleteActorCommand));
 
 FAutoConsoleCommand KyaCreateLevelSetConsoleCommand(
     TEXT("Kya.CreateLevelSet"),

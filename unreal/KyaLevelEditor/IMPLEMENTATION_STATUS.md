@@ -8,11 +8,9 @@ verified. Reference for behaviour and layouts is this repository's own source
 
 Last updated: 2026-11-13.
 
-Checklist status: 79 of 80 items are implemented and covered by the
-`Kya.Editor`/`Kya.Bank` automation (43 tests). The only open item is Milestone E
-(structural authoring), which stays disabled until the bank writer can relocate
-records and remap references; `Kya.Editor.StructuralEditGate` verifies that
-deferral.
+Checklist status: all 80 items are implemented and covered by the
+`Kya.Editor`/`Kya.Bank` automation (44 tests), including structural actor
+create/duplicate/delete with stream relocation and typed reference remapping.
 
 ## 1. Working-tree findings (before this work)
 
@@ -108,13 +106,19 @@ deferral.
   through `CActorFactory`/`CActor::Create` to inspect the resulting position and
   visibility/culling values. The harness requires matching gtest XML evidence
   (one test, no failures/errors/skips) so a stale binary cannot pass.
-- Structural authoring is explicitly deferred but gated: `AnalyzeKyaStructuralEdit`
-  computes allocation deltas, actor-index remaps, dangling references and preserved
-  bank entries with blocking reasons, `ValidateKyaActorStructuralEdit` recursively
-  rejects class replacement, variable-length names and any fixed-size array/string
-  slot change before mutation (single and bulk edits), and the writer reports an
-  explicit actor-count mismatch. Create/delete/duplicate/resize/class commands stay
-  disabled until relocation and structural writeback exist.
+- Structural authoring (`Kya.Editor.StructuralWriter`): `KyaBankStructuralWriter`
+  locates and rebuilds the scene actor stream, appends copied template chunks for
+  create/duplicate with unique names and contiguous indices, shifts later entries
+  and the entry/type tables, recomputes actor class allocation counts and preserves
+  trailing scene bytes. Delete removes a chunk, shifts later actor indices, remaps
+  typed actor and scene-level references recursively (respecting class presence
+  flags) and rejects a delete that would leave a reference to the removed actor.
+  `Kya.CreateActor`/`Kya.DuplicateActor`/`Kya.DeleteActor` and the Kya Level menu
+  expose it through a transaction and preview refresh. Unknown raw payload bytes are
+  preserved unchanged; class replacement, array resizing and variable-length renames
+  remain blocked. `Kya.Editor.StructuralWriter` covers duplicate/append,
+  export/reimport, middle-reference remapping and last-record deletion; the gate
+  exercises the commands and the preflight rejection for an unapplied count change.
 - Export acceptance (`Kya.Editor.ExportAcceptance`): the exporter reports its
   supported edit scope (record counts, changed actors vs the imported baseline and
   the in-place/structural-rejection policy) through `FKyaBankExportOutcome`, the
@@ -444,7 +448,7 @@ Results: `Kya.Bank.LevelOneRoundTrip`, `Kya.Bank.SmallBankRoundTrip`,
 `Kya.Editor.MessageLogLinks`, `Kya.Editor.AuthoringVisibility`,
 `Kya.Editor.TargetedWorkflowAcceptance`, `Kya.Editor.LevelActionsReporting`,
 `Kya.Bank.SelectedActorRoundTrip`, `Kya.Editor.RunningPortExportValidation`,
-`Kya.Editor.StructuralEditGate`, `Kya.Editor.ExportAcceptance`,
+`Kya.Editor.StructuralEditGate`, `Kya.Editor.StructuralWriter`, `Kya.Editor.ExportAcceptance`,
 `Kya.Editor.MilestoneAGate`, `Kya.Editor.MilestoneBGate`,
 `Kya.Editor.MilestoneCGate`, `Kya.Editor.MilestoneDGate`,
 `Kya.Editor.ViewportClickSelection`, `Kya.Editor.SharedEditPath`,
