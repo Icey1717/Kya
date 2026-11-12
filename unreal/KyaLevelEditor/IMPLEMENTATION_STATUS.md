@@ -6,7 +6,13 @@ investigated, the design chosen for each slice, what is implemented, and how it 
 verified. Reference for behaviour and layouts is this repository's own source
 (`src/b-witch`, `port/`).
 
-Last updated: 2026-11-12.
+Last updated: 2026-11-13.
+
+Checklist status: 79 of 80 items are implemented and covered by the
+`Kya.Editor`/`Kya.Bank` automation (43 tests). The only open item is Milestone E
+(structural authoring), which stays disabled until the bank writer can relocate
+records and remap references; `Kya.Editor.StructuralEditGate` verifies that
+deferral.
 
 ## 1. Working-tree findings (before this work)
 
