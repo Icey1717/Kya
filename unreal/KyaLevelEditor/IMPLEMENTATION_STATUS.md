@@ -226,6 +226,12 @@ Last updated: 2026-11-12.
   preview's `VisualizerLimitations` says so. Light edits are exported by patching the
   THGL archive in place; layout-changing type/shape edits are rejected, and untouched
   color channels keep their exact bytes.
+- `UKyaLevelSettings` is the discoverable authoring surface for environment, main
+  camera, fog and scene configuration, opened from the Kya Level menu or
+  `Kya.LevelSettings` as a docked details tab. Applying writes the whole settings
+  block through `ApplySceneSettings` (validation, one undo step, preview refresh);
+  preview properties are split into `Kya|Authoring` and `Kya|Diagnostics|*` so
+  comparison/capture options are separate from authoring.
 - Generated actors are grouped in the Outliner under one transient grouping actor  per sector, attached to the preview. Labels are `<serialized name> [class <id>]`,
   disambiguated with the record index for duplicate names; labels are derived from
   the whole bank so sector load/unload cannot rename them, and serialized names are
@@ -276,8 +282,8 @@ Results: `Kya.Bank.LevelOneRoundTrip`, `Kya.Bank.SmallBankRoundTrip`,
 `Kya.Editor.MultiEditBaseline`, `Kya.Editor.GeneratedActorLifecycle`,
 `Kya.Editor.StructuralCommands`, `Kya.Editor.OutlinerPolicy`,
 `Kya.Editor.PathVisualization`, `Kya.Editor.WaypointOrientation`,
-`Kya.Editor.HierarchyGeometry`, `Kya.Editor.SceneVisualizers` and
-`Kya.Editor.LightExport` all `Success`.
+`Kya.Editor.HierarchyGeometry`, `Kya.Editor.SceneVisualizers`,
+`Kya.Editor.LightExport` and `Kya.Editor.LevelSettings` all `Success`.
 
 Coverage added by the new tests:
 
@@ -325,8 +331,9 @@ These remain open in [the checklist](EDITOR_WORKFLOW_PLAN.md):
 
 - Nested reference arrays and nested actor/zone reference pickers (top-level scalar
   references are covered; array elements still show raw ids).
-- Path timing/lead-in/loop visualization and selectable visualizers for lights,
-  cameras, zones, trigger bounds and actor links.
+- Path timing/lead-in/loop visualization; zone-bounds visualization is not possible
+  because the schema stores zone references without geometry (stated in the preview
+  limitations and visualizer semantics).
 - `UKyaLevelSet` creation is a command/menu action rather than an asset-type
   Content Browser action; it is not auto-created on import.
 - Progress/cancel UI for export; Message Log entries do not have navigation links.

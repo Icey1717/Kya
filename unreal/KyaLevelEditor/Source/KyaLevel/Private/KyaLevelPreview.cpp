@@ -5,6 +5,7 @@
 #include "Misc/Paths.h"
 #include "KyaLevelBank.h"
 #include "KyaLevelSet.h"
+#include "KyaLevelSettings.h"
 #include "KyaWaypointComponent.h"
 #include "KyaPathPointComponent.h"
 #include "KyaActorMarkerComponent.h"
@@ -1661,6 +1662,23 @@ void AKyaLevelPreview::ApplyLevelSet()
         // not match the SECT<number> in its filename.
         LevelSetSectors.Add(Sector.SectorId, Sector.Bank);
     }
+}
+
+UKyaLevelSettings* AKyaLevelPreview::GetOrCreateLevelSettings()
+{
+    const bool bBankChanged = LevelSettings && LevelSettings->Bank != Bank;
+    if (!LevelSettings)
+    {
+        LevelSettings = NewObject<UKyaLevelSettings>(this, NAME_None, RF_Transient);
+        LevelSettings->Bank = Bank;
+        LevelSettings->LoadFromBank();
+    }
+    else if (bBankChanged)
+    {
+        LevelSettings->Bank = Bank;
+        LevelSettings->LoadFromBank();
+    }
+    return LevelSettings;
 }
 
 bool AKyaLevelPreview::ShouldActorHandlesRenderGeometry() const

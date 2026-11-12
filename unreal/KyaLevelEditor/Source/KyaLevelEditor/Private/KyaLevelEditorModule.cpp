@@ -9,6 +9,8 @@
 #include "KyaHierarchyHandle.h"
 #include "KyaSceneVisualizer.h"
 #include "KyaSceneVisualizerDetailsCustomization.h"
+#include "KyaLevelSettings.h"
+#include "KyaLevelSettingsDetailsCustomization.h"
 #include "KyaSpatialRecordDetailsCustomization.h"
 #include "KyaSpatialRecordHandle.h"
 #include "KyaLevelActorFactory.h"
@@ -17,10 +19,15 @@
 #include "KyaLevelBank.h"
 #include "KyaLevelPreview.h"
 #include "KyaLevelSet.h"
+#include "KyaLevelSettings.h"
 #include "Misc/App.h"
 #include "Misc/MessageDialog.h"
 #include "Misc/Paths.h"
 #include "PropertyEditorModule.h"
+#include "IDetailsView.h"
+#include "LevelEditor.h"
+#include "Framework/Docking/TabManager.h"
+#include "Widgets/Docking/SDockTab.h"
 #include "Textures/SlateIcon.h"
 #include "ToolMenuOwner.h"
 #include "ToolMenus.h"
@@ -35,9 +42,53 @@ void KyaShowSummary(const FString& Title, const FString& Message)
         FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(Message), FText::FromString(Title));
 }
 
-void KyaSetAllPathsCommand(const TArray<FString>& Args)
+TWeakObjectPtr<UKyaLevelSettings> GLevelSettingsTarget;
+TSharedPtr<IDetailsView> GLevelSettingsView;
+bool GLevelSettingsSpawnerRegistered = false;
+
+TSharedRef<SDockTab> SpawnLevelSettingsTab(const FSpawnTabArgs&)
 {
-    const bool bVisible = Args.Num() == 0 || Args[0] != TEXT("0");
+    UKyaLevelSettings* Target = GLevelSettingsTarget.Get();
+    if (!Target)
+    {
+        const TArray<AKyaLevelPreview*> Previews = KyaGetTargetPreviews();
+        if (!Previews.IsEmpty()) Target = Previews[0]->GetOrCreateLevelSettings();
+        GLevelSettingsTarget = Target;
+    }
+    if (!GLevelSettingsView.IsValid())
+    {
+        FPropertyEditorModule& PropertyModule =
+            FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
+        FDetailsViewArgs Args;
+        Args.bHideSelectionTip = true;
+        Args.NameAreaSettings = FDetailsViewArgs::HideNameArea;
+        GLevelSettingsView = PropertyModule.CreateDetailView(Args);
+    }
+    if (Target) GLevelSettingsView->SetObject(Target);
+    else GLevelSettingsView->SetObject(nullptr);
+    return SNew(SDockTab)
+        .TabRole(ETabRole::NomadTab)
+        [
+            GLevelSettingsView.ToSharedRef()
+        ];
+}
+
+void KyaOpenLevelSettingsCommand(const TArray<FString>& Args)
+{
+    const TArray<AKyaLevelPreview*> Previews = KyaGetTargetPreviews();
+    if (Previews.IsEmpty())
+    {
+        KyaShowSummary(TEXT("Kya Level Settings"), TEXT("Select a Kya level preview first."));
+        return;
+    }
+    GLevelSettingsTarget = Previews[0]->GetOrCreateLevelSettings();
+    // If the tab is already open, switch it to the requested preview's settings.
+    if (GLevelSettingsView.IsValid()) GLevelSettingsView->SetObject(GLevelSettingsTarget.Get());
+    FGlobalTabmanager::Get()->TryInvokeTab(FTabId("KyaLevelSettings"));
+}
+
+void KyaSetAllPathsCommand(const TArray<FString>& Args)
+{    const bool bVisible = Args.Num() == 0 || Args[0] != TEXT("0");
     int32 Affected = 0;
     for (AKyaLevelPreview* Preview : KyaGetTargetPreviews())
     {
@@ -161,6 +212,11 @@ void AddKyaMenuEntries(FToolMenuSection& Section)
         FText::FromString(TEXT("Create or update the persisted level-set asset for the selected preview.")),
         FSlateIcon(),
         FUIAction(FExecuteAction::CreateLambda([]() { KyaCreateLevelSetCommand({}); })));
+    Section.AddMenuEntry("KyaLevelSettings",
+        FText::FromString(TEXT("Edit Level Settings")),
+        FText::FromString(TEXT("Open environment, camera, fog and scene configuration authoring for the selected level.")),
+        FSlateIcon(),
+        FUIAction(FExecuteAction::CreateLambda([]() { KyaOpenLevelSettingsCommand({}); })));
     Section.AddMenuEntry("KyaSaveLevel",
         FText::FromString(TEXT("Save Kya Level")),
         FText::FromString(TEXT("Save the bank packages used by the selected level preview.")),
@@ -266,9 +322,22 @@ public:
             FOnGetDetailCustomizationInstance::CreateStatic(&FKyaHierarchyDetailsCustomization::MakeInstance));
         PropertyModule.RegisterCustomClassLayout(AKyaSceneVisualizer::StaticClass()->GetFName(),
             FOnGetDetailCustomizationInstance::CreateStatic(&FKyaSceneVisualizerDetailsCustomization::MakeInstance));
+        PropertyModule.RegisterCustomClassLayout(UKyaLevelSettings::StaticClass()->GetFName(),
+            FOnGetDetailCustomizationInstance::CreateStatic(&FKyaLevelSettingsDetailsCustomization::MakeInstance));
 
         UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(
             this, &FKyaLevelEditorModule::RegisterMenus));
+
+        if (!GLevelSettingsSpawnerRegistered)
+        {
+            FGlobalTabmanager::Get()->RegisterNomadTabSpawner("KyaLevelSettings",
+                FOnSpawnTab::CreateStatic(&SpawnLevelSettingsTab))
+                .SetDisplayName(NSLOCTEXT("KyaLevelEditor", "LevelSettingsTab", "Kya Level Settings"))
+                .SetTooltipText(NSLOCTEXT("KyaLevelEditor", "LevelSettingsTabTip",
+                    "Environment, camera, fog and scene configuration authoring for the selected level."))
+                .SetMenuType(ETabSpawnerMenuType::Hidden);
+            GLevelSettingsSpawnerRegistered = true;
+        }
 
         // Structural commands are not cancelable per actor; block delete through
         // AActor::CanDeleteSelectedActor and remove generated copies after duplicate,
@@ -305,6 +374,13 @@ public:
         StructuralEndHandles.Reset();
         UToolMenus::UnRegisterStartupCallback(this);
         UToolMenus::UnregisterOwner(this);
+        if (GLevelSettingsSpawnerRegistered)
+        {
+            FGlobalTabmanager::Get()->UnregisterNomadTabSpawner("KyaLevelSettings");
+            GLevelSettingsSpawnerRegistered = false;
+        }
+        GLevelSettingsView.Reset();
+        GLevelSettingsTarget.Reset();
         if (FPropertyEditorModule* PropertyModule =
             FModuleManager::GetModulePtr<FPropertyEditorModule>("PropertyEditor"))
         {
@@ -312,6 +388,7 @@ public:
             PropertyModule->UnregisterCustomClassLayout(AKyaSpatialRecordHandle::StaticClass()->GetFName());
             PropertyModule->UnregisterCustomClassLayout(AKyaHierarchyHandle::StaticClass()->GetFName());
             PropertyModule->UnregisterCustomClassLayout(AKyaSceneVisualizer::StaticClass()->GetFName());
+            PropertyModule->UnregisterCustomClassLayout(UKyaLevelSettings::StaticClass()->GetFName());
         }
         if (GEditor)
             GEditor->ActorFactories.RemoveAll([](UActorFactory* Factory)
@@ -434,6 +511,11 @@ FAutoConsoleCommand KyaShowAllPathsConsoleCommand(
     TEXT("Kya.ShowAllPaths"),
     TEXT("Show (1, default) or hide (0) every path with linear interpolation and selectable points."),
     FConsoleCommandWithArgsDelegate::CreateStatic(&KyaSetAllPathsCommand));
+
+FAutoConsoleCommand KyaLevelSettingsConsoleCommand(
+    TEXT("Kya.LevelSettings"),
+    TEXT("Open the level settings tab for the selected level preview."),
+    FConsoleCommandWithArgsDelegate::CreateStatic(&KyaOpenLevelSettingsCommand));
 
 FAutoConsoleCommand KyaLockGeneratedSelectionConsoleCommand(
     TEXT("Kya.LockGeneratedSelection"),

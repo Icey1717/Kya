@@ -1055,4 +1055,59 @@ bool FKyaLevelEditService::ApplySceneCamera(const FKyaSceneCameraKey& Key, const
     return true;
 }
 
+bool FKyaLevelEditService::ApplySceneSettings(UKyaLevelBank* Bank, const FKyaSceneEnvironment& Environment,
+    const FKyaSceneConfiguration& Configuration, EKyaEditNotify Notify, FString* OutError)
+{
+    if (!Bank)
+    {
+        if (OutError) *OutError = TEXT("No bank was supplied for the level settings.");
+        return false;
+    }
+    FString Error;
+    if (!ValidateVector(Environment.CameraPosition, TEXT("Camera position"), Error) ||
+        !ValidateVector(Environment.CameraLookAt, TEXT("Camera look-at"), Error) ||
+        !ValidateVector(Environment.CameraUp, TEXT("Camera up"), Error) ||
+        !ValidateVector(Environment.CameraTargetOffset, TEXT("Camera target offset"), Error) ||
+        !ValidateVector(Environment.CameraPitchAngles, TEXT("Camera pitch angles"), Error) ||
+        !ValidateVector(Environment.CameraOtherAngles, TEXT("Camera other angles"), Error) ||
+        !ValidateVector(Environment.CameraDistances, TEXT("Camera distances"), Error) ||
+        !FMath::IsFinite(Environment.ClipDistance) || !FMath::IsFinite(Environment.FogParameter) ||
+        !FMath::IsFinite(Environment.CameraFov) || Environment.CameraFov < 0.0f || Environment.CameraFov > 180.0f ||
+        !FMath::IsFinite(Environment.CameraConfigAngle) || !FMath::IsFinite(Environment.Field118))
+    {
+        if (OutError) *OutError = Error.IsEmpty()
+            ? TEXT("Level camera, fog and environment values must be finite (FOV 0..180).") : Error;
+        return false;
+    }
+    const auto RequireU32 = [&Error](int64 Value, const TCHAR* Label)
+    {
+        if (Value >= 0 && Value <= MAX_uint32) return true;
+        Error = FString::Printf(TEXT("%s must fit the serialized unsigned 32-bit field."), Label);
+        return false;
+    };
+    if (!RequireU32(Environment.BackgroundFlags, TEXT("Background flags")) ||
+        !RequireU32(Environment.FogFlags, TEXT("Fog flags")) ||
+        !RequireU32(Environment.CameraFlags, TEXT("Camera flags")) ||
+        !RequireU32(Environment.CameraConfigFlags, TEXT("Camera config flags")) ||
+        !RequireU32(Environment.Field11C, TEXT("Scene field 0x11C")) ||
+        !RequireU32(Environment.Count120, TEXT("Scene count 0x120")) ||
+        !RequireU32(Environment.MapField08, TEXT("Map field 0x08")))
+    {
+        if (OutError) *OutError = Error;
+        return false;
+    }
+    Bank->Modify();
+    // Placement records are edited by the actor/waypoint/path services; the settings
+    // surface must never overwrite them with a stale snapshot.
+    FKyaSceneEnvironment NewEnvironment = Environment;
+    NewEnvironment.Actors = Bank->SceneEnvironment.Actors;
+    NewEnvironment.Waypoints = Bank->SceneEnvironment.Waypoints;
+    NewEnvironment.Paths = Bank->SceneEnvironment.Paths;
+    Bank->SceneEnvironment = NewEnvironment;
+    Bank->SceneConfiguration = Configuration;
+    Bank->MarkPackageDirty();
+    NotifyAfterEdit(*this, Bank, Notify);
+    return true;
+}
+
 #endif

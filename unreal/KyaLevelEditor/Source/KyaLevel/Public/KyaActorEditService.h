@@ -246,6 +246,10 @@ public:
     bool ApplySceneCamera(const FKyaSceneCameraKey& Key, const FKyaSceneCameraEditPatch& Patch,
         EKyaEditNotify Notify, FString* OutError = nullptr);
 
+    /** Replace the authoring scene environment/configuration in one validated step. */
+    bool ApplySceneSettings(UKyaLevelBank* Bank, const FKyaSceneEnvironment& Environment,
+        const FKyaSceneConfiguration& Configuration, EKyaEditNotify Notify, FString* OutError = nullptr);
+
     void RegisterView(UKyaLevelBank* Bank, AKyaLevelPreview* View);
     void UnregisterView(UKyaLevelBank* Bank, AKyaLevelPreview* View);
     void UnregisterView(AKyaLevelPreview* View);

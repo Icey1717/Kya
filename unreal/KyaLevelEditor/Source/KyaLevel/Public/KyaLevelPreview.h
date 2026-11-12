@@ -6,6 +6,7 @@
 
 class UKyaLevelBank;
 class UKyaLevelSet;
+class UKyaLevelSettings;
 class UProceduralMeshComponent;
 class UMaterialInterface;
 class UTexture2D;
@@ -67,7 +68,7 @@ public:
     void UpdatePathGuidePoint(int32 PathIndex, int32 PointIndex, const FVector& Position);
 #endif
 
-    UPROPERTY(EditAnywhere, Category="Kya")
+    UPROPERTY(EditAnywhere, Category="Kya|Authoring")
     TObjectPtr<UKyaLevelBank> Bank;
 
     /**
@@ -75,20 +76,31 @@ public:
      * associations are authoritative for this preview and copied into Bank/SectorBanks
      * on every build, so reopening a map restores the level automatically.
      */
-    UPROPERTY(EditAnywhere, Category="Kya")
+    UPROPERTY(EditAnywhere, Category="Kya|Authoring")
     TObjectPtr<UKyaLevelSet> LevelSet;
 
     /** Copy the level set's main bank and sector associations into this preview. */
     void ApplyLevelSet();
+
+    /**
+     * Transient authoring surface for environment/camera/fog/scene configuration.
+     * Created on demand by the Level Settings tab; edits are written through the edit
+     * service and are not part of the render/capture diagnostics.
+     */
+    UPROPERTY(Transient)
+    TObjectPtr<UKyaLevelSettings> LevelSettings;
+
+    UFUNCTION(BlueprintCallable, Category="Kya|Level")
+    UKyaLevelSettings* GetOrCreateLevelSettings();
     /** Sector ID of a loaded bank, preferring the level set's mapping over its filename. */
     int32 ResolveSectorId(const UKyaLevelBank& Sector) const;
 
     /** Optional imported SECT*.BNK assets; their background meshes are previewed. */
-    UPROPERTY(EditAnywhere, Category="Kya")
+    UPROPERTY(EditAnywhere, Category="Kya|Authoring")
     TArray<TObjectPtr<UKyaLevelBank>> SectorBanks;
 
     /** Native active sector for distance clipping; -1 uses the first sector bank. */
-    UPROPERTY(EditAnywhere, Category="Kya|Visibility")
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Visibility")
     int32 PreviewBaseSector = -1;
 
     /** Log per-sector entry, decoding, material and world-space bounds diagnostics on construction. */
@@ -96,7 +108,7 @@ public:
     bool bLogSectorDiagnostics = false;
 
     /** Optional override with a Texture2D parameter named KyaTexture. */
-    UPROPERTY(EditAnywhere, Category="Kya|Materials")
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Materials")
     TObjectPtr<UMaterialInterface> TextureMaterial;
 
     /**
@@ -104,57 +116,57 @@ public:
      * result for Unreal's linear output. This matches the game's vertex shading; disable it to
      * compare against Unreal's normal sRGB texture sampling.
      */
-    UPROPERTY(EditAnywhere, Category="Kya|Materials", meta=(DisplayName="Game Colour Space"))
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Materials", meta=(DisplayName="Game Colour Space"))
     bool bRawColorModulation = true;
 
-    UPROPERTY(EditAnywhere, Category="Kya|Waypoints")
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Waypoints")
     bool bShowWaypoints = true;
 
     /** Index of a path to inspect; -1 hides the path preview. */
-    UPROPERTY(EditAnywhere, Category="Kya|Paths", meta=(ClampMin="-1"))
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Paths", meta=(ClampMin="-1"))
     int32 PreviewPathIndex = -1;
 
     /** Index in the bank's actor array; -1 hides the marker. */
-    UPROPERTY(EditAnywhere, Category="Kya|Actors", meta=(ClampMin="-1"))
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Actors", meta=(ClampMin="-1"))
     int32 PreviewActorIndex = -1;
 
     /** Optional native capture basis X/Y/Z and translation in game coordinates. */
-    UPROPERTY(EditAnywhere, Transient, Category="Kya|Actors")
+    UPROPERTY(EditAnywhere, Transient, Category="Kya|Diagnostics|Actors")
     TArray<FVector> PreviewActorNativeTransform;
 
     /** Bank actor index whose textured strips bypass RGB modulation for capture. */
-    UPROPERTY(EditAnywhere, Category="Kya|Actors", meta=(ClampMin="-1"))
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Actors", meta=(ClampMin="-1"))
     int32 TextureOnlyActorIndex = -1;
 
     /** Experimental static model preview using the actor's initial class transform. */
     /** Render the common and sector background meshes. */
-    UPROPERTY(EditAnywhere, Category="Kya|Visibility")
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Visibility")
     bool bShowBackgroundMeshes = true;
     /** Render the common and sector static cluster meshes. */
-    UPROPERTY(EditAnywhere, Category="Kya|Visibility")
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Visibility")
     bool bShowClusterMeshes = true;
 
     /** Render prepared cluster sprite billboards. */
-    UPROPERTY(EditAnywhere, Category="Kya|Visibility")
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Visibility")
     bool bShowSprites = true;
 
     /** Camera forward used to expand sprite billboards, in game axes (Y up). */
-    UPROPERTY(EditAnywhere, Category="Kya|Sprites")
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Sprites")
     FVector SpriteCameraForward = FVector(1.0, 0.0, 0.0);
 
     /** Camera up used to expand sprite billboards, in game axes (Y up). */
-    UPROPERTY(EditAnywhere, Category="Kya|Sprites")
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Sprites")
     FVector SpriteCameraUp = FVector(0.0, 1.0, 0.0);
 
     /** GS draw-surface dimensions, independent of the PC framebuffer (PAL 512x512, NTSC 512x448). */
-    UPROPERTY(EditAnywhere, Category="Kya|Sprites", meta=(ClampMin="1"))
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Sprites", meta=(ClampMin="1"))
     FIntPoint NativeSurfaceSize = FIntPoint(512, 512);
 
-    UPROPERTY(EditAnywhere, Category="Kya|Actors")
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Actors")
     bool bShowActorMesh = false;
 
     /** Render only one strip of the previewed actor model; -1 renders every strip. */
-    UPROPERTY(EditAnywhere, Category="Kya|Actors", meta=(ClampMin="-1"))
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Actors", meta=(ClampMin="-1"))
     int32 PreviewActorStripIndex = -1;
 
     /**
@@ -162,11 +174,11 @@ public:
      * colours using each strip's stored model normals, transformed by the hierarchy
      * and placement. Strips without stored normals keep their baked colours.
      */
-    UPROPERTY(EditAnywhere, Category="Kya|Actors")
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Actors")
     bool bApplyActorLighting = true;
 
     /** Preview all actor models in their initial placement (experimental). */
-    UPROPERTY(EditAnywhere, Category="Kya|Actors")
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Actors")
     bool bShowAllActorMeshes = false;
 
     /**
@@ -177,7 +189,7 @@ public:
      * editor-only and transient. Enabled by default so clicking visible actor
      * geometry selects the actor without enabling diagnostics first.
      */
-    UPROPERTY(EditAnywhere, Category="Kya|Selection")
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Selection")
     bool bSpawnActorHandles = true;
 
     /**
@@ -186,45 +198,45 @@ public:
      * mesh modes (Show Actor Mesh / Show All Actor Meshes) keep the shared route so
      * capture output is unchanged.
      */
-    UPROPERTY(EditAnywhere, Category="Kya|Selection")
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Selection")
     bool bShowActorMeshesOnHandles = true;
 
     /** Show a small marker for actors that have no renderable mesh (or in mesh modes). */
-    UPROPERTY(EditAnywhere, Category="Kya|Selection")
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Selection")
     bool bShowActorIcons = true;
 
     /**
      * Lock generated representations against viewport picking. Presentation state
      * only: the actors stay visible and editable through the bank record.
      */
-    UPROPERTY(EditAnywhere, Category="Kya|Selection")
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Selection")
     bool bLockGeneratedActorSelection = false;
 
     /** Selectable light visualizers for every light record in the loaded banks. */
-    UPROPERTY(EditAnywhere, Category="Kya|Visualizers")
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Visualizers")
     bool bSpawnLightVisualizers = false;
 
     /** Selectable main-camera visualizer for the main bank. */
-    UPROPERTY(EditAnywhere, Category="Kya|Visualizers")
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Visualizers")
     bool bSpawnCameraVisualizer = false;
 
     /** Derived, read-only lines between actors and their resolved actor references. */
-    UPROPERTY(EditAnywhere, Category="Kya|Visualizers")
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Visualizers")
     bool bSpawnActorLinkVisualizers = false;
 
     /** Approximate, read-only trigger markers at checkpoint waypoints. */
-    UPROPERTY(EditAnywhere, Category="Kya|Visualizers")
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Visualizers")
     bool bSpawnTriggerVisualizers = false;
 
     /** Human-readable list of visualizer limitations (for example missing zone geometry). */
-    UPROPERTY(VisibleAnywhere, Category="Kya|Visualizers")
+    UPROPERTY(VisibleAnywhere, Category="Kya|Diagnostics|Visualizers")
     FString VisualizerLimitations;
 
     /**
      * Spawn selectable handles for waypoints. When enabled, the diagnostic waypoint
      * arrows are suppressed to avoid drawing two markers per record.
      */
-    UPROPERTY(EditAnywhere, Category="Kya|Selection")
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Selection")
     bool bSpawnWaypointHandles = false;
 
     /**
@@ -232,38 +244,38 @@ public:
      * point index. This makes spatial records discoverable without setting a numeric
      * preview path index; the spline guide still follows PreviewPathIndex.
      */
-    UPROPERTY(EditAnywhere, Category="Kya|Selection")
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Selection")
     bool bSpawnPathPointHandles = false;
 
     /**
      * Draw a guide for every path in the bank (linear, matching the game) and spawn
      * selectable points for all of them, without requiring Preview Path Index.
      */
-    UPROPERTY(EditAnywhere, Category="Kya|Paths")
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Paths")
     bool bShowAllPaths = false;
 
     /** Number of live path guides (one per visible path). */
-    UFUNCTION(BlueprintCallable, Category="Kya|Paths")
+    UFUNCTION(BlueprintCallable, Category="Kya|Diagnostics|Paths")
     int32 GetPathGuideCount() const { return PathGuides.Num(); }
 
     /** Spline guide for one path index, or null when that path is not shown. */
-    UFUNCTION(BlueprintCallable, Category="Kya|Paths")
+    UFUNCTION(BlueprintCallable, Category="Kya|Diagnostics|Paths")
     USplineComponent* GetPathGuide(int32 PathIndex) const;
 
     /** Editor-only Outliner group that owns the points of one path. */
-    UFUNCTION(BlueprintCallable, Category="Kya|Paths")
+    UFUNCTION(BlueprintCallable, Category="Kya|Diagnostics|Paths")
     AActor* GetPathGroup(int32 PathIndex) const;
 
     /** Number of live waypoint/path-point handles. */
-    UFUNCTION(BlueprintCallable, Category="Kya|Selection")
+    UFUNCTION(BlueprintCallable, Category="Kya|Diagnostics|Selection")
     int32 GetSpatialHandleCount() const { return SpatialHandles.Num(); }
 
     /** Waypoint handle by waypoint index, or null. */
-    UFUNCTION(BlueprintCallable, Category="Kya|Selection")
+    UFUNCTION(BlueprintCallable, Category="Kya|Diagnostics|Selection")
     AActor* GetWaypointHandle(int32 WaypointIndex) const;
 
     /** Path-point handle by path and point index, or null. */
-    UFUNCTION(BlueprintCallable, Category="Kya|Selection")
+    UFUNCTION(BlueprintCallable, Category="Kya|Diagnostics|Selection")
     AActor* GetPathPointHandle(int32 PathIndex, int32 PointIndex) const;
 
 #if WITH_EDITOR
@@ -281,16 +293,16 @@ public:
      * Temporarily hide one generated representation in this editor only. Uses
      * SetIsTemporarilyHiddenInEditor, so game visibility and bank data are untouched.
      */
-    UFUNCTION(BlueprintCallable, Category="Kya|Selection")
+    UFUNCTION(BlueprintCallable, Category="Kya|Diagnostics|Selection")
     void SetGeneratedActorTemporarilyHidden(AActor* Actor, bool bInHidden);
-    UFUNCTION(BlueprintCallable, Category="Kya|Selection")
+    UFUNCTION(BlueprintCallable, Category="Kya|Diagnostics|Selection")
     bool IsGeneratedActorTemporarilyHidden(const AActor* Actor) const;
     /** Hide every generated representation except Actors, until isolation is cleared. */
-    UFUNCTION(BlueprintCallable, Category="Kya|Selection")
+    UFUNCTION(BlueprintCallable, Category="Kya|Diagnostics|Selection")
     void IsolateGeneratedActors(const TArray<AActor*>& Actors);
-    UFUNCTION(BlueprintCallable, Category="Kya|Selection")
+    UFUNCTION(BlueprintCallable, Category="Kya|Diagnostics|Selection")
     void ClearGeneratedActorIsolation();
-    UFUNCTION(BlueprintCallable, Category="Kya|Selection")
+    UFUNCTION(BlueprintCallable, Category="Kya|Diagnostics|Selection")
     bool IsGeneratedActorIsolated(const AActor* Actor) const;
     /** Reapply temporary visibility and selection-lock state after a build. */
     void ApplyGeneratedActorPresentation();
@@ -308,11 +320,11 @@ public:
      * Spawn selectable handles for static world-geometry hierarchies (the smallest
      * practical unit: a cluster node's strip group in a sector or common mesh).
      */
-    UPROPERTY(EditAnywhere, Category="Kya|Selection")
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Selection")
     bool bSpawnHierarchyHandles = false;
 
     /** Hierarchy keys hidden from the preview by a hierarchy handle. */
-    UPROPERTY(EditAnywhere, Category="Kya|Selection")
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Selection")
     TSet<FString> HiddenHierarchies;
 
     /** Hide or show one world-geometry hierarchy and rebuild the preview. */
@@ -326,15 +338,15 @@ public:
     int64 BuildCount = 0;
 
     /** Number of path-point markers for the previewed path. */
-    UFUNCTION(BlueprintCallable, Category="Kya|Paths")
+    UFUNCTION(BlueprintCallable, Category="Kya|Diagnostics|Paths")
     int32 GetPathMarkerCount() const { return PathMarkers.Num(); }
 
     /** Path-point marker by index, or null. */
-    UFUNCTION(BlueprintCallable, Category="Kya|Paths")
+    UFUNCTION(BlueprintCallable, Category="Kya|Diagnostics|Paths")
     UKyaPathPointComponent* GetPathMarker(int32 MarkerIndex) const;
 
     /** Number of live selectable actor handles. */
-    UFUNCTION(BlueprintCallable, Category="Kya|Selection")
+    UFUNCTION(BlueprintCallable, Category="Kya|Diagnostics|Selection")
     int32 GetActorHandleCount() const { return ActorHandles.Num(); }
 
 #if WITH_EDITOR
@@ -355,10 +367,10 @@ public:
 #endif
 
     /** Handle for a bank actor index, or null. */
-    UFUNCTION(BlueprintCallable, Category="Kya|Selection")
+    UFUNCTION(BlueprintCallable, Category="Kya|Diagnostics|Selection")
     AActor* GetActorHandle(int32 ActorIndex) const;
 
-    UPROPERTY(VisibleAnywhere, Category="Kya")
+    UPROPERTY(VisibleAnywhere, Category="Kya|Authoring")
     TObjectPtr<UProceduralMeshComponent> Mesh;
 
 private:

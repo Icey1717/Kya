@@ -392,6 +392,16 @@ zone references without serialized geometry, and the preview's
 what is verified versus approximate, and read-only kinds reject transforms with a
 status message.
 
+**Level settings.** `Edit Level Settings` in the Kya Level menu (or
+`Kya.LevelSettings`) opens a docked **Kya Level Settings** tab for the selected
+preview. It edits the bank's environment, main camera, fog and scene configuration
+as one authoring surface; applying writes the whole block through the shared edit
+service (one undo step) and refreshes every preview. Invalid values (non-finite
+camera/fog data, FOV outside 0–180, flags outside the serialized 32-bit range) are
+rejected with the bank unchanged. Preview properties are categorised separately:
+`Kya|Authoring` holds the bank/level-set association, while render comparison,
+capture, selection and visualizer toggles live under `Kya|Diagnostics|*`.
+
 Enable `Log Sector Diagnostics` on the preview actor to log bank entries, cluster
 and hierarchy strip counts, material coverage, and bounds. For a camera-aligned
 capture, save a game screenshot with `python tools/debug_socket/client.py screenshot --metadata out/screenshots/matched-camera.json`, set `KYA_CAMERA_METADATA` to

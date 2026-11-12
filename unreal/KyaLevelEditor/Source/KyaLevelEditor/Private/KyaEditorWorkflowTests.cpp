@@ -14,6 +14,7 @@
 #include "KyaCameraStream.h"
 #include "KyaLevelEditorActions.h"
 #include "KyaLevelPreview.h"
+#include "KyaLevelSettings.h"
 #include "KyaLevelSet.h"
 #include "KyaLevelSetFactory.h"
 #include "KyaPathPointComponent.h"
@@ -24,6 +25,7 @@
 #include "Misc/Paths.h"
 #include "HAL/FileManager.h"
 #include "Editor.h"
+#include "ScopedTransaction.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "Components/SplineComponent.h"
@@ -1278,6 +1280,125 @@ bool FKyaLightExportTest::RunTest(const FString& Parameters)
         TestTrue(TEXT("Light multiplier survives export"),
             FMath::IsNearlyEqual(Reimported->Lights[0].Multiplier, Bank->Lights[0].Multiplier, 1.0e-3f));
     }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaLevelSettingsTest, "Kya.Editor.LevelSettings",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaLevelSettingsTest::RunTest(const FString& Parameters)
+{
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    UKyaLevelBank* Bank = MakeKyaTestBank(GetTransientPackage());
+    Bank->SceneEnvironment.CameraPosition = FVector(1.0, 2.0, 3.0);
+    Bank->SceneEnvironment.CameraLookAt = FVector(4.0, 5.0, 6.0);
+    Bank->SceneEnvironment.CameraFov = 65.0f;
+    Bank->SceneEnvironment.FogParameter = 0.25f;
+    Bank->SceneEnvironment.FogColor = FColor(10, 20, 30, 255);
+    Bank->SceneConfiguration.Field20 = 7;
+
+    UKyaLevelSettings* Settings = NewObject<UKyaLevelSettings>(GetTransientPackage(), NAME_None, RF_Transient);
+    Settings->Bank = Bank;
+    Settings->LoadFromBank();
+    TestTrue(TEXT("Settings load the camera position"), Settings->Environment.CameraPosition.Equals(FVector(1.0, 2.0, 3.0)));
+    TestEqual(TEXT("Settings load the camera FOV"), Settings->Environment.CameraFov, 65.0f);
+    TestEqual(TEXT("Settings load the fog parameter"), Settings->Environment.FogParameter, 0.25f);
+    TestEqual(TEXT("Settings load the scene configuration"), int64(Settings->SceneConfiguration.Field20), int64(7));
+
+    Settings->Environment.CameraFov = 80.0f;
+    Settings->Environment.FogParameter = 0.5f;
+    Settings->Environment.FogColor = FColor(1, 2, 3, 255);
+    Settings->SceneConfiguration.Field20 = 9;
+    // A stale settings snapshot must not overwrite placement records edited elsewhere.
+    Bank->SceneEnvironment.Actors[0].Position = FVector(9.0, 8.0, 7.0);
+    const float OriginalFov = Bank->SceneEnvironment.CameraFov;
+    const float OriginalFog = Bank->SceneEnvironment.FogParameter;
+    FString Error;
+    {
+        FScopedTransaction Transaction(NSLOCTEXT("KyaTests", "LevelSettings", "Level Settings"));
+        TestTrue(TEXT("Level settings apply"), Settings->ApplyToBank(Error));
+    }
+    TestEqual(TEXT("Camera FOV is written"), Bank->SceneEnvironment.CameraFov, 80.0f);
+    TestEqual(TEXT("Fog parameter is written"), Bank->SceneEnvironment.FogParameter, 0.5f);
+    TestEqual(TEXT("Scene configuration is written"), int64(Bank->SceneConfiguration.Field20), int64(9));
+    TestEqual(TEXT("Fog color is written"), uint32(Bank->SceneEnvironment.FogColor.ToPackedARGB()), uint32(FColor(1, 2, 3, 255).ToPackedARGB()));
+    TestTrue(TEXT("Settings apply preserves externally edited actor records"),
+        Bank->SceneEnvironment.Actors[0].Position.Equals(FVector(9.0, 8.0, 7.0)));
+    if (GEditor)
+    {
+        GEditor->UndoTransaction();
+        TestTrue(TEXT("Undo restores the camera FOV"),
+            FMath::IsNearlyEqual(Bank->SceneEnvironment.CameraFov, OriginalFov));
+        TestTrue(TEXT("Undo restores the fog parameter"),
+            FMath::IsNearlyEqual(Bank->SceneEnvironment.FogParameter, OriginalFog));
+    }
+
+    // Property edits auto-apply through PostEditChangeProperty.
+    Settings->Environment.FogParameter = 0.75f;
+    if (FProperty* EnvironmentProperty = FindFProperty<FProperty>(UKyaLevelSettings::StaticClass(), TEXT("Environment")))
+    {
+        FPropertyChangedEvent Changed(EnvironmentProperty);
+        Settings->PostEditChangeProperty(Changed);
+        TestTrue(TEXT("Settings property edits auto-apply"),
+            FMath::IsNearlyEqual(Bank->SceneEnvironment.FogParameter, 0.75f));
+    }
+
+    // Selecting another bank reloads the settings instead of applying the old ones.
+    UKyaLevelBank* OtherBank = MakeKyaTestBank(GetTransientPackage());
+    OtherBank->SceneEnvironment.FogParameter = 0.125f;
+    Settings->Bank = OtherBank;
+    if (FProperty* BankField = FindFProperty<FProperty>(UKyaLevelSettings::StaticClass(), TEXT("Bank")))
+    {
+        FPropertyChangedEvent BankChanged(BankField);
+        Settings->PostEditChangeProperty(BankChanged);
+        TestTrue(TEXT("Bank change reloads from the new bank"),
+            FMath::IsNearlyEqual(Settings->Environment.FogParameter, 0.125f));
+        TestTrue(TEXT("Bank change does not overwrite the new bank"),
+            FMath::IsNearlyEqual(OtherBank->SceneEnvironment.FogParameter, 0.125f));
+    }
+    Settings->Bank = Bank;
+    Settings->LoadFromBank();
+
+    // Invalid settings are rejected before mutation.
+    const float BeforeInvalid = Bank->SceneEnvironment.FogParameter;
+    Settings->Environment.FogParameter = NAN;
+    TestFalse(TEXT("Invalid level settings are rejected"), Settings->ApplyToBank(Error));
+    TestFalse(TEXT("Level settings rejection explains why"), Error.IsEmpty());
+    TestTrue(TEXT("Rejected level settings leave the bank unchanged"),
+        FMath::IsNearlyEqual(Bank->SceneEnvironment.FogParameter, BeforeInvalid));
+
+    // The preview exposes a discoverable, stable authoring object.
+    UWorld* World = UWorld::CreateWorld(EWorldType::EditorPreview, false);
+    if (TestNotNull(TEXT("Create level settings world"), World))
+    {
+        AKyaLevelPreview* Preview = World->SpawnActor<AKyaLevelPreview>();
+        if (TestNotNull(TEXT("Spawn level settings preview"), Preview))
+        {
+            Preview->Bank = Bank;
+            UKyaLevelSettings* First = Preview->GetOrCreateLevelSettings();
+            UKyaLevelSettings* Second = Preview->GetOrCreateLevelSettings();
+            TestTrue(TEXT("Level settings object is stable"), First == Second);
+            TestEqual(TEXT("Preview settings use the preview bank"), First->Bank.Get(), Bank);
+        }
+        World->DestroyWorld(false);
+    }
+
+    // Authoring and diagnostics are separated in the preview Details metadata.
+    const FProperty* BankProperty = FindFProperty<FProperty>(AKyaLevelPreview::StaticClass(), TEXT("Bank"));
+    const FProperty* HandlesProperty = FindFProperty<FProperty>(AKyaLevelPreview::StaticClass(), TEXT("bSpawnActorHandles"));
+    if (TestNotNull(TEXT("Bank property exists"), BankProperty) &&
+        TestNotNull(TEXT("Handle option property exists"), HandlesProperty))
+    {
+        TestTrue(TEXT("Bank is an authoring property"),
+            BankProperty->HasMetaData(TEXT("Category")) &&
+            BankProperty->GetMetaData(TEXT("Category")).Contains(TEXT("Authoring")));
+        TestTrue(TEXT("Handle options are diagnostics"),
+            HandlesProperty->HasMetaData(TEXT("Category")) &&
+            HandlesProperty->GetMetaData(TEXT("Category")).Contains(TEXT("Diagnostics")));
+    }
+
+    Service.Reset();
     return true;
 }
 
