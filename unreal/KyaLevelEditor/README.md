@@ -309,12 +309,14 @@ draws one guide when all-path mode is off.
 Both handle kinds
 have bank + index + generation identity, write through the same edit service as the
 old arrow markers (which now call the service too, so both routes agree), and
-preserve unedited values and undo grouping. Stored waypoint rotation is edited
-numerically: the ported source stores an Euler triple in radians consumed by
-`SetVectorFromAngles`/`InitPositionRotation` (for example `ActorMicken` and actor
-spawn parameters), and orientation is deliberately not drawn because the arrow
-convention is not verified. Path timing, lead-in and loop visualization are not
-implemented.
+preserve unedited values and undo grouping. Stored waypoint rotation is an XYZ Euler
+triple in radians: the ported source assigns it to `rotationEuler` and converts it
+with `SetVectorFromAngles`/`edF32Matrix4FromEulerSoft(..., "XYZ")` (for example
+`ActorMicken`, `ActorTeleporter`). The handle therefore shows a green forward arrow
+built from that exact basis, rotates with the gizmo, and writes the inverse triple
+back through the edit service; a pure translate preserves the stored angles. Path
+timing, lead-in and loop behaviour remain explicit non-goals: path-point rotation is
+edited numerically and exported, but no playback is simulated.
 
 ## Editor commands
 

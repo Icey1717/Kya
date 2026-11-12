@@ -1183,6 +1183,118 @@ bool FKyaStructuralCommandsTest::RunTest(const FString& Parameters)
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaWaypointOrientationTest, "Kya.Editor.WaypointOrientation",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaWaypointOrientationTest::RunTest(const FString& Parameters)
+{
+    // The repository's SetVectorFromAngles uses edF32Matrix4FromEulerSoft(..., "XYZ").
+    // With yaw +90 the stored forward image is game +X; after the editor's axis swap
+    // the visible arrow must point along Unreal +X.
+    FVector BasisX, BasisY, BasisZ;
+    KyaActorTransform::BuildEulerRotationBasis(FVector(0.0, HALF_PI, 0.0), BasisX, BasisY, BasisZ);
+    TestTrue(TEXT("Stored yaw rotates game forward onto game +X"),
+        BasisZ.Equals(FVector(1.0, 0.0, 0.0), 1.0e-4));
+    const FQuat Yaw90 = KyaActorTransform::QuatFromGameEuler(FVector(0.0, HALF_PI, 0.0));
+    FVector RoundTrip;
+    TestTrue(TEXT("Euler inverse accepts the stored orientation"),
+        KyaActorTransform::GameEulerFromQuat(Yaw90, FVector(0.0, HALF_PI, 0.0), RoundTrip));
+    TestTrue(TEXT("Euler inverse round trips the angles"),
+        RoundTrip.Equals(FVector(0.0, HALF_PI, 0.0), 1.0e-4));
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    UKyaLevelBank* Bank = MakeKyaTestBank(GetTransientPackage());
+    FKyaWaypoint& Waypoint = Bank->SceneEnvironment.Waypoints.AddDefaulted_GetRef();
+    Waypoint.Position = FVector(1.0, 2.0, 3.0);
+    Waypoint.Rotation = FVector(0.0, HALF_PI, 0.0);
+    FKyaPath& Path = Bank->SceneEnvironment.Paths.AddDefaulted_GetRef();
+    Path.Points.Add(FVector4(4.0, 5.0, 6.0, 1.0));
+    Path.Rotations.Add(FVector4(0.0, 0.25, 0.0, 0.0));
+
+    UWorld* World = UWorld::CreateWorld(EWorldType::EditorPreview, false);
+    if (!TestNotNull(TEXT("Create orientation world"), World)) return false;
+    AKyaLevelPreview* Preview = World->SpawnActor<AKyaLevelPreview>();
+    if (!TestNotNull(TEXT("Spawn orientation preview"), Preview))
+    {
+        World->DestroyWorld(false);
+        return false;
+    }
+    Preview->Bank = Bank;
+    Preview->bSpawnActorHandles = false;
+    Preview->bSpawnWaypointHandles = true;
+    Preview->bSpawnPathPointHandles = true;
+    Preview->OnConstruction(FTransform::Identity);
+
+    AKyaSpatialRecordHandle* WaypointHandle = Cast<AKyaSpatialRecordHandle>(Preview->GetWaypointHandle(0));
+    AKyaSpatialRecordHandle* PathHandle = Cast<AKyaSpatialRecordHandle>(Preview->GetPathPointHandle(0, 0));
+    if (TestNotNull(TEXT("Waypoint orientation handle exists"), WaypointHandle) &&
+        TestNotNull(TEXT("Path point handle exists"), PathHandle))
+    {
+        TestTrue(TEXT("Waypoint handle mirrors the stored orientation"),
+            WaypointHandle->GetActorQuat().Equals(Yaw90, 1.0e-4));
+        TestTrue(TEXT("Waypoint handle shows the forward arrow"),
+            WaypointHandle->OrientationArrow && WaypointHandle->OrientationArrow->GetVisibleFlag());
+        TestTrue(TEXT("Waypoint arrow shows the stored forward direction"),
+            WaypointHandle->OrientationArrow->GetForwardVector().Equals(FVector(1.0, 0.0, 0.0), 1.0e-3));
+
+        // The arrow follows the preview's transform, not just the handle's local space.
+        const FQuat PreviewRotation = FRotator(0.0, 45.0, 0.0).Quaternion();
+        Preview->SetActorRotation(PreviewRotation);
+        Preview->OnConstruction(Preview->GetActorTransform());
+        if (AKyaSpatialRecordHandle* RotatedHandle = Cast<AKyaSpatialRecordHandle>(Preview->GetWaypointHandle(0)))
+        {
+            TestTrue(TEXT("Arrow follows a rotated preview"),
+                RotatedHandle->OrientationArrow->GetForwardVector().Equals(
+                    PreviewRotation.RotateVector(FVector(1.0, 0.0, 0.0)), 1.0e-3));
+        }
+        Preview->SetActorRotation(FQuat::Identity);
+        Preview->OnConstruction(Preview->GetActorTransform());
+        WaypointHandle = Cast<AKyaSpatialRecordHandle>(Preview->GetWaypointHandle(0));
+        PathHandle = Cast<AKyaSpatialRecordHandle>(Preview->GetPathPointHandle(0, 0));
+        TestFalse(TEXT("Path point handle hides the waypoint arrow"),
+            PathHandle->OrientationArrow && PathHandle->OrientationArrow->GetVisibleFlag());
+        TestTrue(TEXT("Path point handle stays unrotated"), PathHandle->GetActorQuat().IsIdentity(1.0e-4));
+
+        // Gizmo rotation writes the stored Euler triple.
+        const FQuat Yaw180 = KyaActorTransform::QuatFromGameEuler(FVector(0.0, PI, 0.0));
+        WaypointHandle->SetActorRelativeRotation(Yaw180);
+        WaypointHandle->PostEditMove(true);
+        FVector RotatedX, RotatedY, RotatedZ;
+        KyaActorTransform::BuildEulerRotationBasis(Bank->SceneEnvironment.Waypoints[0].Rotation,
+            RotatedX, RotatedY, RotatedZ);
+        TestTrue(TEXT("Gizmo rotation writes the bank orientation"),
+            RotatedZ.Equals(FVector(0.0, 0.0, -1.0), 1.0e-3));
+        TestTrue(TEXT("Handle arrow follows the committed orientation"),
+            WaypointHandle->OrientationArrow->GetForwardVector().Equals(FVector(0.0, -1.0, 0.0), 1.0e-3));
+        Service.FlushPendingNotifications();
+
+        // Translation must preserve the stored orientation exactly.
+        const FVector StoredRotation = Bank->SceneEnvironment.Waypoints[0].Rotation;
+        WaypointHandle->AddActorWorldOffset(FVector(100.0, 0.0, 0.0));
+        WaypointHandle->PostEditMove(true);
+        TestTrue(TEXT("Translate keeps the stored orientation"),
+            Bank->SceneEnvironment.Waypoints[0].Rotation.Equals(StoredRotation, 1.0e-4));
+        TestTrue(TEXT("Translate still writes the position"),
+            Bank->SceneEnvironment.Waypoints[0].Position.Equals(FVector(2.0, 2.0, 3.0), 1.0e-4));
+
+        // Path-point rotation remains a Details/export field, not a gizmo edit.
+        const FVector4 StoredPathRotation = Bank->SceneEnvironment.Paths[0].Rotations[0];
+        PathHandle->SetActorRelativeRotation(FQuat(FVector::UpVector, 0.5));
+        PathHandle->PostEditMove(true);
+        TestTrue(TEXT("Path point gizmo rotation does not change serialized rotation"),
+            Bank->SceneEnvironment.Paths[0].Rotations[0].Equals(StoredPathRotation, 1.0e-6));
+        TestTrue(TEXT("Path point handle rotation is reset after commit"),
+            PathHandle->GetActorQuat().IsIdentity(1.0e-4));
+        Service.FlushPendingNotifications();
+    }
+
+    Preview->Destroy();
+    World->DestroyWorld(false);
+    Service.Reset();
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaPathVisualizationTest, "Kya.Editor.PathVisualization",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 

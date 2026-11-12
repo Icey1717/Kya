@@ -33,6 +33,14 @@ void FKyaSpatialRecordDetailsCustomization::CustomizeDetails(IDetailLayoutBuilde
     if (Handle->Kind == EKyaSpatialRecordKind::Waypoint)
     {
         DetailBuilder.HideCategory("Kya|Path point");
+        Summary.AddCustomRow(FText::FromString(TEXT("Orientation")))
+            .ValueContent()
+            [SNew(STextBlock)
+                .Text(FText::FromString(TEXT("Green arrow shows the stored waypoint forward direction.")))
+                .AutoWrapText(true)
+                .ToolTipText(FText::FromString(TEXT("CWayPoint stores an XYZ Euler triple in radians. "
+                    "It is converted with the engine's SetVectorFromAngles/XYZ convention; rotate the handle "
+                    "or edit the angles numerically.")))];
     }
     else
     {
@@ -43,5 +51,12 @@ void FKyaSpatialRecordDetailsCustomization::CustomizeDetails(IDetailLayoutBuilde
         if (!Handle->bHasFlagsRecord) DetailBuilder.HideProperty(TEXT("PathFlags"));
         if (!Handle->bHasExtraValueRecord) DetailBuilder.HideProperty(TEXT("PathExtraValue"));
         if (!Handle->bHasExtraWordRecord) DetailBuilder.HideProperty(TEXT("PathExtraWord"));
+        Summary.AddCustomRow(FText::FromString(TEXT("Simulation")))
+            .ValueContent()
+            [SNew(STextBlock)
+                .Text(FText::FromString(TEXT("Point data only: path timing, lead-in and loop behavior are not visualized.")))
+                .AutoWrapText(true)
+                .ToolTipText(FText::FromString(TEXT("Delays, flags and per-point rotations are editable and exported, "
+                    "but the preview does not simulate path playback.")))];
     }
 }

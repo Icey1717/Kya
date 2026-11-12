@@ -122,10 +122,15 @@ Last updated: 2026-11-12.
   gets a transient `<bank> path <n>` Outliner group that owns its points, and edits
   update both the bank and the guide. `Preview Path Index` remains the single-guide
   legacy mode.
-- Stored waypoint rotation is the game's Euler triple in radians (used by
-  `SetVectorFromAngles`/`InitPositionRotation` in the ported source). It is edited
-  numerically; orientation is not drawn because the arrow convention is not
-  verified. Path timing/lead-in/loop visualization is not implemented.
+- Stored waypoint rotation is the game's XYZ Euler triple in radians. The repository
+  source assigns `CWayPoint::rotation` to `rotationEuler` and converts it with
+  `SetVectorFromAngles`/`edF32Matrix4FromEulerSoft(..., "XYZ")` (ActorMicken,
+  ActorTeleporter, JamGut/Hero copies), and the port's Euler basis reproduces that
+  composition. Waypoint handles show a green forward arrow from that basis, rotate
+  with the gizmo (inverse angles chosen nearest the stored triple), and preserve the
+  angles on a pure translate. Path timing, lead-in and loop behaviour are explicit
+  non-goals: path-point rotation is numeric/exported only and no playback is
+  simulated.
 
 ### Editor integration
 - Real `IModuleInterface` startup/shutdown; a `Kya Level` section in the Tools menu
@@ -248,8 +253,8 @@ Results: `Kya.Bank.LevelOneRoundTrip`, `Kya.Bank.SmallBankRoundTrip`,
 `Kya.Editor.ExportValidation`, `Kya.Editor.LevelPreviewPlacement`,
 `Kya.Editor.LevelSet`, `Kya.Editor.SpatialRecords`, `Kya.Editor.ActorCatalog`,
 `Kya.Editor.MultiEditBaseline`, `Kya.Editor.GeneratedActorLifecycle`,
-`Kya.Editor.StructuralCommands`, `Kya.Editor.OutlinerPolicy` and
-`Kya.Editor.PathVisualization` all `Success`.
+`Kya.Editor.StructuralCommands`, `Kya.Editor.OutlinerPolicy`,
+`Kya.Editor.PathVisualization` and `Kya.Editor.WaypointOrientation` all `Success`.
 
 Coverage added by the new tests:
 

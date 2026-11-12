@@ -6,6 +6,7 @@
 
 class AKyaLevelPreview;
 class UKyaLevelBank;
+class UArrowComponent;
 class USceneComponent;
 class UStaticMeshComponent;
 
@@ -60,6 +61,14 @@ public:
 
     UPROPERTY(VisibleAnywhere, Category="Kya|Identity")
     TObjectPtr<UStaticMeshComponent> Marker;
+
+    /**
+     * Forward arrow for waypoint orientation. The stored CWayPoint triple is an XYZ
+     * Euler rotation; the arrow is shown only for waypoints (path points do not use
+     * the gizmo rotation path).
+     */
+    UPROPERTY(VisibleAnywhere, Category="Kya|Identity")
+    TObjectPtr<UArrowComponent> OrientationArrow;
 
     UPROPERTY(VisibleAnywhere, Category="Kya|Identity")
     TObjectPtr<UKyaLevelBank> Bank;

@@ -101,6 +101,71 @@ namespace KyaActorTransform
         OutZ = ApplyClassRotation(FVector(0, 0, 1), Angles, ClassId);
     }
 
+    inline FQuat QuatFromGameBasis(const FVector& BasisX, const FVector& BasisY, const FVector& BasisZ);
+    inline void GameBasisFromQuat(const FQuat& Rotation, FVector& OutX, FVector& OutY, FVector& OutZ);
+    inline double NearestAngle(double Candidate, double Reference);
+
+    /** Rotation-only basis for the engine's Euler "XYZ" representation (CWayPoint rotation). */
+    inline void BuildEulerRotationBasis(const FVector& Angles, FVector& OutX, FVector& OutY, FVector& OutZ)
+    {
+        const double Sx = FMath::Sin(Angles.X), Cx = FMath::Cos(Angles.X);
+        const double Sy = FMath::Sin(Angles.Y), Cy = FMath::Cos(Angles.Y);
+        const double Sz = FMath::Sin(Angles.Z), Cz = FMath::Cos(Angles.Z);
+        OutX = FVector(Cy * Cz, Cy * Sz, -Sy);
+        OutY = FVector(Sy * Sx * Cz - Cx * Sz, Cx * Cz + Sx * Sz * Sy, Cy * Sx);
+        OutZ = FVector(Sx * Sz + Sy * Cx * Cz, Sy * Cx * Sz - Sx * Cz, Cx * Cy);
+    }
+
+    /**
+     * Unreal rotation for a stored CWayPoint Euler triple.
+     *
+     * The game stores an XYZ Euler triple in radians and converts it with
+     * edF32Matrix4FromEulerSoft(..., "XYZ") (SetVectorFromAngles); this builds the same
+     * basis and conjugates it by the editor's axis permutation.
+     */
+    inline FQuat QuatFromGameEuler(const FVector& Angles)
+    {
+        FVector X, Y, Z;
+        BuildEulerRotationBasis(Angles, X, Y, Z);
+        return QuatFromGameBasis(X, Y, Z);
+    }
+
+    /** Inverse of QuatFromGameEuler, choosing angles nearest PreviousAngles. */
+    inline bool GameEulerFromQuat(const FQuat& Rotation, const FVector& PreviousAngles, FVector& OutAngles)
+    {
+        FVector X, Y, Z;
+        GameBasisFromQuat(Rotation, X, Y, Z);
+        const double Determinant = FVector::DotProduct(X, FVector::CrossProduct(Y, Z));
+        if (!FMath::IsNearlyEqual(Determinant, 1.0, 1.0e-3)) return false;
+        const double Sy = -X.Z;
+        const double Cy = FMath::Sqrt(FMath::Max(0.0, 1.0 - Sy * Sy));
+        double Pitch = 0.0, Yaw = 0.0, Roll = 0.0;
+        if (Cy > 1.0e-3)
+        {
+            const double Cx = Z.Z / Cy;
+            const double Sx = Y.Z / Cy;
+            Pitch = FMath::Atan2(Sx, Cx);
+            Yaw = FMath::Atan2(Sy, Cy);
+            Roll = FMath::Atan2(X.Y, X.X);
+        }
+        else
+        {
+            const double Sign = Sy >= 0.0 ? 1.0 : -1.0;
+            Yaw = Sign * HALF_PI;
+            const double Difference = Sign > 0.0
+                ? FMath::Atan2(Y.X, Y.Y)
+                : FMath::Atan2(-Z.Y, -Z.X);
+            Roll = NearestAngle(PreviousAngles.Z, 0.0);
+            Pitch = Difference + Sign * Roll;
+        }
+        // Preserve the chosen angles' branch where possible.
+        OutAngles = FVector(
+            NearestAngle(Pitch, PreviousAngles.X),
+            NearestAngle(Yaw, PreviousAngles.Y),
+            NearestAngle(Roll, PreviousAngles.Z));
+        return true;
+    }
+
     /** Unreal rotation whose basis is the game basis conjugated by the axis permutation. */
     inline FQuat QuatFromGameBasis(const FVector& BasisX, const FVector& BasisY, const FVector& BasisZ)
     {

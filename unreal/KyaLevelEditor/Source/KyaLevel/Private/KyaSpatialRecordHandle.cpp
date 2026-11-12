@@ -1,6 +1,7 @@
 #include "KyaSpatialRecordHandle.h"
 
 #include "Components/StaticMeshComponent.h"
+#include "Components/ArrowComponent.h"
 #include "Engine/StaticMesh.h"
 #include "KyaActorEditService.h"
 #include "KyaActorTransform.h"
@@ -33,6 +34,21 @@ AKyaSpatialRecordHandle::AKyaSpatialRecordHandle()
     Marker->CastShadow = false;
     Marker->SetHiddenInGame(true);
     Marker->SetMobility(EComponentMobility::Movable);
+
+    // Forward indicator for waypoint orientation. Path-point handles keep it hidden.
+    OrientationArrow = CreateDefaultSubobject<UArrowComponent>(TEXT("OrientationArrow"));
+    OrientationArrow->SetupAttachment(SceneRoot);
+    OrientationArrow->ArrowColor = FColor(120, 230, 120);
+    OrientationArrow->ArrowSize = 0.8f;
+    OrientationArrow->ArrowLength = 90.0f;
+    OrientationArrow->bHiddenInGame = true;
+    OrientationArrow->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    // The handle's rotation maps its local +Y to the stored game forward (the game +Z
+    // image after the axis permutation), so the arrow points along +Y locally and the
+    // handle/preview transforms carry it into world space.
+    OrientationArrow->SetRelativeRotation(FQuat::FindBetweenNormals(
+        FVector::ForwardVector, FVector::RightVector));
+    OrientationArrow->SetVisibility(false, true);
 }
 
 void AKyaSpatialRecordHandle::Initialize(AKyaLevelPreview* InPreview, UKyaLevelBank* InBank,
@@ -102,7 +118,10 @@ void AKyaSpatialRecordHandle::SyncFromBank()
     if (Kind == EKyaSpatialRecordKind::Waypoint)
     {
         if (Bank->SceneEnvironment.Waypoints.IsValidIndex(RecordIndex))
-            Local = FTransform(KyaActorTransform::SwapGameAxes(WaypointPosition) * 100.0);
+        {
+            Local = FTransform(KyaActorTransform::QuatFromGameEuler(WaypointRotation),
+                KyaActorTransform::SwapGameAxes(WaypointPosition) * 100.0);
+        }
     }
     else if (Bank->SceneEnvironment.Paths.IsValidIndex(RecordIndex) &&
         Bank->SceneEnvironment.Paths[RecordIndex].Points.IsValidIndex(PointIndex))
@@ -111,6 +130,12 @@ void AKyaSpatialRecordHandle::SyncFromBank()
         Local = FTransform(KyaActorTransform::SwapGameAxes(Position) * 100.0);
     }
     SetActorRelativeTransform(Local, false, nullptr, ETeleportType::TeleportPhysics);
+    if (OrientationArrow)
+    {
+        const bool bWaypoint = Kind == EKyaSpatialRecordKind::Waypoint &&
+            Bank->SceneEnvironment.Waypoints.IsValidIndex(RecordIndex);
+        OrientationArrow->SetVisibility(bWaypoint, true);
+    }
     bSyncing = false;
 
 #if WITH_EDITOR
@@ -166,9 +191,27 @@ void AKyaSpatialRecordHandle::CommitFromActor()
         if (Kind == EKyaSpatialRecordKind::Waypoint)
         {
             FKyaWaypointEditPatch Patch;
-            if (Bank->SceneEnvironment.Waypoints.IsValidIndex(RecordIndex) &&
-                !Bank->SceneEnvironment.Waypoints[RecordIndex].Position.Equals(GamePosition, 1.0e-4))
-                Patch.Position = GamePosition;
+            if (Bank->SceneEnvironment.Waypoints.IsValidIndex(RecordIndex))
+            {
+                const FKyaWaypoint& Current = Bank->SceneEnvironment.Waypoints[RecordIndex];
+                if (!Current.Position.Equals(GamePosition, 1.0e-4)) Patch.Position = GamePosition;
+
+                // The handle rotation is the Unreal representation of the stored XYZ
+                // Euler triple; only pass the axes through the inverse when the quat
+                // actually changed, so a pure translate preserves the serialized angles.
+                const FQuat LocalRotation = Local.GetRotation().GetNormalized();
+                const FQuat CurrentRotation = KyaActorTransform::QuatFromGameEuler(Current.Rotation);
+                if (!CurrentRotation.Equals(LocalRotation, 1.0e-5))
+                {
+                    FVector NewAngles = Current.Rotation;
+                    if (!KyaActorTransform::GameEulerFromQuat(LocalRotation, Current.Rotation, NewAngles))
+                    {
+                        Error = TEXT("Waypoint orientation cannot be represented by the stored Euler triple.");
+                        return false;
+                    }
+                    Patch.Rotation = NewAngles;
+                }
+            }
             if (Patch.IsEmpty()) return true;
             return Service.ApplyWaypoint(Service.MakeWaypointKey(Bank, RecordIndex), Patch, Notify, &Error);
         }
