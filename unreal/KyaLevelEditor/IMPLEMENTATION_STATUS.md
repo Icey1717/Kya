@@ -186,6 +186,12 @@ Last updated: 2026-11-12.
   sharing a bank stay synchronized through a Details edit, undo/redo and 25 rapid
   consecutive property patches; saving, closing and reloading the package restores
   the Details values and the rendered placement in two fresh previews.
+- Explicit sector assignment (`Kya.Editor.SectorAssignment`): moving an actor never
+  rewrites `SectorId`; the Details panel's live **Sector candidates** row reports the
+  authored sector plus loaded sector backgrounds whose approximate bounds contain
+  the position, explicitly as a diagnostic that is never applied. The gate moves an
+  actor into loaded SECT1 bounds and confirms the id survives the move and
+  export/reimport.
 - `FKyaLevelBankReimportHandler` implements `FReimportHandler`: parses into a
   temporary bank, only replaces the asset on success, asks before discarding dirty
   changes (refuses in unattended mode), updates provenance, bumps the edit
@@ -427,8 +433,8 @@ Results: `Kya.Bank.LevelOneRoundTrip`, `Kya.Bank.SmallBankRoundTrip`,
 `Kya.Editor.MilestoneCGate`, `Kya.Editor.MilestoneDGate`,
 `Kya.Editor.ViewportClickSelection`, `Kya.Editor.SharedEditPath`,
 `Kya.Editor.SectorIsolation`, `Kya.Editor.GizmoAcceptance`,
-`Kya.Editor.RepresentativeActorEdits` and `Kya.Editor.SaveReopenConsistency` all
-`Success`.
+`Kya.Editor.RepresentativeActorEdits`, `Kya.Editor.SaveReopenConsistency` and
+`Kya.Editor.SectorAssignment` all `Success`.
 
 Coverage added by the new tests:
 

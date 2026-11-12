@@ -365,6 +365,9 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
     {
         Mesh->ClearAllMeshSections();
         PreviewTextures.Reset();
+        // A completed build without geometry must not keep reporting candidates from a
+        // previously displayed level. Cancelled builds retain their published state.
+        SectorBackgroundBounds.Reset();
         BackgroundFlares.Reset();
         FlareMaterials.Reset();
         FlarePostProcess->Settings.WeightedBlendables.Array.Reset();
@@ -785,6 +788,7 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
     TMap<int32, FSectionData> TexturedSections;
     TMap<int32, TObjectPtr<UMaterialInterface>> BuiltSectionMaterials;
     TArray<TObjectPtr<UTexture2D>> BuiltPreviewTextures;
+    TMap<int32, FBox> BuiltSectorBounds;
     auto GetTexturedSection = [&](uint64 Hash, TConstArrayView<uint8> Source,
         const TMap<uint64, int32>& Offsets, FMaterialSections& Sections,
         const TCHAR* SourceLabel, uint32 Primitive) -> FSectionData*
@@ -1776,6 +1780,13 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
                 }
                 AppendUnrealTriangles(TargetTriangles, Strip.Indices, Base);
             }
+            if (Sector != Bank && BackgroundBounds.IsValid)
+            {
+                // Diagnostics only: candidate sectors are derived from decoded sector
+                // backgrounds, never used to rewrite an actor's explicit SectorId.
+                FBox& SectorBounds = BuiltSectorBounds.FindOrAdd(ResolveSectorId(*Sector));
+                SectorBounds += BackgroundBounds;
+            }
             if (bLogSectorDiagnostics)
                 UE_LOG(LogTemp, Display, TEXT("KYA_SECTOR_BACKGROUND name=%s entry=%d parsed=1 strips=%d textured=%d missing_transform=%d materials=%d vertices=%lld triangles=%lld bounds_cm=%s"),
                     *DiagnosticName, EntryIndex, SectorStrips.Num(), BackgroundTextured, BackgroundMissingTransform,
@@ -1791,6 +1802,7 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
         return;
     }
     PreviewTextures = MoveTemp(BuiltPreviewTextures);
+    SectorBackgroundBounds = MoveTemp(BuiltSectorBounds);
     BackgroundFlares = MoveTemp(BuiltBackgroundFlares);
     FlareMaterials = MoveTemp(BuiltFlareMaterials);
     FlarePostProcess->Settings.WeightedBlendables.Array.Reset();
@@ -1906,6 +1918,36 @@ int32 AKyaLevelPreview::ResolveSectorId(const UKyaLevelBank& Sector) const
     for (const TPair<int32, TObjectPtr<UKyaLevelBank>>& Pair : LevelSetSectors)
         if (Pair.Value == &Sector) return Pair.Key;
     return GetSectorId(Sector);
+}
+
+TArray<int32> AKyaLevelPreview::GetCandidateSectorIdsForPosition(const FVector& GamePosition) const
+{
+    TArray<int32> Candidates;
+    const FVector Local = FVector(GamePosition.X, GamePosition.Z, GamePosition.Y) * 100.0;
+    for (const TPair<int32, FBox>& Pair : SectorBackgroundBounds)
+        if (Pair.Value.IsValid && Pair.Value.IsInsideOrOn(Local)) Candidates.Add(Pair.Key);
+    Candidates.Sort();
+    return Candidates;
+}
+
+FString AKyaLevelPreview::DescribeSectorAssignment(int32 SectorId, const FVector& GamePosition) const
+{
+    const TArray<int32> Candidates = GetCandidateSectorIdsForPosition(GamePosition);
+    const FString Assignment = SectorId < 0
+        ? FString(TEXT("Explicit assignment: global (no sector)."))
+        : FString::Printf(TEXT("Explicit assignment: sector %d."), SectorId);
+    if (Candidates.IsEmpty())
+        return Assignment + TEXT(" No loaded sector background contains this position; the assignment is kept.");
+
+    TArray<FString> Labels;
+    for (const int32 Candidate : Candidates)
+        Labels.Add(FString::Printf(TEXT("sector %d"), Candidate));
+    FString Result = Assignment + FString::Printf(
+        TEXT(" Position falls inside %s background bounds (approximate, diagnostic only; not applied)."),
+        *FString::Join(Labels, TEXT(", ")));
+    if (!Candidates.Contains(SectorId))
+        Result += TEXT(" The authored sector is kept; membership is never changed automatically.");
+    return Result;
 }
 
 void AKyaLevelPreview::ApplyLevelSet()

@@ -85,7 +85,7 @@ This is a source review of the current working tree, including the in-progress a
 - [x] Support Outliner selection, multi-selection, search, focus, temporary hide/isolate and selection locking. Keep editor visibility distinct from the game's visibility fields.
 - [x] Define Outliner rename behavior explicitly: presentation label versus serialized actor name, including encoded-length limits. Do not silently truncate a game name.
 - [x] Define Delete, Duplicate, Alt-drag, copy/paste and cut behavior. While the bank writer requires fixed counts, block unsupported structural commands with a clear explanation rather than allowing a generated actor to disappear and respawn mysteriously.
-- [ ] Keep assigning an actor's sector explicit until reliable spatial sector membership exists. Add candidate-sector diagnostics for moved actors; do not infer membership from arbitrary mesh bounds or change it silently.
+- [x] Keep assigning an actor's sector explicit until reliable spatial sector membership exists. Add candidate-sector diagnostics for moved actors; do not infer membership from arbitrary mesh bounds or change it silently.
 - [ ] Acceptance: familiar selection and organization commands work, and unsupported structural operations cannot leave map and bank state inconsistent.
 
 ## 7. Extend editing beyond actor placements

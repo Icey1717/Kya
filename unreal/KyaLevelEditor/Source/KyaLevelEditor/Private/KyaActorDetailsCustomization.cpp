@@ -394,6 +394,39 @@ void FKyaActorDetailsCustomization::CustomizeDetails(IDetailLayoutBuilder& Detai
         GetKyaSectorLabel(SectorNames, Record.SectorId), GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, SectorId),
         [](FKyaActorPlacement& Placement, int32 Value) { Placement.SectorId = Value; });
 
+    // Candidate-sector diagnostics: the assignment stays explicit. Loaded sector
+    // backgrounds only suggest where the authored position currently falls.
+    if (AKyaLevelPreview* Preview = Actor->Preview.Get())
+    {
+        References.AddCustomRow(FText::FromString(TEXT("Sector candidates")))
+            .NameContent()
+            [
+                SNew(STextBlock).Text(FText::FromString(TEXT("Sector candidates")))
+                    .ToolTipText(FText::FromString(TEXT(
+                        "Diagnostic only. The actor's sector stays explicit and is never "
+                        "reassigned from background bounds.")))
+            ]
+            .ValueContent().MinDesiredWidth(320.0f)
+            [
+                SNew(STextBlock)
+                    .Text_Lambda([this]()
+                    {
+                        AKyaActorHandle* Source = Handle.Get();
+                        FKyaActorPlacement* Scope = ScopeRecord();
+                        AKyaLevelPreview* LivePreview = Source ? Source->Preview.Get() : nullptr;
+                        if (!Scope || !LivePreview)
+                            return FText::FromString(TEXT(
+                                "No loaded sector bounds; the explicit assignment is kept."));
+                        return FText::FromString(LivePreview->DescribeSectorAssignment(
+                            Scope->SectorId, Scope->Position));
+                    })
+                    .AutoWrapText(true)
+                    .ToolTipText(FText::FromString(TEXT(
+                        "Approximate containment in loaded sector backgrounds. This does not "
+                        "change the authored sector and is not a native membership test.")))
+            ];
+    }
+
     // Mesh picker: bank-local type-4 mesh ordinals.
     TArray<TSharedPtr<FKyaPickerOption>> MeshOptions;
     MeshOptions.Add(MakePickerOption(-1, TEXT("None"), TEXT("This actor has no model mesh.")));

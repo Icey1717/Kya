@@ -218,6 +218,15 @@ index so the Outliner never shows two identical entries, without modifying the
 serialized names. Labels are derived from the whole bank, so loading or unloading
 a sector does not rename existing handles.
 
+Sector assignment stays explicit. Moving an actor never rewrites `SectorId`; the
+Details panel shows a read-only **Sector candidates** row that reports the authored
+sector and any loaded sector backgrounds whose approximate bounds contain the
+current position. The row is a diagnostic hint only, updates as the record moves and
+never changes membership; it is not derived from the actor's own mesh bounds.
+`Kya.Editor.SectorAssignment` moves an actor from its authored sector into loaded
+SECT1 background bounds, confirms the explicit id survives the move and
+export/reimport, and checks the diagnostic wording.
+
 Validation, export and sector discovery report through the Message Log
 (`KyaLevelEditor` listing) as well as the dialog summary: one entry per bank or
 sector, with the asset path, the failure reason and any warnings. Entries are

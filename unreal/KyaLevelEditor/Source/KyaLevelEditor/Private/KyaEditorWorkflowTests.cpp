@@ -3208,6 +3208,157 @@ bool FKyaSectorIsolationTest::RunTest(const FString& Parameters)
     World->DestroyWorld(false);
     return true;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaSectorAssignmentTest, "Kya.Editor.SectorAssignment",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaSectorAssignmentTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to run the sector-assignment acceptance."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read the sector-assignment bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient | RF_Transactional, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import the sector-assignment bank"), Bank)) return false;
+
+    const FString SectorFilename = FPaths::Combine(FPaths::GetPath(Filename), TEXT("SECT1.BNK"));
+    TArray<uint8> SectorInput;
+    UKyaLevelBank* SectorBank = nullptr;
+    if (TestTrue(TEXT("Read the SECT1 bank"), FFileHelper::LoadFileToArray(SectorInput, *SectorFilename)))
+    {
+        const uint8* SectorCursor = SectorInput.GetData();
+        SectorBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+            GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), SectorCursor,
+            SectorInput.GetData() + SectorInput.Num(), GWarn));
+        if (TestNotNull(TEXT("Import the SECT1 bank"), SectorBank))
+            SectorBank->SourceFilename = SectorFilename;
+    }
+    if (!SectorBank)
+    {
+        Service.Reset();
+        return false;
+    }
+
+    UWorld* World = UWorld::CreateWorld(EWorldType::EditorPreview, false);
+    if (!TestNotNull(TEXT("Create the sector-assignment world"), World)) return false;
+    AKyaLevelPreview* Preview = World->SpawnActor<AKyaLevelPreview>();
+    if (!TestNotNull(TEXT("Spawn the sector-assignment preview"), Preview))
+    {
+        World->DestroyWorld(false);
+        return false;
+    }
+    Preview->Bank = Bank;
+    Preview->SectorBanks.Add(SectorBank);
+    Preview->bShowRebuildProgress = false;
+    Preview->bSpawnActorHandles = true;
+    Preview->OnConstruction(FTransform::Identity);
+
+    const FBox* SectorOneBounds = Preview->GetSectorBackgroundBounds().Find(1);
+    if (!TestNotNull(TEXT("The loaded sector background contributes bounds"), SectorOneBounds) ||
+        !TestTrue(TEXT("The sector background bounds enclose geometry"), SectorOneBounds->IsValid != 0))
+    {
+        Preview->Destroy();
+        World->DestroyWorld(false);
+        Service.Reset();
+        return false;
+    }
+
+    // Pick a handle whose authored sector is not SECT1 and whose current position is
+    // outside the SECT1 bounds, so the move creates a real candidate disagreement.
+    AKyaActorHandle* Handle = nullptr;
+    int32 HandleIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        AKyaActorHandle* Candidate = Cast<AKyaActorHandle>(Preview->GetActorHandle(Index));
+        if (!Candidate) continue;
+        const FKyaActorPlacement& Placement = Bank->SceneEnvironment.Actors[Index];
+        if (Placement.SectorId == 1) continue;
+        if (Preview->GetCandidateSectorIdsForPosition(Placement.Position).Contains(1)) continue;
+        Handle = Candidate;
+        HandleIndex = Index;
+        break;
+    }
+    if (!TestNotNull(TEXT("An actor outside SECT1 is available"), Handle))
+    {
+        Preview->Destroy();
+        World->DestroyWorld(false);
+        Service.Reset();
+        return false;
+    }
+
+    const int32 AuthoredSector = Bank->SceneEnvironment.Actors[HandleIndex].SectorId;
+    const FString AssignmentBefore = Preview->DescribeSectorAssignment(AuthoredSector,
+        Bank->SceneEnvironment.Actors[HandleIndex].Position);
+    TestTrue(TEXT("The diagnostic states the explicit assignment"), AssignmentBefore.Contains(TEXT("Explicit assignment")));
+    TestFalse(TEXT("The pre-move position is not inside SECT1"),
+        Preview->GetCandidateSectorIdsForPosition(Bank->SceneEnvironment.Actors[HandleIndex].Position).Contains(1));
+
+    // Move the representation into the loaded SECT1 background. This is the normal
+    // gizmo commit path; it must not rewrite the authored SectorId.
+    const FVector LocalTarget = SectorOneBounds->GetCenter();
+    const FVector WorldTarget = Preview->GetActorTransform().TransformPosition(LocalTarget);
+    const FVector GameTarget(LocalTarget.X / 100.0, LocalTarget.Z / 100.0, LocalTarget.Y / 100.0);
+    {
+        FScopedTransaction Transaction(NSLOCTEXT("KyaTests", "SectorMove", "Sector move"));
+        Handle->AddActorWorldOffset(WorldTarget - Handle->GetActorLocation());
+        Handle->PostEditMove(true);
+        Service.FlushPendingNotifications();
+    }
+    const FKyaActorPlacement& Moved = Bank->SceneEnvironment.Actors[HandleIndex];
+    TestEqual(TEXT("Moving an actor keeps its explicit sector"), Moved.SectorId, AuthoredSector);
+    TestTrue(TEXT("Moving writes the new position"), Moved.Position.Equals(GameTarget, 1.0e-3));
+
+    const TArray<int32> Candidates = Preview->GetCandidateSectorIdsForPosition(Moved.Position);
+    TestTrue(TEXT("The moved position has SECT1 as a candidate sector"), Candidates.Contains(1));
+    const FString AssignmentAfter = Preview->DescribeSectorAssignment(Moved.SectorId, Moved.Position);
+    AddInfo(AssignmentAfter);
+    TestTrue(TEXT("The diagnostic reports the SECT1 candidate"), AssignmentAfter.Contains(TEXT("sector 1")));
+    TestTrue(TEXT("The diagnostic states it is not applied"), AssignmentAfter.Contains(TEXT("not applied")));
+    TestTrue(TEXT("The diagnostic keeps the authored sector"),
+        AssignmentAfter.Contains(FString::Printf(TEXT("sector %d"), AuthoredSector)) ||
+        (AuthoredSector < 0 && AssignmentAfter.Contains(TEXT("global"))));
+    if (AuthoredSector != 1)
+        TestTrue(TEXT("A disagreeing candidate never rewrites membership"),
+            AssignmentAfter.Contains(TEXT("never changed automatically")));
+
+    // The explicit id also survives export/reimport.
+    FKyaBankExportDiagnostics Diagnostics;
+    TArray<uint8> Exported;
+    if (TestTrue(TEXT("Export the sector-assignment bank"),
+        KyaBuildBankExportBytes(Bank, Exported, Diagnostics)))
+    {
+        const uint8* ExportedCursor = Exported.GetData();
+        UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(
+            UKyaLevelBank::StaticClass(), GetTransientPackage(), NAME_None, RF_Transient, nullptr,
+            TEXT("bnk"), ExportedCursor, Exported.GetData() + Exported.Num(), GWarn));
+        if (TestNotNull(TEXT("Reimport the sector-assignment bank"), Reimported) &&
+            TestTrue(TEXT("The reimported bank keeps the moved actor"),
+                Reimported->SceneEnvironment.Actors.IsValidIndex(HandleIndex)))
+        {
+            TestEqual(TEXT("Export keeps the explicit sector"),
+                Reimported->SceneEnvironment.Actors[HandleIndex].SectorId, AuthoredSector);
+            TestTrue(TEXT("Export keeps the moved position"),
+                Reimported->SceneEnvironment.Actors[HandleIndex].Position.Equals(GameTarget, 1.0e-3));
+        }
+    }
+
+    Preview->Destroy();
+    World->DestroyWorld(false);
+    Service.Reset();
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaSaveReopenConsistencyTest, "Kya.Editor.SaveReopenConsistency",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 

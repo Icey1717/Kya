@@ -105,6 +105,21 @@ public:
     /** Sector ID of a loaded bank, preferring the level set's mapping over its filename. */
     int32 ResolveSectorId(const UKyaLevelBank& Sector) const;
 
+    /**
+     * Preview-local background bounds captured per loaded sector during the last
+     * published build. Diagnostic only; actor sector assignments are never inferred
+     * from these bounds.
+     */
+    const TMap<int32, FBox>& GetSectorBackgroundBounds() const { return SectorBackgroundBounds; }
+    /**
+     * Sector ids whose loaded background bounds contain a game-space position. This is
+     * a hint for the explicit sector picker, not a membership test; callers must not
+     * write the result into a record automatically.
+     */
+    TArray<int32> GetCandidateSectorIdsForPosition(const FVector& GamePosition) const;
+    /** Text describing the explicit assignment plus any candidate sectors. */
+    FString DescribeSectorAssignment(int32 SectorId, const FVector& GamePosition) const;
+
     /** Optional imported SECT*.BNK assets; their background meshes are previewed. */
     UPROPERTY(EditAnywhere, Category="Kya|Authoring")
     TArray<TObjectPtr<UKyaLevelBank>> SectorBanks;
@@ -570,6 +585,8 @@ private:
     TArray<TObjectPtr<AKyaHierarchyHandle>> HierarchyHandles;
     UPROPERTY(Transient)
     TMap<int32, TObjectPtr<AKyaActorHandle>> ActorHandles;
+    /** Per-sector background bounds in preview-local centimetres, from the last build. */
+    TMap<int32, FBox> SectorBackgroundBounds;
     /** Editor-only sector grouping actors for the Outliner (sector 0 = global actors). */
     UPROPERTY(Transient)
     TMap<int32, TObjectPtr<AKyaActorGroup>> ActorSectorGroups;
