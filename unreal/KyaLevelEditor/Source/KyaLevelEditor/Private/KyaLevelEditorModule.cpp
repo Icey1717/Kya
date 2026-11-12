@@ -10,6 +10,7 @@
 #include "KyaLevelBankReimportHandler.h"
 #include "KyaLevelBank.h"
 #include "KyaLevelPreview.h"
+#include "KyaLevelSet.h"
 #include "Misc/App.h"
 #include "Misc/MessageDialog.h"
 #include "Misc/Paths.h"
@@ -84,8 +85,28 @@ void KyaDiscoverCommand(const TArray<FString>& Args)
     KyaShowSummary(TEXT("Refresh Sector Discovery"), FString::Join(Messages, TEXT("\n\n")));
 }
 
-void KyaSaveCommand(const TArray<FString>& Args)
+void KyaCreateLevelSetCommand(const TArray<FString>& Args)
 {
+    const TArray<AKyaLevelPreview*> Previews = KyaGetTargetPreviews();
+    if (Previews.IsEmpty())
+    {
+        KyaShowSummary(TEXT("Create Kya Level Set"), TEXT("Select a level preview first."));
+        return;
+    }
+    TArray<FString> Messages;
+    for (AKyaLevelPreview* Preview : Previews)
+    {
+        FString Error;
+        if (const UKyaLevelSet* LevelSet = KyaCreateLevelSetFromPreview(Preview, Error))
+            Messages.Add(FString::Printf(TEXT("%s: %s (%d sector associations)"), *GetNameSafe(Preview),
+                *LevelSet->GetPathName(), LevelSet->Sectors.Num()));
+        else
+            Messages.Add(FString::Printf(TEXT("%s: %s"), *GetNameSafe(Preview), *Error));
+    }
+    KyaShowSummary(TEXT("Create Kya Level Set"), FString::Join(Messages, TEXT("\n")));
+}
+
+void KyaSaveCommand(const TArray<FString>& Args){
     const TArray<UKyaLevelBank*> Banks = KyaCollectLevelBanks(KyaGetTargetPreviews());
     FString Error;
     if (KyaSaveLevelBanks(Banks, Error))
@@ -111,6 +132,11 @@ void AddKyaMenuEntries(FToolMenuSection& Section)
         FText::FromString(TEXT("Find sibling SECT bank files next to the level's main bank.")),
         FSlateIcon(),
         FUIAction(FExecuteAction::CreateLambda([]() { KyaDiscoverCommand({}); })));
+    Section.AddMenuEntry("KyaCreateLevelSet",
+        FText::FromString(TEXT("Create Kya Level Set")),
+        FText::FromString(TEXT("Create or update the persisted level-set asset for the selected preview.")),
+        FSlateIcon(),
+        FUIAction(FExecuteAction::CreateLambda([]() { KyaCreateLevelSetCommand({}); })));
     Section.AddMenuEntry("KyaSaveLevel",
         FText::FromString(TEXT("Save Kya Level")),
         FText::FromString(TEXT("Save the bank packages used by the selected level preview.")),
@@ -203,6 +229,11 @@ FAutoConsoleCommand KyaSaveConsoleCommand(
     TEXT("Kya.SaveLevel"),
     TEXT("Save the bank packages used by the selected level preview."),
     FConsoleCommandWithArgsDelegate::CreateStatic(&KyaSaveCommand));
+
+FAutoConsoleCommand KyaCreateLevelSetConsoleCommand(
+    TEXT("Kya.CreateLevelSet"),
+    TEXT("Create or update the persisted level-set asset for the selected preview."),
+    FConsoleCommandWithArgsDelegate::CreateStatic(&KyaCreateLevelSetCommand));
 
 FAutoConsoleCommand ViewportTonemapperCommand(
     TEXT("Kya.ViewportTonemapper"),

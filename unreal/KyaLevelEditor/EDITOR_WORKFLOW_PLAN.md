@@ -33,7 +33,7 @@ This is a source review of the current working tree, including the in-progress a
 ## 2. Import and discover a complete level
 
 - [x] Add a normal Content Browser action to import/open a Kya level, and a drag-and-drop placement path that creates a configured level preview. Do not require a capture script or manually constructed preview to start editing.
-- [ ] Introduce a persisted level-set asset or equivalent descriptor linking the main bank, sector IDs, sector bank assets, source root and import revision. Keep these associations out of game bytes.
+- [x] Introduce a persisted level-set asset or equivalent descriptor linking the main bank, sector IDs, sector bank assets, source root and import revision. Keep these associations out of game bytes.
 - [x] Discover sibling sector banks from the selected source level directory and available bank metadata. Inspect the existing capture scripts and `GetSectorId` logic first; factor reusable discovery into editor code rather than invoking capture scripts.
 - [x] Resolve dependencies deterministically by level identity and sector ID. Reuse already imported matching assets through the Asset Registry; never match solely on a generic name such as `SECT1` across different levels.
 - [x] Import missing sector assets into a predictable level-specific folder, with progress/cancel support and a summary of imported, reused, missing and ambiguous files. Leave a coherent partial result if canceled or a bank fails.

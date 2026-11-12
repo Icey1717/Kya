@@ -5,6 +5,7 @@
 #include "KyaLevelPreview.generated.h"
 
 class UKyaLevelBank;
+class UKyaLevelSet;
 class UProceduralMeshComponent;
 class UMaterialInterface;
 class UTexture2D;
@@ -66,6 +67,19 @@ public:
 
     UPROPERTY(EditAnywhere, Category="Kya")
     TObjectPtr<UKyaLevelBank> Bank;
+
+    /**
+     * Optional persisted level descriptor. When assigned, its main bank and sector
+     * associations are authoritative for this preview and copied into Bank/SectorBanks
+     * on every build, so reopening a map restores the level automatically.
+     */
+    UPROPERTY(EditAnywhere, Category="Kya")
+    TObjectPtr<UKyaLevelSet> LevelSet;
+
+    /** Copy the level set's main bank and sector associations into this preview. */
+    void ApplyLevelSet();
+    /** Sector ID of a loaded bank, preferring the level set's mapping over its filename. */
+    int32 ResolveSectorId(const UKyaLevelBank& Sector) const;
 
     /** Optional imported SECT*.BNK assets; their background meshes are previewed. */
     UPROPERTY(EditAnywhere, Category="Kya")
@@ -332,6 +346,8 @@ private:
     TObjectPtr<UKyaLevelBank> ActorMarkerBank;
     /** Per-actor game mesh captured during the last build, keyed by bank actor index. */
     TMap<int32, TArray<FKyaActorMeshSection>> ActorMeshSections;
+    /** Level-set sector ID mapping (descriptor-authoritative), bank to ID. */
+    TMap<int32, TObjectPtr<UKyaLevelBank>> LevelSetSectors;
     /** Editor only: bank notification binding so asset edits and undo refresh the preview. */
     void BindBankNotifications();
     void UnbindBankNotifications();

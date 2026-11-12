@@ -7,7 +7,10 @@
 #include "KyaLevelActorFactory.h"
 #include "KyaLevelBank.h"
 #include "KyaLevelBankFactory.h"
+#include "KyaLevelEditorActions.h"
 #include "KyaLevelPreview.h"
+#include "KyaLevelSet.h"
+#include "KyaLevelSetFactory.h"
 #include "Misc/AutomationTest.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
@@ -718,6 +721,78 @@ bool FKyaExportValidationTest::RunTest(const FString& Parameters)
         AddWarning(TEXT("Set KYA_TEST_BANK to run the real-bank export validation."));
     }
     IFileManager::Get().DeleteDirectory(*TempDirectory, false, true);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaLevelSetTest, "Kya.Editor.LevelSet",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaLevelSetTest::RunTest(const FString& Parameters)
+{
+    UKyaLevelBank* MainBank = MakeKyaTestBank(GetTransientPackage());
+    UKyaLevelBank* SectorBank = MakeKyaTestBank(GetTransientPackage(), 1);
+    SectorBank->SourceFilename = TEXT("X:/levels/level_1/SECT1.BNK");
+
+    UKyaLevelSetFactory* Factory = NewObject<UKyaLevelSetFactory>();
+    UKyaLevelSet* LevelSet = Cast<UKyaLevelSet>(Factory->FactoryCreateNew(UKyaLevelSet::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, GWarn));
+    if (!TestNotNull(TEXT("Level set factory creates a descriptor"), LevelSet)) return false;
+    TestEqual(TEXT("Descriptor starts at the current version"), LevelSet->DescriptorVersion,
+        UKyaLevelSet::CurrentDescriptorVersion);
+
+    LevelSet->MainBank = MainBank;
+    LevelSet->SourceRoot = TEXT("X:/levels/level_1");
+    LevelSet->SetSector(1, SectorBank, TEXT("X:/levels/level_1/SECT1.BNK"), false);
+    TestEqual(TEXT("Sector association added"), LevelSet->Sectors.Num(), 1);
+    TestEqual(TEXT("Sector resolves by id"), LevelSet->FindSector(1), SectorBank);
+    LevelSet->SetSector(1, SectorBank, TEXT("X:/levels/level_1/SECT1.BNK"), true);
+    TestEqual(TEXT("Re-setting a sector does not duplicate it"), LevelSet->Sectors.Num(), 1);
+    TestTrue(TEXT("Manual override is recorded"), LevelSet->Sectors[0].bManualOverride);
+
+    UWorld* World = UWorld::CreateWorld(EWorldType::EditorPreview, false);
+    if (!TestNotNull(TEXT("Create level set world"), World)) return false;
+    AKyaLevelPreview* Preview = World->SpawnActor<AKyaLevelPreview>();
+    if (!TestNotNull(TEXT("Spawn preview for level set"), Preview))
+    {
+        World->DestroyWorld(false);
+        return false;
+    }
+    Preview->LevelSet = LevelSet;
+    Preview->OnConstruction(FTransform::Identity);
+    TestEqual(TEXT("Level set supplies the main bank"), Preview->Bank.Get(), MainBank);
+    TestEqual(TEXT("Level set supplies the sector banks"), Preview->SectorBanks.Num(), 1);
+    if (Preview->SectorBanks.Num() == 1)
+        TestEqual(TEXT("Level set sector bank matches"), Preview->SectorBanks[0].Get(), SectorBank);
+    TestTrue(TEXT("Level set preview creates actor handles"), Preview->GetActorHandleCount() > 0);
+
+    // The descriptor owns the sector ID mapping: a manual association that does not
+    // match the bank's SECT<number> filename must still resolve to the stored ID.
+    UKyaLevelBank* MislabelledSector = MakeKyaTestBank(GetTransientPackage(), 1);
+    MislabelledSector->SourceFilename = TEXT("X:/levels/level_1/SECT3.BNK");
+    LevelSet->SetSector(7, MislabelledSector, MislabelledSector->SourceFilename, true);
+    Preview->OnConstruction(FTransform::Identity);
+    TestEqual(TEXT("Descriptor sector ID overrides the filename"), Preview->ResolveSectorId(*MislabelledSector), 7);
+    TestEqual(TEXT("Unmapped sector banks still use the filename"), Preview->ResolveSectorId(*SectorBank), 1);
+
+    // Discovery refresh keeps manual associations authoritative and never duplicates
+    // the same bank under its filename-derived sector ID.
+    Preview->SectorBanks.AddUnique(MislabelledSector);
+    KyaSyncLevelSetFromPreview(*LevelSet, *Preview, TEXT("X:/levels/level_1"));
+    TestEqual(TEXT("Discovery refresh keeps manual associations"), LevelSet->FindSector(7), MislabelledSector);
+    TestNull(TEXT("Discovery refresh does not duplicate a manual bank under its filename ID"),
+        LevelSet->FindSector(3));
+    TestEqual(TEXT("Discovery refresh keeps discovered associations"), LevelSet->FindSector(1), SectorBank);
+    TestEqual(TEXT("Discovery refresh bumps the revision"), LevelSet->ImportRevision, 1);
+
+    // Changing the descriptor's main bank takes effect on the next build, which is how
+    // a reopened map restores its associations.
+    UKyaLevelBank* OtherMain = MakeKyaTestBank(GetTransientPackage(), 1);
+    LevelSet->MainBank = OtherMain;
+    Preview->OnConstruction(FTransform::Identity);
+    TestEqual(TEXT("Rebuilding follows the descriptor's main bank"), Preview->Bank.Get(), OtherMain);
+
+    Preview->Destroy();
+    World->DestroyWorld(false);
     return true;
 }
 

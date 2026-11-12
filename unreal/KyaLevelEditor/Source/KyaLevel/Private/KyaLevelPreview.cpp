@@ -4,6 +4,7 @@
 #include "KyaSceneRenderSettings.h"
 #include "Misc/Paths.h"
 #include "KyaLevelBank.h"
+#include "KyaLevelSet.h"
 #include "KyaWaypointComponent.h"
 #include "KyaPathPointComponent.h"
 #include "KyaActorMarkerComponent.h"
@@ -157,6 +158,7 @@ void AKyaLevelPreview::PostEditChangeProperty(FPropertyChangedEvent& PropertyCha
 void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
 {
     Super::OnConstruction(Transform);
+    ApplyLevelSet();
     if (Bank && !Bank->HasCurrentImportSchema())
         UE_LOG(LogTemp, Warning, TEXT("KYA_PREVIEW_STALE_SCHEMA bank=%s version=%d current=%d; reimport the bank to refresh typed data"),
             *Bank->GetName(), Bank->ImportSchemaVersion, UKyaLevelBank::CurrentImportSchemaVersion);
@@ -288,7 +290,7 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
     ActiveClipDistance = Bank->SceneEnvironment.ClipDistance > 0 ? Bank->SceneEnvironment.ClipDistance : 500;
     int32 BaseSector = PreviewBaseSector;
     if (BaseSector < 0)
-        for (const auto& Sector : SectorBanks) if (Sector && Sector != Bank) { BaseSector = GetSectorId(*Sector); break; }
+        for (const auto& Sector : SectorBanks) if (Sector && Sector != Bank) { BaseSector = ResolveSectorId(*Sector); break; }
     if (const auto* Settings = SectorSettings.Find(BaseSector)) ActiveClipDistance = Settings->ClipDistance;
     if (bLogSectorDiagnostics)
         UE_LOG(LogTemp, Display, TEXT("KYA_NATIVE_CLIP sector=%d distance=%.3f"), BaseSector, ActiveClipDistance);
@@ -1356,7 +1358,7 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
                             const FString HierarchyKey = MakeHierarchyKey(Sector, Strip.HierarchyOffset);
                             FHierarchySelectionInfo& HierarchyInfo = HierarchySelectionInfo.FindOrAdd(HierarchyKey);
                             HierarchyInfo.Bank = const_cast<UKyaLevelBank*>(Sector);
-                            HierarchyInfo.SectorId = Sector == Bank ? -1 : GetSectorId(*Sector);
+                            HierarchyInfo.SectorId = Sector == Bank ? -1 : ResolveSectorId(*Sector);
                             HierarchyInfo.Offset = Strip.HierarchyOffset;
                             HierarchyInfo.Origin = HierarchyTransform.GetOrigin();
                             ++HierarchyInfo.Strips;
@@ -1417,7 +1419,7 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
             int64 BackgroundVertices = 0, BackgroundTriangles = 0;
             TArray<int32> SectorCameraRelative;
             AddBackgroundFlares(Data, SectorTextureData, SectorMaterialOffsets);
-            const FKyaSectorRenderSettings* Settings = SectorSettings.Find(GetSectorId(*Sector));
+            const FKyaSectorRenderSettings* Settings = SectorSettings.Find(ResolveSectorId(*Sector));
             const uint32 BackgroundFlags = Settings ? Settings->BackgroundFlags : uint32(Bank->SceneEnvironment.BackgroundFlags);
             if (bLogSectorDiagnostics)
                 UE_LOG(LogTemp, Display, TEXT("KYA_SECTOR_RENDER_SETTINGS name=%s flags=%u clip=%.3f source=%s"),
@@ -1526,6 +1528,29 @@ AActor* AKyaLevelPreview::GetActorHandle(int32 ActorIndex) const
 {
     const TObjectPtr<AKyaActorHandle>* Found = ActorHandles.Find(ActorIndex);
     return Found ? Found->Get() : nullptr;
+}
+
+int32 AKyaLevelPreview::ResolveSectorId(const UKyaLevelBank& Sector) const
+{
+    for (const TPair<int32, TObjectPtr<UKyaLevelBank>>& Pair : LevelSetSectors)
+        if (Pair.Value == &Sector) return Pair.Key;
+    return GetSectorId(Sector);
+}
+
+void AKyaLevelPreview::ApplyLevelSet()
+{
+    LevelSetSectors.Reset();
+    if (!LevelSet) return;
+    if (LevelSet->MainBank) Bank = LevelSet->MainBank;
+    SectorBanks.Reset();
+    for (const FKyaLevelSetSector& Sector : LevelSet->Sectors)
+    {
+        if (!Sector.Bank) continue;
+        SectorBanks.AddUnique(Sector.Bank);
+        // The descriptor owns the sector ID mapping: a manually associated bank may
+        // not match the SECT<number> in its filename.
+        LevelSetSectors.Add(Sector.SectorId, Sector.Bank);
+    }
 }
 
 bool AKyaLevelPreview::ShouldActorHandlesRenderGeometry() const
@@ -1669,7 +1694,7 @@ void AKyaLevelPreview::RefreshActorHandles()
 
     TSet<int32> LoadedSectors;
     for (const UKyaLevelBank* Sector : SectorBanks)
-        if (Sector && Sector != Bank) LoadedSectors.Add(GetSectorId(*Sector));
+        if (Sector && Sector != Bank) LoadedSectors.Add(ResolveSectorId(*Sector));
 
     // Sector grouping actors keep the Outliner organized while the handles stay
     // attached (and therefore follow the preview root transform).

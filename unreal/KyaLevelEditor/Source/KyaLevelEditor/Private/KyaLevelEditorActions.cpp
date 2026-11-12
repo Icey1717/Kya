@@ -12,6 +12,8 @@
 #include "KyaBankExport.h"
 #include "KyaLevelBank.h"
 #include "KyaLevelPreview.h"
+#include "KyaLevelSet.h"
+#include "KyaLevelSetFactory.h"
 #include "Logging/MessageLog.h"
 #include "Misc/FileHelper.h"
 #include "Misc/MessageDialog.h"
@@ -66,8 +68,18 @@ UKyaLevelBank* FindBankForSourceFile(const FString& SourceFile)
     return nullptr;
 }
 
-FString LevelExportDirectory(const TArray<UKyaLevelBank*>& Banks)
+int32 GetBankSectorId(const UKyaLevelBank& Bank)
 {
+    FString Name = FPaths::GetBaseFilename(Bank.SourceFilename);
+    if (!Name.RemoveFromStart(TEXT("SECT"), ESearchCase::IgnoreCase))
+    {
+        Name = Bank.GetName();
+        if (!Name.RemoveFromStart(TEXT("SECT"), ESearchCase::IgnoreCase)) return INDEX_NONE;
+    }
+    return Name.IsNumeric() ? FCString::Atoi(*Name) : INDEX_NONE;
+}
+
+FString LevelExportDirectory(const TArray<UKyaLevelBank*>& Banks){
     FString LevelName = TEXT("KyaLevel");
     for (const UKyaLevelBank* Bank : Banks)
         if (Bank && Bank->Entries.ContainsByPredicate([](const FKyaBankEntry& Entry) {
@@ -113,8 +125,90 @@ TArray<UKyaLevelBank*> KyaCollectLevelBanks(const TArray<AKyaLevelPreview*>& Pre
     return Banks;
 }
 
-FKyaBankValidationReport KyaValidateBank(UKyaLevelBank* Bank)
+UKyaLevelSet* KyaCreateLevelSetFromPreview(AKyaLevelPreview* Preview, FString& OutError)
 {
+    if (!Preview || !Preview->Bank)
+    {
+        OutError = TEXT("Select a level preview with a main bank first.");
+        return nullptr;
+    }
+    UKyaLevelBank* MainBank = Preview->Bank;
+    const FString PackagePath = FString::Printf(TEXT("/Game/KyaLevels/%s"), *MainBank->GetName());
+    const FString BaseAssetName = FString::Printf(TEXT("%sLevelSet"), *MainBank->GetName());
+    UKyaLevelSet* LevelSet = nullptr;
+    for (int32 Suffix = 1; Suffix <= 32 && !LevelSet; ++Suffix)
+    {
+        const FString AssetName = Suffix == 1 ? BaseAssetName : FString::Printf(TEXT("%s%d"), *BaseAssetName, Suffix);
+        const FString ObjectPath = FString::Printf(TEXT("%s/%s.%s"), *PackagePath, *AssetName, *AssetName);
+        if (UKyaLevelSet* Existing = LoadObject<UKyaLevelSet>(nullptr, *ObjectPath))
+        {
+            // Two levels can have identically named main banks. Never adopt or
+            // overwrite a descriptor that belongs to another bank.
+            if (!Existing->MainBank || Existing->MainBank == MainBank) LevelSet = Existing;
+            continue;
+        }
+        UKyaLevelSetFactory* Factory = NewObject<UKyaLevelSetFactory>();
+        IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
+        LevelSet = Cast<UKyaLevelSet>(AssetTools.CreateAsset(AssetName, PackagePath,
+            UKyaLevelSet::StaticClass(), Factory));
+    }
+    if (!LevelSet)
+    {
+        OutError = TEXT("Could not create a level set asset under /Game/KyaLevels.");
+        return nullptr;
+    }
+
+    LevelSet->Modify();
+    LevelSet->DescriptorVersion = UKyaLevelSet::CurrentDescriptorVersion;
+    LevelSet->MainBank = MainBank;
+    LevelSet->SourceRoot = FPaths::GetPath(MainBank->SourceFilename);
+    LevelSet->Sectors.Reset();
+    for (const TObjectPtr<UKyaLevelBank>& SectorBank : Preview->SectorBanks)
+        if (SectorBank) LevelSet->SetSector(GetBankSectorId(*SectorBank), SectorBank, SectorBank->SourceFilename, false);
+    ++LevelSet->ImportRevision;
+    LevelSet->MarkPackageDirty();
+
+    Preview->Modify();
+    Preview->LevelSet = LevelSet;
+    Preview->ApplyLevelSet();
+    Preview->RebuildFromBank();
+    UE_LOG(LogTemp, Display, TEXT("KYA_LEVEL_SET %s main=%s sectors=%d"), *LevelSet->GetPathName(),
+        *MainBank->GetName(), LevelSet->Sectors.Num());
+    return LevelSet;
+}
+
+void KyaSyncLevelSetFromPreview(UKyaLevelSet& LevelSet, AKyaLevelPreview& Preview, const FString& SourceDirectory)
+{
+    LevelSet.Modify();
+    LevelSet.MainBank = Preview.Bank;
+    if (!SourceDirectory.IsEmpty()) LevelSet.SourceRoot = SourceDirectory;
+
+    TArray<FKyaLevelSetSector> Preserved;
+    TSet<int32> ManualIds;
+    TSet<const UKyaLevelBank*> ManualBanks;
+    for (const FKyaLevelSetSector& Sector : LevelSet.Sectors)
+    {
+        if (!Sector.bManualOverride || !Sector.Bank) continue;
+        Preserved.Add(Sector);
+        ManualIds.Add(Sector.SectorId);
+        ManualBanks.Add(Sector.Bank);
+    }
+    // Manual associations are authoritative for their sector ID, and their bank must
+    // not also be added under its filename-derived ID.
+    LevelSet.Sectors = Preserved;
+    for (const TObjectPtr<UKyaLevelBank>& SectorBank : Preview.SectorBanks)
+    {
+        if (!SectorBank) continue;
+        if (ManualBanks.Contains(SectorBank.Get())) continue;
+        const int32 SectorId = GetBankSectorId(*SectorBank);
+        if (ManualIds.Contains(SectorId)) continue;
+        LevelSet.SetSector(SectorId, SectorBank, SectorBank->SourceFilename, false);
+    }
+    ++LevelSet.ImportRevision;
+    LevelSet.MarkPackageDirty();
+}
+
+FKyaBankValidationReport KyaValidateBank(UKyaLevelBank* Bank){
     FKyaBankValidationReport Report;
     Report.Bank = Bank;
     if (!Bank)
@@ -319,6 +413,11 @@ FKyaSectorDiscoveryResult KyaDiscoverSectors(AKyaLevelPreview* Preview, bool bIm
         }
 
     if (Preview->Bank) Preview->SectorBanks.RemoveAll([](const TObjectPtr<UKyaLevelBank>& Bank) { return !Bank; });
+
+    // Keep the persisted descriptor in sync, preserving explicit manual associations.
+    if (UKyaLevelSet* LevelSet = Preview->LevelSet)
+        KyaSyncLevelSetFromPreview(*LevelSet, *Preview, SourceDirectory);
+
     Preview->RebuildFromBank();
 
     FMessageLog Log("KyaLevelEditor");

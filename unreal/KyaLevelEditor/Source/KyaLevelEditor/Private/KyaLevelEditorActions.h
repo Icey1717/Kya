@@ -4,6 +4,7 @@
 
 class AKyaLevelPreview;
 class UKyaLevelBank;
+class UKyaLevelSet;
 
 /** Per-bank validation report used by the Validate/Export editor commands. */
 struct FKyaBankValidationReport
@@ -38,6 +39,16 @@ struct FKyaSectorDiscoveryResult
     TArray<FString> Messages;
     FString Summary() const;
 };
+
+/** Create (or reuse) a UKyaLevelSet for the preview's bank and associations. */
+UKyaLevelSet* KyaCreateLevelSetFromPreview(AKyaLevelPreview* Preview, FString& OutError);
+
+/**
+ * Refresh a level set from a preview's current associations. Manual overrides keep
+ * their sector ID and bank; a bank already mapped manually is never also inserted
+ * under its filename-derived ID.
+ */
+void KyaSyncLevelSetFromPreview(UKyaLevelSet& LevelSet, AKyaLevelPreview& Preview, const FString& SourceDirectory);
 
 /**
  * Discover sibling SECT<digits>.BNK files next to the preview's main bank, reuse

@@ -125,6 +125,14 @@ Last updated: 2026-11-12.
   being adopted.
 - `UKyaLevelPreviewFactory` (auto-registered `UActorFactory`) lets a bank asset be
   dragged into the viewport to place a configured `AKyaLevelPreview`.
+- `UKyaLevelSet` persists a level's main bank, sector associations (id, bank,
+  source filename, manual-override flag), source root and import revision as an
+  editor data asset, so reopening a map restores the level without re-running
+  discovery. The preview copies the descriptor into its editable arrays on build
+  and uses its ID-to-bank mapping for sector lookup, so a manual association does
+  not have to match the bank's filename. `Kya.CreateLevelSet` creates/updates the
+  descriptor (never overwriting another bank's descriptor) and discovery refreshes
+  it while keeping manual associations authoritative.
 
 ## 3. Verification
 
@@ -149,7 +157,8 @@ $env:KYA_TEST_BANK = 'G:\repos\Kya\assets\CDEURO\LEVEL\LEVEL_1\LEVEL.BNK'
 Results: `Kya.Bank.LevelOneRoundTrip`, `Kya.Bank.SmallBankRoundTrip`,
 `Kya.Editor.ActorTransformConversion`, `Kya.Editor.ActorEditService`,
 `Kya.Editor.ActorHandleTransform`, `Kya.Editor.ActorOwnedGeometry`,
-`Kya.Editor.ExportValidation` all `Success`.
+`Kya.Editor.ExportValidation`, `Kya.Editor.LevelPreviewPlacement` and
+`Kya.Editor.LevelSet` all `Success`.
 
 Coverage added by the new tests:
 
@@ -172,7 +181,13 @@ Coverage added by the new tests:
 - export: unsupported bank rejected before writing, sentinel file preserved, no
   staging file left behind, duplicate destinations rejected, and a real bank
   build → stage → publish → reimport round trip with the same actor count, byte
-  size and first-record values.
+  size and first-record values;
+- level set: factory creation, sector add/update/manual flags, descriptor-driven
+  preview bank/sector/handle setup, descriptor sector IDs overriding filenames,
+  discovery-refresh preservation without filename-derived duplicates, and
+  following a changed main bank on rebuild;
+- placement: the actor factory only accepts bank assets, spawns a preview that
+  uses the dragged bank and builds its scene and handles.
 
 ## 4. Not implemented yet
 
