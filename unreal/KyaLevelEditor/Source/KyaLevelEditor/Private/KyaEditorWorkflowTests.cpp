@@ -1644,6 +1644,204 @@ bool FKyaStructuralEditGateTest::RunTest(const FString& Parameters)
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaViewportClickSelectionTest, "Kya.Editor.ViewportClickSelection",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaViewportClickSelectionTest::RunTest(const FString& Parameters)
+{
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    UKyaLevelBank* Bank = MakeKyaTestBank(GetTransientPackage());
+
+    UWorld* World = UWorld::CreateWorld(EWorldType::EditorPreview, false);
+    if (!TestNotNull(TEXT("Create click world"), World)) return false;
+    AKyaLevelPreview* Preview = World->SpawnActor<AKyaLevelPreview>();
+    if (!TestNotNull(TEXT("Spawn click preview"), Preview))
+    {
+        World->DestroyWorld(false);
+        return false;
+    }
+    Preview->Bank = Bank;
+    Preview->bShowRebuildProgress = false;
+    Preview->bSpawnActorHandles = true;
+    Preview->bShowActorMeshesOnHandles = false;
+    Preview->OnConstruction(FTransform::Identity);
+
+    AKyaActorHandle* First = Cast<AKyaActorHandle>(Preview->GetActorHandle(0));
+    AKyaActorHandle* Second = Cast<AKyaActorHandle>(Preview->GetActorHandle(1));
+    if (!TestNotNull(TEXT("First click handle exists"), First) ||
+        !TestNotNull(TEXT("Second click handle exists"), Second))
+    {
+        Preview->Destroy();
+        World->DestroyWorld(false);
+        return false;
+    }
+
+    // Two material strips per actor keep batching intact; the pick must not depend on
+    // a broad proxy volume.
+    const auto MakeQuad = [](const FVector& Center, float HalfSize)
+    {
+        FKyaActorMeshSection Section;
+        Section.Positions = {
+            Center + FVector(-HalfSize, -HalfSize, 0.0),
+            Center + FVector(HalfSize, -HalfSize, 0.0),
+            Center + FVector(HalfSize, HalfSize, 0.0),
+            Center + FVector(-HalfSize, HalfSize, 0.0) };
+        Section.Triangles = { 0, 1, 2, 0, 2, 3 };
+        return Section;
+    };
+    First->SetActorMeshSections({
+        MakeQuad(FVector(0.0, 0.0, 0.0), 25.0), MakeQuad(FVector(200.0, 0.0, 0.0), 25.0) });
+    Second->SetActorMeshSections({ MakeQuad(FVector(0.0, 0.0, 0.0), 25.0) });
+    TestEqual(TEXT("The first actor keeps two material sections"),
+        First->GetRenderedSectionCount(), 2);
+
+    const auto LocalToWorld = [](const AKyaActorHandle* Handle, const FVector& Local)
+    {
+        return Handle->ActorMesh->GetComponentTransform().TransformPosition(Local);
+    };
+    const auto CastDownAt = [Preview](const FVector& WorldTarget)
+    {
+        return Preview->HitTestActorMesh(WorldTarget + FVector(0.0, 0.0, 1000.0), FVector(0.0, 0.0, -1.0));
+    };
+
+    // --- any strip of the actor resolves to the owning record ---------------------
+    TestEqual(TEXT("Clicking the first strip selects the actor"),
+        CastDownAt(LocalToWorld(First, FVector(0.0, 0.0, 0.0))), First);
+    const FString FirstLabel = First->GetActorLabel();
+    TestEqual(TEXT("Clicking another strip selects the same actor"),
+        CastDownAt(LocalToWorld(First, FVector(200.0, 0.0, 0.0))), First);
+    TestEqual(TEXT("Clicking a second actor selects that actor"),
+        CastDownAt(LocalToWorld(Second, FVector(0.0, 0.0, 0.0))), Second);
+    TestNull(TEXT("A ray that misses every actor selects nothing"),
+        Preview->HitTestActorMesh(FVector(0.0, 0.0, 1.0e6), FVector(0.0, 0.0, 1.0)));
+
+    // --- nearest visible strip wins ------------------------------------------------
+    {
+        const FVector Target = LocalToWorld(First, FVector(200.0, 0.0, 0.0)) + FVector(0.0, 0.0, -200.0);
+        Second->SetActorMeshSections({ MakeQuad(
+            Second->ActorMesh->GetComponentTransform().InverseTransformPosition(Target), 25.0) });
+        TestEqual(TEXT("The nearest strip wins over an occluded actor"),
+            CastDownAt(LocalToWorld(First, FVector(200.0, 0.0, 0.0))), First);
+    }
+
+    // --- selection highlights the full mesh and gives Focus Selected bounds --------
+    Preview->SetGeneratedActorHighlighted(First, true);
+    TestTrue(TEXT("The picked actor is highlighted"), First->IsMeshHighlighted());
+    TestFalse(TEXT("Other actors are not highlighted"), Second->IsMeshHighlighted());
+    const FBox FocusBounds = First->GetRenderedMeshBounds();
+    TestTrue(TEXT("Focus bounds cover the first strip"),
+        FocusBounds.IsInsideOrOn(LocalToWorld(First, FVector(0.0, 0.0, 0.0))));
+    TestTrue(TEXT("Focus bounds cover the second strip"),
+        FocusBounds.IsInsideOrOn(LocalToWorld(First, FVector(200.0, 0.0, 0.0))));
+    TestFalse(TEXT("Focus bounds exclude the other actor"),
+        FocusBounds.IsInsideOrOn(LocalToWorld(Second, FVector(0.0, 0.0, 0.0))));
+
+    if (GEditor)
+    {
+        GEditor->SelectNone(false, true, false);
+        const FVector ClickOrigin = LocalToWorld(First, FVector(200.0, 0.0, 0.0)) + FVector(0.0, 0.0, 1000.0);
+        AKyaActorHandle* Picked = KyaSelectRenderedActorAt(Preview, ClickOrigin, FVector(0.0, 0.0, -1.0));
+        TestEqual(TEXT("The click path selects the hit actor"), Picked, First);
+        TestTrue(TEXT("The clicked actor is selected so Details follows"), First->IsSelected());
+        TestTrue(TEXT("The click path highlights every material strip"), First->IsMeshHighlighted());
+        TestEqual(TEXT("Highlighting keeps the material batching"),
+            First->GetRenderedSectionCount(), 2);
+        TestFalse(TEXT("Clicking clears the previous highlight"), Second->IsMeshHighlighted());
+    }
+    TestEqual(TEXT("Clicking does not change the actor label"), First->GetActorLabel(), FirstLabel);
+
+    // --- nearest hit across previews (the cursor path uses this) -------------------
+    {
+        AKyaLevelPreview* SecondPreview = World->SpawnActor<AKyaLevelPreview>();
+        if (TestNotNull(TEXT("Second preview spawns"), SecondPreview))
+        {
+            UKyaLevelBank* SecondBank = MakeKyaTestBank(GetTransientPackage());
+            SecondPreview->Bank = SecondBank;
+            SecondPreview->bShowRebuildProgress = false;
+            SecondPreview->bSpawnActorHandles = true;
+            SecondPreview->OnConstruction(FTransform::Identity);
+            AKyaActorHandle* Third = Cast<AKyaActorHandle>(SecondPreview->GetActorHandle(0));
+            if (TestNotNull(TEXT("Second preview handle exists"), Third))
+            {
+                const FVector RayStart = LocalToWorld(First, FVector(200.0, 0.0, 0.0)) + FVector(0.0, 0.0, 1000.0);
+                const FVector NearPoint = RayStart + FVector(0.0, 0.0, -500.0);
+                Third->SetActorMeshSections({ MakeQuad(
+                    Third->ActorMesh->GetComponentTransform().InverseTransformPosition(NearPoint), 25.0) });
+                AKyaLevelPreview* Owner = nullptr;
+                TestEqual(TEXT("The nearest actor across previews wins"),
+                    KyaHitTestRenderedActorAcrossPreviews({ Preview, SecondPreview }, RayStart,
+                        FVector(0.0, 0.0, -1.0), &Owner), Third);
+                TestEqual(TEXT("The owning preview is reported"), Owner, SecondPreview);
+
+                const FVector FarPoint = RayStart + FVector(0.0, 0.0, -1400.0);
+                Third->SetActorMeshSections({ MakeQuad(
+                    Third->ActorMesh->GetComponentTransform().InverseTransformPosition(FarPoint), 25.0) });
+                Owner = nullptr;
+                TestEqual(TEXT("A farther preview does not occlude the nearer actor"),
+                    KyaHitTestRenderedActorAcrossPreviews({ Preview, SecondPreview }, RayStart,
+                        FVector(0.0, 0.0, -1.0), &Owner), First);
+                TestEqual(TEXT("The owning preview follows the nearest hit"), Owner, Preview);
+            }
+            SecondPreview->Destroy();
+        }
+    }
+
+    // Plain editor selection (viewport or Outliner) drives the same full-mesh highlight.
+    if (GEditor)
+    {
+        GEditor->SelectNone(false, true, false);
+        GEditor->NoteSelectionChange();
+        TestFalse(TEXT("Clearing the selection clears the highlight"), First->IsMeshHighlighted());
+        GEditor->SelectActor(First, true, true);
+        TestTrue(TEXT("Selection changes highlight the full mesh"), First->IsMeshHighlighted());
+        TestEqual(TEXT("Selection highlights every material section"),
+            First->GetRenderedSectionCount(), 2);
+        GEditor->SelectNone(false, true, false);
+        GEditor->NoteSelectionChange();
+    }
+
+    // --- locked representations are not pickable -----------------------------------
+    First->bSelectionLocked = true;
+    TestNull(TEXT("Locked actor geometry cannot be picked"),
+        CastDownAt(LocalToWorld(First, FVector(0.0, 0.0, 0.0))));
+    First->bSelectionLocked = false;
+
+    // --- hidden or isolated geometry does not win the pick -------------------------
+    Preview->SetGeneratedActorTemporarilyHidden(First, true);
+    TestNull(TEXT("Temporarily hidden geometry cannot be picked"),
+        CastDownAt(LocalToWorld(First, FVector(0.0, 0.0, 0.0))));
+    Preview->SetGeneratedActorTemporarilyHidden(First, false);
+
+    Preview->IsolateGeneratedActors({ Second });
+    TestNull(TEXT("An isolated-out actor cannot be picked"),
+        CastDownAt(LocalToWorld(First, FVector(0.0, 0.0, 0.0))));
+    Preview->ClearGeneratedActorIsolation();
+
+    if (First->ActorMesh)
+    {
+        First->ActorMesh->SetMeshSectionVisible(0, false);
+        TestNull(TEXT("A hidden material strip cannot be picked"),
+            CastDownAt(LocalToWorld(First, FVector(0.0, 0.0, 0.0))));
+        TestEqual(TEXT("The remaining visible strip still picks the actor"),
+            CastDownAt(LocalToWorld(First, FVector(200.0, 0.0, 0.0))), First);
+        First->ActorMesh->SetMeshSectionVisible(0, true);
+    }
+
+    // The interactive entry point degrades gracefully when no level viewport exists.
+    FString CursorError;
+    TestNull(TEXT("Cursor picking without a level viewport selects nothing"),
+        KyaSelectRenderedActorAtCursor(&CursorError));
+    TestTrue(TEXT("Cursor picking explains why it failed"), !CursorError.IsEmpty());
+
+    First->ClearActorMesh();
+    Second->ClearActorMesh();
+    Preview->Destroy();
+    World->DestroyWorld(false);
+    Service.Reset();
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaMilestoneDGateTest, "Kya.Editor.MilestoneDGate",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 

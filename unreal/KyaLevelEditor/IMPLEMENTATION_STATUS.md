@@ -147,6 +147,17 @@ Last updated: 2026-11-12.
   references produce blocking diagnostics whose message names the actor and property.
   Spatial handle labels now include the game-space position, so waypoints and path
   points are identifiable in the Outliner without knowing their indices.
+- Viewport picking and highlight: `AKyaLevelPreview::HitTestActorMesh` ray-casts
+  every rendered material strip (nearest hit, no proxy volumes) and skips locked,
+  hidden, isolated-out and invisible-section geometry;
+  `KyaHitTestRenderedActorAcrossPreviews`/`KyaSelectRenderedActorAtCursor` resolve
+  the nearest hit across previews from the level viewport cursor
+  (`Kya.SelectAtCursor`, **Select Actor Under Cursor**). `AKyaActorHandle` highlights
+  all sections via custom depth (batching preserved) and reports whole-mesh bounds for
+  Focus Selected; the preview follows editor selection changes so the highlight stays
+  in sync. `Kya.Editor.ViewportClickSelection` covers per-strip picking, misses,
+  nearest-strip and cross-preview occlusion, highlight/bounds, hidden and locked
+  rejection; README documents the manual mouse/gizmo acceptance pass.
 - `FKyaLevelBankReimportHandler` implements `FReimportHandler`: parses into a
   temporary bank, only replaces the asset on success, asks before discarding dirty
   changes (refuses in unattended mode), updates provenance, bumps the edit
@@ -385,7 +396,8 @@ Results: `Kya.Bank.LevelOneRoundTrip`, `Kya.Bank.SmallBankRoundTrip`,
 `Kya.Bank.SelectedActorRoundTrip`, `Kya.Editor.RunningPortExportValidation`,
 `Kya.Editor.StructuralEditGate`, `Kya.Editor.ExportAcceptance`,
 `Kya.Editor.MilestoneAGate`, `Kya.Editor.MilestoneBGate`,
-`Kya.Editor.MilestoneCGate` and `Kya.Editor.MilestoneDGate` all `Success`.
+`Kya.Editor.MilestoneCGate`, `Kya.Editor.MilestoneDGate` and
+`Kya.Editor.ViewportClickSelection` all `Success`.
 
 Coverage added by the new tests:
 

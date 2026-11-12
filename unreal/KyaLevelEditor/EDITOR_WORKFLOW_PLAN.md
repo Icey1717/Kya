@@ -47,7 +47,7 @@ This is a source review of the current working tree, including the in-progress a
 
 - [x] Promote actor representations to the default editing experience. Retain diagnostic marker toggles, but remove the requirement to enable stand-ins before selecting game actors.
 - [x] Prototype rendering each actor's geometry on components owned by its editor representation. Keep world geometry batching separate. If per-actor components are too expensive, implement a tested hit-proxy/selection mapping that still selects a stable actor representation.
-- [ ] Ensure clicking any strip of an actor selects that actor, highlights its full mesh, exposes its Details and gives useful bounds for Focus Selected. Preserve material batching within an actor and avoid invisible broad selection volumes masking neighbors.
+- [x] Ensure clicking any strip of an actor selects that actor, highlights its full mesh, exposes its Details and gives useful bounds for Focus Selected. Preserve material batching within an actor and avoid invisible broad selection volumes masking neighbors.
 - [x] Give meshless actors meaningful selectable icons or bounds with class/name tooltips. Support overlapping actor selection and temporarily hidden actors through the Outliner.
 - [x] Implement transform writeback for translate, rotate and scale using the editor's interactive movement lifecycle. Update the visible actor during drag and commit the supported bank values at the appropriate transaction boundary.
 - [x] Centralize forward and inverse position/rotation/scale conversion: game Y-up coordinates, meters versus centimeters, preview placement and class rotation semantics. Preserve original values when no actual edit occurs.
@@ -127,7 +127,7 @@ This is a source review of the current working tree, including the in-progress a
 - [x] **Milestone D — broader authoring:** complete Outliner policies, spatial record editing, diagnostics and incremental updates. Gate: a representative editing session requires neither numeric actor indices nor capture-script setup.
 - [ ] **Milestone E — structural authoring:** enable new/deleted/duplicated records only after the bank writer and reference-remapping tests support them.
 - [x] Add focused automation alongside each milestone in `KyaLevelBankTests.cpp` and editor-focused tests where needed. Cover undo grouping, map reload, sector identity collisions, selected-object refresh, unsupported commands and interrupted export.
-- [ ] Include real viewport click/gizmo tests or a documented manual acceptance pass. Existing scripted selection proves selection APIs work; it does not prove clicking visible actor geometry works.
+- [x] Include real viewport click/gizmo tests or a documented manual acceptance pass. Existing scripted selection proves selection APIs work; it does not prove clicking visible actor geometry works.
 - [x] Update README and COVERAGE after each milestone to state actual behavior, remaining restrictions and the standard user workflow. Keep capture/render-comparison instructions available as diagnostics.
 
 ## Implementation boundaries

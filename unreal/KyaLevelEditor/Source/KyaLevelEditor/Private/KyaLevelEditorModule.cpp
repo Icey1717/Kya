@@ -276,6 +276,16 @@ void AddKyaMenuEntries(FToolMenuSection& Section)
         FText::FromString(TEXT("Stop drawing every path; the Empty Preview Path Index guide still applies.")),
         FSlateIcon(),
         FUIAction(FExecuteAction::CreateLambda([]() { KyaSetAllPathsCommand({ TEXT("0") }); })));
+    Section.AddMenuEntry("KyaSelectAtCursor",
+        FText::FromString(TEXT("Select Actor Under Cursor")),
+        FText::FromString(TEXT("Pick the actor whose rendered mesh is under the level viewport cursor and highlight its whole mesh.")),
+        FSlateIcon(),
+        FUIAction(FExecuteAction::CreateLambda([]()
+        {
+            FString Error;
+            if (!KyaSelectRenderedActorAtCursor(&Error))
+                UE_LOG(LogTemp, Display, TEXT("KYA_SELECT_AT_CURSOR %s"), *Error);
+        })));
     Section.AddMenuEntry("KyaAuthoringVisibility",
         FText::FromString(TEXT("Enable Authoring Visibility")),
         FText::FromString(TEXT("Keep actors from unloaded sectors and distance-culled scenery visible for authoring. "
@@ -529,6 +539,16 @@ FAutoConsoleCommand KyaClearPreviewCameraConsoleCommand(
     FConsoleCommandWithArgsDelegate::CreateLambda([](const TArray<FString>&)
     {
         KyaClearPreviewCamera();
+    }));
+
+FAutoConsoleCommand KyaSelectAtCursorConsoleCommand(
+    TEXT("Kya.SelectAtCursor"),
+    TEXT("Select the actor whose rendered mesh is under the level viewport cursor and highlight its whole mesh."),
+    FConsoleCommandDelegate::CreateLambda([]()
+    {
+        FString Error;
+        if (!KyaSelectRenderedActorAtCursor(&Error))
+            UE_LOG(LogTemp, Display, TEXT("KYA_SELECT_AT_CURSOR %s"), *Error);
     }));
 
 FAutoConsoleCommand KyaAuthoringVisibilityConsoleCommand(

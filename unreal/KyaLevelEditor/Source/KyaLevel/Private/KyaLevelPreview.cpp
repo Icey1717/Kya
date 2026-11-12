@@ -35,6 +35,7 @@
 #include "Materials/MaterialInstanceDynamic.h"
 #if WITH_EDITOR
 #include "Engine/Engine.h"
+#include "Engine/Selection.h"
 #include "Editor.h"
 #include "LevelEditorViewport.h"
 #include "Materials/MaterialExpressionTextureSampleParameter2D.h"
@@ -1839,6 +1840,9 @@ void AKyaLevelPreview::Destroyed()
     // Stop any in-flight decode and wait for every worker before pooling its event.
     if (DecodeCancelToken.IsValid()) DecodeCancelToken->Increment();
     DrainAsyncDecodeEvents(true);
+#if WITH_EDITOR
+    UnbindEditorSelection();
+#endif
     GeometryDecodeCache.Reset();
     GeometryDecodeCacheGeneration.Reset();
     UnbindBankNotifications();
@@ -2629,11 +2633,102 @@ void AKyaLevelPreview::ApplyGeneratedActorPresentation()
     for (const TPair<int32, TObjectPtr<AKyaActorGroup>>& Pair : ActorSectorGroups) Apply(Pair.Value);
     for (const TPair<int32, TObjectPtr<AKyaActorGroup>>& Pair : PathGroups) Apply(Pair.Value);
     for (const TPair<FString, TObjectPtr<AKyaSceneVisualizer>>& Pair : SceneVisualizers) Apply(Pair.Value);
+#if WITH_EDITOR
+    BindEditorSelection();
+    RefreshGeneratedActorHighlights();
+#endif
+}
+
+void AKyaLevelPreview::SetGeneratedActorHighlighted(AKyaActorHandle* Handle, bool bHighlighted)
+{
+    if (IsValid(Handle)) Handle->SetMeshHighlighted(bHighlighted);
+}
+
+void AKyaLevelPreview::RefreshGeneratedActorHighlights()
+{
+    for (const TPair<int32, TObjectPtr<AKyaActorHandle>>& Pair : ActorHandles)
+        if (IsValid(Pair.Value)) Pair.Value->SetMeshHighlighted(Pair.Value->IsSelected());
+}
+
+#if WITH_EDITOR
+void AKyaLevelPreview::BindEditorSelection()
+{
+    if (!GEditor || EditorSelectionChangedHandle.IsValid()) return;
+    if (USelection* SelectedActors = GEditor->GetSelectedActors())
+        EditorSelectionChangedHandle = SelectedActors->SelectionChangedEvent.AddUObject(
+            this, &AKyaLevelPreview::HandleEditorSelectionChanged);
+}
+
+void AKyaLevelPreview::UnbindEditorSelection()
+{
+    if (!EditorSelectionChangedHandle.IsValid()) return;
+    if (GEditor)
+    {
+        if (USelection* SelectedActors = GEditor->GetSelectedActors())
+            SelectedActors->SelectionChangedEvent.Remove(EditorSelectionChangedHandle);
+    }
+    EditorSelectionChangedHandle.Reset();
+}
+
+void AKyaLevelPreview::HandleEditorSelectionChanged(UObject* NewSelection)
+{
+    // Selection drives the full-mesh highlight, so any change (viewport click,
+    // Outliner, script) keeps every strip of the picked actor lit.
+    RefreshGeneratedActorHighlights();
+}
+#endif
+
+AKyaActorHandle* AKyaLevelPreview::HitTestActorMesh(const FVector& WorldOrigin, const FVector& WorldDirection,
+    float MaxDistance, float* OutDistance) const
+{
+    if (OutDistance) *OutDistance = -1.0f;
+    const FVector Direction = WorldDirection.GetSafeNormal();
+    if (Direction.IsNearlyZero() || MaxDistance <= 0.0f) return nullptr;
+    const FVector SegmentEnd = WorldOrigin + Direction * double(MaxDistance);
+
+    AKyaActorHandle* Best = nullptr;
+    double BestDistance = double(MaxDistance);
+    for (const TPair<int32, TObjectPtr<AKyaActorHandle>>& Pair : ActorHandles)
+    {
+        AKyaActorHandle* Handle = Pair.Value;
+        if (!IsValid(Handle) || !Handle->IsSelectable()) continue;
+        // Hidden/isolated representations must not win the pick.
+        if (Handle->IsTemporarilyHiddenInEditor() || Handle->IsHidden()) continue;
+        UProceduralMeshComponent* ProceduralMesh = Handle->ActorMesh;
+        if (!ProceduralMesh || Handle->GetRenderedSectionCount() == 0) continue;
+        const FTransform MeshTransform = ProceduralMesh->GetComponentTransform();
+        for (int32 Section = 0; Section < ProceduralMesh->GetNumSections(); ++Section)
+        {
+            const FProcMeshSection* Data = ProceduralMesh->GetProcMeshSection(Section);
+            if (!Data || !Data->bSectionVisible) continue;
+            const TArray<FProcMeshVertex>& Vertices = Data->ProcVertexBuffer;
+            const TArray<uint32>& Indices = Data->ProcIndexBuffer;
+            for (int32 Index = 0; Index + 2 < Indices.Num(); Index += 3)
+            {
+                const uint32 I0 = Indices[Index];
+                const uint32 I1 = Indices[Index + 1];
+                const uint32 I2 = Indices[Index + 2];
+                if (!Vertices.IsValidIndex(int32(I0)) || !Vertices.IsValidIndex(int32(I1)) ||
+                    !Vertices.IsValidIndex(int32(I2))) continue;
+                const FVector A = MeshTransform.TransformPosition(FVector(Vertices[int32(I0)].Position));
+                const FVector B = MeshTransform.TransformPosition(FVector(Vertices[int32(I1)].Position));
+                const FVector C = MeshTransform.TransformPosition(FVector(Vertices[int32(I2)].Position));
+                FVector Intersection, Normal;
+                if (!FMath::SegmentTriangleIntersection(WorldOrigin, SegmentEnd, A, B, C, Intersection, Normal))
+                    continue;
+                const double Distance = FVector::Dist(WorldOrigin, Intersection);
+                if (Distance >= BestDistance) continue;
+                BestDistance = Distance;
+                Best = Handle;
+            }
+        }
+    }
+    if (Best && OutDistance) *OutDistance = float(BestDistance);
+    return Best;
 }
 
 void AKyaLevelPreview::RefreshSpatialHandles()
-{
-    UWorld* World = GetWorld();
+{    UWorld* World = GetWorld();
     const bool bWantPathHandles = bSpawnPathPointHandles || bShowAllPaths;
     if ((!bSpawnWaypointHandles && !bWantPathHandles) || !Bank || !World || World->IsGameWorld())
     {

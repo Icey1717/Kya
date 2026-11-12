@@ -106,6 +106,31 @@ void AKyaActorHandle::SetActorMeshSections(const TArray<FKyaActorMeshSection>& S
     if (Marker) Marker->SetVisibility(bShowIcon && RenderSectionCount == 0);
 }
 
+void AKyaActorHandle::SetMeshHighlighted(bool bHighlighted)
+{
+    bMeshHighlighted = bHighlighted;
+    if (!ActorMesh) return;
+    // Stencil-based editor highlight covers every section, so the whole mesh reads as
+    // one selectable actor even when it is split into material batches.
+    ActorMesh->SetRenderCustomDepth(bHighlighted);
+    ActorMesh->SetCustomDepthStencilValue(bHighlighted ? 1 : 0);
+}
+
+FBox AKyaActorHandle::GetRenderedMeshBounds() const
+{
+    FBox Bounds(ForceInit);
+    if (!ActorMesh) return Bounds;
+    const FTransform MeshTransform = ActorMesh->GetComponentTransform();
+    for (int32 Section = 0; Section < ActorMesh->GetNumSections(); ++Section)
+    {
+        const FProcMeshSection* Data = ActorMesh->GetProcMeshSection(Section);
+        if (!Data) continue;
+        for (const FProcMeshVertex& Vertex : Data->ProcVertexBuffer)
+            Bounds += MeshTransform.TransformPosition(FVector(Vertex.Position));
+    }
+    return Bounds;
+}
+
 void AKyaActorHandle::ClearActorMesh()
 {
     if (ActorMesh) ActorMesh->ClearAllMeshSections();

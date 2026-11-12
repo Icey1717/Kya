@@ -406,12 +406,42 @@ actors, or on every preview in the level when nothing is selected.
 | `Kya.DiscoverSectors [0]` | Find sibling `SECT<digits>.BNK` files next to the main bank's source, reuse already-imported assets by source provenance, and import missing ones into `/Game/KyaLevels/<Level>`. `0` disables importing. Duplicate numeric IDs are reported as ambiguous, actor sector references with no file are reported as missing, destinations already occupied by a bank from a different source are rejected, and cancelling leaves a coherent partial result. |
 | `Kya.CreateLevelSet` | Create or update the persisted `UKyaLevelSet` asset for the selected preview (`/Game/KyaLevels/<Bank>/<Bank>LevelSet`). It records the main bank, sector associations with their source filenames, the source root and an import revision; the preview and `Refresh Sector Discovery` keep it in sync. Descriptor sector IDs are authoritative (a manually associated bank does not have to match its `SECT<number>` filename), and an existing descriptor that belongs to a different main bank is never overwritten. |
 | `Kya.SaveLevel` | Save the bank packages used by the preview (saving Unreal assets is separate from exporting game banks). |
+| `Kya.SelectAtCursor` | Pick the actor whose rendered mesh strip is under the level viewport cursor, select it (so Details follows) and highlight its whole mesh. Also available as **Select Actor Under Cursor** in the `Kya Level` menu. |
 
 The bank assets record `UAssetImportData` provenance, so they can be reimported
 from the Content Browser. Reimport parses the new source into a temporary bank
 first and only replaces the asset when parsing succeeds; a dirty asset asks before
 discarding changes. `Kya.Export` writes `.bnk` files and never overwrites the
 original source bank.
+
+### Manual viewport acceptance pass
+
+Slate mouse input and the transform gizmo widget itself cannot be driven from
+unattended automation, so this short pass covers the interactive path. `Kya.Editor.ViewportClickSelection`
+already proves the mesh hit-test, nearest-strip selection, full-mesh highlight,
+Focus bounds, hidden/locked rejection and the `KyaSelectRenderedActorAt` selection
+path headlessly; the steps below confirm the same behaviour through real viewport
+input.
+
+1. Import a level bank, drag it into the level, enable `Spawn Actor Handles` and
+   `Show All Actor Meshes`, and rebuild the preview.
+2. Click a visible mesh strip. The actor's handle is selected in the Outliner, its
+   Details panel shows the bank record, and every strip of that actor is outlined
+   (selection highlight uses the mesh component's custom depth, not a proxy volume).
+   Repeat on a different strip and on a neighbouring actor to confirm the pick is
+   per-strip and per-actor.
+3. Press `F` (Focus Selected). The camera frames the whole actor mesh, not a strip
+   or a placeholder.
+4. Move the actor with `W`, rotate with `E` where the class supports it and scale
+   with `R` where supported. Details position/rotation/scale update, and editing the
+   same values in Details moves the mesh.
+5. `Ctrl+Z`/`Ctrl+Y`, save the map, close and reopen it, and confirm both Details and
+   the rendered placement agree.
+6. Run `Kya.SelectAtCursor` with the cursor over a mesh and confirm it selects the
+   same actor; with the cursor over empty space it logs `KYA_SELECT_AT_CURSOR` and
+   selects nothing.
+7. Hide, isolate and lock representations (menu or Details) and confirm clicks skip
+   hidden or locked actors and that `Kya.SelectAtCursor` reports no hit.
 
 
 Actor and hierarchy handles can also be selected from scripts through the editor

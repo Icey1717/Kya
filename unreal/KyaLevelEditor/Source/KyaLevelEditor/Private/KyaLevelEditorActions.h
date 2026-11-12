@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 
 class AKyaLevelPreview;
+class AKyaActorHandle;
 class UKyaLevelBank;
 class UKyaLevelSet;
 
@@ -79,6 +80,27 @@ bool KyaSaveLevelBanks(const TArray<UKyaLevelBank*>& Banks, FString& OutError);
 void KyaSetAuthoringVisibility(bool bEnabled);
 /** Clear the comparison/capture camera lock on every target preview. */
 void KyaClearPreviewCamera();
+
+/**
+ * Select the actor whose rendered geometry the ray hits (the viewport click path):
+ * hit-tests every mesh strip, selects the owning handle and highlights its full mesh.
+ * Returns the handle, or null when nothing selectable was hit.
+ */
+AKyaActorHandle* KyaSelectRenderedActorAt(AKyaLevelPreview* Preview, const FVector& WorldOrigin,
+    const FVector& WorldDirection);
+
+/**
+ * Nearest visible actor geometry along a ray across several previews. Fills
+ * OutPreview with the owning preview so selection and highlight run on the right one.
+ */
+AKyaActorHandle* KyaHitTestRenderedActorAcrossPreviews(const TArray<AKyaLevelPreview*>& Previews,
+    const FVector& WorldOrigin, const FVector& WorldDirection, AKyaLevelPreview** OutPreview = nullptr);
+
+/**
+ * Select the actor under the level viewport cursor using the same mesh hit-test,
+ * i.e. the interactive click entry point. Returns null when nothing is under it.
+ */
+AKyaActorHandle* KyaSelectRenderedActorAtCursor(FString* OutError = nullptr);
 
 /** Export the banks to <ProjectSaved>/KyaExport/<level>/ and log per-file outcomes. */
 bool KyaExportLevelBanks(const TArray<UKyaLevelBank*>& Banks, const FString& DestinationDirectory,

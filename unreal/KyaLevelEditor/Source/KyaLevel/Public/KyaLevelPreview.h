@@ -369,6 +369,22 @@ public:
     bool IsGeneratedActorIsolated(const AActor* Actor) const;
     /** Reapply temporary visibility and selection-lock state after a build. */
     void ApplyGeneratedActorPresentation();
+
+    /**
+     * Pick the visible actor geometry a viewport click would hit: ray-casts every
+     * rendered mesh section (all material strips) of the owned handles and returns the
+     * nearest selectable hit. Locked/hidden/handle-less representations are skipped.
+     */
+    AKyaActorHandle* HitTestActorMesh(const FVector& WorldOrigin, const FVector& WorldDirection,
+        float MaxDistance = 1.0e7f, float* OutDistance = nullptr) const;
+    /** Highlight the full mesh of one generated actor and clear the others. */
+    void SetGeneratedActorHighlighted(AKyaActorHandle* Handle, bool bHighlighted);
+    /** Sync every handle's highlight with the current editor selection. */
+    void RefreshGeneratedActorHighlights();
+    /** Follow editor selection changes so the picked mesh stays highlighted. */
+    void BindEditorSelection();
+    void UnbindEditorSelection();
+    void HandleEditorSelectionChanged(UObject* NewSelection);
 #endif
 
     /** True when actor geometry belongs to the actor handles and must not enter the shared mesh. */
@@ -634,6 +650,8 @@ private:
         TConstArrayView<uint8> Data, int32 MaxLods, TArray<FKyaG3DDecodedStrip>& Scratch,
         const TArray<FKyaG3DDecodedStrip>*& OutStrips);
     void ResetGeometryDecodeCache(const UKyaLevelBank* Source);
+    /** Editor selection-changed subscription used for full-mesh highlights. */
+    FDelegateHandle EditorSelectionChangedHandle;
     bool bCancelRebuildRequested = false;
     void StartAsyncActorDecode();
     /** Recycle decode events; only waits when bWait (shutdown), never in the editor. */

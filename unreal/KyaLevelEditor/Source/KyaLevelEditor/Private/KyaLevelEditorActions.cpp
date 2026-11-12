@@ -4,6 +4,7 @@
 #include "AssetToolsModule.h"
 #include "AssetImportTask.h"
 #include "Editor.h"
+#include "LevelEditorViewport.h"
 #include "Editor/EditorEngine.h"
 #include "FileHelpers.h"
 #include "Engine/Selection.h"
@@ -687,9 +688,70 @@ void KyaClearPreviewCamera()
     }
 }
 
-bool KyaSaveLevelBanks(const TArray<UKyaLevelBank*>& Banks, FString& OutError)
+AKyaActorHandle* KyaSelectRenderedActorAt(AKyaLevelPreview* Preview, const FVector& WorldOrigin,
+    const FVector& WorldDirection)
 {
-    TArray<UPackage*> Packages;
+    if (!Preview) return nullptr;
+    AKyaActorHandle* Hit = Preview->HitTestActorMesh(WorldOrigin, WorldDirection);
+    if (!Hit) return nullptr;
+    if (GEditor)
+    {
+        GEditor->SelectNone(false, true, false);
+        GEditor->SelectActor(Hit, true, true);
+    }
+    // Highlight every selected strip of the owning actor, and clear stale highlights.
+    Preview->RefreshGeneratedActorHighlights();
+    return Hit;
+}
+
+AKyaActorHandle* KyaHitTestRenderedActorAcrossPreviews(const TArray<AKyaLevelPreview*>& Previews,
+    const FVector& WorldOrigin, const FVector& WorldDirection, AKyaLevelPreview** OutPreview)
+{
+    if (OutPreview) *OutPreview = nullptr;
+    AKyaActorHandle* Best = nullptr;
+    float BestDistance = TNumericLimits<float>::Max();
+    for (AKyaLevelPreview* Preview : Previews)
+    {
+        if (!Preview) continue;
+        float Distance = -1.0f;
+        AKyaActorHandle* Hit = Preview->HitTestActorMesh(WorldOrigin, WorldDirection, BestDistance, &Distance);
+        if (!Hit || Distance < 0.0f || Distance >= BestDistance) continue;
+        BestDistance = Distance;
+        Best = Hit;
+        if (OutPreview) *OutPreview = Preview;
+    }
+    return Best;
+}
+
+AKyaActorHandle* KyaSelectRenderedActorAtCursor(FString* OutError)
+{
+    if (!GCurrentLevelEditingViewportClient)
+    {
+        if (OutError) *OutError = TEXT("No level viewport is active.");
+        return nullptr;
+    }
+    const FViewportCursorLocation Cursor =
+        GCurrentLevelEditingViewportClient->GetCursorWorldLocationFromMousePos();
+    const FVector Origin = Cursor.GetOrigin();
+    const FVector Direction = Cursor.GetDirection();
+    if (Direction.IsNearlyZero())
+    {
+        if (OutError) *OutError = TEXT("The viewport cursor ray is not valid.");
+        return nullptr;
+    }
+    AKyaLevelPreview* HitPreview = nullptr;
+    AKyaActorHandle* Hit = KyaHitTestRenderedActorAcrossPreviews(KyaGetTargetPreviews(),
+        Origin, Direction, &HitPreview);
+    if (!Hit)
+    {
+        if (OutError) *OutError = TEXT("No selectable actor geometry under the cursor.");
+        return nullptr;
+    }
+    return KyaSelectRenderedActorAt(HitPreview, Origin, Direction);
+}
+
+bool KyaSaveLevelBanks(const TArray<UKyaLevelBank*>& Banks, FString& OutError)
+{    TArray<UPackage*> Packages;
     for (UKyaLevelBank* Bank : Banks)
     {
         if (!Bank) continue;

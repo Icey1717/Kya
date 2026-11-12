@@ -138,6 +138,17 @@ public:
     UPROPERTY(VisibleAnywhere, Category="Kya|Diagnostics")
     int32 RenderSectionCount = 0;
 
+    /** True while the editor highlight covers every rendered section. */
+    UPROPERTY(VisibleAnywhere, Category="Kya|Diagnostics")
+    bool bMeshHighlighted = false;
+
+    /** Highlight the whole rendered mesh (all material sections), not one strip. */
+    void SetMeshHighlighted(bool bHighlighted);
+    bool IsMeshHighlighted() const { return bMeshHighlighted; }
+    int32 GetRenderedSectionCount() const { return RenderSectionCount; }
+    /** World-space bounds covering every rendered section, for Focus Selected. */
+    FBox GetRenderedMeshBounds() const;
+
 private:
     bool bSyncing = false;
     bool bShowIcon = true;
