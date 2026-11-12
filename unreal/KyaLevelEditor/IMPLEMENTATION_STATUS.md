@@ -171,6 +171,11 @@ Last updated: 2026-11-12.
   associations inside their own root with no shared bank objects, stay idempotent on
   repeated discovery, and restore the descriptor rows plus the preview's sector-id
   mapping after a forced package save/reload.
+- Gizmo acceptance (`Kya.Editor.GizmoAcceptance`): on a nonidentity preview root the
+  gate clicks a rendered strip, translates with W, rotates a full-basis class and a
+  yaw-only class (rejecting an unrepresentable pitch), scales with R, then saves,
+  reopens and exports/reimports, checking the bank values and the recovered
+  placement at every stage.
 - `FKyaLevelBankReimportHandler` implements `FReimportHandler`: parses into a
   temporary bank, only replaces the asset on success, asks before discarding dirty
   changes (refuses in unattended mode), updates provenance, bumps the edit
@@ -410,8 +415,8 @@ Results: `Kya.Bank.LevelOneRoundTrip`, `Kya.Bank.SmallBankRoundTrip`,
 `Kya.Editor.StructuralEditGate`, `Kya.Editor.ExportAcceptance`,
 `Kya.Editor.MilestoneAGate`, `Kya.Editor.MilestoneBGate`,
 `Kya.Editor.MilestoneCGate`, `Kya.Editor.MilestoneDGate`,
-`Kya.Editor.ViewportClickSelection`, `Kya.Editor.SharedEditPath` and
-`Kya.Editor.SectorIsolation` all `Success`.
+`Kya.Editor.ViewportClickSelection`, `Kya.Editor.SharedEditPath`,
+`Kya.Editor.SectorIsolation` and `Kya.Editor.GizmoAcceptance` all `Success`.
 
 Coverage added by the new tests:
 

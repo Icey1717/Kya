@@ -432,7 +432,11 @@ unattended automation, so this short pass covers the interactive path. `Kya.Edit
 already proves the mesh hit-test, nearest-strip selection, full-mesh highlight,
 Focus bounds, hidden/locked rejection and the `KyaSelectRenderedActorAt` selection
 path headlessly; the steps below confirm the same behaviour through real viewport
-input.
+input. `Kya.Editor.GizmoAcceptance` drives the same W/E/R writeback headlessly on the
+real bank with a place-transformed preview root: it clicks a rendered strip, then
+translates, rotates a full-basis class, rotates a yaw-only class (and proves an
+unrepresentable pitch edit is rejected), scales, saves and reloads the package, and
+exports/reimports, checking that the bank values and the recovered placement agree.
 
 1. Import a level bank, drag it into the level, enable `Spawn Actor Handles` and
    `Show All Actor Meshes`, and rebuild the preview.

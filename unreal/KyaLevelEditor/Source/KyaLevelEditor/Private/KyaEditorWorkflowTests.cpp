@@ -3208,6 +3208,380 @@ bool FKyaSectorIsolationTest::RunTest(const FString& Parameters)
     World->DestroyWorld(false);
     return true;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaGizmoAcceptanceTest, "Kya.Editor.GizmoAcceptance",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaGizmoAcceptanceTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to run the gizmo acceptance."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read the gizmo bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    Factory->AddToRoot();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Imported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient | RF_Transactional, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import the gizmo bank"), Imported) ||
+        !TestTrue(TEXT("The gizmo bank has actors"), Imported->SceneEnvironment.Actors.Num() > 0))
+    {
+        Factory->RemoveFromRoot();
+        return false;
+    }
+
+    // The gate saves and reopens the bank, so edit a real package instead of the
+    // transient import.
+    const FString PackageName = FString::Printf(TEXT("/Game/KyaGizmoAcceptance/Bank_%s"),
+        *FGuid::NewGuid().ToString(EGuidFormats::Digits));
+    UPackage* Package = CreatePackage(*PackageName);
+    UKyaLevelBank* Bank = DuplicateObject<UKyaLevelBank>(Imported, Package, TEXT("Bank"));
+    if (!TestNotNull(TEXT("Duplicate the gizmo bank into a saveable package"), Bank))
+    {
+        Factory->RemoveFromRoot();
+        return false;
+    }
+    Bank->ClearFlags(RF_Transient);
+    Bank->SetFlags(RF_Public | RF_Standalone | RF_Transactional);
+    Package->ClearFlags(RF_Transient);
+    Package->SetFlags(RF_Public | RF_Standalone);
+    Bank->SourceFilename = Filename;
+    if (!Bank->AssetImportData) Bank->AssetImportData = NewObject<UAssetImportData>(Bank);
+    Bank->AssetImportData->Update(Bank->SourceFilename);
+    Package->SetDirtyFlag(false);
+
+    UWorld* World = UWorld::CreateWorld(EWorldType::EditorPreview, false);
+    if (!TestNotNull(TEXT("Create the gizmo world"), World))
+    {
+        Factory->RemoveFromRoot();
+        return false;
+    }
+    // A nonidentity preview root: every gizmo edit below is resolved relative to it.
+    const FTransform PreviewTransform(FRotator(0.0, 37.0, 0.0), FVector(5200.0, -3100.0, 1250.0));
+    AKyaLevelPreview* Preview = World->SpawnActor<AKyaLevelPreview>(
+        AKyaLevelPreview::StaticClass(), PreviewTransform);
+    if (!TestNotNull(TEXT("Spawn the gizmo preview"), Preview))
+    {
+        World->DestroyWorld(false);
+        Factory->RemoveFromRoot();
+        return false;
+    }
+    Preview->Bank = Bank;
+    Preview->bShowRebuildProgress = false;
+    Preview->bSpawnActorHandles = true;
+    Preview->OnConstruction(PreviewTransform);
+    const FTransform PreviewWorld = Preview->GetActorTransform();
+    TestTrue(TEXT("The preview keeps its placed transform"), PreviewWorld.GetLocation().Equals(PreviewTransform.GetLocation(), 0.01));
+    if (!TestTrue(TEXT("The gizmo preview has generated handles"), Preview->GetActorHandleCount() > 0))
+    {
+        Preview->Destroy();
+        World->DestroyWorld(false);
+        Factory->RemoveFromRoot();
+        return false;
+    }
+
+    const auto LocalOf = [Preview](const AKyaActorHandle* Handle)
+    {
+        return Handle->GetActorTransform().GetRelativeTransform(Preview->GetActorTransform());
+    };
+    const auto ForwardOf = [](const FKyaActorPlacement& Placement, FTransform& OutTransform)
+    {
+        KyaActorTransform::MakeUnrealTransform(Placement.Position, Placement.Rotation,
+            Placement.Scale, Placement.ClassId, OutTransform);
+    };
+    const auto FindHandle = [Bank, Preview](bool bYawOnly, bool bRequireMesh) -> AKyaActorHandle*
+    {
+        for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+        {
+            const bool bIsYawOnly = KyaActorTransform::RotationPath(
+                Bank->SceneEnvironment.Actors[Index].ClassId) == KyaActorTransform::ERotationPath::YawOnly;
+            if (bIsYawOnly != bYawOnly) continue;
+            AKyaActorHandle* Handle = Cast<AKyaActorHandle>(Preview->GetActorHandle(Index));
+            if (!Handle) continue;
+            if (bRequireMesh && Handle->GetRenderedSectionCount() == 0) continue;
+            return Handle;
+        }
+        return nullptr;
+    };
+
+    // --- W: click a visible mesh, then translate it --------------------------------
+    AKyaActorHandle* Clicked = nullptr;
+    AKyaActorHandle* ClickCandidate = nullptr;
+    FVector ClickOrigin = FVector::ZeroVector;
+    const FVector ClickDirection(0.0, 0.0, -1.0);
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num() && !Clicked; ++Index)
+    {
+        AKyaActorHandle* Candidate = Cast<AKyaActorHandle>(Preview->GetActorHandle(Index));
+        if (!Candidate || Candidate->GetRenderedSectionCount() == 0) continue;
+        const FBox Bounds = Candidate->GetRenderedMeshBounds();
+        if (!Bounds.IsValid) continue;
+        const FVector Center = Bounds.GetCenter();
+        const FVector Extent = Bounds.GetExtent();
+        for (const double OffsetX : { -0.35, 0.0, 0.35 })
+        {
+            for (const double OffsetY : { -0.35, 0.0, 0.35 })
+            {
+                const FVector Sample(Center.X + Extent.X * OffsetX, Center.Y + Extent.Y * OffsetY,
+                    Bounds.Max.Z + 50.0);
+                if (AKyaActorHandle* Hit = Preview->HitTestActorMesh(Sample, ClickDirection))
+                {
+                    Clicked = Hit;
+                    ClickCandidate = Candidate;
+                    ClickOrigin = Sample;
+                    break;
+                }
+            }
+            if (Clicked) break;
+        }
+    }
+    if (!TestNotNull(TEXT("Clicking a visible generated mesh hits an actor"), Clicked) ||
+        !TestEqual(TEXT("The nearest visible mesh resolves to its own handle"), Clicked, ClickCandidate))
+    {
+        Preview->Destroy();
+        World->DestroyWorld(false);
+        Factory->RemoveFromRoot();
+        return false;
+    }
+    TestTrue(TEXT("The clicked actor carries renderable geometry"), Clicked->GetRenderedSectionCount() > 0);
+    TestTrue(TEXT("The clicked actor maps to a bank record"),
+        Bank->SceneEnvironment.Actors.IsValidIndex(Clicked->ActorIndex));
+    AddInfo(FString::Printf(TEXT("Gizmo click target: actor %d, class %lld, %d sections"),
+        Clicked->ActorIndex, Bank->SceneEnvironment.Actors[Clicked->ActorIndex].ClassId,
+        Clicked->GetRenderedSectionCount()));
+    if (GEditor)
+    {
+        GEditor->SelectNone(false, true, false);
+        AKyaActorHandle* Picked = KyaSelectRenderedActorAt(Preview, ClickOrigin, ClickDirection);
+        TestEqual(TEXT("The editor click path selects the clicked mesh"), Picked, Clicked);
+        TestTrue(TEXT("The clicked mesh is selected so the gizmo targets it"), Clicked->IsSelected());
+        TestTrue(TEXT("The clicked mesh is highlighted"), Clicked->IsMeshHighlighted());
+    }
+    TestFalse(TEXT("Selecting does not dirty the bank"), Package->IsDirty());
+
+    const int32 ClickIndex = Clicked->ActorIndex;
+    const FKyaActorPlacement ClickBefore = Bank->SceneEnvironment.Actors[ClickIndex];
+    const FVector MoveOffset(250.0, -150.0, 100.0);
+    const FVector InitialWorldLocation = Clicked->GetActorLocation();
+    FVector IntendedLocalLocation;
+    {
+        FScopedTransaction Transaction(NSLOCTEXT("KyaTests", "GizmoTranslate", "Gizmo translate"));
+        Clicked->AddActorWorldOffset(MoveOffset);
+        const FVector IntendedWorldLocation = Clicked->GetActorLocation();
+        IntendedLocalLocation = PreviewWorld.InverseTransformPosition(IntendedWorldLocation);
+        TestTrue(TEXT("The translate gizmo moved the visible actor"),
+            IntendedWorldLocation.Equals(InitialWorldLocation + MoveOffset, 0.01));
+        Clicked->PostEditMove(true);
+        Service.FlushPendingNotifications();
+    }
+    {
+        const FKyaActorPlacement& After = Bank->SceneEnvironment.Actors[ClickIndex];
+        const FVector ExpectedPosition = KyaActorTransform::SwapGameAxes(IntendedLocalLocation / 100.0);
+        TestTrue(TEXT("Translate writes the intended game-space position"), After.Position.Equals(ExpectedPosition, 1.0e-3));
+        TestFalse(TEXT("Translate actually changed the record"), After.Position.Equals(ClickBefore.Position, 1.0e-4));
+        TestTrue(TEXT("Translate preserves the record rotation"), After.Rotation.Equals(ClickBefore.Rotation, 1.0e-5));
+        TestTrue(TEXT("Translate preserves the record scale"), After.Scale.Equals(ClickBefore.Scale, 1.0e-4));
+        FTransform RoundTrip;
+        ForwardOf(After, RoundTrip);
+        TestTrue(TEXT("The stored position reopens at the intended placement"),
+            RoundTrip.GetLocation().Equals(IntendedLocalLocation, 0.1));
+        TestTrue(TEXT("The handle mirrors the stored position"),
+            Clicked->GetActorLocation().Equals(PreviewWorld.TransformPosition(IntendedLocalLocation), 0.1));
+    }
+
+    // --- E: rotate a class that supports a full basis, and a yaw-only class ---------
+    AKyaActorHandle* RotateHandle = (KyaActorTransform::RotationPath(ClickBefore.ClassId) !=
+        KyaActorTransform::ERotationPath::YawOnly) ? Clicked : FindHandle(false, true);
+    if (!RotateHandle) RotateHandle = FindHandle(false, false);
+    if (TestNotNull(TEXT("A non-yaw actor can be rotated"), RotateHandle))
+    {
+        const int32 RotateIndex = RotateHandle->ActorIndex;
+        AddInfo(FString::Printf(TEXT("Gizmo rotate target: actor %d, class %lld"),
+            RotateIndex, Bank->SceneEnvironment.Actors[RotateIndex].ClassId));
+        const FKyaActorPlacement RotateBefore = Bank->SceneEnvironment.Actors[RotateIndex];
+        const FQuat IntendedRotation = LocalOf(RotateHandle).GetRotation() *
+            FQuat(FVector::UpVector, 0.4);
+        {
+            FScopedTransaction Transaction(NSLOCTEXT("KyaTests", "GizmoRotate", "Gizmo rotate"));
+            RotateHandle->SetActorRelativeRotation(IntendedRotation);
+            RotateHandle->PostEditMove(true);
+            Service.FlushPendingNotifications();
+        }
+        const FKyaActorPlacement& After = Bank->SceneEnvironment.Actors[RotateIndex];
+        TestFalse(TEXT("Rotate writes a new record rotation"), After.Rotation.Equals(RotateBefore.Rotation, 1.0e-4));
+        TestTrue(TEXT("Rotate preserves the record position"), After.Position.Equals(RotateBefore.Position, 1.0e-4));
+        TestTrue(TEXT("Rotate preserves the record scale"), After.Scale.Equals(RotateBefore.Scale, 1.0e-4));
+        FTransform RoundTrip;
+        ForwardOf(After, RoundTrip);
+        TestTrue(TEXT("The stored rotation reproduces the gizmo orientation"),
+            (RoundTrip.GetRotation()).AngularDistance(IntendedRotation) < 2.0e-3);
+        TestTrue(TEXT("The handle mirrors the stored rotation"),
+            (LocalOf(RotateHandle).GetRotation()).AngularDistance(RoundTrip.GetRotation()) < 2.0e-3);
+    }
+
+    AKyaActorHandle* YawHandle = FindHandle(true, true);
+    if (!YawHandle) YawHandle = FindHandle(true, false);
+    if (TestNotNull(TEXT("The bank has a yaw-only actor"), YawHandle))
+    {
+        const int32 YawIndex = YawHandle->ActorIndex;
+        AddInfo(FString::Printf(TEXT("Gizmo yaw-only target: actor %d, class %lld"),
+            YawIndex, Bank->SceneEnvironment.Actors[YawIndex].ClassId));
+        const FKyaActorPlacement YawBefore = Bank->SceneEnvironment.Actors[YawIndex];
+        const FQuat IntendedYaw = LocalOf(YawHandle).GetRotation() *
+            FQuat(FVector::UpVector, 0.6);
+        {
+            FScopedTransaction Transaction(NSLOCTEXT("KyaTests", "GizmoYaw", "Gizmo yaw"));
+            YawHandle->SetActorRelativeRotation(IntendedYaw);
+            YawHandle->PostEditMove(true);
+            Service.FlushPendingNotifications();
+        }
+        const FVector YawAfterRotation = Bank->SceneEnvironment.Actors[YawIndex].Rotation;
+        TestFalse(TEXT("Yaw-only rotation writes a new record rotation"),
+            YawAfterRotation.Equals(YawBefore.Rotation, 1.0e-4));
+        TestTrue(TEXT("Yaw-only rotation stores no pitch"),
+            FMath::Abs(YawAfterRotation.X) < 1.0e-5);
+        TestTrue(TEXT("Yaw-only rotation stores no roll"),
+            FMath::Abs(YawAfterRotation.Z) < 1.0e-5);
+        TestTrue(TEXT("Yaw-only rotation preserves the record position"),
+            Bank->SceneEnvironment.Actors[YawIndex].Position.Equals(YawBefore.Position, 1.0e-4));
+        FTransform RoundTrip;
+        ForwardOf(Bank->SceneEnvironment.Actors[YawIndex], RoundTrip);
+        TestTrue(TEXT("The stored yaw reproduces the gizmo orientation"),
+            (RoundTrip.GetRotation()).AngularDistance(IntendedYaw) < 2.0e-3);
+
+        // A pitch edit cannot be represented by the class and must be rejected.
+        {
+            FScopedTransaction Transaction(NSLOCTEXT("KyaTests", "GizmoYawReject", "Gizmo yaw reject"));
+            YawHandle->SetActorRelativeRotation(IntendedYaw * FQuat(FVector::RightVector, 0.3));
+            YawHandle->PostEditMove(true);
+            Service.FlushPendingNotifications();
+        }
+        TestTrue(TEXT("An unrepresentable yaw-only pitch is rejected"),
+            Bank->SceneEnvironment.Actors[YawIndex].Rotation.Equals(YawAfterRotation, 1.0e-5));
+        TestTrue(TEXT("A rejected edit restores the handle from the record"),
+            (LocalOf(YawHandle).GetRotation()).AngularDistance(RoundTrip.GetRotation()) < 2.0e-3);
+    }
+
+    // --- R: scale the clicked actor, preserving its stored placement ---------------
+    {
+        const FKyaActorPlacement ScaleBefore = Bank->SceneEnvironment.Actors[ClickIndex];
+        const FQuat RotationBeforeScale = LocalOf(Clicked).GetRotation();
+        const FVector IntendedScale = LocalOf(Clicked).GetScale3D() * FVector(1.5, 0.8, 2.0);
+        {
+            FScopedTransaction Transaction(NSLOCTEXT("KyaTests", "GizmoScale", "Gizmo scale"));
+            Clicked->SetActorRelativeScale3D(IntendedScale);
+            Clicked->PostEditMove(true);
+            Service.FlushPendingNotifications();
+        }
+        const FKyaActorPlacement& After = Bank->SceneEnvironment.Actors[ClickIndex];
+        TestTrue(TEXT("Scale writes the intended game-space scale"),
+            After.Scale.Equals(KyaActorTransform::SwapGameAxes(IntendedScale), 1.0e-4));
+        TestTrue(TEXT("Scale preserves the record position"), After.Position.Equals(ScaleBefore.Position, 1.0e-4));
+        TestTrue(TEXT("Scale preserves the record rotation"), After.Rotation.Equals(ScaleBefore.Rotation, 1.0e-5));
+        FTransform RoundTrip;
+        ForwardOf(After, RoundTrip);
+        TestTrue(TEXT("The stored scale reproduces the gizmo scale"), RoundTrip.GetScale3D().Equals(IntendedScale, 1.0e-4));
+        TestTrue(TEXT("The handle keeps its rotation through the scale edit"),
+            (LocalOf(Clicked).GetRotation()).AngularDistance(RotationBeforeScale) < 1.0e-4);
+        TestTrue(TEXT("The handle mirrors the stored scale"),
+            LocalOf(Clicked).GetScale3D().Equals(IntendedScale, 1.0e-4));
+    }
+
+    // --- persistence: save, reopen, export and reimport ----------------------------
+    TSet<int32> EditedIndexes;
+    EditedIndexes.Add(ClickIndex);
+    if (RotateHandle) EditedIndexes.Add(RotateHandle->ActorIndex);
+    if (YawHandle) EditedIndexes.Add(YawHandle->ActorIndex);
+    TMap<int32, FKyaActorPlacement> Expected;
+    for (const int32 Index : EditedIndexes)
+        Expected.Add(Index, Bank->SceneEnvironment.Actors[Index]);
+
+    const FString PackageFilename = FPackageName::LongPackageNameToFilename(PackageName,
+        FPackageName::GetAssetPackageExtension());
+    Package->MarkPackageDirty();
+    FSavePackageArgs SaveArgs;
+    SaveArgs.TopLevelFlags = RF_Public | RF_Standalone;
+    SaveArgs.SaveFlags = SAVE_NoError;
+    const bool bSaved = UPackage::SavePackage(Package, Bank, *PackageFilename, SaveArgs);
+    TestTrue(TEXT("The edited gizmo bank saves"), bSaved);
+
+    // Drop editor selection before the unload: a selected transient handle would keep
+    // typed-element references alive past the preview and the package reload.
+    if (GEditor)
+    {
+        GEditor->SelectNone(false, true, false);
+        GEditor->NoteSelectionChange();
+    }
+    Preview->Destroy();
+    World->DestroyWorld(false);
+
+    FText ReloadError;
+    const bool bReloaded = bSaved && UPackageTools::ReloadPackages({ Package }, ReloadError,
+        EReloadPackagesInteractionMode::AssumePositive);
+    TestTrue(FString::Printf(TEXT("The edited gizmo bank reopens from disk (%s)"), *ReloadError.ToString()),
+        bReloaded);
+    UPackage* LoadedPackage = FindPackage(nullptr, *PackageName);
+    UKyaLevelBank* LoadedBank = LoadedPackage ? FindObject<UKyaLevelBank>(LoadedPackage, TEXT("Bank")) : nullptr;
+    if (TestNotNull(TEXT("The reopened package holds the bank"), LoadedBank))
+    {
+        for (const TPair<int32, FKyaActorPlacement>& Pair : Expected)
+        {
+            if (!TestTrue(TEXT("The reopened bank keeps the edited actor"), LoadedBank->SceneEnvironment.Actors.IsValidIndex(Pair.Key)))
+                continue;
+            const FKyaActorPlacement& Reopened = LoadedBank->SceneEnvironment.Actors[Pair.Key];
+            TestTrue(TEXT("Reopen preserves the edited position"), Reopened.Position.Equals(Pair.Value.Position, 1.0e-3));
+            TestTrue(TEXT("Reopen preserves the edited rotation"), Reopened.Rotation.Equals(Pair.Value.Rotation, 1.0e-5));
+            TestTrue(TEXT("Reopen preserves the edited scale"), Reopened.Scale.Equals(Pair.Value.Scale, 1.0e-4));
+            FTransform RoundTrip;
+            ForwardOf(Reopened, RoundTrip);
+            FTransform ExpectedTransform;
+            ForwardOf(Pair.Value, ExpectedTransform);
+            TestTrue(TEXT("The reopened record renders at the intended placement"),
+                RoundTrip.GetLocation().Equals(ExpectedTransform.GetLocation(), 0.1) &&
+                (RoundTrip.GetRotation()).AngularDistance(ExpectedTransform.GetRotation()) < 2.0e-3 &&
+                RoundTrip.GetScale3D().Equals(ExpectedTransform.GetScale3D(), 1.0e-4));
+        }
+
+        FKyaBankExportDiagnostics Diagnostics;
+        TArray<uint8> Exported;
+        if (TestTrue(TEXT("Export the reopened bank"), KyaBuildBankExportBytes(LoadedBank, Exported, Diagnostics)))
+        {
+            const uint8* ExportedCursor = Exported.GetData();
+            UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(
+                UKyaLevelBank::StaticClass(), GetTransientPackage(), NAME_None, RF_Transient, nullptr,
+                TEXT("bnk"), ExportedCursor, Exported.GetData() + Exported.Num(), GWarn));
+            if (TestNotNull(TEXT("Reimport the exported gizmo bank"), Reimported))
+            {
+                for (const TPair<int32, FKyaActorPlacement>& Pair : Expected)
+                {
+                    if (!TestTrue(TEXT("The reimported bank keeps the edited actor"),
+                        Reimported->SceneEnvironment.Actors.IsValidIndex(Pair.Key))) continue;
+                    const FKyaActorPlacement& ReimportedActor = Reimported->SceneEnvironment.Actors[Pair.Key];
+                    TestTrue(TEXT("Export/reimport preserves the edited position"),
+                        ReimportedActor.Position.Equals(Pair.Value.Position, 1.0e-3));
+                    TestTrue(TEXT("Export/reimport preserves the edited rotation"),
+                        ReimportedActor.Rotation.Equals(Pair.Value.Rotation, 1.0e-5));
+                    TestTrue(TEXT("Export/reimport preserves the edited scale"),
+                        ReimportedActor.Scale.Equals(Pair.Value.Scale, 1.0e-4));
+                }
+            }
+        }
+    }
+
+    if (LoadedPackage) LoadedPackage->SetDirtyFlag(false);
+    IFileManager::Get().Delete(*PackageFilename, false, true, true);
+    Factory->RemoveFromRoot();
+    Service.Reset();
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaMilestoneAGateTest, "Kya.Editor.MilestoneAGate",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 

@@ -54,7 +54,7 @@ This is a source review of the current working tree, including the in-progress a
 - [x] Restrict or explain axes that cannot be represented by a class, especially yaw-only actors. Define handling for negative/nonuniform scale and unsupported shear; never silently store a misleading transform.
 - [x] Make numeric Transform edits and gizmo edits use the same conversion and validation. Keep raw game-space transform fields in an advanced section, with radians/degrees and units clearly labeled.
 - [x] Implement snapping, world/local gizmos, multi-selection transforms and focus behavior. Moving the preview root should reposition the whole displayed level without rewriting every bank placement.
-- [ ] Acceptance: click a visible mesh, move it with W, rotate with E where supported, scale with R where supported, save/reopen, export/reimport, and recover the intended placement. Include nonidentity preview transforms and yaw-only classes.
+- [x] Acceptance: click a visible mesh, move it with W, rotate with E where supported, scale with R where supported, save/reopen, export/reimport, and recover the intended placement. Include nonidentity preview transforms and yaw-only classes.
 
 ## 4. Show the selected actor's complete supported properties
 
