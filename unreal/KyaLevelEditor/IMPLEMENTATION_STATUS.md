@@ -111,6 +111,16 @@ Last updated: 2026-11-12.
   transaction when the details setter does not own one, hides the old mirrored
   fields, and reloads the presentation copy on undo/redo, external edits and
   reimport (deferred, so the panel can rebuild safely).
+- Generated actors are grouped in the Outliner under one transient grouping actor
+  per sector, attached to the preview. Labels are `<serialized name> [class <id>]`,
+  disambiguated with the record index for duplicate names; labels are derived from
+  the whole bank so sector load/unload cannot rename them, and serialized names are
+  never modified.
+- Validate, export and sector discovery write `FMessageLog` entries (one per bank
+  or sector, with errors, warnings and asset paths). Sector discovery runs behind
+  a cancellable `FScopedSlowTask` and leaves a coherent partial result when
+  cancelled; `Kya.Export` reports one outcome per file and opens the log on
+  failure.
 
 ## 3. Verification
 
@@ -147,6 +157,10 @@ Coverage added by the new tests:
 - handle translate/scale writeback, undo/redo, one refresh per multi-actor drag,
   yaw-only rejection, nested `Position.X` Details edits and untouched-field
   preservation;
+- Outliner grouping: one transient grouping actor per sector, `<name> [class <id>]`
+  labels, duplicate disambiguation derived from the whole bank (stable across
+  rebuilds), grouping actors that cannot move the level, and reused group labels
+  when the preview is reassigned to another bank;
 - real level 1: 616 handles, 472 with owned meshes and 133,758 handle-owned
   triangles, while the shared mesh contains only 6,397 background/cluster vertices
   (no actor duplication); diagnostic mesh mode moves the actor geometry back to the

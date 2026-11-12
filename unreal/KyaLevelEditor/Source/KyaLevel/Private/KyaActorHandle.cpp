@@ -140,12 +140,6 @@ void AKyaActorHandle::SyncFromBank()
     KyaActorTransform::MakeUnrealTransform(ActorPosition, ActorRotation, ActorScale, ClassId, Local);
     SetActorRelativeTransform(Local, false, nullptr, ETeleportType::TeleportPhysics);
     bSyncing = false;
-
-#if WITH_EDITOR
-    if (!ActorName.IsEmpty() && GetActorLabel() != ActorName) SetActorLabel(ActorName);
-    else if (ActorName.IsEmpty() && ClassId != 0)
-        SetActorLabel(FString::Printf(TEXT("Actor %d (class %lld)"), ActorIndex, ClassId));
-#endif
 }
 
 #if WITH_EDITOR

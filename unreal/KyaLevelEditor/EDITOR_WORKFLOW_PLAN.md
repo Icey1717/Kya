@@ -81,7 +81,7 @@ This is a source review of the current working tree, including the in-progress a
 
 ## 6. Outliner and normal level organization
 
-- [ ] Group generated actors under a level root and sector folders, with stable human-readable names and class labels. Disambiguate duplicate names without changing serialized actor names.
+- [x] Group generated actors under a level root and sector folders, with stable human-readable names and class labels. Disambiguate duplicate names without changing serialized actor names.
 - [ ] Support Outliner selection, multi-selection, search, focus, temporary hide/isolate and selection locking. Keep editor visibility distinct from the game's visibility fields.
 - [ ] Define Outliner rename behavior explicitly: presentation label versus serialized actor name, including encoded-length limits. Do not silently truncate a game name.
 - [ ] Define Delete, Duplicate, Alt-drag, copy/paste and cut behavior. While the bank writer requires fixed counts, block unsupported structural commands with a clear explanation rather than allowing a generated actor to disappear and respawn mysteriously.

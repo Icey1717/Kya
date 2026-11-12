@@ -14,6 +14,7 @@ class USplineComponent;
 class UKyaPathPointComponent;
 class UKyaActorMarkerComponent;
 class AKyaActorHandle;
+class AKyaActorGroup;
 class AKyaHierarchyHandle;
 class UPostProcessComponent;
 class UMaterialInstanceDynamic;
@@ -322,6 +323,9 @@ private:
     TArray<TObjectPtr<AKyaHierarchyHandle>> HierarchyHandles;
     UPROPERTY(Transient)
     TMap<int32, TObjectPtr<AKyaActorHandle>> ActorHandles;
+    /** Editor-only sector grouping actors for the Outliner (sector 0 = global actors). */
+    UPROPERTY(Transient)
+    TMap<int32, TObjectPtr<AKyaActorGroup>> ActorSectorGroups;
     UPROPERTY(Transient)
     TObjectPtr<UKyaActorMarkerComponent> ActorMarker;
     UPROPERTY(Transient)

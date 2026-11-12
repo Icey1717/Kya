@@ -195,6 +195,20 @@ to resolve instead of editing a different record. Handles and other views
 subscribed to a bank refresh once per edit, including for undo/redo and for
 changes made in the bank's own asset editor.
 
+Handles are grouped in the World Outliner under one transient grouping actor per
+sector (attached to the level preview, labelled `<bank> sector <n>` or
+`<bank> global actors`). Their labels are the serialized actor name plus the game
+class (`<name> [class <id>]`); duplicate names are disambiguated with the record
+index so the Outliner never shows two identical entries, without modifying the
+serialized names. Labels are derived from the whole bank, so loading or unloading
+a sector does not rename existing handles.
+
+Validation, export and sector discovery report through the Message Log
+(`KyaLevelEditor` listing) as well as the dialog summary: one entry per bank or
+sector, with the asset path, the failure reason and any warnings. Sector
+discovery shows a cancellable progress dialog and leaves a coherent partial result
+when cancelled.
+
 The handle's Details panel shows the bank record itself: one row per editable
 `FKyaActorPlacement` property, grouped by the schema's own categories, including
 nested fixed-size arrays, class-specific records and behaviour payloads. Edits are

@@ -434,6 +434,66 @@ bool FKyaActorHandleTransformTest::RunTest(const FString& Parameters)
             Bank->SceneEnvironment.Actors[0].Scale.Equals(FVector(2.0, 3.0, 4.0)));
     }
 
+    // Outliner organization: duplicates are disambiguated without touching the bank,
+    // and generated actors live under a per-bank/per-sector folder.
+    {
+        Bank->SceneEnvironment.Actors[1].Name = Bank->SceneEnvironment.Actors[0].Name;
+        Preview->OnConstruction(FTransform::Identity);
+        AKyaActorHandle* RenamedFirst = Cast<AKyaActorHandle>(Preview->GetActorHandle(0));
+        AKyaActorHandle* RenamedSecond = Cast<AKyaActorHandle>(Preview->GetActorHandle(1));
+        if (TestNotNull(TEXT("First handle after rename"), RenamedFirst) &&
+            TestNotNull(TEXT("Second handle after rename"), RenamedSecond))
+        {
+            TestTrue(TEXT("Duplicate display names are disambiguated"),
+                RenamedFirst->GetActorLabel() != RenamedSecond->GetActorLabel());
+            TestTrue(TEXT("Display labels carry the game class"),
+                RenamedFirst->GetActorLabel().Contains(TEXT("[class")));
+            TestEqual(TEXT("Serialized names are untouched"),
+                Bank->SceneEnvironment.Actors[0].Name, Bank->SceneEnvironment.Actors[1].Name);
+            AActor* GroupParent = RenamedFirst->GetAttachParentActor();
+            if (TestNotNull(TEXT("Handles are attached to a sector grouping actor"), GroupParent))
+            {
+                TestTrue(TEXT("Sector grouping actor identifies its sector"),
+                    GroupParent->GetActorLabel().Contains(TEXT("sector")) ||
+                    GroupParent->GetActorLabel().Contains(TEXT("global")));
+                TestTrue(TEXT("Grouping actor is transient"),
+                    GroupParent->HasAnyFlags(RF_Transient));
+            }
+            const FString FirstLabel = RenamedFirst->GetActorLabel();
+            Preview->OnConstruction(FTransform::Identity);
+            if (AKyaActorHandle* Rebuilt = Cast<AKyaActorHandle>(Preview->GetActorHandle(0)))
+                TestEqual(TEXT("Display labels stay stable across rebuilds"), Rebuilt->GetActorLabel(), FirstLabel);
+
+            if (GroupParent)
+            {
+                // Grouping actors are organizational only: moving one cannot move the
+                // level or corrupt a child's writeback.
+                const FVector BankBefore = Bank->SceneEnvironment.Actors[0].Position;
+                const FVector ChildWorldBefore = RenamedFirst->GetActorLocation();
+                GroupParent->AddActorWorldOffset(FVector(500.0, 0.0, 0.0));
+                GroupParent->PostEditMove(true);
+                TestTrue(TEXT("Grouping actor cannot move the level"),
+                    RenamedFirst->GetActorLocation().Equals(ChildWorldBefore, 0.01));
+                RenamedFirst->AddActorWorldOffset(FVector(100.0, 0.0, 0.0));
+                RenamedFirst->PostEditMove(true);
+                TestTrue(TEXT("Child writeback is independent of the grouping actor"),
+                    Bank->SceneEnvironment.Actors[0].Position.Equals(BankBefore + FVector(1.0, 0.0, 0.0)));
+                Service.FlushPendingNotifications();
+            }
+
+            // Reusing the preview for another bank refreshes the group label.
+            UKyaLevelBank* OtherBank = MakeKyaTestBank(GetTransientPackage(), 1);
+            Preview->Bank = OtherBank;
+            Preview->OnConstruction(FTransform::Identity);
+            if (AKyaActorHandle* OtherHandle = Cast<AKyaActorHandle>(Preview->GetActorHandle(0)))
+            {
+                if (AActor* OtherGroup = OtherHandle->GetAttachParentActor())
+                    TestTrue(TEXT("Reused grouping actor takes the new bank name"),
+                        OtherGroup->GetActorLabel().Contains(OtherBank->GetName()));
+            }
+        }
+    }
+
     Preview->Destroy();
     World->DestroyWorld(false);
     Service.Reset();

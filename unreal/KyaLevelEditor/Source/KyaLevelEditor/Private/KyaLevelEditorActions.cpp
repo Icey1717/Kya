@@ -12,10 +12,12 @@
 #include "KyaBankExport.h"
 #include "KyaLevelBank.h"
 #include "KyaLevelPreview.h"
+#include "Logging/MessageLog.h"
 #include "Misc/FileHelper.h"
 #include "Misc/MessageDialog.h"
 #include "Misc/PackageName.h"
 #include "Misc/Paths.h"
+#include "Misc/ScopedSlowTask.h"
 #include "UObject/SavePackage.h"
 
 FString FKyaBankValidationReport::Summary() const
@@ -140,11 +142,27 @@ FKyaBankValidationReport KyaValidateBank(UKyaLevelBank* Bank)
 TArray<FKyaBankValidationReport> KyaValidateLevelBanks(const TArray<UKyaLevelBank*>& Banks)
 {
     TArray<FKyaBankValidationReport> Reports;
+    FMessageLog Log("KyaLevelEditor");
+    bool bAnyFailure = false;
     for (UKyaLevelBank* Bank : Banks)
     {
         Reports.Add(KyaValidateBank(Bank));
-        UE_LOG(LogTemp, Display, TEXT("KYA_VALIDATE %s"), *Reports.Last().Summary());
+        const FKyaBankValidationReport& Report = Reports.Last();
+        if (Report.bBytesBuilt)
+        {
+            Log.Info(FText::FromString(FString::Printf(TEXT("%s is exportable."), *Report.AssetPath)));
+        }
+        else
+        {
+            bAnyFailure = true;
+            Log.Error(FText::FromString(FString::Printf(TEXT("%s cannot be exported: %s"), *Report.AssetPath,
+                *Report.UnsupportedReason)));
+        }
+        for (const FString& Warning : Report.Warnings)
+            Log.Warning(FText::FromString(FString::Printf(TEXT("%s: %s"), *Report.AssetPath, *Warning)));
+        UE_LOG(LogTemp, Display, TEXT("KYA_VALIDATE %s"), *Report.Summary());
     }
+    if (bAnyFailure) Log.Open(EMessageSeverity::Error);
     return Reports;
 }
 
@@ -193,16 +211,31 @@ FKyaSectorDiscoveryResult KyaDiscoverSectors(AKyaLevelPreview* Preview, bool bIm
     for (const FCandidate& Candidate : Candidates) FilesBySector.FindOrAdd(Candidate.SectorId).Add(Candidate.Filename);
 
     const FString DestinationPath = FString::Printf(TEXT("/Game/KyaLevels/%s"), *MainBank->GetName());
-    for (const TPair<int32, TArray<FString>>& Pair : FilesBySector)
+    TArray<int32> SectorIds;
+    FilesBySector.GetKeys(SectorIds);
+    SectorIds.Sort();
+    FScopedSlowTask SlowTask(float(SectorIds.Num()),
+        FText::FromString(FString::Printf(TEXT("Discovering %s sectors"), *MainBank->GetName())));
+    SlowTask.MakeDialog(true);
+    bool bCanceled = false;
+    for (const int32 SectorId : SectorIds)
     {
-        if (Pair.Value.Num() > 1)
+        if (SlowTask.ShouldCancel())
+        {
+            bCanceled = true;
+            Result.Messages.Add(TEXT("Sector discovery was cancelled; existing associations were kept."));
+            break;
+        }
+        SlowTask.EnterProgressFrame(1.0f, FText::FromString(FString::Printf(TEXT("Sector %d"), SectorId)));
+        const TArray<FString>& SectorFiles = FilesBySector.FindChecked(SectorId);
+        if (SectorFiles.Num() > 1)
         {
             ++Result.Ambiguous;
-            Result.Messages.Add(FString::Printf(TEXT("Sector %d is ambiguous: %s"), Pair.Key,
-                *FString::Join(Pair.Value, TEXT(", "))));
+            Result.Messages.Add(FString::Printf(TEXT("Sector %d is ambiguous: %s"), SectorId,
+                *FString::Join(SectorFiles, TEXT(", "))));
             continue;
         }
-        const FString& Filename = Pair.Value[0];
+        const FString& Filename = SectorFiles[0];
         UKyaLevelBank* Existing = FindBankForSourceFile(Filename);
         if (!Existing)
         {
@@ -225,7 +258,7 @@ FKyaSectorDiscoveryResult KyaDiscoverSectors(AKyaLevelPreview* Preview, bool bIm
         }
         if (!bImportMissing)
         {
-            Result.MissingIds.Add(Pair.Key);
+            Result.MissingIds.Add(SectorId);
             continue;
         }
         UAssetImportTask* Task = NewObject<UAssetImportTask>();
@@ -243,7 +276,7 @@ FKyaSectorDiscoveryResult KyaDiscoverSectors(AKyaLevelPreview* Preview, bool bIm
         UKyaLevelBank* Imported = LoadObject<UKyaLevelBank>(nullptr, *ObjectPath);
         if (!Imported)
         {
-            Result.MissingIds.Add(Pair.Key);
+            Result.MissingIds.Add(SectorId);
             Result.Messages.Add(FString::Printf(TEXT("Failed to import %s."), *Filename));
             continue;
         }
@@ -267,6 +300,16 @@ FKyaSectorDiscoveryResult KyaDiscoverSectors(AKyaLevelPreview* Preview, bool bIm
 
     if (Preview->Bank) Preview->SectorBanks.RemoveAll([](const TObjectPtr<UKyaLevelBank>& Bank) { return !Bank; });
     Preview->RebuildFromBank();
+
+    FMessageLog Log("KyaLevelEditor");
+    Log.Info(FText::FromString(Result.Summary()));
+    for (const FString& Message : Result.Messages)
+        Log.Warning(FText::FromString(Message));
+    for (const int32 Missing : Result.MissingIds)
+        Log.Error(FText::FromString(FString::Printf(TEXT("Missing sector bank for sector %d."), Missing)));
+    if (!Result.MissingIds.IsEmpty() || Result.Ambiguous > 0) Log.Open(EMessageSeverity::Warning);
+    if (bCanceled) Log.Warning(FText::FromString(TEXT("Sector discovery stopped early; rerun it to continue.")));
+
     UE_LOG(LogTemp, Display, TEXT("KYA_DISCOVER_SECTORS %s"), *Result.Summary());
     return Result;
 }
@@ -318,6 +361,7 @@ bool KyaExportLevelBanks(const TArray<UKyaLevelBank*>& Banks, const FString& Des
         return false;
     }
     const TArray<FKyaBankExportOutcome> Outcomes = KyaWriteValidatedExportSet(Requests);
+    FMessageLog Log("KyaLevelEditor");
     bool bAllPublished = !Outcomes.IsEmpty();
     for (const FKyaBankExportOutcome& Outcome : Outcomes)
     {
@@ -328,6 +372,18 @@ bool KyaExportLevelBanks(const TArray<UKyaLevelBank*>& Banks, const FString& Des
         for (const FString& Warning : Outcome.Warnings) OutMessages.Add(FString::Printf(TEXT("  warning: %s"), *Warning));
         if (!Outcome.bPublished) bAllPublished = false;
         UE_LOG(LogTemp, Display, TEXT("KYA_EXPORT %s %s"), *Outcome.DestinationFilename, State);
+        const FText BankText = FText::FromString(GetNameSafe(Outcome.Bank));
+        if (Outcome.bPublished)
+            Log.Info(FText::FromString(FString::Printf(TEXT("%s exported to %s."), *BankText.ToString(),
+                *Outcome.DestinationFilename)));
+        else
+            Log.Error(FText::FromString(FString::Printf(TEXT("%s was not exported to %s."), *BankText.ToString(),
+                *Outcome.DestinationFilename)));
+        for (const FString& Error : Outcome.Errors)
+            Log.Error(FText::FromString(FString::Printf(TEXT("%s: %s"), *BankText.ToString(), *Error)));
+        for (const FString& Warning : Outcome.Warnings)
+            Log.Warning(FText::FromString(FString::Printf(TEXT("%s: %s"), *BankText.ToString(), *Warning)));
     }
+    if (!bAllPublished) Log.Open(EMessageSeverity::Error);
     return bAllPublished;
 }

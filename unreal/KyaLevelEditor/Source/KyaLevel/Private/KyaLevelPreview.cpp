@@ -8,6 +8,7 @@
 #include "KyaPathPointComponent.h"
 #include "KyaActorMarkerComponent.h"
 #include "KyaActorHandle.h"
+#include "KyaActorGroup.h"
 #include "KyaHierarchyHandle.h"
 #include "KyaActorTransform.h"
 #include "KyaActorEditService.h"
@@ -1497,6 +1498,9 @@ void AKyaLevelPreview::Destroyed()
     for (const TObjectPtr<AKyaHierarchyHandle>& Handle : HierarchyHandles)
         if (IsValid(Handle)) Handle->Destroy();
     HierarchyHandles.Reset();
+    for (const TPair<int32, TObjectPtr<AKyaActorGroup>>& Pair : ActorSectorGroups)
+        if (IsValid(Pair.Value)) Pair.Value->Destroy();
+    ActorSectorGroups.Reset();
     Super::Destroyed();
 }
 
@@ -1636,14 +1640,72 @@ void AKyaLevelPreview::RefreshActorHandles()
         for (const TPair<int32, TObjectPtr<AKyaActorHandle>>& Pair : ActorHandles)
             if (IsValid(Pair.Value)) Pair.Value->Destroy();
         ActorHandles.Reset();
+        for (const TPair<int32, TObjectPtr<AKyaActorGroup>>& Pair : ActorSectorGroups)
+            if (IsValid(Pair.Value)) Pair.Value->Destroy();
+        ActorSectorGroups.Reset();
         return;
     }
+
+    // Display labels are derived from the whole bank, not from the currently spawned
+    // handles, so loading or unloading a sector cannot relabel a record. Serialized
+    // names are never modified; duplicate names are disambiguated with the index.
+    TArray<FString> BaseNames;
+    TArray<FString> Labels;
+    TSet<FString> DuplicateNames;
+    BaseNames.Reserve(Bank->SceneEnvironment.Actors.Num());
+    Labels.Reserve(Bank->SceneEnvironment.Actors.Num());
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Placement = Bank->SceneEnvironment.Actors[Index];
+        const FString Base = Placement.Name.IsEmpty()
+            ? FString::Printf(TEXT("Actor %d"), Index) : Placement.Name;
+        if (BaseNames.Contains(Base)) DuplicateNames.Add(Base);
+        BaseNames.Add(Base);
+        Labels.Add(FString::Printf(TEXT("%s [class %lld]"), *Base, Placement.ClassId));
+    }
+    for (int32 Index = 0; Index < Labels.Num(); ++Index)
+        if (DuplicateNames.Contains(BaseNames[Index]))
+            Labels[Index] = FString::Printf(TEXT("%s [%d]"), *Labels[Index], Index);
 
     TSet<int32> LoadedSectors;
     for (const UKyaLevelBank* Sector : SectorBanks)
         if (Sector && Sector != Bank) LoadedSectors.Add(GetSectorId(*Sector));
 
+    // Sector grouping actors keep the Outliner organized while the handles stay
+    // attached (and therefore follow the preview root transform).
+    const auto FindOrCreateSectorGroup = [this, World](int32 SectorId) -> AKyaActorGroup*
+    {
+        const FString ExpectedLabel = SectorId <= 0
+            ? FString::Printf(TEXT("%s global actors"), *GetNameSafe(Bank))
+            : FString::Printf(TEXT("%s sector %d"), *GetNameSafe(Bank), SectorId);
+        if (TObjectPtr<AKyaActorGroup>* Found = ActorSectorGroups.Find(SectorId))
+        {
+            if (IsValid(*Found))
+            {
+                AKyaActorGroup* Existing = *Found;
+                // The preview can be reassigned to another bank; keep the label and the
+                // level-root transform authoritative on every refresh.
+                if (Existing->GetActorLabel() != ExpectedLabel) Existing->SetActorLabel(ExpectedLabel);
+                if (!Existing->GetRootComponent()->GetRelativeTransform().Equals(FTransform::Identity))
+                    Existing->SetActorRelativeTransform(FTransform::Identity, false, nullptr, ETeleportType::TeleportPhysics);
+                return Existing;
+            }
+        }
+        FActorSpawnParameters Params;
+        Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        Params.ObjectFlags |= RF_Transient | RF_Transactional;
+        AKyaActorGroup* Group = World->SpawnActor<AKyaActorGroup>(
+            AKyaActorGroup::StaticClass(), FTransform::Identity, Params);
+        if (!Group) return nullptr;
+        Group->SetFlags(RF_Transient | RF_Transactional);
+        Group->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
+        Group->SetActorLabel(ExpectedLabel);
+        ActorSectorGroups.Add(SectorId, Group);
+        return Group;
+    };
+
     TSet<int32> Wanted;
+    TSet<int32> WantedSectors;
     const bool bShowIcon = ShouldShowActorIcon();
     for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
     {
@@ -1652,17 +1714,24 @@ void AKyaLevelPreview::RefreshActorHandles()
         // get a handle when their sector is loaded. Without sector banks, show all.
         if (Placement.SectorId >= 0 && !LoadedSectors.IsEmpty() && !LoadedSectors.Contains(Placement.SectorId)) continue;
         Wanted.Add(Index);
+        const int32 GroupSector = Placement.SectorId < 0 ? 0 : Placement.SectorId;
+        WantedSectors.Add(GroupSector);
+        AKyaActorGroup* Group = FindOrCreateSectorGroup(GroupSector);
         const TArray<FKyaActorMeshSection>* Sections = ActorMeshSections.Find(Index);
         TObjectPtr<AKyaActorHandle>* Existing = ActorHandles.Find(Index);
         if (Existing && IsValid(*Existing))
         {
-            (*Existing)->Bank = Bank;
-            (*Existing)->Preview = this;
-            (*Existing)->ActorIndex = Index;
-            (*Existing)->SyncFromBank();
-            (*Existing)->SetIconEnabled(bShowIcon);
-            if (Sections) (*Existing)->SetActorMeshSections(*Sections);
-            else (*Existing)->SetActorMeshSections(TArray<FKyaActorMeshSection>());
+            AKyaActorHandle* Handle = *Existing;
+            Handle->Bank = Bank;
+            Handle->Preview = this;
+            Handle->ActorIndex = Index;
+            if (Group && Handle->GetAttachParentActor() != Group)
+                Handle->AttachToActor(Group, FAttachmentTransformRules::KeepRelativeTransform);
+            Handle->SyncFromBank();
+            Handle->SetIconEnabled(bShowIcon);
+            if (Sections) Handle->SetActorMeshSections(*Sections);
+            else Handle->SetActorMeshSections(TArray<FKyaActorMeshSection>());
+            if (Handle->GetActorLabel() != Labels[Index]) Handle->SetActorLabel(Labels[Index]);
             continue;
         }
         FActorSpawnParameters Params;
@@ -1678,10 +1747,9 @@ void AKyaLevelPreview::RefreshActorHandles()
             continue;
         }
         Handle->SetFlags(RF_Transient | RF_Transactional);
-        // Group the representation under the level preview in the Outliner while
-        // keeping its transform relative to the preview.
-        Handle->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
+        if (Group) Handle->AttachToActor(Group, FAttachmentTransformRules::KeepRelativeTransform);
         Handle->Initialize(this, Bank, Index, bShowIcon);
+        Handle->SetActorLabel(Labels[Index]);
         if (Sections) Handle->SetActorMeshSections(*Sections);
         ActorHandles.Add(Index, Handle);
     }
@@ -1692,9 +1760,18 @@ void AKyaLevelPreview::RefreshActorHandles()
         if (IsValid(It.Value())) It.Value()->Destroy();
         It.RemoveCurrent();
     }
+
+    for (auto It = ActorSectorGroups.CreateIterator(); It; ++It)
+    {
+        if (WantedSectors.Contains(It.Key())) continue;
+        if (IsValid(It.Value())) It.Value()->Destroy();
+        It.RemoveCurrent();
+    }
+
     if (bSpawnActorHandles)
-        UE_LOG(LogTemp, Display, TEXT("KYA_ACTOR_HANDLES wanted=%d handles=%d loaded_sectors=%d bank=%s world_game=%d"),
-            Wanted.Num(), ActorHandles.Num(), LoadedSectors.Num(), *GetNameSafe(Bank), World->IsGameWorld() ? 1 : 0);
+        UE_LOG(LogTemp, Display, TEXT("KYA_ACTOR_HANDLES wanted=%d handles=%d groups=%d loaded_sectors=%d bank=%s world_game=%d"),
+            Wanted.Num(), ActorHandles.Num(), ActorSectorGroups.Num(), LoadedSectors.Num(), *GetNameSafe(Bank),
+            World->IsGameWorld() ? 1 : 0);
 }
 
 void AKyaLevelPreview::RefreshHierarchyHandles()
