@@ -91,7 +91,7 @@ This is a source review of the current working tree, including the in-progress a
 ## 7. Extend editing beyond actor placements
 
 - [x] Give waypoints and path points stable identities, useful labels and the same selection/transaction/save behavior as actors. Expose the selected record's full supported properties.
-- [ ] Show all relevant paths on demand with selectable points and clear path ownership, rather than requiring a numeric preview index. Preserve native linear interpolation; do not silently convert to Unreal smooth spline semantics.
+- [x] Show all relevant paths on demand with selectable points and clear path ownership, rather than requiring a numeric preview index. Preserve native linear interpolation; do not silently convert to Unreal smooth spline semantics.
 - [ ] Add waypoint orientation visualization/editing only after verifying stored rotation conventions. Keep path timing, lead-in and loop visualization explicit about what is implemented.
 - [ ] Make hierarchy selection operate on rendered geometry at the existing practical hierarchy/strip-group granularity. Show bounds, owning sector, material information and source offsets.
 - [ ] Keep hierarchy hide/isolate actions clearly presentation-only. Enable hierarchy transforms only after implementing and validating serialized hierarchy writeback; a movable-looking handle must not imply export support.

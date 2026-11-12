@@ -294,7 +294,19 @@ one transient `AKyaSpatialRecordHandle` per waypoint (position, stored rotation 
 `CWayPoint` parameter triple) and suppresses the diagnostic waypoint arrows while
 enabled. `Spawn Path Point Handles` creates one handle per point of every path,
 labelled `Path <n> Point <m>`, so spatial records can be found without setting
-`Preview Path Index`; the spline guide still follows that index. Both handle kinds
+`Preview Path Index`; the spline guide still follows that index.
+
+`Show All Paths` (`Kya.ShowAllPaths [1|0]`, or the `Show All Paths` menu entries)
+draws a guide for every non-empty path and spawns its selectable points, so no
+numeric preview index is required. Guides use the game→Unreal axis mapping and
+explicitly set every point to linear interpolation — the native point-to-point
+semantics, not Unreal's smooth spline defaults. Each path gets a transient
+`<bank> path <n>` Outliner group that owns its point handles, so ownership is
+visible and hide/isolate/cleanup treat the group and points together. Editing a
+point updates both the bank and its guide. The legacy `Preview Path Index` still
+draws one guide when all-path mode is off.
+
+Both handle kinds
 have bank + index + generation identity, write through the same edit service as the
 old arrow markers (which now call the service too, so both routes agree), and
 preserve unedited values and undo grouping. Stored waypoint rotation is edited

@@ -214,6 +214,25 @@ public:
     UPROPERTY(EditAnywhere, Category="Kya|Selection")
     bool bSpawnPathPointHandles = false;
 
+    /**
+     * Draw a guide for every path in the bank (linear, matching the game) and spawn
+     * selectable points for all of them, without requiring Preview Path Index.
+     */
+    UPROPERTY(EditAnywhere, Category="Kya|Paths")
+    bool bShowAllPaths = false;
+
+    /** Number of live path guides (one per visible path). */
+    UFUNCTION(BlueprintCallable, Category="Kya|Paths")
+    int32 GetPathGuideCount() const { return PathGuides.Num(); }
+
+    /** Spline guide for one path index, or null when that path is not shown. */
+    UFUNCTION(BlueprintCallable, Category="Kya|Paths")
+    USplineComponent* GetPathGuide(int32 PathIndex) const;
+
+    /** Editor-only Outliner group that owns the points of one path. */
+    UFUNCTION(BlueprintCallable, Category="Kya|Paths")
+    AActor* GetPathGroup(int32 PathIndex) const;
+
     /** Number of live waypoint/path-point handles. */
     UFUNCTION(BlueprintCallable, Category="Kya|Selection")
     int32 GetSpatialHandleCount() const { return SpatialHandles.Num(); }
@@ -375,8 +394,6 @@ private:
     TObjectPtr<UKyaLevelBank> WaypointMarkerBank;
 
     UPROPERTY(Transient)
-    TObjectPtr<USplineComponent> PathPreview;
-    UPROPERTY(Transient)
     TArray<TObjectPtr<UKyaPathPointComponent>> PathMarkers;
     UPROPERTY(Transient)
     TObjectPtr<UKyaLevelBank> PathMarkerBank;
@@ -410,6 +427,12 @@ private:
     /** Editor-only waypoint/path-point handles, keyed by "W:<index>" or "P:<path>:<point>". */
     UPROPERTY(Transient)
     TMap<FString, TObjectPtr<AKyaSpatialRecordHandle>> SpatialHandles;
+    /** Linear spline guides for all-path mode, keyed by path index. */
+    UPROPERTY(Transient)
+    TMap<int32, TObjectPtr<USplineComponent>> PathGuides;
+    /** Editor-only Outliner groups that own each path's points. */
+    UPROPERTY(Transient)
+    TMap<int32, TObjectPtr<AKyaActorGroup>> PathGroups;
     /** Editor-only temporary hiding of generated representations (per preview). */
     UPROPERTY(Transient)
     TSet<TWeakObjectPtr<AActor>> TemporarilyHiddenGeneratedActors;

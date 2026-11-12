@@ -114,6 +114,11 @@ void AKyaSpatialRecordHandle::SyncFromBank()
     bSyncing = false;
 
 #if WITH_EDITOR
+    if (Kind == EKyaSpatialRecordKind::PathPoint && IsValid(Preview))
+        Preview->UpdatePathGuidePoint(RecordIndex, PointIndex, Local.GetLocation());
+#endif
+
+#if WITH_EDITOR
     FString Label;
     if (Kind == EKyaSpatialRecordKind::Waypoint)
         Label = FString::Printf(TEXT("Waypoint %d"), RecordIndex);

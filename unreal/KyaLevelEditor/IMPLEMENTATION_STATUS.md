@@ -116,6 +116,12 @@ Last updated: 2026-11-12.
   numeric preview index. Waypoint arrows and handles are mutually exclusive.
 - The old waypoint and path-point arrow markers now write through the edit service,
   so markers, handles, Details and scripts share one edit path.
+- `Show All Paths` (`Kya.ShowAllPaths [1|0]`) draws a guide for every non-empty path
+  and spawns selectable points without a numeric preview index. Guides use the game
+  axis mapping with every point explicitly set to linear interpolation, each path
+  gets a transient `<bank> path <n>` Outliner group that owns its points, and edits
+  update both the bank and the guide. `Preview Path Index` remains the single-guide
+  legacy mode.
 - Stored waypoint rotation is the game's Euler triple in radians (used by
   `SetVectorFromAngles`/`InitPositionRotation` in the ported source). It is edited
   numerically; orientation is not drawn because the arrow convention is not
@@ -242,7 +248,8 @@ Results: `Kya.Bank.LevelOneRoundTrip`, `Kya.Bank.SmallBankRoundTrip`,
 `Kya.Editor.ExportValidation`, `Kya.Editor.LevelPreviewPlacement`,
 `Kya.Editor.LevelSet`, `Kya.Editor.SpatialRecords`, `Kya.Editor.ActorCatalog`,
 `Kya.Editor.MultiEditBaseline`, `Kya.Editor.GeneratedActorLifecycle`,
-`Kya.Editor.StructuralCommands` and `Kya.Editor.OutlinerPolicy` all `Success`.
+`Kya.Editor.StructuralCommands`, `Kya.Editor.OutlinerPolicy` and
+`Kya.Editor.PathVisualization` all `Success`.
 
 Coverage added by the new tests:
 

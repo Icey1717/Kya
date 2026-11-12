@@ -217,25 +217,58 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
         const FVector P = Bank->SceneEnvironment.Waypoints[Index].Position;
         WaypointMarkers[Index]->SetRelativeLocation(FVector(P.X, P.Z, P.Y) * 100.0);
     }
-    if (!PathPreview)
+    // Path guides: all-path mode shows every path, otherwise a single guide follows
+    // PreviewPathIndex for backwards compatibility. Both use linear point types, which
+    // matches the game's point-to-point interpolation; timing/lead-in/loop behaviour is
+    // not visualized.
+    TSet<int32> DesiredGuides;
+    if (Bank)
     {
-        PathPreview = NewObject<USplineComponent>(this, NAME_None, RF_Transient);
-        PathPreview->SetupAttachment(RootComponent);
-        PathPreview->SetDrawDebug(true);
-        PathPreview->bSelectable = false;
-        PathPreview->RegisterComponent();
+        if (bShowAllPaths)
+        {
+            for (int32 PathIndex = 0; PathIndex < Bank->SceneEnvironment.Paths.Num(); ++PathIndex)
+                if (!Bank->SceneEnvironment.Paths[PathIndex].Points.IsEmpty()) DesiredGuides.Add(PathIndex);
+        }
+        else if (Bank->SceneEnvironment.Paths.IsValidIndex(PreviewPathIndex))
+        {
+            DesiredGuides.Add(PreviewPathIndex);
+        }
     }
-    PathPreview->ClearSplinePoints(false);
-    if (Bank && Bank->SceneEnvironment.Paths.IsValidIndex(PreviewPathIndex))
+    for (auto It = PathGuides.CreateIterator(); It; ++It)
     {
-        const FKyaPath& Path = Bank->SceneEnvironment.Paths[PreviewPathIndex];
+        if (DesiredGuides.Contains(It.Key())) continue;
+        if (IsValid(It.Value())) It.Value()->DestroyComponent();
+        It.RemoveCurrent();
+    }
+    for (const int32 PathIndex : DesiredGuides)
+    {
+        USplineComponent* Guide = nullptr;
+        if (TObjectPtr<USplineComponent>* Existing = PathGuides.Find(PathIndex))
+        {
+            if (IsValid(*Existing)) Guide = *Existing;
+        }
+        if (!Guide)
+        {
+            Guide = NewObject<USplineComponent>(this, NAME_None, RF_Transient);
+            Guide->SetupAttachment(RootComponent);
+            Guide->SetDrawDebug(true);
+            Guide->bSelectable = false;
+            Guide->RegisterComponent();
+            PathGuides.Add(PathIndex, Guide);
+        }
+        const FKyaPath& Path = Bank->SceneEnvironment.Paths[PathIndex];
+        Guide->ClearSplinePoints(false);
         for (const FVector4& P : Path.Points)
-            PathPreview->AddSplinePoint(FVector(P.X, P.Z, P.Y) * 100.0, ESplineCoordinateSpace::Local, false);
+            Guide->AddSplinePoint(FVector(P.X, P.Z, P.Y) * 100.0, ESplineCoordinateSpace::Local, false);
         for (int32 Point = 0; Point < Path.Points.Num(); ++Point)
-            PathPreview->SetSplinePointType(Point, ESplinePointType::Linear, false);
+            Guide->SetSplinePointType(Point, ESplinePointType::Linear, false);
+        Guide->UpdateSpline();
+        Guide->SetVisibility(true);
     }
-    PathPreview->UpdateSpline();
-    const int32 DesiredPathMarkers = Bank && Bank->SceneEnvironment.Paths.IsValidIndex(PreviewPathIndex)
+    // Legacy arrow markers for the single PreviewPathIndex remain diagnostic; all-path
+    // mode uses the selectable AKyaSpatialRecordHandle points instead.
+    const int32 DesiredPathMarkers = !bShowAllPaths && Bank &&
+        Bank->SceneEnvironment.Paths.IsValidIndex(PreviewPathIndex)
         ? Bank->SceneEnvironment.Paths[PreviewPathIndex].Points.Num() : 0;
     if (PathMarkerBank != Bank || PathMarkerIndex != PreviewPathIndex || PathMarkers.Num() != DesiredPathMarkers)
     {
@@ -1516,6 +1549,12 @@ void AKyaLevelPreview::Destroyed()
     for (const TPair<FString, TObjectPtr<AKyaSpatialRecordHandle>>& Pair : SpatialHandles)
         if (IsValid(Pair.Value)) Pair.Value->Destroy();
     SpatialHandles.Reset();
+    for (const TPair<int32, TObjectPtr<AKyaActorGroup>>& Pair : PathGroups)
+        if (IsValid(Pair.Value)) Pair.Value->Destroy();
+    PathGroups.Reset();
+    for (const TPair<int32, TObjectPtr<USplineComponent>>& Pair : PathGuides)
+        if (IsValid(Pair.Value)) Pair.Value->DestroyComponent();
+    PathGuides.Reset();
     Super::Destroyed();
 }
 
@@ -1826,6 +1865,18 @@ AActor* AKyaLevelPreview::GetPathPointHandle(int32 PathIndex, int32 PointIndex) 
     return Found ? Found->Get() : nullptr;
 }
 
+USplineComponent* AKyaLevelPreview::GetPathGuide(int32 PathIndex) const
+{
+    const TObjectPtr<USplineComponent>* Found = PathGuides.Find(PathIndex);
+    return Found ? Found->Get() : nullptr;
+}
+
+AActor* AKyaLevelPreview::GetPathGroup(int32 PathIndex) const
+{
+    const TObjectPtr<AKyaActorGroup>* Found = PathGroups.Find(PathIndex);
+    return Found ? Found->Get() : nullptr;
+}
+
 bool AKyaLevelPreview::OwnsGeneratedActor(const AActor* Actor) const
 {
     if (!Actor) return false;
@@ -1843,6 +1894,8 @@ bool AKyaLevelPreview::OwnsGeneratedActor(const AActor* Actor) const
         return Found && Found->Get() == Actor;
     }
     for (const TPair<int32, TObjectPtr<AKyaActorGroup>>& Pair : ActorSectorGroups)
+        if (Pair.Value == Actor) return true;
+    for (const TPair<int32, TObjectPtr<AKyaActorGroup>>& Pair : PathGroups)
         if (Pair.Value == Actor) return true;
     for (const TObjectPtr<AKyaHierarchyHandle>& Handle : HierarchyHandles)
         if (Handle == Actor) return true;
@@ -1954,34 +2007,70 @@ void AKyaLevelPreview::ApplyGeneratedActorPresentation()
     for (const TPair<FString, TObjectPtr<AKyaSpatialRecordHandle>>& Pair : SpatialHandles) Apply(Pair.Value);
     for (const TObjectPtr<AKyaHierarchyHandle>& Handle : HierarchyHandles) Apply(Handle);
     for (const TPair<int32, TObjectPtr<AKyaActorGroup>>& Pair : ActorSectorGroups) Apply(Pair.Value);
+    for (const TPair<int32, TObjectPtr<AKyaActorGroup>>& Pair : PathGroups) Apply(Pair.Value);
 }
 
 void AKyaLevelPreview::RefreshSpatialHandles()
 {
     UWorld* World = GetWorld();
-    if ((!bSpawnWaypointHandles && !bSpawnPathPointHandles) || !Bank || !World || World->IsGameWorld())
+    const bool bWantPathHandles = bSpawnPathPointHandles || bShowAllPaths;
+    if ((!bSpawnWaypointHandles && !bWantPathHandles) || !Bank || !World || World->IsGameWorld())
     {
         for (const TPair<FString, TObjectPtr<AKyaSpatialRecordHandle>>& Pair : SpatialHandles)
             if (IsValid(Pair.Value)) Pair.Value->Destroy();
         SpatialHandles.Reset();
+        for (const TPair<int32, TObjectPtr<AKyaActorGroup>>& Pair : PathGroups)
+            if (IsValid(Pair.Value)) Pair.Value->Destroy();
+        PathGroups.Reset();
         return;
     }
 
+    // One Outliner group per path makes point ownership explicit without relying on a
+    // numeric preview index.
+    const auto FindOrCreatePathGroup = [this, World](int32 PathIndex) -> AKyaActorGroup*
+    {
+        const FString Label = FString::Printf(TEXT("%s path %d"), *GetNameSafe(Bank), PathIndex);
+        if (TObjectPtr<AKyaActorGroup>* Found = PathGroups.Find(PathIndex))
+        {
+            if (IsValid(*Found))
+            {
+                AKyaActorGroup* Existing = *Found;
+                if (Existing->GetActorLabel() != Label) Existing->SetGeneratedLabel(Label);
+                return Existing;
+            }
+        }
+        FActorSpawnParameters Params;
+        Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        Params.ObjectFlags |= RF_Transient | RF_Transactional;
+        AKyaActorGroup* Group = World->SpawnActor<AKyaActorGroup>(
+            AKyaActorGroup::StaticClass(), FTransform::Identity, Params);
+        if (!Group) return nullptr;
+        Group->SetFlags(RF_Transient | RF_Transactional);
+        Group->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
+        Group->SetGeneratedLabel(Label);
+        PathGroups.Add(PathIndex, Group);
+        return Group;
+    };
+
     TSet<FString> Wanted;
+    TSet<int32> WantedPathGroups;
     const auto SpawnOrUpdate = [this, World, &Wanted](const FString& Key, EKyaSpatialRecordKind Kind,
-        int32 Index, int32 PointIndex)
+        int32 Index, int32 PointIndex, AKyaActorGroup* Group)
     {
         Wanted.Add(Key);
         if (TObjectPtr<AKyaSpatialRecordHandle>* Existing = SpatialHandles.Find(Key))
         {
             if (IsValid(*Existing))
             {
-                (*Existing)->Bank = Bank;
-                (*Existing)->Preview = this;
-                (*Existing)->Kind = Kind;
-                (*Existing)->RecordIndex = Index;
-                (*Existing)->PointIndex = PointIndex;
-                (*Existing)->SyncFromBank();
+                AKyaSpatialRecordHandle* Handle = *Existing;
+                Handle->Bank = Bank;
+                Handle->Preview = this;
+                Handle->Kind = Kind;
+                Handle->RecordIndex = Index;
+                Handle->PointIndex = PointIndex;
+                if (Group && Handle->GetAttachParentActor() != Group)
+                    Handle->AttachToActor(Group, FAttachmentTransformRules::KeepRelativeTransform);
+                Handle->SyncFromBank();
                 return;
             }
         }
@@ -1992,7 +2081,8 @@ void AKyaLevelPreview::RefreshSpatialHandles()
             AKyaSpatialRecordHandle::StaticClass(), FTransform::Identity, Params);
         if (!Handle) return;
         Handle->SetFlags(RF_Transient | RF_Transactional);
-        Handle->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
+        AActor* AttachParent = Group ? static_cast<AActor*>(Group) : static_cast<AActor*>(this);
+        Handle->AttachToActor(AttachParent, FAttachmentTransformRules::KeepRelativeTransform);
         Handle->Initialize(this, Bank, Kind, Index, PointIndex);
         SpatialHandles.Add(Key, Handle);
     };
@@ -2000,14 +2090,17 @@ void AKyaLevelPreview::RefreshSpatialHandles()
     if (bSpawnWaypointHandles)
         for (int32 Index = 0; Index < Bank->SceneEnvironment.Waypoints.Num(); ++Index)
             SpawnOrUpdate(FString::Printf(TEXT("W:%d"), Index), EKyaSpatialRecordKind::Waypoint,
-                Index, INDEX_NONE);
-    if (bSpawnPathPointHandles)
+                Index, INDEX_NONE, nullptr);
+    if (bWantPathHandles)
         for (int32 PathIndex = 0; PathIndex < Bank->SceneEnvironment.Paths.Num(); ++PathIndex)
         {
             const FKyaPath& Path = Bank->SceneEnvironment.Paths[PathIndex];
+            if (Path.Points.IsEmpty()) continue;
+            AKyaActorGroup* Group = FindOrCreatePathGroup(PathIndex);
+            if (Group) WantedPathGroups.Add(PathIndex);
             for (int32 PointIndex = 0; PointIndex < Path.Points.Num(); ++PointIndex)
                 SpawnOrUpdate(FString::Printf(TEXT("P:%d:%d"), PathIndex, PointIndex),
-                    EKyaSpatialRecordKind::PathPoint, PathIndex, PointIndex);
+                    EKyaSpatialRecordKind::PathPoint, PathIndex, PointIndex, Group);
         }
 
     for (auto It = SpatialHandles.CreateIterator(); It; ++It)
@@ -2016,8 +2109,14 @@ void AKyaLevelPreview::RefreshSpatialHandles()
         if (IsValid(It.Value())) It.Value()->Destroy();
         It.RemoveCurrent();
     }
-    UE_LOG(LogTemp, Display, TEXT("KYA_SPATIAL_HANDLES waypoints=%d paths=%d handles=%d bank=%s"),
-        bSpawnWaypointHandles ? 1 : 0, bSpawnPathPointHandles ? 1 : 0, SpatialHandles.Num(),
+    for (auto It = PathGroups.CreateIterator(); It; ++It)
+    {
+        if (WantedPathGroups.Contains(It.Key())) continue;
+        if (IsValid(It.Value())) It.Value()->Destroy();
+        It.RemoveCurrent();
+    }
+    UE_LOG(LogTemp, Display, TEXT("KYA_SPATIAL_HANDLES waypoints=%d paths=%d handles=%d guides=%d bank=%s"),
+        bSpawnWaypointHandles ? 1 : 0, bWantPathHandles ? 1 : 0, SpatialHandles.Num(), PathGroups.Num(),
         *GetNameSafe(Bank));
 }
 
@@ -2206,7 +2305,10 @@ void AKyaLevelPreview::UpdateClusterVisibility(const FVector& Position, const FV
 #if WITH_EDITOR
 void AKyaLevelPreview::UpdatePathGuidePoint(int32 PathIndex, int32 PointIndex, const FVector& Position)
 {
-    if (PathPreview && PathIndex == PreviewPathIndex && PointIndex >= 0 && PointIndex < PathPreview->GetNumberOfSplinePoints())
-        PathPreview->SetLocationAtSplinePoint(PointIndex, Position, ESplineCoordinateSpace::Local, true);
+    TObjectPtr<USplineComponent>* Found = PathGuides.Find(PathIndex);
+    if (!Found || !IsValid(*Found)) return;
+    USplineComponent* Guide = *Found;
+    if (PointIndex >= 0 && PointIndex < Guide->GetNumberOfSplinePoints())
+        Guide->SetLocationAtSplinePoint(PointIndex, Position, ESplineCoordinateSpace::Local, true);
 }
 #endif

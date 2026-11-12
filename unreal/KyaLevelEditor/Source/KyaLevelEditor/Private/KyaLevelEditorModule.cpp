@@ -31,6 +31,24 @@ void KyaShowSummary(const FString& Title, const FString& Message)
         FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(Message), FText::FromString(Title));
 }
 
+void KyaSetAllPathsCommand(const TArray<FString>& Args)
+{
+    const bool bVisible = Args.Num() == 0 || Args[0] != TEXT("0");
+    int32 Affected = 0;
+    for (AKyaLevelPreview* Preview : KyaGetTargetPreviews())
+    {
+        if (!Preview) continue;
+        Preview->Modify();
+        Preview->bShowAllPaths = bVisible;
+        Preview->RebuildFromBank();
+        ++Affected;
+    }
+    KyaShowSummary(TEXT("Kya Paths"), bVisible
+        ? FString::Printf(TEXT("Showing every path on %d preview(s) with linear interpolation and selectable points."),
+            Affected)
+        : FString::Printf(TEXT("All-path display disabled on %d preview(s)."), Affected));
+}
+
 void KyaValidateCommand(const TArray<FString>& Args)
 {
     const TArray<AKyaLevelPreview*> Previews = KyaGetTargetPreviews();
@@ -188,6 +206,16 @@ void AddKyaMenuEntries(FToolMenuSection& Section)
             KyaClearGeneratedActorIsolation();
             KyaShowSummary(TEXT("Kya Isolation"), TEXT("All generated representations are visible again."));
         })));
+    Section.AddMenuEntry("KyaShowAllPaths",
+        FText::FromString(TEXT("Show All Paths")),
+        FText::FromString(TEXT("Draw every path (linear) and spawn selectable points without setting a path index.")),
+        FSlateIcon(),
+        FUIAction(FExecuteAction::CreateLambda([]() { KyaSetAllPathsCommand({ TEXT("1") }); })));
+    Section.AddMenuEntry("KyaHideAllPaths",
+        FText::FromString(TEXT("Hide All Paths")),
+        FText::FromString(TEXT("Stop drawing every path; the Empty Preview Path Index guide still applies.")),
+        FSlateIcon(),
+        FUIAction(FExecuteAction::CreateLambda([]() { KyaSetAllPathsCommand({ TEXT("0") }); })));
     Section.AddMenuEntry("KyaLockGenerated",
         FText::FromString(TEXT("Toggle Generated Actor Selection Lock")),
         FText::FromString(TEXT("Prevent viewport picking of generated actors (they stay visible and editable).")),
@@ -305,8 +333,9 @@ public:
                 "Delete is blocked for generated actors."), Removed, Removed == 1 ? TEXT("y was") : TEXT("ies were")));
     }
 
-    void RegisterMenus()
-    {        if (!UToolMenus::IsToolMenuUIEnabled()) return;
+void RegisterMenus()
+    {
+        if (!UToolMenus::IsToolMenuUIEnabled()) return;
         UToolMenus* Menus = UToolMenus::Get();
         if (!Menus) return;
         // Own the entries so module shutdown removes them with the module's callbacks.
@@ -390,6 +419,11 @@ FAutoConsoleCommand KyaClearIsolationConsoleCommand(
     {
         KyaClearGeneratedActorIsolation();
     }));
+
+FAutoConsoleCommand KyaShowAllPathsConsoleCommand(
+    TEXT("Kya.ShowAllPaths"),
+    TEXT("Show (1, default) or hide (0) every path with linear interpolation and selectable points."),
+    FConsoleCommandWithArgsDelegate::CreateStatic(&KyaSetAllPathsCommand));
 
 FAutoConsoleCommand KyaLockGeneratedSelectionConsoleCommand(
     TEXT("Kya.LockGeneratedSelection"),

@@ -23,6 +23,7 @@
 #include "Editor.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
+#include "Components/SplineComponent.h"
 #include "ProceduralMeshComponent.h"
 #include "UObject/Package.h"
 #include "UObject/UnrealType.h"
@@ -1176,6 +1177,101 @@ bool FKyaStructuralCommandsTest::RunTest(const FString& Parameters)
         GEditor->SelectNone(false, true);
         TestFalse(TEXT("Empty selection has no generated actors"), KyaSelectionContainsGeneratedActor());
     }
+
+    Preview->Destroy();
+    World->DestroyWorld(false);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaPathVisualizationTest, "Kya.Editor.PathVisualization",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaPathVisualizationTest::RunTest(const FString& Parameters)
+{
+    UKyaLevelBank* Bank = MakeKyaTestBank(GetTransientPackage());
+    FKyaPath& Path0 = Bank->SceneEnvironment.Paths.AddDefaulted_GetRef();
+    Path0.Points = {FVector4(1.0, 2.0, 3.0, 1.0), FVector4(4.0, 5.0, 6.0, 1.0)};
+    FKyaPath& Path1 = Bank->SceneEnvironment.Paths.AddDefaulted_GetRef();
+    Path1.Points = {FVector4(-1.0, -2.0, -3.0, 1.0), FVector4(7.0, 8.0, 9.0, 1.0),
+        FVector4(10.0, 11.0, 12.0, 1.0)};
+
+    UWorld* World = UWorld::CreateWorld(EWorldType::EditorPreview, false);
+    if (!TestNotNull(TEXT("Create path world"), World)) return false;
+    AKyaLevelPreview* Preview = World->SpawnActor<AKyaLevelPreview>();
+    if (!TestNotNull(TEXT("Spawn path preview"), Preview))
+    {
+        World->DestroyWorld(false);
+        return false;
+    }
+    Preview->Bank = Bank;
+    Preview->PreviewPathIndex = -1;
+    Preview->bSpawnActorHandles = false;
+    Preview->bShowAllPaths = true;
+    Preview->OnConstruction(FTransform::Identity);
+
+    // Every path is shown without a numeric preview index, with the game's linear
+    // point-to-point interpolation.
+    TestEqual(TEXT("All paths produce guides"), Preview->GetPathGuideCount(), 2);
+    USplineComponent* Guide0 = Preview->GetPathGuide(0);
+    USplineComponent* Guide1 = Preview->GetPathGuide(1);
+    if (TestNotNull(TEXT("Path 0 guide exists"), Guide0) && TestNotNull(TEXT("Path 1 guide exists"), Guide1))
+    {
+        TestEqual(TEXT("Path 0 guide point count"), Guide0->GetNumberOfSplinePoints(), 2);
+        TestEqual(TEXT("Path 1 guide point count"), Guide1->GetNumberOfSplinePoints(), 3);
+        const auto IsLinear = [](const USplineComponent* Guide)
+        {
+            for (int32 Index = 0; Index < Guide->GetNumberOfSplinePoints(); ++Index)
+                if (Guide->GetSplinePointType(Index) != ESplinePointType::Linear) return false;
+            return true;
+        };
+        TestTrue(TEXT("Path 0 keeps linear interpolation"), IsLinear(Guide0));
+        TestTrue(TEXT("Path 1 keeps linear interpolation"), IsLinear(Guide1));
+        TestTrue(TEXT("Path 0 guide maps game axes"),
+            Guide0->GetLocationAtSplinePoint(0, ESplineCoordinateSpace::Local).Equals(
+                FVector(1.0, 3.0, 2.0) * 100.0, 0.01));
+    }
+
+    // Selectable points are created for every path and grouped by path ownership.
+    AKyaSpatialRecordHandle* Point = Cast<AKyaSpatialRecordHandle>(Preview->GetPathPointHandle(0, 0));
+    AKyaSpatialRecordHandle* LastPoint = Cast<AKyaSpatialRecordHandle>(Preview->GetPathPointHandle(1, 2));
+    AActor* PathGroup0 = Preview->GetPathGroup(0);
+    AActor* PathGroup1 = Preview->GetPathGroup(1);
+    if (TestNotNull(TEXT("First path point handle exists"), Point) &&
+        TestNotNull(TEXT("Last path point handle exists"), LastPoint))
+    {
+        TestEqual(TEXT("All-path mode creates selectable points"), Preview->GetSpatialHandleCount(), 5);
+        TestTrue(TEXT("Path points are owned by their path group"), Point->GetAttachParentActor() == PathGroup0);
+        TestEqual(TEXT("Path 0 group names its ownership"), PathGroup0
+            ? PathGroup0->GetActorLabel() : FString(), FString::Printf(TEXT("%s path 0"), *Bank->GetName()));
+        TestTrue(TEXT("Path 1 group identifies a different path"),
+            PathGroup1 && PathGroup1->GetActorLabel().Contains(TEXT("path 1")));
+        TestTrue(TEXT("Path groups are transient"), PathGroup0 && PathGroup0->HasAnyFlags(RF_Transient));
+
+        // Moving a point writes the bank and updates the guide it owns.
+        Point->AddActorWorldOffset(FVector(100.0, 0.0, 0.0));
+        Point->PostEditMove(true);
+        TestTrue(TEXT("Path point handle writes the bank"),
+            Bank->SceneEnvironment.Paths[0].Points[0].Equals(FVector4(2.0, 2.0, 3.0, 1.0)));
+        if (Guide0)
+            TestTrue(TEXT("Path guide follows the edited point"),
+                Guide0->GetLocationAtSplinePoint(0, ESplineCoordinateSpace::Local).Equals(
+                    FVector(2.0, 3.0, 2.0) * 100.0, 0.01));
+        FKyaLevelEditService::Get().FlushPendingNotifications();
+    }
+
+    // Turning the mode off removes guides, point handles and path groups.
+    Preview->bShowAllPaths = false;
+    Preview->OnConstruction(FTransform::Identity);
+    TestEqual(TEXT("Disabling all-path mode removes guides"), Preview->GetPathGuideCount(), 0);
+    TestEqual(TEXT("Disabling all-path mode removes point handles"), Preview->GetSpatialHandleCount(), 0);
+    TestNull(TEXT("Disabling all-path mode removes path groups"), Preview->GetPathGroup(0));
+
+    // The legacy numeric index still draws exactly one guide when all-path mode is off.
+    Preview->PreviewPathIndex = 1;
+    Preview->OnConstruction(FTransform::Identity);
+    TestEqual(TEXT("Preview path index draws one guide"), Preview->GetPathGuideCount(), 1);
+    TestNotNull(TEXT("Preview path index draws the requested guide"), Preview->GetPathGuide(1));
+    TestNull(TEXT("Preview path index does not draw other guides"), Preview->GetPathGuide(0));
 
     Preview->Destroy();
     World->DestroyWorld(false);
