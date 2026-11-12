@@ -3,6 +3,8 @@
 #include "HAL/IConsoleManager.h"
 #include "LevelEditorViewport.h"
 #include "KyaActorEditService.h"
+#include "KyaActorDetailsCustomization.h"
+#include "KyaActorHandle.h"
 #include "KyaLevelEditorActions.h"
 #include "KyaLevelBankReimportHandler.h"
 #include "KyaLevelBank.h"
@@ -10,6 +12,7 @@
 #include "Misc/App.h"
 #include "Misc/MessageDialog.h"
 #include "Misc/Paths.h"
+#include "PropertyEditorModule.h"
 #include "Textures/SlateIcon.h"
 #include "ToolMenuOwner.h"
 #include "ToolMenus.h"
@@ -123,6 +126,11 @@ public:
         ReimportHandler = MakeUnique<FKyaLevelBankReimportHandler>();
         FReimportManager::Instance()->RegisterHandler(*ReimportHandler);
 
+        FPropertyEditorModule& PropertyModule =
+            FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
+        PropertyModule.RegisterCustomClassLayout(AKyaActorHandle::StaticClass()->GetFName(),
+            FOnGetDetailCustomizationInstance::CreateStatic(&FKyaActorDetailsCustomization::MakeInstance));
+
         UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(
             this, &FKyaLevelEditorModule::RegisterMenus));
     }
@@ -131,6 +139,9 @@ public:
     {
         UToolMenus::UnRegisterStartupCallback(this);
         UToolMenus::UnregisterOwner(this);
+        if (FPropertyEditorModule* PropertyModule =
+            FModuleManager::GetModulePtr<FPropertyEditorModule>("PropertyEditor"))
+            PropertyModule->UnregisterCustomClassLayout(AKyaActorHandle::StaticClass()->GetFName());
         // The handler unregisters itself from FReimportManager on destruction.
         ReimportHandler.Reset();
         FKyaLevelEditService::Get().Reset();

@@ -109,6 +109,20 @@ FKyaLevelEditService& FKyaLevelEditService::Get()
     return Service;
 }
 
+bool KyaMakePlacementPropertyPatch(const FKyaActorPlacement& Source, FName PropertyName,
+    FKyaActorEditPatch& OutPatch)
+{
+    FProperty* Property = FKyaActorPlacement::StaticStruct()->FindPropertyByName(PropertyName);
+    if (!Property || !Property->HasAnyPropertyFlags(CPF_Edit)) return false;
+    // Capture the edited value, not a pointer into a temporary or array element.
+    OutPatch.Custom = [Property, Source](FKyaActorPlacement& Record, FString& OutError) -> bool
+    {
+        Property->CopyCompleteValue_InContainer(&Record, &Source);
+        return true;
+    };
+    return true;
+}
+
 FKyaActorRecordKey FKyaLevelEditService::MakeKey(UKyaLevelBank* Bank, int32 ActorIndex) const
 {
     FKyaActorRecordKey Key;
@@ -253,6 +267,13 @@ void FKyaLevelEditService::NotifyBankChangedDeferred(UKyaLevelBank* Bank)
         FlushPendingNotifications();
         return false;
     }), 0.0f);
+}
+
+void FKyaLevelEditService::NotifyBankReloaded(UKyaLevelBank* Bank)
+{
+    if (!Bank) return;
+    if (OnBankEdited.IsBound()) OnBankEdited.Broadcast(Bank);
+    NotifyBankChanged(Bank, true);
 }
 
 void FKyaLevelEditService::FlushPendingNotifications()

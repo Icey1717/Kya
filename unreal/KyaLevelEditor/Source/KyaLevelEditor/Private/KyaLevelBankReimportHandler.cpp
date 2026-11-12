@@ -109,7 +109,7 @@ EReimportResult::Type FKyaLevelBankReimportHandler::Reimport(UObject* Obj)
     // Replacing the typed records invalidates every editor record key.
     Bank->BumpEditGeneration();
     Bank->MarkPackageDirty();
-    FKyaLevelEditService::Get().NotifyBankChanged(Bank);
+    FKyaLevelEditService::Get().NotifyBankReloaded(Bank);
     UE_LOG(LogTemp, Display, TEXT("KYA_REIMPORT %s from %s"), *Bank->GetPathName(), *Filename);
     return EReimportResult::Succeeded;
 }

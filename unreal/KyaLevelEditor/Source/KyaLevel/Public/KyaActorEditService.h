@@ -99,6 +99,8 @@ public:
     void NotifyBankChanged(UKyaLevelBank* Bank, bool bImmediate = true);
     /** Queue a refresh for the end of the current frame; multiple edits coalesce. */
     void NotifyBankChangedDeferred(UKyaLevelBank* Bank);
+    /** Notify observers that the bank's typed data was replaced (reimport/reload). */
+    void NotifyBankReloaded(UKyaLevelBank* Bank);
     void FlushPendingNotifications();
     int32 GetViewCount(UKyaLevelBank* Bank) const;
 
@@ -117,3 +119,12 @@ private:
 
 /** Validate a record before it is written; used by the edit service and by export preflight. */
 KYALEVEL_API bool ValidateKyaActorPlacement(const FKyaActorPlacement& Placement, FString& OutError);
+
+/**
+ * Build a patch that copies one top-level FKyaActorPlacement property (including any
+ * nested change) from a presentation copy onto the authoritative record. The Details
+ * customization uses this so every edit-supported field is reachable without a
+ * hand-written per-field mirror.
+ */
+KYALEVEL_API bool KyaMakePlacementPropertyPatch(const FKyaActorPlacement& Source, FName PropertyName,
+    FKyaActorEditPatch& OutPatch);

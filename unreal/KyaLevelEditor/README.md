@@ -195,6 +195,18 @@ to resolve instead of editing a different record. Handles and other views
 subscribed to a bank refresh once per edit, including for undo/redo and for
 changes made in the bank's own asset editor.
 
+The handle's Details panel shows the bank record itself: one row per editable
+`FKyaActorPlacement` property, grouped by the schema's own categories, including
+nested fixed-size arrays, class-specific records and behaviour payloads. Edits are
+applied one top-level property at a time through the shared edit service, so a
+nested field or array element change writes only that property and produces one
+undo step. The old hand-written mirror fields remain on the actor for script
+compatibility but are hidden from Details. Non-editable fields (such as the
+serialized record index) stay read-only, and the property handles evaluate the
+schema's existing presence flags and edit conditions. Reference pickers, named
+behaviour labels, mixed-value multi-editing and reset-to-imported actions are not
+implemented yet.
+
 ## Editor commands
 
 The plugin registers a `Kya Level` section in the editor's Tools menu and the

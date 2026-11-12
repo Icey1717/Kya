@@ -104,6 +104,13 @@ Last updated: 2026-11-12.
 - Real `IModuleInterface` startup/shutdown; a `Kya Level` section in the Tools menu
   owned by the module, plus console commands `Kya.Validate`, `Kya.Export`,
   `Kya.DiscoverSectors`, `Kya.SaveLevel` and the existing `Kya.ViewportTonemapper`.
+- `FKyaActorDetailsCustomization` (registered for `AKyaActorHandle`) exposes the
+  complete editable `FKyaActorPlacement` via `FStructOnScope` and
+  `AddExternalStructureProperty`. Each row applies a single top-level property patch
+  through the edit service (nested array/sub-struct changes included), opens a
+  transaction when the details setter does not own one, hides the old mirrored
+  fields, and reloads the presentation copy on undo/redo, external edits and
+  reimport (deferred, so the panel can rebuild safely).
 
 ## 3. Verification
 
@@ -153,8 +160,9 @@ Coverage added by the new tests:
 
 These remain open in [the checklist](EDITOR_WORKFLOW_PLAN.md):
 
-- Field capability table and the full `FKyaActorPlacement` Details customization
-  (the handle still mirrors a subset of placement fields).
+- Reference pickers (actor/waypoint/path/sector/mesh/material), named behaviour
+  labels, flag widgets, unit tooltips, mixed-value multi-editing and
+  reset-to-imported actions in Details.
 - `UKyaLevelSet` asset and a normal Content Browser import/drag-drop flow; sector
   discovery is driven by the selected preview instead.
 - Progress/cancel UI for import and export; Message Log integration with

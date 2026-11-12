@@ -58,10 +58,10 @@ This is a source review of the current working tree, including the in-progress a
 
 ## 4. Show the selected actor's complete supported properties
 
-- [ ] Replace the small manually mirrored handle field list with a Details customization backed by the selected `FKyaActorPlacement` and shared edit service. Avoid maintaining a second hand-written copy of every class-specific field.
-- [ ] Organize Details into identity, transform, rendering/materials, sector, class configuration, behaviours, references and advanced/raw data. Show applicable class/behaviour fields using existing presence flags; hide irrelevant structures.
-- [ ] Make every currently supported exportable actor property reachable from selection, including nested fixed-size arrays, class tuning, models, switch/camera records and behaviour payloads. Audit against the schema and exporter and document any exceptions.
-- [ ] Handle nested property notifications and array-element edits correctly. Preserve indices and serialized sizes; remove add/remove/reorder controls where the exporter cannot support them.
+- [x] Replace the small manually mirrored handle field list with a Details customization backed by the selected `FKyaActorPlacement` and shared edit service. Avoid maintaining a second hand-written copy of every class-specific field.
+- [x] Organize Details into identity, transform, rendering/materials, sector, class configuration, behaviours, references and advanced/raw data. Show applicable class/behaviour fields using existing presence flags; hide irrelevant structures.
+- [x] Make every currently supported exportable actor property reachable from selection, including nested fixed-size arrays, class tuning, models, switch/camera records and behaviour payloads. Audit against the schema and exporter and document any exceptions.
+- [x] Handle nested property notifications and array-element edits correctly. Preserve indices and serialized sizes; remove add/remove/reorder controls where the exporter cannot support them.
 - [ ] Show class name plus numeric ID, named behaviours where recovered, unit tooltips, flag widgets for understood bits, and explicit unknown labels for unrecovered fields. Preserve unknown bits and do not invent semantics.
 - [ ] Provide actor, waypoint, path, sector, mesh and material reference pickers with searchable labels, current raw IDs and unresolved-reference warnings. Add Browse/Select Referenced Object actions and retain raw ID access for advanced work.
 - [ ] Validate ranges, reference scope, serialized widths, string byte lengths and layout-changing flags before committing. Explain the exact property and constraint inline instead of waiting for an export failure.

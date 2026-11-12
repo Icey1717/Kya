@@ -212,6 +212,44 @@ bool FKyaActorEditServiceTest::RunTest(const FString& Parameters)
     TestFalse(TEXT("Stale key does not edit"), Service.Apply(Key, Patch, EKyaEditNotify::Notify, &Error));
     TestTrue(TEXT("Stale key explains the reimport"), Error.Contains(TEXT("stale")));
 
+    // Full-record Details support: a presentation copy edits any top-level property
+    // (including nested fixed-size arrays) and writes back exactly that property.
+    {
+        Bank->SceneEnvironment.Actors[0].ActorFlags = 3;
+        Bank->SceneEnvironment.Actors[0].LightingFlags = 9;
+        Bank->SceneEnvironment.Actors[0].Conditions.Reset();
+        FKyaScenarioCondition& Condition = Bank->SceneEnvironment.Actors[0].Conditions.AddDefaulted_GetRef();
+        Condition.Variable = 11;
+        Condition.Value = 22;
+
+        FKyaActorPlacement Presentation = Bank->SceneEnvironment.Actors[0];
+        Presentation.ActorFlags = 77;
+        Presentation.Conditions[0].Value = 99;
+        FKyaActorEditPatch DetailsPatch;
+        TestTrue(TEXT("Details patch builds for a scalar field"),
+            KyaMakePlacementPropertyPatch(Presentation, GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, ActorFlags), DetailsPatch));
+        const FKyaActorRecordKey CurrentKey = Service.MakeKey(Bank, 0);
+        TestTrue(TEXT("Details patch applies"), Service.Apply(CurrentKey, DetailsPatch, EKyaEditNotify::Silent, &Error));
+        TestEqual(TEXT("Details patch writes the edited scalar"), Bank->SceneEnvironment.Actors[0].ActorFlags, 77);
+        TestEqual(TEXT("Details patch preserves other scalars"), Bank->SceneEnvironment.Actors[0].LightingFlags, int64(9));
+        TestEqual(TEXT("Details patch preserves untouched nested values"),
+            Bank->SceneEnvironment.Actors[0].Conditions[0].Value, 22);
+
+        // A nested array element change is carried by the containing property.
+        Presentation.Conditions[0].Value = 123;
+        FKyaActorEditPatch NestedPatch;
+        TestTrue(TEXT("Details patch builds for a fixed-size array"),
+            KyaMakePlacementPropertyPatch(Presentation, GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Conditions), NestedPatch));
+        TestTrue(TEXT("Nested details patch applies"),
+            Service.Apply(CurrentKey, NestedPatch, EKyaEditNotify::Silent, &Error));
+        TestEqual(TEXT("Nested details patch writes the element"),
+            Bank->SceneEnvironment.Actors[0].Conditions[0].Value, 123);
+        TestEqual(TEXT("Nested details patch keeps the array size"),
+            Bank->SceneEnvironment.Actors[0].Conditions.Num(), 1);
+        TestFalse(TEXT("Unknown or non-editable property is rejected"),
+            KyaMakePlacementPropertyPatch(Presentation, TEXT("NotAProperty"), DetailsPatch));
+    }
+
     // Two previews of the same bank refresh once per edit.
     UWorld* World = UWorld::CreateWorld(EWorldType::EditorPreview, false);
     if (!TestNotNull(TEXT("Create preview world"), World)) return false;
