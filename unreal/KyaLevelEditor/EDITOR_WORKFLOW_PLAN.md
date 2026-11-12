@@ -121,7 +121,7 @@ This is a source review of the current working tree, including the in-progress a
 
 ## 10. Delivery order and end-to-end gates
 
-- [ ] **Milestone A — direct actor editing:** complete ownership/edit service, default mesh selection, transform conversion, transactions and saving for existing fixed-size placements. Gate: click → move → undo/redo → save/reopen → export/reimport.
+- [x] **Milestone A — direct actor editing:** complete ownership/edit service, default mesh selection, transform conversion, transactions and saving for existing fixed-size placements. Gate: click → move → undo/redo → save/reopen → export/reimport.
 - [ ] **Milestone B — complete level setup:** implement level-set discovery, sector associations, import provenance and safe reimport. Gate: import a main bank into an empty project and reach a usable scene without manually filling sector arrays.
 - [ ] **Milestone C — full selected-actor Details:** cover the existing typed schema, nested edits, reference pickers and multi-edit. Gate: audit every export-supported actor field for accessibility and persistence.
 - [ ] **Milestone D — broader authoring:** complete Outliner policies, spatial record editing, diagnostics and incremental updates. Gate: a representative editing session requires neither numeric actor indices nor capture-script setup.

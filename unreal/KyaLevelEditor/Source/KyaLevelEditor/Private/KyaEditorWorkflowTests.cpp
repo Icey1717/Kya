@@ -25,6 +25,7 @@
 #include "Misc/AutomationTest.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
+#include "Misc/PackageName.h"
 #include "HAL/FileManager.h"
 #include "HAL/PlatformProcess.h"
 #include "Editor.h"
@@ -39,6 +40,8 @@
 #include "Components/SplineComponent.h"
 #include "ProceduralMeshComponent.h"
 #include "UObject/Package.h"
+#include "UObject/SavePackage.h"
+#include "PackageTools.h"
 #include "UObject/UnrealType.h"
 
 namespace
@@ -1635,6 +1638,174 @@ bool FKyaStructuralEditGateTest::RunTest(const FString& Parameters)
             }
         }
     }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaMilestoneAGateTest, "Kya.Editor.MilestoneAGate",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaMilestoneAGateTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to run the Milestone A gate."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read Milestone A bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    Factory->AddToRoot();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient | RF_Transactional, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Milestone A bank"), Bank))
+    {
+        Factory->RemoveFromRoot();
+        return false;
+    }
+    Bank->AddToRoot();
+    if (!TestTrue(TEXT("Milestone A bank has actors"), Bank->SceneEnvironment.Actors.Num() > 0)) return false;
+
+    UWorld* World = UWorld::CreateWorld(EWorldType::EditorPreview, false);
+    if (!TestNotNull(TEXT("Create Milestone A world"), World)) return false;
+    AKyaLevelPreview* Preview = World->SpawnActor<AKyaLevelPreview>();
+    if (!TestNotNull(TEXT("Spawn Milestone A preview"), Preview))
+    {
+        World->DestroyWorld(false);
+        return false;
+    }
+    Preview->Bank = Bank;
+    Preview->bShowRebuildProgress = false;
+    Preview->bSpawnActorHandles = true;
+    Preview->OnConstruction(FTransform::Identity);
+    AKyaActorHandle* Handle = Cast<AKyaActorHandle>(Preview->GetActorHandle(0));
+    if (!TestNotNull(TEXT("Milestone A handle exists"), Handle))
+    {
+        Preview->Destroy();
+        World->DestroyWorld(false);
+        return false;
+    }
+
+    // Gate step 1: selection (scripted click equivalent for headless automation).
+    if (GEditor)
+    {
+        GEditor->SelectNone(false, true, false);
+        GEditor->SelectActor(Handle, true, true);
+    }
+    TestTrue(TEXT("Clicking selects the actor handle"), Handle->IsSelected());
+
+    // Gate step 2: move through the transaction/edit service path.
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    Preview->OnConstruction(FTransform::Identity);
+    Handle = Cast<AKyaActorHandle>(Preview->GetActorHandle(0));
+    if (!TestNotNull(TEXT("Milestone A handle survives refresh"), Handle))
+    {
+        Preview->Destroy();
+        World->DestroyWorld(false);
+        return false;
+    }
+    const FKyaActorPlacement& Original = Bank->SceneEnvironment.Actors[0];
+    const FVector OriginalPosition = Original.Position;
+    // Unreal world offset (150, 0, 225) cm maps to game axes (1.5, 2.25, 0) m.
+    const FVector MovedPosition = OriginalPosition + FVector(1.5, 2.25, 0.0);
+    {
+        FScopedTransaction Transaction(NSLOCTEXT("KyaTests", "MilestoneAMove", "Milestone A move"));
+        Handle->AddActorWorldOffset(FVector(150.0, 0.0, 225.0));
+        Handle->PostEditMove(true);
+        Service.FlushPendingNotifications();
+    }
+    TestTrue(TEXT("Move writes the bank"), Bank->SceneEnvironment.Actors[0].Position.Equals(MovedPosition, 1.0e-3));
+
+    // Gate step 3: undo and redo.
+    if (GEditor)
+    {
+        TestTrue(TEXT("Undo returns a transaction"), GEditor->UndoTransaction());
+        TestTrue(TEXT("Undo restores the original position"),
+            Bank->SceneEnvironment.Actors[0].Position.Equals(OriginalPosition, 1.0e-3));
+        GEditor->RedoTransaction();
+        TestTrue(TEXT("Redo reapplies the moved position"),
+            Bank->SceneEnvironment.Actors[0].Position.Equals(MovedPosition, 1.0e-3));
+    }
+    Service.FlushPendingNotifications();
+
+    // Gate step 4: save and reopen a real package.
+    const FString PackageRoot = FPaths::ConvertRelativePathToFull(
+        FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("KyaMilestoneA")));
+    IFileManager::Get().MakeDirectory(*PackageRoot, true);
+    const FString PackageName = FString::Printf(TEXT("/Game/KyaMilestoneATest/Bank_%s"),
+        *FGuid::NewGuid().ToString(EGuidFormats::Digits));
+    UPackage* SavePackage = CreatePackage(*PackageName);
+    UKyaLevelBank* SaveBank = DuplicateObject<UKyaLevelBank>(Bank, SavePackage, TEXT("Bank"));
+    if (TestNotNull(TEXT("Duplicate bank for save"), SaveBank))
+    {
+        SaveBank->ClearFlags(RF_Transient);
+        SaveBank->SetFlags(RF_Public | RF_Standalone);
+        SavePackage->ClearFlags(RF_Transient);
+        SavePackage->SetFlags(RF_Public | RF_Standalone);
+        SavePackage->MarkPackageDirty();
+        const FString PackageFilename = FPackageName::LongPackageNameToFilename(PackageName,
+            FPackageName::GetAssetPackageExtension());
+        FSavePackageArgs SaveArgs;
+        SaveArgs.TopLevelFlags = RF_Public | RF_Standalone;
+        SaveArgs.SaveFlags = SAVE_NoError;
+        TestTrue(TEXT("Save the bank package"), UPackage::SavePackage(SavePackage, SaveBank, *PackageFilename, SaveArgs));
+        // Prove disk deserialization: reload the saved package from its file.
+        const FString SavedPackageName = SavePackage->GetName();
+        FText ReloadError;
+        const bool bReloaded = UPackageTools::ReloadPackages({ SavePackage }, ReloadError,
+            EReloadPackagesInteractionMode::AssumePositive);
+        TestTrue(FString::Printf(TEXT("Reload the saved package from disk (%s)"), *ReloadError.ToString()), bReloaded);
+        UPackage* LoadedPackage = FindPackage(nullptr, *SavedPackageName);
+        TestNotNull(TEXT("Reload creates a package"), LoadedPackage);
+        UKyaLevelBank* LoadedBank = LoadedPackage ? FindObject<UKyaLevelBank>(LoadedPackage, TEXT("Bank")) : nullptr;
+        if (TestNotNull(TEXT("Reopen the saved bank"), LoadedBank))
+        {
+            TestTrue(TEXT("Saved position survives reopen"),
+                LoadedBank->SceneEnvironment.Actors[0].Position.Equals(MovedPosition, 1.0e-3));
+            TestEqual(TEXT("Saved actor count survives reopen"),
+                LoadedBank->SceneEnvironment.Actors.Num(), Bank->SceneEnvironment.Actors.Num());
+
+            // Export the reopened asset, so the persistence and export gates are connected.
+            FKyaBankExportDiagnostics PersistedDiagnostics;
+            TArray<uint8> PersistedBytes;
+            if (TestTrue(TEXT("Export the reopened bank"),
+                KyaBuildBankExportBytes(LoadedBank, PersistedBytes, PersistedDiagnostics)))
+            {
+                const uint8* PersistedCursor = PersistedBytes.GetData();
+                UKyaLevelBank* PersistedReimport = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(
+                    UKyaLevelBank::StaticClass(), GetTransientPackage(), NAME_None, RF_Transient, nullptr,
+                    TEXT("bnk"), PersistedCursor, PersistedBytes.GetData() + PersistedBytes.Num(), GWarn));
+                if (TestNotNull(TEXT("Reimport the reopened bank"), PersistedReimport))
+                    TestTrue(TEXT("Reopened export/reimport preserves the moved position"),
+                        PersistedReimport->SceneEnvironment.Actors[0].Position.Equals(MovedPosition, 1.0e-3));
+            }
+        }
+        if (LoadedPackage) LoadedPackage->SetDirtyFlag(false);
+        IFileManager::Get().Delete(*PackageFilename, false, true, true);
+    }
+
+    // Gate step 5: export and reimport the current state as well.
+    FKyaBankExportDiagnostics Diagnostics;
+    TArray<uint8> Exported;
+    if (TestTrue(TEXT("Export Milestone A bank"), KyaBuildBankExportBytes(Bank, Exported, Diagnostics)))
+    {
+        const uint8* ExportedCursor = Exported.GetData();
+        UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+            GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+            Exported.GetData() + Exported.Num(), GWarn));
+        if (TestNotNull(TEXT("Reimport Milestone A bank"), Reimported))
+            TestTrue(TEXT("Export/reimport preserves the moved position"),
+                Reimported->SceneEnvironment.Actors[0].Position.Equals(MovedPosition, 1.0e-3));
+    }
+
+    Preview->Destroy();
+    World->DestroyWorld(false);
+    Service.Reset();
+    Bank->RemoveFromRoot();
+    Factory->RemoveFromRoot();
     return true;
 }
 

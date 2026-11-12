@@ -116,6 +116,11 @@ Last updated: 2026-11-12.
   byte-identical, a selected-actor edit reimports exact values with a bounded diff
   and an unchanged neighbour, and a structural actor-count change fails before
   staging while leaving unrelated and existing destination files untouched.
+- Milestone A gate (`Kya.Editor.MilestoneAGate`): a real transactional bank is
+  selected through a generated handle (headless click equivalent), moved in a
+  transaction with the bank write verified, undone/redone, saved to a canonical
+  package, reloaded from disk with `UPackageTools::ReloadPackages`, and the
+  reloaded asset is exported and reimported with the moved position intact.
 - `FKyaLevelBankReimportHandler` implements `FReimportHandler`: parses into a
   temporary bank, only replaces the asset on success, asks before discarding dirty
   changes (refuses in unattended mode), updates provenance, bumps the edit
@@ -352,7 +357,8 @@ Results: `Kya.Bank.LevelOneRoundTrip`, `Kya.Bank.SmallBankRoundTrip`,
 `Kya.Editor.MessageLogLinks`, `Kya.Editor.AuthoringVisibility`,
 `Kya.Editor.TargetedWorkflowAcceptance`, `Kya.Editor.LevelActionsReporting`,
 `Kya.Bank.SelectedActorRoundTrip`, `Kya.Editor.RunningPortExportValidation`,
-`Kya.Editor.StructuralEditGate` and `Kya.Editor.ExportAcceptance` all `Success`.
+`Kya.Editor.StructuralEditGate`, `Kya.Editor.ExportAcceptance` and
+`Kya.Editor.MilestoneAGate` all `Success`.
 
 Coverage added by the new tests:
 
