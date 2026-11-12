@@ -376,6 +376,22 @@ bytes. A transform attempt is reset immediately and the Details panel reports
 `Transform reset: hierarchy transforms are not serialized`, so the handle cannot be
 mistaken for a supported export edit.
 
+Enable `Spawn Light Visualizers`, `Spawn Camera Visualizer`,
+`Spawn Actor Link Visualizers` and `Spawn Trigger Visualizers` to add selectable
+scene visualizers. Lights mirror the verified serialized light records and are
+editable through the shared edit service (position, direction, colors, multiplier,
+falloff/FOV and type); the colored sphere and arrow are explicitly approximate
+shapes. The main camera edits the verified serialized position/look-at/up/FOV, with
+an approximate frustum marker. Light edits are exported by patching the THGL
+archive in place (record counts are fixed); the exporter rejects a count mismatch.
+Actor links are read-only derived lines between an
+actor and a resolved actor/waypoint reference, and trigger bounds are approximate
+checkpoint-waypoint spheres. Zone bounds are **not** visualized: the schema stores
+zone references without serialized geometry, and the preview's
+`VisualizerLimitations` field states this. Each visualizer's Details panel labels
+what is verified versus approximate, and read-only kinds reject transforms with a
+status message.
+
 Enable `Log Sector Diagnostics` on the preview actor to log bank entries, cluster
 and hierarchy strip counts, material coverage, and bounds. For a camera-aligned
 capture, save a game screenshot with `python tools/debug_socket/client.py screenshot --metadata out/screenshots/matched-camera.json`, set `KYA_CAMERA_METADATA` to

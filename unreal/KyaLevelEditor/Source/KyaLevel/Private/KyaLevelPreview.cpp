@@ -11,6 +11,8 @@
 #include "KyaActorHandle.h"
 #include "KyaActorGroup.h"
 #include "KyaSpatialRecordHandle.h"
+#include "KyaSceneVisualizer.h"
+#include "KyaActorCatalog.h"
 #include "KyaHierarchyHandle.h"
 #include "KyaActorTransform.h"
 #include "KyaActorEditService.h"
@@ -190,6 +192,7 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
         RefreshSpatialHandles();
         RefreshHierarchyHandles();
         ApplyGeneratedActorPresentation();
+        RefreshSceneVisualizers();
 #endif
     };
 #if WITH_EDITOR
@@ -1582,6 +1585,7 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
     RefreshSpatialHandles();
     RefreshHierarchyHandles();
     ApplyGeneratedActorPresentation();
+    RefreshSceneVisualizers();
 #endif
 }
 
@@ -1603,6 +1607,9 @@ void AKyaLevelPreview::Destroyed()
     for (const TPair<int32, TObjectPtr<AKyaActorGroup>>& Pair : PathGroups)
         if (IsValid(Pair.Value)) Pair.Value->Destroy();
     PathGroups.Reset();
+    for (const TPair<FString, TObjectPtr<AKyaSceneVisualizer>>& Pair : SceneVisualizers)
+        if (IsValid(Pair.Value)) Pair.Value->Destroy();
+    SceneVisualizers.Reset();
     for (const TPair<int32, TObjectPtr<USplineComponent>>& Pair : PathGuides)
         if (IsValid(Pair.Value)) Pair.Value->DestroyComponent();
     PathGuides.Reset();
@@ -1948,6 +1955,8 @@ bool AKyaLevelPreview::OwnsGeneratedActor(const AActor* Actor) const
         if (Pair.Value == Actor) return true;
     for (const TPair<int32, TObjectPtr<AKyaActorGroup>>& Pair : PathGroups)
         if (Pair.Value == Actor) return true;
+    for (const TPair<FString, TObjectPtr<AKyaSceneVisualizer>>& Pair : SceneVisualizers)
+        if (Pair.Value == Actor) return true;
     for (const TObjectPtr<AKyaHierarchyHandle>& Handle : HierarchyHandles)
         if (Handle == Actor) return true;
     return false;
@@ -1963,6 +1972,8 @@ int32 AKyaLevelPreview::DestroyStrayGeneratedActors()
     for (TActorIterator<AKyaSpatialRecordHandle> It(World); It; ++It)
         if (It->Preview == this && !OwnsGeneratedActor(*It)) Strays.Add(*It);
     for (TActorIterator<AKyaHierarchyHandle> It(World); It; ++It)
+        if (It->Preview == this && !OwnsGeneratedActor(*It)) Strays.Add(*It);
+    for (TActorIterator<AKyaSceneVisualizer> It(World); It; ++It)
         if (It->Preview == this && !OwnsGeneratedActor(*It)) Strays.Add(*It);
     for (TActorIterator<AKyaActorGroup> It(World); It; ++It)
         if (It->GetAttachParentActor() == this && !OwnsGeneratedActor(*It)) Strays.Add(*It);
@@ -2059,6 +2070,7 @@ void AKyaLevelPreview::ApplyGeneratedActorPresentation()
     for (const TObjectPtr<AKyaHierarchyHandle>& Handle : HierarchyHandles) Apply(Handle);
     for (const TPair<int32, TObjectPtr<AKyaActorGroup>>& Pair : ActorSectorGroups) Apply(Pair.Value);
     for (const TPair<int32, TObjectPtr<AKyaActorGroup>>& Pair : PathGroups) Apply(Pair.Value);
+    for (const TPair<FString, TObjectPtr<AKyaSceneVisualizer>>& Pair : SceneVisualizers) Apply(Pair.Value);
 }
 
 void AKyaLevelPreview::RefreshSpatialHandles()
@@ -2233,6 +2245,155 @@ void AKyaLevelPreview::RefreshHierarchyHandles(){
     }
     UE_LOG(LogTemp, Display, TEXT("KYA_HIERARCHY_HANDLES hierarchies=%d handles=%d hidden=%d"),
         HierarchySelectionInfo.Num(), HierarchyHandles.Num(), HiddenHierarchies.Num());
+}
+
+void AKyaLevelPreview::RefreshSceneVisualizers()
+{
+    UWorld* World = GetWorld();
+    const bool bAny = (bSpawnLightVisualizers || bSpawnCameraVisualizer || bSpawnActorLinkVisualizers ||
+        bSpawnTriggerVisualizers) && World && !World->IsGameWorld();
+    if (!bAny || !Bank)
+    {
+        for (const TPair<FString, TObjectPtr<AKyaSceneVisualizer>>& Pair : SceneVisualizers)
+            if (IsValid(Pair.Value)) Pair.Value->Destroy();
+        SceneVisualizers.Reset();
+        return;
+    }
+
+    TSet<FString> Wanted;
+    const auto SpawnOrUpdate = [this, World, &Wanted](const FString& Key, const FString& Label,
+        TFunction<void(AKyaSceneVisualizer*)> Initialize)
+    {
+        Wanted.Add(Key);
+        if (TObjectPtr<AKyaSceneVisualizer>* Existing = SceneVisualizers.Find(Key))
+        {
+            if (IsValid(*Existing))
+            {
+                (*Existing)->Preview = this;
+                (*Existing)->Bank = Bank;
+                Initialize(*Existing);
+                (*Existing)->SyncFromBank();
+                (*Existing)->SetGeneratedLabel(Label);
+                return;
+            }
+        }
+        FActorSpawnParameters Params;
+        Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        Params.ObjectFlags |= RF_Transient | RF_Transactional;
+        AKyaSceneVisualizer* Visualizer = World->SpawnActor<AKyaSceneVisualizer>(
+            AKyaSceneVisualizer::StaticClass(), FTransform::Identity, Params);
+        if (!Visualizer) return;
+        Visualizer->SetFlags(RF_Transient | RF_Transactional);
+        Visualizer->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
+        Initialize(Visualizer);
+        Visualizer->SetGeneratedLabel(Label);
+        SceneVisualizers.Add(Key, Visualizer);
+    };
+
+    TArray<UKyaLevelBank*> Banks;
+    Banks.Add(Bank);
+    for (const TObjectPtr<UKyaLevelBank>& Sector : SectorBanks)
+        if (Sector) Banks.AddUnique(Sector);
+
+    for (UKyaLevelBank* VisualBank : Banks)
+    {
+        if (!VisualBank) continue;
+        if (bSpawnLightVisualizers)
+        {
+            for (int32 Index = 0; Index < VisualBank->Lights.Num(); ++Index)
+            {
+                const FString Key = FString::Printf(TEXT("light:%s:%d"), *VisualBank->GetName(), Index);
+                const FString Label = FString::Printf(TEXT("%s light %d"), *VisualBank->GetName(), Index);
+                SpawnOrUpdate(Key, Label, [this, VisualBank, Index](AKyaSceneVisualizer* Visualizer)
+                {
+                    Visualizer->InitializeLight(this, VisualBank, Index);
+                });
+            }
+        }
+        if (bSpawnActorLinkVisualizers)
+        {
+            for (int32 ActorIndex = 0; ActorIndex < VisualBank->SceneEnvironment.Actors.Num(); ++ActorIndex)
+            {
+                const FKyaActorPlacement& Actor = VisualBank->SceneEnvironment.Actors[ActorIndex];
+                for (const FKyaReferenceField& Field : GetKyaReferenceFields())
+                {
+                    if (Field.Kind != EKyaReferenceKind::Actor && Field.Kind != EKyaReferenceKind::Waypoint) continue;
+                    if (Field.ClassId != -1 && Field.ClassId != Actor.ClassId) continue;
+                    const int64 Value = GetKyaNumericField(Actor, Field.PropertyName);
+                    if (Value < 0) continue;
+                    FVector Target;
+                    FString TargetLabel;
+                    if (Field.Kind == EKyaReferenceKind::Actor)
+                    {
+                        if (!VisualBank->SceneEnvironment.Actors.IsValidIndex(int32(Value))) continue;
+                        Target = VisualBank->SceneEnvironment.Actors[int32(Value)].Position;
+                        TargetLabel = FString::Printf(TEXT("actor %lld"), Value);
+                    }
+                    else
+                    {
+                        if (!VisualBank->SceneEnvironment.Waypoints.IsValidIndex(int32(Value))) continue;
+                        Target = VisualBank->SceneEnvironment.Waypoints[int32(Value)].Position;
+                        TargetLabel = FString::Printf(TEXT("waypoint %lld"), Value);
+                    }
+                    const FString Key = FString::Printf(TEXT("link:%s:%d:%s"),
+                        *VisualBank->GetName(), ActorIndex, *Field.PropertyName.ToString());
+                    const FString Label = FString::Printf(TEXT("%s -> %s"), *Field.PropertyName.ToString(), *TargetLabel);
+                    SpawnOrUpdate(Key, Label, [this, VisualBank, ActorIndex, Field, Target](AKyaSceneVisualizer* Visualizer)
+                    {
+                        Visualizer->InitializeActorLink(this, VisualBank, ActorIndex, Field.PropertyName,
+                            VisualBank->SceneEnvironment.Actors[ActorIndex].Position, Target);
+                    });
+                }
+            }
+        }
+        if (bSpawnTriggerVisualizers)
+        {
+            for (int32 ActorIndex = 0; ActorIndex < VisualBank->SceneEnvironment.Actors.Num(); ++ActorIndex)
+            {
+                const FKyaActorPlacement& Actor = VisualBank->SceneEnvironment.Actors[ActorIndex];
+                for (int32 CheckpointIndex = 0; CheckpointIndex < Actor.Checkpoints.Num(); ++CheckpointIndex)
+                {
+                    const int32 WaypointIndex = Actor.Checkpoints[CheckpointIndex].WaypointA;
+                    if (!VisualBank->SceneEnvironment.Waypoints.IsValidIndex(WaypointIndex)) continue;
+                    const FVector Center = VisualBank->SceneEnvironment.Waypoints[WaypointIndex].Position;
+                    const FString Key = FString::Printf(TEXT("trigger:%s:%d:%d"),
+                        *VisualBank->GetName(), ActorIndex, CheckpointIndex);
+                    const FString Label = FString::Printf(TEXT("Trigger %d/%d (approx.)"), ActorIndex, CheckpointIndex);
+                    SpawnOrUpdate(Key, Label, [this, VisualBank, ActorIndex, CheckpointIndex, Center](
+                        AKyaSceneVisualizer* Visualizer)
+                    {
+                        Visualizer->InitializeTrigger(this, VisualBank, ActorIndex, CheckpointIndex, Center);
+                    });
+                }
+            }
+        }
+    }
+
+    if (bSpawnCameraVisualizer)
+    {
+        const FString Key = FString::Printf(TEXT("camera:%s"), *Bank->GetName());
+        SpawnOrUpdate(Key, FString::Printf(TEXT("%s main camera"), *Bank->GetName()),
+            [this](AKyaSceneVisualizer* Visualizer) { Visualizer->InitializeCamera(this, Bank); });
+    }
+
+    for (auto It = SceneVisualizers.CreateIterator(); It; ++It)
+    {
+        if (Wanted.Contains(It.Key())) continue;
+        if (IsValid(It.Value())) It.Value()->Destroy();
+        It.RemoveCurrent();
+    }
+    UE_LOG(LogTemp, Display, TEXT("KYA_SCENE_VISUALIZERS lights=%d camera=%d links=%d triggers=%d total=%d"),
+        bSpawnLightVisualizers ? 1 : 0, bSpawnCameraVisualizer ? 1 : 0, bSpawnActorLinkVisualizers ? 1 : 0,
+        bSpawnTriggerVisualizers ? 1 : 0, SceneVisualizers.Num());
+    VisualizerLimitations = TEXT("Zones are not visualized: this schema stores zone references without serialized "
+        "bounds. Trigger bounds are approximate checkpoint/waypoint markers, and actor links are derived "
+        "diagnostics; neither has native geometry.");
+}
+
+AKyaSceneVisualizer* AKyaLevelPreview::GetSceneVisualizer(const FString& Key) const
+{
+    const TObjectPtr<AKyaSceneVisualizer>* Found = SceneVisualizers.Find(Key);
+    return Found ? Found->Get() : nullptr;
 }
 #endif
 

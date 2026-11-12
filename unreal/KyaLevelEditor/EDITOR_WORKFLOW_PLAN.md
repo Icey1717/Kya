@@ -95,7 +95,7 @@ This is a source review of the current working tree, including the in-progress a
 - [x] Add waypoint orientation visualization/editing only after verifying stored rotation conventions. Keep path timing, lead-in and loop visualization explicit about what is implemented.
 - [x] Make hierarchy selection operate on rendered geometry at the existing practical hierarchy/strip-group granularity. Show bounds, owning sector, material information and source offsets.
 - [x] Keep hierarchy hide/isolate actions clearly presentation-only. Enable hierarchy transforms only after implementing and validating serialized hierarchy writeback; a movable-looking handle must not imply export support.
-- [ ] Add selectable visualizers for supported lights, cameras, zones, trigger bounds and actor links. Use the same Details/edit service and distinguish approximate preview shapes from verified native semantics.
+- [x] Add selectable visualizers for supported lights, cameras, zones, trigger bounds and actor links. Use the same Details/edit service and distinguish approximate preview shapes from verified native semantics.
 - [ ] Put level environment, camera, fog and scene configuration on a discoverable level settings surface. Separate authoring properties from render comparison and capture diagnostics.
 - [ ] Acceptance: users can find spatial records through the viewport/Outliner, understand their editable scope, and save/export supported changes without global-array hunting.
 

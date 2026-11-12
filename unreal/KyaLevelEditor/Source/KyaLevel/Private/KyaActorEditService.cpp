@@ -883,4 +883,176 @@ void FKyaLevelEditService::Reset()
     OnBankEdited.Clear();
 }
 
+FString FKyaLightRecordKey::ToString() const
+{
+    return FString::Printf(TEXT("%s light %d@%u"), Bank.IsValid() ? *Bank->GetName() : TEXT("<null>"),
+        LightIndex, Generation);
+}
+
+bool FKyaLightEditPatch::IsEmpty() const
+{
+    return !LightType.IsSet() && !ShapeType.IsSet() && !AmbientColor.IsSet() && !Color.IsSet() &&
+        !Multiplier.IsSet() && !Position.IsSet() && !Direction.IsSet() && !Falloff0.IsSet() &&
+        !Falloff1.IsSet() && !Fov0.IsSet() && !Fov1.IsSet();
+}
+
+FString FKyaSceneCameraKey::ToString() const
+{
+    return FString::Printf(TEXT("%s camera@%u"), Bank.IsValid() ? *Bank->GetName() : TEXT("<null>"), Generation);
+}
+
+bool FKyaSceneCameraEditPatch::IsEmpty() const
+{
+    return !Position.IsSet() && !LookAt.IsSet() && !Up.IsSet() && !Fov.IsSet();
+}
+
+FKyaLightRecordKey FKyaLevelEditService::MakeLightKey(UKyaLevelBank* Bank, int32 LightIndex) const
+{
+    FKyaLightRecordKey Key;
+    Key.Bank = Bank;
+    Key.LightIndex = LightIndex;
+    Key.Generation = Bank ? uint32(Bank->EditGeneration) : 0;
+    return Key;
+}
+
+bool FKyaLevelEditService::ResolveLight(const FKyaLightRecordKey& Key, FKyaLight*& OutLight, FString* OutError) const
+{
+    OutLight = nullptr;
+    UKyaLevelBank* Bank = Key.Bank.Get();
+    if (!Bank)
+    {
+        if (OutError) *OutError = TEXT("The bank asset no longer exists.");
+        return false;
+    }
+    if (Key.Generation != uint32(Bank->EditGeneration))
+    {
+        if (OutError) *OutError = FString::Printf(
+            TEXT("Light identity is stale (bank generation %u, key %u); reselect after reimport."),
+            uint32(Bank->EditGeneration), Key.Generation);
+        return false;
+    }
+    if (!Bank->Lights.IsValidIndex(Key.LightIndex))
+    {
+        if (OutError) *OutError = FString::Printf(TEXT("Light index %d does not exist in %s."),
+            Key.LightIndex, *Bank->GetName());
+        return false;
+    }
+    OutLight = &Bank->Lights[Key.LightIndex];
+    return true;
+}
+
+bool FKyaLevelEditService::ApplyLight(const FKyaLightRecordKey& Key, const FKyaLightEditPatch& Patch,
+    EKyaEditNotify Notify, FString* OutError)
+{
+    FString Error;
+    FKyaLight* Light = nullptr;
+    if (!ResolveLight(Key, Light, &Error))
+    {
+        if (OutError) *OutError = Error;
+        return false;
+    }
+    if (Patch.IsEmpty())
+    {
+        if (OutError) *OutError = TEXT("The light patch does not change any property.");
+        return false;
+    }
+    UKyaLevelBank* Bank = Key.Bank.Get();
+    FKyaLight Candidate = *Light;
+    if (Patch.LightType.IsSet()) Candidate.LightType = Patch.LightType.GetValue();
+    if (Patch.ShapeType.IsSet()) Candidate.ShapeType = Patch.ShapeType.GetValue();
+    // The serialized record layout depends on type/shape (direction/FOV presence);
+    // changing that layout requires rebuilding the archive, which the writer does not do.
+    const auto HasDirection = [](int32 Type, int32 Shape) { return Type != 2 && (Shape == 1 || Shape == 2 || Shape == 4); };
+    const auto HasFov = [](int32 Shape) { return Shape == 4; };
+    if (HasDirection(Light->LightType, Light->ShapeType) != HasDirection(Candidate.LightType, Candidate.ShapeType) ||
+        HasFov(Light->ShapeType) != HasFov(Candidate.ShapeType))
+    {
+        if (OutError) *OutError = TEXT("Changing this light's type/shape would change its serialized record layout "
+            "(direction/FOV presence); rebuilding the light archive is not supported.");
+        return false;
+    }
+    if (Patch.AmbientColor.IsSet()) Candidate.AmbientColor = Patch.AmbientColor.GetValue();
+    if (Patch.Color.IsSet()) Candidate.Color = Patch.Color.GetValue();
+    if (Patch.Multiplier.IsSet()) Candidate.Multiplier = Patch.Multiplier.GetValue();
+    if (Patch.Position.IsSet()) Candidate.Position = Patch.Position.GetValue();
+    if (Patch.Direction.IsSet()) Candidate.Direction = Patch.Direction.GetValue();
+    if (Patch.Falloff0.IsSet()) Candidate.Falloff0 = Patch.Falloff0.GetValue();
+    if (Patch.Falloff1.IsSet()) Candidate.Falloff1 = Patch.Falloff1.GetValue();
+    if (Patch.Fov0.IsSet()) Candidate.Fov0 = Patch.Fov0.GetValue();
+    if (Patch.Fov1.IsSet()) Candidate.Fov1 = Patch.Fov1.GetValue();
+    if (!ValidateVector(Candidate.Position, TEXT("Light position"), Error) ||
+        !ValidateVector(Candidate.Direction, TEXT("Light direction"), Error) ||
+        !FMath::IsFinite(Candidate.Multiplier) || !FMath::IsFinite(Candidate.Falloff0) ||
+        !FMath::IsFinite(Candidate.Falloff1) || !FMath::IsFinite(Candidate.Fov0) ||
+        !FMath::IsFinite(Candidate.Fov1))
+    {
+        if (OutError) *OutError = Error.IsEmpty() ? TEXT("Light values must be finite.") : Error;
+        return false;
+    }
+    Bank->Modify();
+    if (!ResolveLight(Key, Light, &Error))
+    {
+        if (OutError) *OutError = Error;
+        return false;
+    }
+    *Light = Candidate;
+    Bank->MarkPackageDirty();
+    NotifyAfterEdit(*this, Bank, Notify);
+    return true;
+}
+
+FKyaSceneCameraKey FKyaLevelEditService::MakeSceneCameraKey(UKyaLevelBank* Bank) const
+{
+    FKyaSceneCameraKey Key;
+    Key.Bank = Bank;
+    Key.Generation = Bank ? uint32(Bank->EditGeneration) : 0;
+    return Key;
+}
+
+bool FKyaLevelEditService::ApplySceneCamera(const FKyaSceneCameraKey& Key, const FKyaSceneCameraEditPatch& Patch,
+    EKyaEditNotify Notify, FString* OutError)
+{
+    UKyaLevelBank* Bank = Key.Bank.Get();
+    if (!Bank)
+    {
+        if (OutError) *OutError = TEXT("The bank asset no longer exists.");
+        return false;
+    }
+    if (Key.Generation != uint32(Bank->EditGeneration))
+    {
+        if (OutError) *OutError = FString::Printf(
+            TEXT("Camera identity is stale (bank generation %u, key %u); reselect after reimport."),
+            uint32(Bank->EditGeneration), Key.Generation);
+        return false;
+    }
+    if (Patch.IsEmpty())
+    {
+        if (OutError) *OutError = TEXT("The camera patch does not change any property.");
+        return false;
+    }
+    FKyaSceneEnvironment Candidate = Bank->SceneEnvironment;
+    if (Patch.Position.IsSet()) Candidate.CameraPosition = Patch.Position.GetValue();
+    if (Patch.LookAt.IsSet()) Candidate.CameraLookAt = Patch.LookAt.GetValue();
+    if (Patch.Up.IsSet()) Candidate.CameraUp = Patch.Up.GetValue();
+    if (Patch.Fov.IsSet()) Candidate.CameraFov = Patch.Fov.GetValue();
+    FString Error;
+    if (!ValidateVector(Candidate.CameraPosition, TEXT("Camera position"), Error) ||
+        !ValidateVector(Candidate.CameraLookAt, TEXT("Camera look-at"), Error) ||
+        !ValidateVector(Candidate.CameraUp, TEXT("Camera up"), Error) ||
+        !FMath::IsFinite(Candidate.CameraFov) || Candidate.CameraFov < 0.0f || Candidate.CameraFov > 180.0f)
+    {
+        if (OutError) *OutError = Error.IsEmpty()
+            ? TEXT("Camera FOV must be finite and between 0 and 180 degrees.") : Error;
+        return false;
+    }
+    Bank->Modify();
+    Bank->SceneEnvironment.CameraPosition = Candidate.CameraPosition;
+    Bank->SceneEnvironment.CameraLookAt = Candidate.CameraLookAt;
+    Bank->SceneEnvironment.CameraUp = Candidate.CameraUp;
+    Bank->SceneEnvironment.CameraFov = Candidate.CameraFov;
+    Bank->MarkPackageDirty();
+    NotifyAfterEdit(*this, Bank, Notify);
+    return true;
+}
+
 #endif

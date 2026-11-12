@@ -3041,6 +3041,129 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
         WriteU32(ClassDataPos + Index * 8 + 4, uint32(Allocation.Count));
     }
     WriteU32(ClassDataPos + int64(ClassCount) * 8, uint32(Bank->SceneConfiguration.ParticleWord));
+
+    // Light archive (THGL): patch the fixed records in place using the serialized
+    // offset table, preserving any bytes the typed schema does not expose.
+    auto WriteLightU32 = [&Bytes](int64 Offset, uint32 Value)
+    {
+        Bytes[Offset] = uint8(Value); Bytes[Offset + 1] = uint8(Value >> 8);
+        Bytes[Offset + 2] = uint8(Value >> 16); Bytes[Offset + 3] = uint8(Value >> 24);
+    };
+    auto WriteLightFloat = [&Bytes](int64 Offset, float Value)
+    {
+        uint32 Bits; FMemory::Memcpy(&Bits, &Value, sizeof(Bits));
+        Bytes[Offset] = uint8(Bits); Bytes[Offset + 1] = uint8(Bits >> 8);
+        Bytes[Offset + 2] = uint8(Bits >> 16); Bytes[Offset + 3] = uint8(Bits >> 24);
+    };
+    auto ReadLightFloat = [&Bytes](int64 Offset)
+    {
+        const uint32 Bits = uint32(Bytes[Offset]) | (uint32(Bytes[Offset + 1]) << 8) |
+            (uint32(Bytes[Offset + 2]) << 16) | (uint32(Bytes[Offset + 3]) << 24);
+        float Value; FMemory::Memcpy(&Value, &Bits, sizeof(Value));
+        return Value;
+    };
+    const auto ReadColorChannel = [&Bytes](int64 Offset, float Multiplier)
+    {
+        const float Value = FMath::Min(Bytes[Offset], uint8(127)) * 2.0f * Multiplier / 255.0f;
+        return FMath::Clamp(Value, 0.0f, 1.0f);
+    };
+    const auto WriteColorChannel = [&Bytes](int64 Offset, float Channel, float Multiplier)
+    {
+        const float Raw = Multiplier > KINDA_SMALL_NUMBER
+            ? Channel * 255.0f / (2.0f * Multiplier) : 0.0f;
+        // One byte per channel; adjacent channels must keep their original bytes.
+        Bytes[Offset] = uint8(FMath::Clamp(FMath::RoundToInt(Raw), 0, 127));
+    };
+    for (const FKyaBankEntry& LightEntry : Bank->Entries)
+    {
+        if (LightEntry.Type != 16 || LightEntry.Subtype != 1 || LightEntry.Offset < 0 || LightEntry.Size < 32 ||
+            LightEntry.Offset > Bytes.Num() || LightEntry.Size > Bytes.Num() - LightEntry.Offset) continue;
+        if (ReadU32(LightEntry.Offset) != 0xDEADBEEF ||
+            FMemory::Memcmp(Bytes.GetData() + LightEntry.Offset + 8, "THGL", 4) != 0) continue;
+        TArray<FKyaLightOffsets> Offsets;
+        if (!KyaReadLightOffsets(MakeArrayView(Bytes.GetData(), Bytes.Num()), LightEntry.Offset + 16,
+            LightEntry.Size - 16, Offsets)) continue;
+        if (Offsets.Num() != Bank->Lights.Num())
+        {
+            Diagnostics.Errors.Add(FString::Printf(
+                TEXT("The light archive has %d records but the asset has %d; changing the light count is not supported."),
+                Offsets.Num(), Bank->Lights.Num()));
+            return false;
+        }
+        for (int32 Index = 0; Index < Offsets.Num(); ++Index)
+        {
+            const FKyaLight& Light = Bank->Lights[Index];
+            const FKyaLightOffsets& Off = Offsets[Index];
+            // Direction/FOV presence is part of the serialized layout; a type/shape
+            // change that alters it would make existing bytes parse differently.
+            const auto HasDirection = [](int32 Type, int32 Shape)
+            {
+                return Type != 2 && (Shape == 1 || Shape == 2 || Shape == 4);
+            };
+            const auto HasFov = [](int32 Shape) { return Shape == 4; };
+            if (HasDirection(Off.LightType, Off.ShapeType) != HasDirection(Light.LightType, Light.ShapeType) ||
+                HasFov(Off.ShapeType) != HasFov(Light.ShapeType) ||
+                (HasDirection(Light.LightType, Light.ShapeType) && Off.Direction == 0) ||
+                (HasFov(Light.ShapeType) && Off.Fov == 0))
+            {
+                Diagnostics.Errors.Add(FString::Printf(
+                    TEXT("Light %d changes its serialized layout (type/shape controls direction/FOV presence); "
+                        "rebuilding the light archive is not supported."), Index));
+                return false;
+            }
+            WriteLightU32(Off.Record, uint32(Light.LightType));
+            WriteLightU32(Off.Record + 4, uint32(Light.ShapeType));
+            const float OriginalMultiplier = ReadLightFloat(Off.Multiplier);
+            const FLinearColor Colors[] = {Light.AmbientColor, Light.Color, Light.Field20Color};
+            const int64 ColorOffsets[] = {Off.Ambient, Off.Color, Off.Field20};
+            for (int32 ColorIndex = 0; ColorIndex < 3; ++ColorIndex)
+            {
+                const FLinearColor& Value = Colors[ColorIndex];
+                // Only touched channels are re-encoded; untouched saturated channels
+                // keep their original bytes so unrelated edits stay byte-exact.
+                const float Channels[] = {Value.R, Value.G, Value.B, Value.A};
+                for (int32 Channel = 0; Channel < 4; ++Channel)
+                {
+                    if (FMath::IsNearlyEqual(Channels[Channel],
+                        ReadColorChannel(ColorOffsets[ColorIndex] + Channel, OriginalMultiplier), 1.0e-4f))
+                        continue;
+                    WriteColorChannel(ColorOffsets[ColorIndex] + Channel, Channels[Channel], Light.Multiplier);
+                }
+            }
+            if (Off.Position != 0 && Off.Falloff != 0)
+            {
+                WriteLightFloat(Off.Position, Light.Position.X);
+                WriteLightFloat(Off.Position + 4, Light.Position.Y);
+                WriteLightFloat(Off.Position + 8, Light.Position.Z);
+                WriteLightFloat(Off.Falloff, Light.Falloff0);
+                WriteLightFloat(Off.Falloff + 4, Light.Falloff1);
+            }
+            if (Off.Direction != 0)
+            {
+                WriteLightFloat(Off.Direction, Light.Direction.X);
+                WriteLightFloat(Off.Direction + 4, Light.Direction.Y);
+                WriteLightFloat(Off.Direction + 8, Light.Direction.Z);
+            }
+            if (Off.Fov != 0)
+            {
+                WriteLightFloat(Off.Fov, Light.Fov0);
+                WriteLightFloat(Off.Fov + 4, Light.Fov1);
+            }
+            for (int32 Trailing = 0; Trailing < Off.TrailingCount && Light.TrailingValues.IsValidIndex(Trailing); ++Trailing)
+                WriteLightU32(Off.Trailing + Trailing * 4, uint32(Light.TrailingValues[Trailing]));
+        }
+        // Scalar header fields are rewritten last so an overlapping trailing/color
+        // write in a malformed record cannot corrupt the multiplier or type words.
+        for (int32 Index = 0; Index < Offsets.Num(); ++Index)
+        {
+            const FKyaLight& Light = Bank->Lights[Index];
+            const FKyaLightOffsets& Off = Offsets[Index];
+            WriteLightU32(Off.Record, uint32(Light.LightType));
+            WriteLightU32(Off.Record + 4, uint32(Light.ShapeType));
+            WriteLightFloat(Off.Multiplier, Light.Multiplier);
+        }
+    }
+
     OutBytes = MoveTemp(Bytes);
     return true;
 }

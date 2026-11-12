@@ -5,11 +5,13 @@
 #include "KyaActorGroup.h"
 #include "KyaActorHandle.h"
 #include "KyaHierarchyHandle.h"
+#include "KyaSceneVisualizer.h"
 #include "KyaActorTransform.h"
 #include "KyaBankExport.h"
 #include "KyaLevelActorFactory.h"
 #include "KyaLevelBank.h"
 #include "KyaLevelBankFactory.h"
+#include "KyaCameraStream.h"
 #include "KyaLevelEditorActions.h"
 #include "KyaLevelPreview.h"
 #include "KyaLevelSet.h"
@@ -1184,6 +1186,272 @@ bool FKyaStructuralCommandsTest::RunTest(const FString& Parameters)
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaLightExportTest, "Kya.Editor.LightExport",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaLightExportTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to run the light export test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read light bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import light bank"), Bank)) return false;
+    if (Bank->Lights.IsEmpty())
+    {
+        AddWarning(TEXT("The test bank has no light archive; skipping light export."));
+        return true;
+    }
+
+    const int32 LightCount = Bank->Lights.Num();
+    const FVector OriginalPosition = Bank->Lights[0].Position;
+    const float OriginalMultiplier = Bank->Lights[0].Multiplier;
+    Bank->Lights[0].Position = OriginalPosition + FVector(1.0, 2.0, 3.0);
+    Bank->Lights[0].Multiplier = OriginalMultiplier + 0.25f;
+
+    FKyaBankExportDiagnostics Diagnostics;
+    TArray<uint8> Built;
+    if (!TestTrue(TEXT("Build light export bytes"), KyaBuildBankExportBytes(Bank, Built, Diagnostics))) return false;
+    for (const FKyaBankEntry& Entry : Bank->Entries)
+    {
+        if (Entry.Type != 16 || Entry.Subtype != 1) continue;
+        TArray<FKyaLightOffsets> OriginalOffsets, BuiltOffsets;
+        if (!KyaReadLightOffsets(MakeArrayView(Bank->BankBytes.GetData(), Bank->BankBytes.Num()),
+            Entry.Offset + 16, Entry.Size - 16, OriginalOffsets)) continue;
+        if (!KyaReadLightOffsets(MakeArrayView(Built.GetData(), Built.Num()),
+            Entry.Offset + 16, Entry.Size - 16, BuiltOffsets)) continue;
+        if (OriginalOffsets.IsValidIndex(0) && BuiltOffsets.IsValidIndex(0))
+        {
+            bool bColorsPreserved = true;
+            for (const int64 ColorOffset : {OriginalOffsets[0].Ambient, OriginalOffsets[0].Color, OriginalOffsets[0].Field20})
+            {
+                const int64 Relative = ColorOffset - OriginalOffsets[0].Ambient;
+                for (int32 Channel = 0; Channel < 4; ++Channel)
+                    if (Bank->BankBytes[ColorOffset + Channel] != Built[BuiltOffsets[0].Ambient + Relative + Channel])
+                        bColorsPreserved = false;
+            }
+            TestTrue(TEXT("Untouched saturated light colors keep their original bytes"), bColorsPreserved);
+
+            // Editing only red must not disturb the neighboring channels.
+            const int64 ColorBase = OriginalOffsets[0].Color;
+            const uint8 OriginalG = Bank->BankBytes[ColorBase + 1];
+            const uint8 OriginalB = Bank->BankBytes[ColorBase + 2];
+            const uint8 OriginalA = Bank->BankBytes[ColorBase + 3];
+            Bank->Lights[0].Color.R = Bank->Lights[0].Color.R < 0.9f
+                ? Bank->Lights[0].Color.R + 0.1f : Bank->Lights[0].Color.R - 0.1f;
+            TArray<uint8> RedBuilt;
+            TestTrue(TEXT("Rebuild after a red-only edit"), KyaBuildBankExportBytes(Bank, RedBuilt, Diagnostics));
+            TArray<FKyaLightOffsets> RedOffsets;
+            if (KyaReadLightOffsets(MakeArrayView(RedBuilt.GetData(), RedBuilt.Num()),
+                Entry.Offset + 16, Entry.Size - 16, RedOffsets) && RedOffsets.IsValidIndex(0))
+            {
+                TestEqual(TEXT("Red-only edit keeps the green byte"),
+                    int32(RedBuilt[RedOffsets[0].Color + 1]), int32(OriginalG));
+                TestEqual(TEXT("Red-only edit keeps the blue byte"),
+                    int32(RedBuilt[RedOffsets[0].Color + 2]), int32(OriginalB));
+                TestEqual(TEXT("Red-only edit keeps the alpha byte"),
+                    int32(RedBuilt[RedOffsets[0].Color + 3]), int32(OriginalA));
+            }
+        }
+        break;
+    }
+
+    const uint8* ReimportCursor = Built.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ReimportCursor,
+        Built.GetData() + Built.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport light bank"), Reimported)) return false;
+    TestEqual(TEXT("Light count survives export"), Reimported->Lights.Num(), LightCount);
+    if (Reimported->Lights.IsValidIndex(0))
+    {
+        TestEqual(TEXT("Light type survives export"), Reimported->Lights[0].LightType, Bank->Lights[0].LightType);
+        TestTrue(TEXT("Light position survives export"),
+            Reimported->Lights[0].Position.Equals(Bank->Lights[0].Position, 1.0e-3));
+        TestTrue(TEXT("Light multiplier survives export"),
+            FMath::IsNearlyEqual(Reimported->Lights[0].Multiplier, Bank->Lights[0].Multiplier, 1.0e-3f));
+    }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaSceneVisualizersTest, "Kya.Editor.SceneVisualizers",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaSceneVisualizersTest::RunTest(const FString& Parameters)
+{
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    UKyaLevelBank* Bank = MakeKyaTestBank(GetTransientPackage());
+
+    FKyaLight& Spot = Bank->Lights.AddDefaulted_GetRef();
+    Spot.LightType = 0;
+    Spot.ShapeType = 4;
+    Spot.Position = FVector(1.0, 2.0, 3.0);
+    Spot.Direction = FVector(0.0, 0.0, 1.0);
+    Spot.Color = FLinearColor::Red;
+    Spot.Falloff0 = 2.0f;
+    FKyaLight& Sun = Bank->Lights.AddDefaulted_GetRef();
+    Sun.ShapeType = 2;
+    Sun.Position = FVector(5.0, 5.0, 5.0);
+    Sun.Direction = FVector(0.0, -1.0, 0.0);
+
+    Bank->SceneEnvironment.CameraPosition = FVector(-5.0, 3.0, 1.0);
+    Bank->SceneEnvironment.CameraLookAt = FVector(0.0, 3.0, 1.0);
+    Bank->SceneEnvironment.CameraFov = 70.0f;
+
+    Bank->SceneEnvironment.Actors[0].ClassId = 0x2c;
+    Bank->SceneEnvironment.Actors[0].Position = FVector(1.0, 2.0, 3.0);
+    Bank->SceneEnvironment.Actors[1].Position = FVector(5.0, 2.0, 3.0);
+    Bank->SceneEnvironment.Actors[0].TrapActorRef = 1;
+    Bank->SceneEnvironment.Waypoints.AddDefaulted();
+    Bank->SceneEnvironment.Waypoints[0].Position = FVector(0.0, 2.0, 3.0);
+    FKyaCheckpoint& Checkpoint = Bank->SceneEnvironment.Actors[0].Checkpoints.AddDefaulted_GetRef();
+    Checkpoint.WaypointA = 0;
+
+    UWorld* World = UWorld::CreateWorld(EWorldType::EditorPreview, false);
+    if (!TestNotNull(TEXT("Create visualizer world"), World)) return false;
+    AKyaLevelPreview* Preview = World->SpawnActor<AKyaLevelPreview>();
+    if (!TestNotNull(TEXT("Spawn visualizer preview"), Preview))
+    {
+        World->DestroyWorld(false);
+        return false;
+    }
+    Preview->Bank = Bank;
+    Preview->bSpawnActorHandles = false;
+    Preview->bSpawnLightVisualizers = true;
+    Preview->bSpawnCameraVisualizer = true;
+    Preview->bSpawnActorLinkVisualizers = true;
+    Preview->bSpawnTriggerVisualizers = true;
+    Preview->OnConstruction(FTransform::Identity);
+
+    TestEqual(TEXT("Two lights, one camera, one link and one trigger are visualized"),
+        Preview->GetSceneVisualizerCount(), 5);
+    TestTrue(TEXT("Unsupported zone geometry is stated explicitly"),
+        Preview->VisualizerLimitations.Contains(TEXT("Zones are not visualized")));
+    AKyaSceneVisualizer* Light = Preview->GetSceneVisualizer(
+        FString::Printf(TEXT("light:%s:0"), *Bank->GetName()));
+    AKyaSceneVisualizer* Camera = Preview->GetSceneVisualizer(
+        FString::Printf(TEXT("camera:%s"), *Bank->GetName()));
+    AKyaSceneVisualizer* Link = Preview->GetSceneVisualizer(
+        FString::Printf(TEXT("link:%s:0:TrapActorRef"), *Bank->GetName()));
+    AKyaSceneVisualizer* Trigger = Preview->GetSceneVisualizer(
+        FString::Printf(TEXT("trigger:%s:0:0"), *Bank->GetName()));
+    if (TestNotNull(TEXT("Light visualizer exists"), Light) &&
+        TestNotNull(TEXT("Camera visualizer exists"), Camera) &&
+        TestNotNull(TEXT("Actor-link visualizer exists"), Link) &&
+        TestNotNull(TEXT("Trigger visualizer exists"), Trigger))
+    {
+        TestTrue(TEXT("Light fields mirror the bank"), Light->LightPosition.Equals(FVector(1.0, 2.0, 3.0)));
+        TestTrue(TEXT("Spot light shows a direction arrow"),
+            Light->DirectionArrow && Light->DirectionArrow->GetVisibleFlag());
+        TestTrue(TEXT("Light semantics distinguish approximate shape"),
+            Light->Semantics.Contains(TEXT("approximate")));
+        TestTrue(TEXT("Camera semantics distinguish approximate frustum"),
+            Camera->Semantics.Contains(TEXT("approximate")));
+        TestTrue(TEXT("Link semantics mark derived diagnostics"),
+            Link->Semantics.Contains(TEXT("Derived")));
+        TestTrue(TEXT("Trigger semantics mark the bound approximate"),
+            Trigger->Semantics.Contains(TEXT("Approximate")));
+        TestFalse(TEXT("Read-only link visualizer reports not editable"), Link->bRecordEditable);
+        TestFalse(TEXT("Read-only trigger visualizer reports not editable"), Trigger->bRecordEditable);
+
+        // Link midpoint maps both endpoints into editor space.
+        TestTrue(TEXT("Actor link marker sits at the mapped midpoint"),
+            Link->GetActorLocation().Equals(FVector(3.0, 3.0, 2.0) * 100.0, 1.0));
+        TestTrue(TEXT("Trigger marker sits at the checkpoint waypoint"),
+            Trigger->GetActorLocation().Equals(FVector(0.0, 3.0, 2.0) * 100.0, 1.0));
+
+        // Type/shape edits that change direction/FOV presence are rejected before the
+        // record layout can diverge from the archive.
+        FKyaLightEditPatch LayoutChange;
+        LayoutChange.ShapeType = 0;
+        FString LayoutError;
+        TestFalse(TEXT("Layout-changing light shape edit is rejected"),
+            Service.ApplyLight(Service.MakeLightKey(Bank, 0), LayoutChange, EKyaEditNotify::Silent, &LayoutError));
+        TestTrue(TEXT("Light layout rejection explains the archive constraint"),
+            LayoutError.Contains(TEXT("layout")));
+        TestEqual(TEXT("Rejected light shape edit leaves the record"), Bank->Lights[0].ShapeType, 4);
+
+        // Light gizmo move and rotation write through the service.
+        Light->AddActorWorldOffset(FVector(100.0, 0.0, 0.0));
+        Light->PostEditMove(true);
+        TestTrue(TEXT("Light position edit writes the bank"),
+            Bank->Lights[0].Position.Equals(FVector(2.0, 2.0, 3.0), 1.0e-4));
+        TestTrue(TEXT("Translating a light preserves its direction"),
+            Bank->Lights[0].Direction.Equals(FVector(0.0, 0.0, 1.0), 1.0e-4));
+        Light->SetActorRelativeRotation(FQuat(FVector::UpVector, HALF_PI));
+        Light->PostEditMove(true);
+        const FVector ExpectedDirection = KyaActorTransform::SwapGameAxes(
+            FQuat(FVector::UpVector, HALF_PI).GetForwardVector()).GetSafeNormal();
+        TestTrue(TEXT("Spot light rotation writes the bank direction"),
+            Bank->Lights[0].Direction.Equals(ExpectedDirection, 1.0e-3));
+        Service.FlushPendingNotifications();
+
+        // Camera move writes the serialized camera position.
+        Camera->AddActorWorldOffset(FVector(0.0, 100.0, 0.0));
+        Camera->PostEditMove(true);
+        TestTrue(TEXT("Camera position edit writes the bank"),
+            Bank->SceneEnvironment.CameraPosition.Equals(FVector(-5.0, 3.0, 2.0), 1.0e-4));
+        TestTrue(TEXT("Camera translation preserves the stored look-at"),
+            Bank->SceneEnvironment.CameraLookAt.Equals(FVector(0.0, 3.0, 1.0), 1.0e-4));
+        const FVector CameraLookAtBefore = Bank->SceneEnvironment.CameraLookAt;
+        Camera->PostEditMove(true);
+        TestTrue(TEXT("Camera no-op move preserves the look-at"),
+            Bank->SceneEnvironment.CameraLookAt.Equals(CameraLookAtBefore, 1.0e-4));
+
+        // Derived visualizers are read-only and explain why.
+        const int64 LightCount = Bank->Lights.Num();
+        const FVector LinkBefore = Link->GetActorLocation();
+        Link->AddActorWorldOffset(FVector(100.0, 0.0, 0.0));
+        Link->PostEditMove(true);
+        TestTrue(TEXT("Link transform is reset"), Link->GetActorLocation().Equals(LinkBefore, 0.01));
+        TestTrue(TEXT("Link edit status explains the restriction"),
+            Link->EditStatus.Contains(TEXT("derived")));
+        Trigger->AddActorWorldOffset(FVector(0.0, 0.0, 100.0));
+        Trigger->PostEditMove(true);
+        TestTrue(TEXT("Trigger edit status explains the restriction"),
+            Trigger->EditStatus.Contains(TEXT("approximate")));
+        TestEqual(TEXT("Read-only edits do not add light records"), int64(Bank->Lights.Num()), LightCount);
+    }
+
+    // Light arrows follow the preview transform (handle-space direction).
+    {
+        const FQuat PreviewRotation = FRotator(0.0, 30.0, 0.0).Quaternion();
+        Preview->SetActorRotation(PreviewRotation);
+        Preview->OnConstruction(Preview->GetActorTransform());
+        if (AKyaSceneVisualizer* RebuiltLight = Preview->GetSceneVisualizer(
+            FString::Printf(TEXT("light:%s:0"), *Bank->GetName())))
+        {
+            const FVector Expected = PreviewRotation.RotateVector(
+                KyaActorTransform::SwapGameAxes(Bank->Lights[0].Direction).GetSafeNormal());
+            TestTrue(TEXT("Light arrow follows a rotated preview"),
+                RebuiltLight->DirectionArrow->GetForwardVector().Equals(Expected, 1.0e-3));
+        }
+        Preview->SetActorRotation(FQuat::Identity);
+        Preview->OnConstruction(Preview->GetActorTransform());
+    }
+
+    // Turning the options off removes every visualizer.
+    Preview->bSpawnLightVisualizers = false;
+    Preview->bSpawnCameraVisualizer = false;
+    Preview->bSpawnActorLinkVisualizers = false;
+    Preview->bSpawnTriggerVisualizers = false;
+    Preview->OnConstruction(FTransform::Identity);
+    TestEqual(TEXT("Disabling visualizers removes them"), Preview->GetSceneVisualizerCount(), 0);
+
+    Preview->Destroy();
+    World->DestroyWorld(false);
+    Service.Reset();
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaHierarchyGeometryTest, "Kya.Editor.HierarchyGeometry",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
@@ -2307,3 +2575,4 @@ bool FKyaLevelPreviewPlacementTest::RunTest(const FString& Parameters)
     return true;
 }
 #endif
+

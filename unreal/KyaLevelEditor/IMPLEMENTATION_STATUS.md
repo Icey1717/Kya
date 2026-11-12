@@ -217,6 +217,15 @@ Last updated: 2026-11-12.
   sets a persistent `TransformStatus` and logs the reason; Details shows
   `Transform reset: hierarchy transforms are not serialized` so the handle cannot
   imply export support.
+- `AKyaSceneVisualizer` adds selectable light, main-camera, actor-link and
+  checkpoint-trigger visualizers. Lights and the camera use verified serialized
+  fields and new light/camera edit-service patches; links and triggers are read-only
+  derived/approximate diagnostics. Details labels verified vs approximate semantics
+  and read-only transform attempts are reset with a status. Zone bounds are
+  explicitly unsupported (zone references have no serialized geometry) and the
+  preview's `VisualizerLimitations` says so. Light edits are exported by patching the
+  THGL archive in place; layout-changing type/shape edits are rejected, and untouched
+  color channels keep their exact bytes.
 - Generated actors are grouped in the Outliner under one transient grouping actor  per sector, attached to the preview. Labels are `<serialized name> [class <id>]`,
   disambiguated with the record index for duplicate names; labels are derived from
   the whole bank so sector load/unload cannot rename them, and serialized names are
@@ -266,8 +275,9 @@ Results: `Kya.Bank.LevelOneRoundTrip`, `Kya.Bank.SmallBankRoundTrip`,
 `Kya.Editor.LevelSet`, `Kya.Editor.SpatialRecords`, `Kya.Editor.ActorCatalog`,
 `Kya.Editor.MultiEditBaseline`, `Kya.Editor.GeneratedActorLifecycle`,
 `Kya.Editor.StructuralCommands`, `Kya.Editor.OutlinerPolicy`,
-`Kya.Editor.PathVisualization`, `Kya.Editor.WaypointOrientation` and
-`Kya.Editor.HierarchyGeometry` all `Success`.
+`Kya.Editor.PathVisualization`, `Kya.Editor.WaypointOrientation`,
+`Kya.Editor.HierarchyGeometry`, `Kya.Editor.SceneVisualizers` and
+`Kya.Editor.LightExport` all `Success`.
 
 Coverage added by the new tests:
 

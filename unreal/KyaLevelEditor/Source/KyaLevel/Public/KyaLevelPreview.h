@@ -17,6 +17,7 @@ class UKyaActorMarkerComponent;
 class AKyaActorHandle;
 class AKyaActorGroup;
 class AKyaSpatialRecordHandle;
+class AKyaSceneVisualizer;
 class AKyaHierarchyHandle;
 class UPostProcessComponent;
 class UMaterialInstanceDynamic;
@@ -199,6 +200,26 @@ public:
     UPROPERTY(EditAnywhere, Category="Kya|Selection")
     bool bLockGeneratedActorSelection = false;
 
+    /** Selectable light visualizers for every light record in the loaded banks. */
+    UPROPERTY(EditAnywhere, Category="Kya|Visualizers")
+    bool bSpawnLightVisualizers = false;
+
+    /** Selectable main-camera visualizer for the main bank. */
+    UPROPERTY(EditAnywhere, Category="Kya|Visualizers")
+    bool bSpawnCameraVisualizer = false;
+
+    /** Derived, read-only lines between actors and their resolved actor references. */
+    UPROPERTY(EditAnywhere, Category="Kya|Visualizers")
+    bool bSpawnActorLinkVisualizers = false;
+
+    /** Approximate, read-only trigger markers at checkpoint waypoints. */
+    UPROPERTY(EditAnywhere, Category="Kya|Visualizers")
+    bool bSpawnTriggerVisualizers = false;
+
+    /** Human-readable list of visualizer limitations (for example missing zone geometry). */
+    UPROPERTY(VisibleAnywhere, Category="Kya|Visualizers")
+    FString VisualizerLimitations;
+
     /**
      * Spawn selectable handles for waypoints. When enabled, the diagnostic waypoint
      * arrows are suppressed to avoid drawing two markers per record.
@@ -326,6 +347,11 @@ public:
     {
         return HierarchyHandles.IsValidIndex(HandleIndex) ? HierarchyHandles[HandleIndex].Get() : nullptr;
     }
+    /** Scene visualizer by key ("light:<bank>:<index>", "camera:<bank>", "link:...", "trigger:..."). */
+    AKyaSceneVisualizer* GetSceneVisualizer(const FString& Key) const;
+    int32 GetSceneVisualizerCount() const { return SceneVisualizers.Num(); }
+    /** Refresh light/camera/link/trigger visualizers after a build. */
+    void RefreshSceneVisualizers();
 #endif
 
     /** Handle for a bank actor index, or null. */
@@ -453,6 +479,9 @@ private:
     /** Editor-only Outliner groups that own each path's points. */
     UPROPERTY(Transient)
     TMap<int32, TObjectPtr<AKyaActorGroup>> PathGroups;
+    /** Editor-only light/camera/link/trigger visualizers, keyed by kind/source. */
+    UPROPERTY(Transient)
+    TMap<FString, TObjectPtr<AKyaSceneVisualizer>> SceneVisualizers;
     /** Editor-only temporary hiding of generated representations (per preview). */
     UPROPERTY(Transient)
     TSet<TWeakObjectPtr<AActor>> TemporarilyHiddenGeneratedActors;

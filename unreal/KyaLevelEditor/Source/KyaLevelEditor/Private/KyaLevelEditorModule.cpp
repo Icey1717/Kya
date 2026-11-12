@@ -7,6 +7,8 @@
 #include "KyaActorHandle.h"
 #include "KyaHierarchyDetailsCustomization.h"
 #include "KyaHierarchyHandle.h"
+#include "KyaSceneVisualizer.h"
+#include "KyaSceneVisualizerDetailsCustomization.h"
 #include "KyaSpatialRecordDetailsCustomization.h"
 #include "KyaSpatialRecordHandle.h"
 #include "KyaLevelActorFactory.h"
@@ -262,6 +264,8 @@ public:
             FOnGetDetailCustomizationInstance::CreateStatic(&FKyaSpatialRecordDetailsCustomization::MakeInstance));
         PropertyModule.RegisterCustomClassLayout(AKyaHierarchyHandle::StaticClass()->GetFName(),
             FOnGetDetailCustomizationInstance::CreateStatic(&FKyaHierarchyDetailsCustomization::MakeInstance));
+        PropertyModule.RegisterCustomClassLayout(AKyaSceneVisualizer::StaticClass()->GetFName(),
+            FOnGetDetailCustomizationInstance::CreateStatic(&FKyaSceneVisualizerDetailsCustomization::MakeInstance));
 
         UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(
             this, &FKyaLevelEditorModule::RegisterMenus));
@@ -307,6 +311,7 @@ public:
             PropertyModule->UnregisterCustomClassLayout(AKyaActorHandle::StaticClass()->GetFName());
             PropertyModule->UnregisterCustomClassLayout(AKyaSpatialRecordHandle::StaticClass()->GetFName());
             PropertyModule->UnregisterCustomClassLayout(AKyaHierarchyHandle::StaticClass()->GetFName());
+            PropertyModule->UnregisterCustomClassLayout(AKyaSceneVisualizer::StaticClass()->GetFName());
         }
         if (GEditor)
             GEditor->ActorFactories.RemoveAll([](UActorFactory* Factory)

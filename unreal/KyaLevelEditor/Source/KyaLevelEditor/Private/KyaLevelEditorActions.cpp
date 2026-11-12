@@ -17,6 +17,7 @@
 #include "KyaLevelPreview.h"
 #include "KyaLevelSet.h"
 #include "KyaLevelSetFactory.h"
+#include "KyaSceneVisualizer.h"
 #include "KyaSpatialRecordHandle.h"
 #include "Logging/MessageLog.h"
 #include "Misc/FileHelper.h"
@@ -119,7 +120,8 @@ TArray<AKyaLevelPreview*> KyaGetTargetPreviews()
 bool KyaIsGeneratedActor(const AActor* Actor)
 {
     return Cast<AKyaActorHandle>(Actor) || Cast<AKyaSpatialRecordHandle>(Actor) ||
-        Cast<AKyaActorGroup>(Actor) || Cast<AKyaHierarchyHandle>(Actor);
+        Cast<AKyaActorGroup>(Actor) || Cast<AKyaHierarchyHandle>(Actor) ||
+        Cast<AKyaSceneVisualizer>(Actor);
 }
 
 bool KyaContainsGeneratedActor(const TArray<AActor*>& Actors)
@@ -159,6 +161,10 @@ int32 KyaDestroyStrayGeneratedActors(UWorld* World)
         else if (const AKyaHierarchyHandle* Hierarchy = Cast<AKyaHierarchyHandle>(*It))
         {
             if (!IsValid(Hierarchy->Preview)) Orphans.Add(*It);
+        }
+        else if (const AKyaSceneVisualizer* Visualizer = Cast<AKyaSceneVisualizer>(*It))
+        {
+            if (!IsValid(Visualizer->Preview)) Orphans.Add(*It);
         }
         else if (const AKyaActorGroup* Group = Cast<AKyaActorGroup>(*It))
         {

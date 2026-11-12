@@ -130,6 +130,70 @@ struct KYALEVEL_API FKyaPathPointEditPatch
     bool IsEmpty() const;
 };
 
+/** Stable identity of one level light record. */
+struct KYALEVEL_API FKyaLightRecordKey
+{
+    TWeakObjectPtr<UKyaLevelBank> Bank;
+    int32 LightIndex = INDEX_NONE;
+    uint32 Generation = 0;
+
+    bool IsSet() const { return Bank.IsValid() && LightIndex >= 0; }
+    bool operator==(const FKyaLightRecordKey& Other) const
+    {
+        return Bank == Other.Bank && LightIndex == Other.LightIndex && Generation == Other.Generation;
+    }
+    friend uint32 GetTypeHash(const FKyaLightRecordKey& Key)
+    {
+        return HashCombine(HashCombine(GetTypeHash(Key.Bank), GetTypeHash(Key.LightIndex)), GetTypeHash(Key.Generation));
+    }
+    FString ToString() const;
+};
+
+/** A change to one level light; unset fields are preserved. */
+struct KYALEVEL_API FKyaLightEditPatch
+{
+    TOptional<int32> LightType;
+    TOptional<int32> ShapeType;
+    TOptional<FLinearColor> AmbientColor;
+    TOptional<FLinearColor> Color;
+    TOptional<float> Multiplier;
+    TOptional<FVector> Position;
+    TOptional<FVector> Direction;
+    TOptional<float> Falloff0;
+    TOptional<float> Falloff1;
+    TOptional<float> Fov0;
+    TOptional<float> Fov1;
+    bool IsEmpty() const;
+};
+
+/** Stable identity of the main scene camera record of a bank. */
+struct KYALEVEL_API FKyaSceneCameraKey
+{
+    TWeakObjectPtr<UKyaLevelBank> Bank;
+    uint32 Generation = 0;
+
+    bool IsSet() const { return Bank.IsValid(); }
+    bool operator==(const FKyaSceneCameraKey& Other) const
+    {
+        return Bank == Other.Bank && Generation == Other.Generation;
+    }
+    friend uint32 GetTypeHash(const FKyaSceneCameraKey& Key)
+    {
+        return HashCombine(GetTypeHash(Key.Bank), GetTypeHash(Key.Generation));
+    }
+    FString ToString() const;
+};
+
+/** A change to the serialized main scene camera. */
+struct KYALEVEL_API FKyaSceneCameraEditPatch
+{
+    TOptional<FVector> Position;
+    TOptional<FVector> LookAt;
+    TOptional<FVector> Up;
+    TOptional<float> Fov;
+    bool IsEmpty() const;
+};
+
 /**
  * Single edit path for bank actor records.
  *
@@ -171,6 +235,15 @@ public:
     FKyaPathPointRecordKey MakePathPointKey(UKyaLevelBank* Bank, int32 PathIndex, int32 PointIndex) const;
     bool ResolvePathPoint(const FKyaPathPointRecordKey& Key, FKyaPath*& OutPath, FString* OutError = nullptr) const;
     bool ApplyPathPoint(const FKyaPathPointRecordKey& Key, const FKyaPathPointEditPatch& Patch,
+        EKyaEditNotify Notify, FString* OutError = nullptr);
+
+    FKyaLightRecordKey MakeLightKey(UKyaLevelBank* Bank, int32 LightIndex) const;
+    bool ResolveLight(const FKyaLightRecordKey& Key, FKyaLight*& OutLight, FString* OutError = nullptr) const;
+    bool ApplyLight(const FKyaLightRecordKey& Key, const FKyaLightEditPatch& Patch,
+        EKyaEditNotify Notify, FString* OutError = nullptr);
+
+    FKyaSceneCameraKey MakeSceneCameraKey(UKyaLevelBank* Bank) const;
+    bool ApplySceneCamera(const FKyaSceneCameraKey& Key, const FKyaSceneCameraEditPatch& Patch,
         EKyaEditNotify Notify, FString* OutError = nullptr);
 
     void RegisterView(UKyaLevelBank* Bank, AKyaLevelPreview* View);
