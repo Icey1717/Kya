@@ -91,6 +91,12 @@ void FKyaActorDetailsCustomization::CustomizeDetails(IDetailLayoutBuilder& Detai
     {
         FProperty* Property = *It;
         if (!Property->HasAnyPropertyFlags(CPF_Edit)) continue;
+        // Export capability metadata drives the UI: only editable fields with a writer
+        // path are offered, and the capability reason becomes the row tooltip.
+        const FKyaFieldCapability Capability = GetKyaActorFieldCapability(Property->GetFName());
+        if (Capability.Kind != EKyaFieldCapability::EditableExportable &&
+            Capability.Kind != EKyaFieldCapability::EditablePresentationOnly)
+            continue;
 
         FString CategoryName = TEXT("Bank record");
         if (const FString* Metadata = Property->FindMetaData(TEXT("Category")))
@@ -107,6 +113,9 @@ void FKyaActorDetailsCustomization::CustomizeDetails(IDetailLayoutBuilder& Detai
         IDetailPropertyRow* Row = Category.AddExternalStructureProperty(PlacementScope, Property->GetFName());
         if (!Row) continue;
         Row->DisplayName(FText::FromString(Property->GetDisplayNameText().ToString()));
+        if (!Capability.Reason.IsEmpty())
+            Row->ToolTip(FText::FromString(FString::Printf(TEXT("%s\n%s"),
+                *DescribeKyaFieldCapability(Capability.Kind).ToString(), *Capability.Reason)));
         // Nested edits (array elements, sub-struct fields) notify the child handle.
         if (TSharedPtr<IPropertyHandle> PropertyHandle = Row->GetPropertyHandle())
         {
@@ -132,9 +141,14 @@ bool FKyaActorDetailsCustomization::BuildPatchForProperty(FName PropertyName, FK
 {
     FKyaActorPlacement* Scope = ScopeRecord();
     if (!Scope) return false;
-    // The helper copies the edited top-level property (including any nested change)
-    // from the presentation scope onto the authoritative record.
-    return KyaMakePlacementPropertyPatch(*Scope, PropertyName, OutPatch);
+    FString Error;
+    if (!KyaMakePlacementPropertyPatch(*Scope, PropertyName, OutPatch, &Error))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("KYA_DETAILS_FIELD_UNSUPPORTED field=%s reason=%s"),
+            *PropertyName.ToString(), *Error);
+        return false;
+    }
+    return true;
 }
 
 void FKyaActorDetailsCustomization::RequestScopeRefresh(bool bRebuildPanel)

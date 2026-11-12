@@ -3,6 +3,7 @@
 #if WITH_EDITOR
 
 #include "KyaLevelPreview.h"
+#include "KyaExportedActorFields.h"
 #include "Containers/Ticker.h"
 
 FString FKyaActorRecordKey::ToString() const
@@ -162,10 +163,17 @@ FKyaLevelEditService& FKyaLevelEditService::Get()
 }
 
 bool KyaMakePlacementPropertyPatch(const FKyaActorPlacement& Source, FName PropertyName,
-    FKyaActorEditPatch& OutPatch)
+    FKyaActorEditPatch& OutPatch, FString* OutError)
 {
+    const FKyaFieldCapability Capability = GetKyaActorFieldCapability(PropertyName);
+    if (Capability.Kind == EKyaFieldCapability::InspectOnly ||
+        Capability.Kind == EKyaFieldCapability::Unsupported)
+    {
+        if (OutError) *OutError = Capability.Reason;
+        return false;
+    }
     FProperty* Property = FKyaActorPlacement::StaticStruct()->FindPropertyByName(PropertyName);
-    if (!Property || !Property->HasAnyPropertyFlags(CPF_Edit)) return false;
+    if (!Property) return false;
     // Capture the edited value, not a pointer into a temporary or array element.
     OutPatch.Custom = [Property, Source](FKyaActorPlacement& Record, FString& OutError) -> bool
     {
@@ -173,6 +181,139 @@ bool KyaMakePlacementPropertyPatch(const FKyaActorPlacement& Source, FName Prope
         return true;
     };
     return true;
+}
+
+FKyaFieldCapability GetKyaNestedFieldCapability(const FString& PropertyPath)
+{
+    FKyaFieldCapability Result;
+    FString TopLevel;
+    FString Nested;
+    if (!PropertyPath.Split(TEXT("."), &TopLevel, &Nested) || Nested.IsEmpty())
+    {
+        Result.Kind = EKyaFieldCapability::Unsupported;
+        Result.Reason = TEXT("Nested capability paths must be written as TopLevel.Field.");
+        return Result;
+    }
+    const FKyaFieldCapability TopCapability = GetKyaActorFieldCapability(FName(*TopLevel));
+    if (TopCapability.Kind != EKyaFieldCapability::EditableExportable)
+    {
+        Result = TopCapability;
+        Result.Reason = FString::Printf(TEXT("%s: %s"), *TopLevel, *TopCapability.Reason);
+        return Result;
+    }
+    const FProperty* TopProperty = FKyaActorPlacement::StaticStruct()->FindPropertyByName(FName(*TopLevel));
+    const FProperty* NestedProperty = nullptr;
+    if (const FArrayProperty* Array = CastField<FArrayProperty>(TopProperty))
+    {
+        if (const FStructProperty* Inner = CastField<FStructProperty>(Array->Inner))
+            NestedProperty = Inner->Struct->FindPropertyByName(FName(*Nested));
+    }
+    else if (const FStructProperty* StructProperty = CastField<FStructProperty>(TopProperty))
+    {
+        NestedProperty = StructProperty->Struct->FindPropertyByName(FName(*Nested));
+    }
+    if (!NestedProperty)
+    {
+        Result.Kind = EKyaFieldCapability::Unsupported;
+        Result.Reason = FString::Printf(TEXT("%s is not a field of the %s record."), *Nested, *TopLevel);
+        return Result;
+    }
+    // Nested records follow the same rules as top-level ones: read-only serialized
+    // layout data and presence flags are not editable just because the parent is.
+    if (!NestedProperty->HasAnyPropertyFlags(CPF_Edit) ||
+        NestedProperty->HasAnyPropertyFlags(CPF_EditConst))
+    {
+        Result.Kind = EKyaFieldCapability::InspectOnly;
+        Result.Reason = TEXT("Read-only nested record data; the bank writer does not accept edits for this field.");
+        return Result;
+    }
+    if (NestedProperty->GetName().StartsWith(TEXT("bHas")))
+    {
+        Result.Kind = EKyaFieldCapability::InspectOnly;
+        Result.Reason = TEXT("Nested presence flag that controls the serialized layout; changing it would desynchronize the writer.");
+        return Result;
+    }
+    Result.Kind = EKyaFieldCapability::EditableExportable;
+    if (CastField<FStrProperty>(NestedProperty) || CastField<FNameProperty>(NestedProperty))
+        Result.Reason = TEXT("Fixed-length string record: the writer requires the aligned (4-byte) length to equal "
+            "the original serialized slot, so the value must stay in the same alignment bucket.");
+    else
+        Result.Reason = FString::Printf(TEXT("Nested typed field of %s; element edits are exported with the parent record."),
+            *TopLevel);
+    return Result;
+}
+
+FText DescribeKyaFieldCapability(EKyaFieldCapability Kind){
+    switch (Kind)
+    {
+    case EKyaFieldCapability::EditableExportable:
+        return NSLOCTEXT("KyaLevel", "CapabilityEditable", "Editable and exported");
+    case EKyaFieldCapability::EditablePresentationOnly:
+        return NSLOCTEXT("KyaLevel", "CapabilityPresentation", "Editable (presentation only)");
+    case EKyaFieldCapability::InspectOnly:
+        return NSLOCTEXT("KyaLevel", "CapabilityInspect", "Inspect only");
+    default:
+        return NSLOCTEXT("KyaLevel", "CapabilityUnsupported", "Unsupported");
+    }
+}
+
+FKyaFieldCapability GetKyaActorFieldCapability(FName PropertyName)
+{
+    FKyaFieldCapability Result;
+    const FProperty* Property = FKyaActorPlacement::StaticStruct()->FindPropertyByName(PropertyName);
+    if (!Property)
+    {
+        Result.Kind = EKyaFieldCapability::Unsupported;
+        Result.Reason = TEXT("The property is not part of the actor placement schema.");
+        return Result;
+    }
+    if (!Property->HasAnyPropertyFlags(CPF_Edit) || Property->HasAnyPropertyFlags(CPF_EditConst))
+    {
+        Result.Kind = EKyaFieldCapability::InspectOnly;
+        Result.Reason = TEXT("Read-only record data; the bank writer does not accept edits for this field.");
+        return Result;
+    }
+    const FString Name = PropertyName.ToString();
+    if (Name.StartsWith(TEXT("bHas")))
+    {
+        Result.Kind = EKyaFieldCapability::InspectOnly;
+        Result.Reason = TEXT("Presence flag that controls the serialized layout; changing it would desynchronize the writer.");
+        return Result;
+    }
+    if (PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Name))
+    {
+        Result.Kind = EKyaFieldCapability::EditableExportable;
+        Result.Reason = TEXT("Serialized into the original fixed-size name slot: the writer requires Align(length + 1, 4) "
+            "to equal the original slot capacity, so the new name must stay in the same 4-byte alignment bucket and "
+            "use single-byte characters.");
+        return Result;
+    }
+    // Export support comes from the writer's own field references, not from
+    // EditAnywhere: a field the exporter never encodes is inspect-only here.
+    if (!KyaExportedActorFields::Get().Contains(PropertyName))
+    {
+        Result.Kind = EKyaFieldCapability::InspectOnly;
+        Result.Reason = TEXT("The current bank writer does not encode this field; edits would not be exported.");
+        return Result;
+    }
+    if (PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, ClassData))
+    {
+        Result.Kind = EKyaFieldCapability::EditableExportable;
+        Result.Reason = TEXT("Raw class payload: the writer preserves its original size and unknown bytes.");
+        return Result;
+    }
+    if (const FArrayProperty* Array = CastField<FArrayProperty>(Property))
+    {
+        Result.Kind = EKyaFieldCapability::EditableExportable;
+        Result.Reason = TEXT("Fixed-size array: element edits are exported; the count and serialized sizes are preserved.");
+        return Result;
+    }
+    Result.Kind = EKyaFieldCapability::EditableExportable;
+    Result.Reason = TEXT("Serialized typed field written by the bank exporter.");
+    if (const FString* Condition = Property->FindMetaData(TEXT("EditCondition")))
+        if (Condition->Contains(TEXT("bHas")))
+            Result.Reason += TEXT(" Only meaningful while its presence flag is set.");
+    return Result;
 }
 
 FKyaActorRecordKey FKyaLevelEditService::MakeKey(UKyaLevelBank* Bank, int32 ActorIndex) const

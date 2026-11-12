@@ -133,6 +133,20 @@ Last updated: 2026-11-12.
   transaction when the details setter does not own one, hides the old mirrored
   fields, and reloads the presentation copy on undo/redo, external edits and
   reimport (deferred, so the panel can rebuild safely).
+- `GetKyaActorFieldCapability` is the field capability table: editable-exportable,
+  editable-presentation-only, inspect-only and unsupported, with a reason per field.
+  Export support is an allowlist derived from the writer's own `Actor.<field>`
+  references (`KyaExportedActorFields.h`), so an editable field the exporter never
+  encodes is inspect-only instead of claiming round-trip support. The table also
+  encodes the writer's fixed-layout constraints: the actor-name slot must keep
+  `Align(length + 1, 4) == original capacity`, fixed-size arrays keep their counts
+  and element sizes, raw class payload bytes keep their size, and `VisibleAnywhere`
+  record data plus the layout-controlling `bHas*` presence flags are inspect-only.
+  `GetKyaNestedFieldCapability("TopLevel.Field")` applies the same rules to nested
+  records (for example `Models.MeshName` and `FighterBlows.NameCapacity`). Details
+  only offers editable rows and shows the capability description and reason as the
+  row tooltip; patch construction rejects inspect-only/unsupported fields with that
+  reason.
 - Generated actors are grouped in the Outliner under one transient grouping actor
   per sector, attached to the preview. Labels are `<serialized name> [class <id>]`,
   disambiguated with the record index for duplicate names; labels are derived from

@@ -257,6 +257,50 @@ bool FKyaActorEditServiceTest::RunTest(const FString& Parameters)
             KyaMakePlacementPropertyPatch(Presentation, TEXT("NotAProperty"), DetailsPatch));
     }
 
+    // Field capability table: derived from the schema and the writer's fixed-layout
+    // constraints, and used to gate the Details rows and patch construction.
+    {
+        FKyaActorPlacement CapabilitySource;
+        FKyaActorEditPatch CapabilityPatch;
+        FString CapabilityError;
+        TestTrue(TEXT("Typed scalar is editable and exportable"),
+            GetKyaActorFieldCapability(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, ActorFlags)).Kind ==
+            EKyaFieldCapability::EditableExportable);
+        TestTrue(TEXT("Actor name explains the fixed name slot"),
+            GetKyaActorFieldCapability(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Name)).Reason.Contains(TEXT("slot")));
+        TestTrue(TEXT("Fixed-size arrays explain their restriction"),
+            GetKyaActorFieldCapability(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Conditions)).Reason.Contains(TEXT("Fixed-size")));
+        TestTrue(TEXT("Presence flags are inspect-only"),
+            GetKyaActorFieldCapability(TEXT("bHasPlatformPrefix")).Kind == EKyaFieldCapability::InspectOnly);
+        TestTrue(TEXT("Serialized record index is inspect-only"),
+            GetKyaActorFieldCapability(TEXT("Index")).Kind == EKyaFieldCapability::InspectOnly);
+        TestTrue(TEXT("Unknown properties are unsupported"),
+            GetKyaActorFieldCapability(TEXT("NotAProperty")).Kind == EKyaFieldCapability::Unsupported);
+        TestTrue(TEXT("Fields the writer never encodes are inspect-only"),
+            GetKyaActorFieldCapability(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, FighterPrefixRaw)).Kind ==
+            EKyaFieldCapability::InspectOnly);
+        TestTrue(TEXT("Actor name explains the aligned slot constraint"),
+            GetKyaActorFieldCapability(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Name)).Reason.Contains(TEXT("Align")));
+        TestTrue(TEXT("Nested strings report the aligned slot constraint"),
+            GetKyaNestedFieldCapability(TEXT("Models.MeshName")).Kind == EKyaFieldCapability::EditableExportable &&
+            GetKyaNestedFieldCapability(TEXT("Models.MeshName")).Reason.Contains(TEXT("aligned")));
+        TestTrue(TEXT("Unknown nested fields are unsupported"),
+            GetKyaNestedFieldCapability(TEXT("Models.NoSuchField")).Kind == EKyaFieldCapability::Unsupported);
+        TestTrue(TEXT("Missing nested path segments are unsupported"),
+            GetKyaNestedFieldCapability(TEXT("Models")).Kind == EKyaFieldCapability::Unsupported);
+        TestTrue(TEXT("Read-only nested layout fields are inspect-only"),
+            GetKyaNestedFieldCapability(TEXT("FighterBlows.NameCapacity")).Kind ==
+            EKyaFieldCapability::InspectOnly);
+        TestTrue(TEXT("Nested presence flags are inspect-only"),
+            GetKyaNestedFieldCapability(TEXT("Behaviours.bHasTypedClusterZones")).Kind ==
+            EKyaFieldCapability::InspectOnly);
+        TestFalse(TEXT("Inspect-only fields cannot build a patch"),
+            KyaMakePlacementPropertyPatch(CapabilitySource, TEXT("bHasPlatformPrefix"), CapabilityPatch, &CapabilityError));
+        TestFalse(TEXT("Inspect-only rejection explains why"), CapabilityError.IsEmpty());
+        TestFalse(TEXT("Capability descriptions are localized"),
+            DescribeKyaFieldCapability(EKyaFieldCapability::InspectOnly).IsEmpty());
+    }
+
     // Two previews of the same bank refresh once per edit.
     UWorld* World = UWorld::CreateWorld(EWorldType::EditorPreview, false);
     if (!TestNotNull(TEXT("Create preview world"), World)) return false;

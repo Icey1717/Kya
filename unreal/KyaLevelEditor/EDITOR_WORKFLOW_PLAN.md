@@ -27,7 +27,7 @@ This is a source review of the current working tree, including the in-progress a
 - [ ] Introduce a shared editor edit service used by viewport transforms, Details, markers, scripting and bulk operations. It should resolve identity, validate, begin/participate in a transaction, modify the bank, mark it dirty, and notify dependent views.
 - [x] Track which preview instances display each bank. An edit through one instance or the asset editor must refresh all others without applying the edit twice. Distinguish bank-local values from each preview's world transform.
 - [x] Define generated representation lifetime explicitly: recreate from saved banks on map load, clean up on preview destruction/world teardown, avoid duplicate objects on reconstruction, and preserve selection when identity remains valid.
-- [ ] Add a field capability table: editable and exportable, editable presentation-only, inspect-only, or unsupported. Derive it from parser/exporter support, not just `EditAnywhere`. Include layout-controlling flags and fixed-length strings as well as arrays.
+- [x] Add a field capability table: editable and exportable, editable presentation-only, inspect-only, or unsupported. Derive it from parser/exporter support, not just `EditAnywhere`. Include layout-controlling flags and fixed-length strings as well as arrays.
 - [ ] Acceptance: editing through any supported entry point yields one authoritative value, all previews agree, and rebuilding or reopening does not introduce duplicates or dirty unchanged assets.
 
 ## 2. Import and discover a complete level

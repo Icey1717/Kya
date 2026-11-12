@@ -195,10 +195,39 @@ private:
 KYALEVEL_API bool ValidateKyaActorPlacement(const FKyaActorPlacement& Placement, FString& OutError);
 
 /**
+ * Export capability of one FKyaActorPlacement property, derived from the schema and
+ * the writer's fixed-layout constraints rather than from EditAnywhere alone.
+ */
+enum class EKyaFieldCapability : uint8
+{
+    /** Editable and encoded by the bank writer. */
+    EditableExportable,
+    /** Editable editor presentation only; not part of the serialized record. */
+    EditablePresentationOnly,
+    /** Read-only record data that the writer does not accept edits for. */
+    InspectOnly,
+    /** Not a record property, or edits would corrupt the serialized layout. */
+    Unsupported
+};
+
+struct KYALEVEL_API FKyaFieldCapability
+{
+    EKyaFieldCapability Kind = EKyaFieldCapability::Unsupported;
+    /** Human-readable reason shown in Details and diagnostics. */
+    FString Reason;
+};
+
+KYALEVEL_API FKyaFieldCapability GetKyaActorFieldCapability(FName PropertyName);
+/** Capability of a nested record field addressed as "TopLevel.Field" (for example "Models.MeshName"). */
+KYALEVEL_API FKyaFieldCapability GetKyaNestedFieldCapability(const FString& PropertyPath);
+KYALEVEL_API FText DescribeKyaFieldCapability(EKyaFieldCapability Kind);
+
+/**
  * Build a patch that copies one top-level FKyaActorPlacement property (including any
  * nested change) from a presentation copy onto the authoritative record. The Details
  * customization uses this so every edit-supported field is reachable without a
- * hand-written per-field mirror.
+ * hand-written per-field mirror. Fields whose capability is inspect-only or
+ * unsupported are rejected with a reason.
  */
 KYALEVEL_API bool KyaMakePlacementPropertyPatch(const FKyaActorPlacement& Source, FName PropertyName,
-    FKyaActorEditPatch& OutPatch);
+    FKyaActorEditPatch& OutPatch, FString* OutError = nullptr);

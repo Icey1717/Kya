@@ -214,12 +214,19 @@ The handle's Details panel shows the bank record itself: one row per editable
 nested fixed-size arrays, class-specific records and behaviour payloads. Edits are
 applied one top-level property at a time through the shared edit service, so a
 nested field or array element change writes only that property and produces one
-undo step. The old hand-written mirror fields remain on the actor for script
-compatibility but are hidden from Details. Non-editable fields (such as the
-serialized record index) stay read-only, and the property handles evaluate the
-schema's existing presence flags and edit conditions. Reference pickers, named
-behaviour labels, mixed-value multi-editing and reset-to-imported actions are not
-implemented yet.
+undo step. A field capability table (`GetKyaActorFieldCapability`) classifies every
+property as editable-exportable, editable-presentation-only, inspect-only or
+unsupported, with a reason. Export support comes from the writer's own field
+references (`KyaExportedActorFields.h`), so a field the exporter does not encode is
+inspect-only even when it is `EditAnywhere`. The table handles the serialized name
+slot (`Align(length + 1, 4)` must match the original capacity), fixed-size arrays,
+raw class-payload size, `VisibleAnywhere` record data and the layout-controlling
+`bHas*` presence flags; `GetKyaNestedFieldCapability` applies the same rules to
+nested records such as `Models.MeshName`. The panel only offers editable fields and
+shows the capability reason as the row tooltip. The old hand-written mirror fields
+remain on the actor for script compatibility but are hidden from Details. Reference
+pickers, named behaviour labels, mixed-value multi-editing and reset-to-imported
+actions are not implemented yet.
 
 Waypoints and path points have the same treatment. `Spawn Waypoint Handles` creates
 one transient `AKyaSpatialRecordHandle` per waypoint (position, stored rotation and
