@@ -212,6 +212,11 @@ Last updated: 2026-11-12.
   world bounds and material names/hashes. Handles are location-locked and reset
   transform edits because hierarchy transforms are not serialized; visibility and
   selection stay presentation-only.
+- Hierarchy hide/isolate uses the same editor-only state as other generated
+  representations (survives rebuilds, never touches bank bytes). A rejected transform
+  sets a persistent `TransformStatus` and logs the reason; Details shows
+  `Transform reset: hierarchy transforms are not serialized` so the handle cannot
+  imply export support.
 - Generated actors are grouped in the Outliner under one transient grouping actor  per sector, attached to the preview. Labels are `<serialized name> [class <id>]`,
   disambiguated with the record index for duplicate names; labels are derived from
   the whole bank so sector load/unload cannot rename them, and serialized names are
@@ -317,8 +322,8 @@ These remain open in [the checklist](EDITOR_WORKFLOW_PLAN.md):
 - Progress/cancel UI for export; Message Log entries do not have navigation links.
 - Targeted per-actor invalidation: a committed transform edit still rebuilds the
   preview once (the drag itself is live and does not rebuild).
-- Hierarchy transform writeback (presentation-only handles by design) and path
-  playback.
+- Serialized hierarchy transform writeback (deliberately disabled until the writer
+  milestone defines it) and path playback.
 - Interactive viewport acceptance pass (click a mesh, W/E/R, save/reopen,
   export/reimport) in a live editor session, and Milestone A–E gates.
 

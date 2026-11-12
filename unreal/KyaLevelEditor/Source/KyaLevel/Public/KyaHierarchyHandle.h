@@ -101,6 +101,10 @@ public:
     UPROPERTY(EditAnywhere, Category="Kya|Hierarchy")
     bool bVisible = true;
 
+    /** Explains the last rejected transform edit (presentation-only handle). */
+    UPROPERTY(VisibleAnywhere, Category="Kya|Hierarchy")
+    FString TransformStatus;
+
     /** Locked representations stay visible but cannot be picked in the viewport. */
     UPROPERTY(EditAnywhere, Category="Kya|Selection")
     bool bSelectionLocked = false;

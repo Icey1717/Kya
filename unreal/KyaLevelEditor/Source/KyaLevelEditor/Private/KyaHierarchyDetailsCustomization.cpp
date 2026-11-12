@@ -66,4 +66,12 @@ void FKyaHierarchyDetailsCustomization::CustomizeDetails(IDetailLayoutBuilder& D
         "Selection and visibility are presentation-only. Hierarchy transforms and material "
         "reassignment are not serialized, so moving the handle is reset and nothing is exported."),
         TEXT("The game stores no independent hierarchy transform; enabling writeback requires a later writer milestone."));
+    AddRow(TEXT("Hide / isolate"), TEXT(
+        "Presentation-only: hidden and isolated hierarchies stay unchanged in the bank, and "
+        "rebuilding the preview does not write any bytes."),
+        TEXT("Uses the same editor-only temporary hide/isolate state as other generated representations."));
+    AddRow(TEXT("Transform support"), Handle->TransformStatus.IsEmpty()
+        ? FString(TEXT("Disabled: no serialized hierarchy writeback. Transform edits are reset."))
+        : Handle->TransformStatus,
+        TEXT("A movable-looking handle must not imply export support. The status reports the last reset attempt."));
 }

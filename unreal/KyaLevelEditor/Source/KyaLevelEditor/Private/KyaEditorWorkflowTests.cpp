@@ -1296,6 +1296,8 @@ bool FKyaHierarchyGeometryTest::RunTest(const FString& Parameters)
         TestTrue(TEXT("Hierarchy handle transform is reset"),
             Sample->GetActorTransform().GetRelativeTransform(Preview->GetActorTransform())
                 .Equals(FTransform::Identity, 0.01));
+        TestTrue(TEXT("Transform reset explains that writeback is unsupported"),
+            Sample->TransformStatus.Contains(TEXT("not serialized")));
         TestTrue(TEXT("Hierarchy mesh stays at the preview transform"),
             Sample->HierarchyMesh->GetComponentLocation().Equals(Preview->GetActorLocation(), 0.01));
 
@@ -1341,6 +1343,47 @@ bool FKyaHierarchyGeometryTest::RunTest(const FString& Parameters)
         Preview->SetHierarchyVisible(SampleBank, Offset, true);
         TestEqual(TEXT("Visibility toggles do not modify bank bytes"),
             int64(SampleBank ? SampleBank->BankBytes.Num() : 0), BeforeBytes);
+    }
+
+    // Hide and isolate are presentation-only for hierarchy handles too.
+    if (AKyaHierarchyHandle* Presentation = Preview->GetHierarchyHandle(0))
+    {
+        AKyaHierarchyHandle* Other = nullptr;
+        for (int32 HandleIndex = 1; HandleIndex < Preview->GetHierarchyHandleCount(); ++HandleIndex)
+        {
+            AKyaHierarchyHandle* Candidate = Preview->GetHierarchyHandle(HandleIndex);
+            if (IsValid(Candidate) && Candidate != Presentation)
+            {
+                Other = Candidate;
+                break;
+            }
+        }
+        const int64 MainBytes = Bank->BankBytes.Num();
+        const int64 SectorBytes = SectorBank ? SectorBank->BankBytes.Num() : 0;
+
+        Preview->SetGeneratedActorTemporarilyHidden(Presentation, true);
+        TestTrue(TEXT("Hierarchy handle can be temporarily hidden"),
+            Presentation->IsTemporarilyHiddenInEditor());
+        if (Other) TestFalse(TEXT("Hiding one hierarchy leaves others visible"),
+            Other->IsTemporarilyHiddenInEditor());
+        Preview->OnConstruction(Preview->GetActorTransform());
+        if (AKyaHierarchyHandle* Rebuilt = Preview->GetHierarchyHandle(0))
+            TestTrue(TEXT("Hierarchy hiding survives a rebuild"), Rebuilt->IsTemporarilyHiddenInEditor());
+        Preview->SetGeneratedActorTemporarilyHidden(Presentation, false);
+        TestFalse(TEXT("Showing a hierarchy restores it"), Presentation->IsTemporarilyHiddenInEditor());
+
+        Preview->IsolateGeneratedActors({Presentation});
+        TestTrue(TEXT("Isolated hierarchy is visible"), !Presentation->IsTemporarilyHiddenInEditor());
+        if (Other) TestTrue(TEXT("Isolation hides other hierarchy handles"),
+            Other->IsTemporarilyHiddenInEditor());
+        Preview->ClearGeneratedActorIsolation();
+        if (Other) TestFalse(TEXT("Clearing isolation restores hierarchy handles"),
+            Other->IsTemporarilyHiddenInEditor());
+
+        TestEqual(TEXT("Hide/isolate leaves the main bank bytes unchanged"),
+            int64(Bank->BankBytes.Num()), MainBytes);
+        TestEqual(TEXT("Hide/isolate leaves the sector bank bytes unchanged"),
+            int64(SectorBank ? SectorBank->BankBytes.Num() : 0), SectorBytes);
     }
 
     // A game/PIE world has no handles, so the shared mesh must keep the geometry.

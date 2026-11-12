@@ -370,6 +370,12 @@ location-locked and resets translate/rotate/scale edits because the game stores 
 independent hierarchy transform, so a movable-looking handle would imply export
 support that does not exist.
 
+The same handle participates in the editor-only Hide/Isolate actions: hiding or
+isolating a hierarchy changes only the preview (and survives rebuilds), never bank
+bytes. A transform attempt is reset immediately and the Details panel reports
+`Transform reset: hierarchy transforms are not serialized`, so the handle cannot be
+mistaken for a supported export edit.
+
 Enable `Log Sector Diagnostics` on the preview actor to log bank entries, cluster
 and hierarchy strip counts, material coverage, and bounds. For a camera-aligned
 capture, save a game screenshot with `python tools/debug_socket/client.py screenshot --metadata out/screenshots/matched-camera.json`, set `KYA_CAMERA_METADATA` to

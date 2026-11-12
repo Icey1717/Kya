@@ -127,6 +127,16 @@ void AKyaHierarchyHandle::SetGeneratedLabel(const FString& Label)
 
 void AKyaHierarchyHandle::ResetToPreviewRoot()
 {
+    const FTransform Current = IsValid(Preview)
+        ? GetActorTransform().GetRelativeTransform(Preview->GetActorTransform())
+        : GetActorTransform();
+    if (!Current.Equals(FTransform::Identity, 1.0e-4))
+    {
+        TransformStatus = TEXT("Transform reset: hierarchy transforms are not serialized, so nothing is exported. "
+            "Move the owning bank/background data instead.");
+        UE_LOG(LogTemp, Warning, TEXT("KYA_HIERARCHY_TRANSFORM_REJECTED handle=%s bank=%s offset=%d: "
+            "serialized hierarchy writeback is unsupported"), *GetNameSafe(this), *GetNameSafe(Bank), HierarchyOffset);
+    }
     SetActorRelativeTransform(FTransform::Identity, false, nullptr, ETeleportType::TeleportPhysics);
 }
 
