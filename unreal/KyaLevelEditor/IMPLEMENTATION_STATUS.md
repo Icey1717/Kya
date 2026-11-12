@@ -102,6 +102,13 @@ Last updated: 2026-11-12.
   through `CActorFactory`/`CActor::Create` to inspect the resulting position and
   visibility/culling values. The harness requires matching gtest XML evidence
   (one test, no failures/errors/skips) so a stale binary cannot pass.
+- Structural authoring is explicitly deferred but gated: `AnalyzeKyaStructuralEdit`
+  computes allocation deltas, actor-index remaps, dangling references and preserved
+  bank entries with blocking reasons, `ValidateKyaActorStructuralEdit` recursively
+  rejects class replacement, variable-length names and any fixed-size array/string
+  slot change before mutation (single and bulk edits), and the writer reports an
+  explicit actor-count mismatch. Create/delete/duplicate/resize/class commands stay
+  disabled until relocation and structural writeback exist.
 - `FKyaLevelBankReimportHandler` implements `FReimportHandler`: parses into a
   temporary bank, only replaces the asset on success, asks before discarding dirty
   changes (refuses in unattended mode), updates provenance, bumps the edit
@@ -337,8 +344,8 @@ Results: `Kya.Bank.LevelOneRoundTrip`, `Kya.Bank.SmallBankRoundTrip`,
 `Kya.Editor.LightExport`, `Kya.Editor.LevelSettings`, `Kya.Editor.AsyncDecode` and
 `Kya.Editor.MessageLogLinks`, `Kya.Editor.AuthoringVisibility`,
 `Kya.Editor.TargetedWorkflowAcceptance`, `Kya.Editor.LevelActionsReporting`,
-`Kya.Bank.SelectedActorRoundTrip` and `Kya.Editor.RunningPortExportValidation` all
-`Success`.
+`Kya.Bank.SelectedActorRoundTrip`, `Kya.Editor.RunningPortExportValidation` and
+`Kya.Editor.StructuralEditGate` all `Success`.
 
 Coverage added by the new tests:
 

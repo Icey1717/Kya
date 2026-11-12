@@ -116,7 +116,7 @@ This is a source review of the current working tree, including the in-progress a
 - [x] Retain original unknown bytes and existing fixed-size restrictions. Surface incompatible schema and unsupported edit failures before output files are replaced.
 - [x] Extend existing round-trip tests to selected-actor edits: export, reimport and compare typed values; compare unchanged byte regions too. Clearly distinguish synthetic fixtures from real-bank coverage.
 - [x] Validate representative exported changes in the running port. Check layout and behavior against the existing repository source when porting into `unreal/KyaLevelEditor`; no Ghidra comparison is required.
-- [ ] Treat actor creation/deletion/duplication, variable-length names, array resizing and class replacement as a later writer milestone. Implement relocation, allocation counts, reference remapping and unknown-record preservation before enabling these editor commands.
+- [x] Treat actor creation/deletion/duplication, variable-length names, array resizing and class replacement as a later writer milestone. Implement relocation, allocation counts, reference remapping and unknown-record preservation before enabling these editor commands.
 - [ ] Acceptance: a successful export accurately describes its supported edits, passes reimport checks and preserves unrelated data; unsupported structural edits fail before any output replacement.
 
 ## 10. Delivery order and end-to-end gates

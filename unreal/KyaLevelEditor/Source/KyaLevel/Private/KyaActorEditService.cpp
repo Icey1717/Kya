@@ -4,6 +4,7 @@
 
 #include "KyaLevelPreview.h"
 #include "KyaActorCatalog.h"
+#include "KyaStructuralEdits.h"
 #include "KyaExportedActorFields.h"
 #if WITH_EDITOR
 #include "Editor.h"
@@ -465,6 +466,7 @@ bool FKyaLevelEditService::Apply(const FKyaActorRecordKey& Key, const FKyaActorE
     // never leaves a partially modified record behind.
     FKyaActorPlacement Candidate = *Placement;
     if (!ApplyPatchToRecord(Candidate, Patch, Error) || !ValidateKyaActorPlacement(Candidate, Error) ||
+        !ValidateKyaActorStructuralEdit(*Placement, Candidate, Error) ||
         !ValidateChangedReferences(*Bank, *Placement, Candidate, Error))
     {
         if (OutError) *OutError = Error;
@@ -556,6 +558,7 @@ bool FKyaLevelEditService::ApplyBulk(const TArray<FKyaActorRecordKey>& Keys, con
         Entry.Candidate = *Placement;
         if (!ApplyPatchToRecord(Entry.Candidate, Patch, Error) ||
             !ValidateKyaActorPlacement(Entry.Candidate, Error) ||
+            !ValidateKyaActorStructuralEdit(*Placement, Entry.Candidate, Error) ||
             !ValidateChangedReferences(*Entry.Bank, *Placement, Entry.Candidate, Error))
         {
             if (OutError) *OutError = FString::Printf(TEXT("Record %d: %s"), Key.RecordIndex, *Error);

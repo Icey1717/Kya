@@ -20,6 +20,7 @@
 #include "KyaLevelSetFactory.h"
 #include "KyaPathPointComponent.h"
 #include "KyaSpatialRecordHandle.h"
+#include "KyaStructuralEdits.h"
 #include "KyaWaypointComponent.h"
 #include "Misc/AutomationTest.h"
 #include "Misc/FileHelper.h"
@@ -1504,6 +1505,137 @@ bool FKyaRunningPortExportValidationTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Running port validates the exported edit"), ReturnCode, 0);
     Service.Reset();
     return ReturnCode == 0 && bRanAndPassed;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaStructuralEditGateTest, "Kya.Editor.StructuralEditGate",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaStructuralEditGateTest::RunTest(const FString& Parameters)
+{
+    UKyaLevelBank* Bank = MakeKyaTestBank(GetTransientPackage(), 6);
+    Bank->SceneEnvironment.Actors[0].ClassId = 0x2c;
+    Bank->SceneEnvironment.Actors[0].TrapActorRef = 2;
+    FKyaActorPlacement& Third = Bank->SceneEnvironment.Actors.AddDefaulted_GetRef();
+    Third.Name = TEXT("THIRD");
+    Third.ClassId = 6;
+    FKyaActorPlacement& Fourth = Bank->SceneEnvironment.Actors.AddDefaulted_GetRef();
+    Fourth.Name = TEXT("FOURTH");
+    Fourth.ClassId = 6;
+    FKyaBankEntry& Preserved = Bank->Entries.AddDefaulted_GetRef();
+    Preserved.Type = 5;
+    Preserved.Subtype = 1;
+
+    // Removal analysis: index map, allocation delta, dangling references and
+    // preserved entries are computed even though the writer remains disabled.
+    FKyaStructuralEditAnalysis Delete;
+    TestTrue(TEXT("Delete analysis runs"), AnalyzeKyaStructuralEdit(*Bank,
+        EKyaStructuralEditKind::DeleteActor, 2, Delete));
+    TestFalse(TEXT("Delete remains blocked until relocation exists"), Delete.bWriterSupported);
+    TestEqual(TEXT("Delete remaps higher actors"), Delete.ActorIndexRemap.FindRef(3), 2);
+    TestEqual(TEXT("Delete marks the removed actor"), Delete.ActorIndexRemap.FindRef(2), -1);
+    TestEqual(TEXT("Delete decrements the class allocation"),
+        Delete.ClassAllocationDelta.FindRef(Bank->SceneEnvironment.Actors[2].ClassId), -1);
+    TestEqual(TEXT("Delete counts references to the removed actor"),
+        Delete.ReferencesToRemovedActor, 1);
+    TestEqual(TEXT("Delete preserves unrelated bank entries"), Delete.PreservedBankEntries, 1);
+    TestTrue(TEXT("Delete explains relocation"), Delete.BlockingReasons.Num() > 0 &&
+        Delete.BlockingReasons[0].Contains(TEXT("relocation")));
+
+    FKyaStructuralEditAnalysis Duplicate;
+    TestTrue(TEXT("Duplicate analysis runs"), AnalyzeKyaStructuralEdit(*Bank,
+        EKyaStructuralEditKind::DuplicateActor, 1, Duplicate));
+    TestFalse(TEXT("Duplicate remains blocked"), Duplicate.bWriterSupported);
+    TestEqual(TEXT("Duplicate increments the class allocation"),
+        Duplicate.ClassAllocationDelta.FindRef(6), 1);
+    TestEqual(TEXT("Duplicate preserves existing indices"), Duplicate.ActorIndexRemap.FindRef(1), 1);
+
+    // In-place edits reject layout changes before mutating the bank.
+    FKyaActorPlacement Candidate = Bank->SceneEnvironment.Actors[0];
+    FString Error;
+    Candidate.ClassId = 0x0d;
+    TestFalse(TEXT("Class replacement is rejected"),
+        ValidateKyaActorStructuralEdit(Bank->SceneEnvironment.Actors[0], Candidate, Error));
+    TestTrue(TEXT("Class rejection explains the milestone"), Error.Contains(TEXT("Class replacement")));
+
+    Candidate = Bank->SceneEnvironment.Actors[0];
+    Candidate.Name = TEXT("FIRST123");
+    TestFalse(TEXT("Variable-length name is rejected"),
+        ValidateKyaActorStructuralEdit(Bank->SceneEnvironment.Actors[0], Candidate, Error));
+    TestTrue(TEXT("Name rejection explains relocation"), Error.Contains(TEXT("relocat")));
+
+    Candidate = Bank->SceneEnvironment.Actors[0];
+    Candidate.Behaviours.AddDefaulted();
+    TestFalse(TEXT("Array resizing is rejected"),
+        ValidateKyaActorStructuralEdit(Bank->SceneEnvironment.Actors[0], Candidate, Error));
+    TestTrue(TEXT("Array rejection explains resizing"), Error.Contains(TEXT("Resizing")));
+
+    // Nested arrays are validated recursively, including struct arrays inside the
+    // class-specific records.
+    Bank->SceneEnvironment.Actors[0].Checkpoints.AddDefaulted();
+    Candidate = Bank->SceneEnvironment.Actors[0];
+    Candidate.Checkpoints[0].ActorWaypoints.AddDefaulted();
+    TestFalse(TEXT("Nested array resizing is rejected"),
+        ValidateKyaActorStructuralEdit(Bank->SceneEnvironment.Actors[0], Candidate, Error));
+    TestTrue(TEXT("Nested rejection names the nested field"), Error.Contains(TEXT("ActorWaypoints")));
+
+    // The edit service refuses a cross-slot rename and leaves the bank unchanged.
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    FKyaActorEditPatch Rename;
+    Rename.Name = TEXT("FIRST123");
+    TestFalse(TEXT("Service rejects a cross-slot rename"),
+        Service.Apply(Service.MakeKey(Bank, 0), Rename, EKyaEditNotify::Silent, &Error));
+    TestEqual(TEXT("Rejected rename leaves the bank untouched"),
+        Bank->SceneEnvironment.Actors[0].Name, FString(TEXT("FIRST")));
+    Service.Reset();
+
+    // Bulk edits must use the same structural gate as single-record edits.
+    FKyaActorEditPatch BulkResize;
+    BulkResize.Custom = [](FKyaActorPlacement& Placement, FString& OutError)
+    {
+        Placement.Behaviours.AddDefaulted();
+        return true;
+    };
+    FKyaLevelEditService& BulkService = FKyaLevelEditService::Get();
+    BulkService.Reset();
+    const int32 BehavioursBeforeBulk = Bank->SceneEnvironment.Actors[0].Behaviours.Num();
+    TestFalse(TEXT("Bulk edit cannot resize a fixed array"),
+        BulkService.ApplyBulk({ BulkService.MakeKey(Bank, 0) }, BulkResize, EKyaEditNotify::Silent, &Error));
+    TestEqual(TEXT("Rejected bulk resize leaves the bank untouched"),
+        Bank->SceneEnvironment.Actors[0].Behaviours.Num(), BehavioursBeforeBulk);
+    BulkService.Reset();
+
+    // Writer preflight rejects actor-count changes before any output is staged.
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (!Filename.IsEmpty())
+    {
+        TArray<uint8> Input;
+        if (TestTrue(TEXT("Read structural bank"), FFileHelper::LoadFileToArray(Input, *Filename)))
+        {
+            const uint8* Cursor = Input.GetData();
+            UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+            UKyaLevelBank* RealBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(
+                UKyaLevelBank::StaticClass(), GetTransientPackage(), NAME_None, RF_Transient, nullptr,
+                TEXT("bnk"), Cursor, Input.GetData() + Input.Num(), GWarn));
+            if (TestNotNull(TEXT("Import structural bank"), RealBank) &&
+                RealBank->SceneEnvironment.Actors.Num() > 0)
+            {
+                FKyaActorPlacement Copy = RealBank->SceneEnvironment.Actors[0];
+                Copy.Name = TEXT("DUPLICATE");
+                RealBank->SceneEnvironment.Actors.Add(Copy);
+                FKyaBankExportDiagnostics Diagnostics;
+                TArray<uint8> Bytes;
+                TestFalse(TEXT("Writer rejects an actor-count change"),
+                    KyaBuildBankExportBytes(RealBank, Bytes, Diagnostics));
+                TestTrue(TEXT("Writer rejection explains relocation/allocation"),
+                    Diagnostics.Errors.ContainsByPredicate([](const FString& Message)
+                    {
+                        return Message.Contains(TEXT("actor count")) && Message.Contains(TEXT("relocation"));
+                    }));
+            }
+        }
+    }
+    return true;
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaLevelActionsReportingTest, "Kya.Editor.LevelActionsReporting",
