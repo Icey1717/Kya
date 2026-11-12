@@ -218,7 +218,7 @@ void AKyaActorHandle::CommitTransformFromActor()
     FKyaLevelEditService& Service = FKyaLevelEditService::Get();
     const FKyaActorRecordKey Key = Service.MakeKey(Bank, ActorIndex);
     bool bApplied = false;
-    if (GEditor && !GEditor->IsTransactionActive())
+    if (GEditor && !GIsTransacting)
     {
         // Some editor move paths close their transaction before PostEditMove. Open
         // our own so the single bank write at the end of the interaction is still
@@ -431,3 +431,4 @@ void AKyaActorHandle::ApplyToBank()
     SyncFromBank();
 #endif
 }
+

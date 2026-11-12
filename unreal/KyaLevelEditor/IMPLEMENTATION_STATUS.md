@@ -158,6 +158,14 @@ Last updated: 2026-11-12.
   in sync. `Kya.Editor.ViewportClickSelection` covers per-strip picking, misses,
   nearest-strip and cross-preview occlusion, highlight/bounds, hidden and locked
   rejection; README documents the manual mouse/gizmo acceptance pass.
+- Shared edit path (`Kya.Editor.SharedEditPath`): every supported entry point
+  (viewport transform, Details patch, legacy waypoint/path markers, scripted
+  `ApplyToBank`, bulk edits) writes the authoritative record, and all previews of the
+  bank agree. The service opens one transaction for direct/scripted calls when none is
+  active (actor, bulk, waypoint, path point, light, camera, settings) and treats
+  unchanged candidates as no-ops, so identical patches and synchronized re-applies do
+  not dirty the bank. A two-preview rebuild keeps one handle per record, does not
+  duplicate spatial handles and leaves an unchanged bank clean.
 - `FKyaLevelBankReimportHandler` implements `FReimportHandler`: parses into a
   temporary bank, only replaces the asset on success, asks before discarding dirty
   changes (refuses in unattended mode), updates provenance, bumps the edit
@@ -396,8 +404,8 @@ Results: `Kya.Bank.LevelOneRoundTrip`, `Kya.Bank.SmallBankRoundTrip`,
 `Kya.Bank.SelectedActorRoundTrip`, `Kya.Editor.RunningPortExportValidation`,
 `Kya.Editor.StructuralEditGate`, `Kya.Editor.ExportAcceptance`,
 `Kya.Editor.MilestoneAGate`, `Kya.Editor.MilestoneBGate`,
-`Kya.Editor.MilestoneCGate`, `Kya.Editor.MilestoneDGate` and
-`Kya.Editor.ViewportClickSelection` all `Success`.
+`Kya.Editor.MilestoneCGate`, `Kya.Editor.MilestoneDGate`,
+`Kya.Editor.ViewportClickSelection` and `Kya.Editor.SharedEditPath` all `Success`.
 
 Coverage added by the new tests:
 

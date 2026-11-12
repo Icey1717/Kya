@@ -8,8 +8,32 @@
 #include "KyaExportedActorFields.h"
 #if WITH_EDITOR
 #include "Editor.h"
+#include "ScopedTransaction.h"
 #endif
 #include "Containers/Ticker.h"
+
+namespace
+{
+#if WITH_EDITOR
+/**
+ * One undo step for direct service/scripted calls. When the caller already opened a
+ * transaction (viewport drag, Details edit, bulk command) this just participates.
+ */
+struct FKyaServiceTransaction
+{
+    TUniquePtr<FScopedTransaction> Transaction;
+    explicit FKyaServiceTransaction(const FText& Label)
+    {
+        if (!GIsTransacting) Transaction = MakeUnique<FScopedTransaction>(Label);
+    }
+};
+
+#define KYA_SERVICE_TRANSACTION(Label) \
+    FKyaServiceTransaction TransactionScope(NSLOCTEXT("KyaLevel", Label, Label))
+#else
+#define KYA_SERVICE_TRANSACTION(Label)
+#endif
+}
 
 FString FKyaActorRecordKey::ToString() const
 {
@@ -473,6 +497,15 @@ bool FKyaLevelEditService::Apply(const FKyaActorRecordKey& Key, const FKyaActorE
         return false;
     }
 
+    // An edit that matches the current record is not a change: no transaction, no
+    // dirty flag and no notifications, so scripted re-applies stay clean.
+    if (FKyaActorPlacement::StaticStruct()->CompareScriptStruct(Placement, &Candidate, PPF_None))
+        return true;
+
+    // Direct service/scripted calls must produce one undo step too; viewport drags
+    // and Details edits already own a transaction and this participates in it.
+    KYA_SERVICE_TRANSACTION("KyaEditActorRecord");
+
     Bank->Modify();
     if (!Resolve(Key, Placement, &Error))
     {
@@ -536,10 +569,12 @@ bool FKyaLevelEditService::ApplyBulk(const TArray<FKyaActorRecordKey>& Keys, con
         FKyaActorRecordKey Key;
         UKyaLevelBank* Bank = nullptr;
         FKyaActorPlacement Candidate;
+        bool bChanged = false;
     };
     TArray<FEntry> Entries;
     Entries.Reserve(Keys.Num());
-    TSet<UKyaLevelBank*> Banks;
+
+    bool bAnyChanged = false;
 
     // Pass 1: resolve and validate every record before mutating any of them, so a
     // bulk edit either applies completely or not at all.
@@ -564,13 +599,24 @@ bool FKyaLevelEditService::ApplyBulk(const TArray<FKyaActorRecordKey>& Keys, con
             if (OutError) *OutError = FString::Printf(TEXT("Record %d: %s"), Key.RecordIndex, *Error);
             return false;
         }
-        Banks.Add(Entry.Bank);
-    }
+        Entry.bChanged = !FKyaActorPlacement::StaticStruct()->CompareScriptStruct(
+            Placement, &Entry.Candidate, PPF_None);
+        if (Entry.bChanged) bAnyChanged = true;
 
-    // Pass 2: one Modify per record (inside the caller's transaction) and one dirty
-    // marker plus one refresh per affected bank.
+    }
+    // A bulk edit that matches every selected record is not a change.
+    if (!bAnyChanged) return true;
+
+    // Span the whole bulk edit with one undo step when the caller has none.
+    KYA_SERVICE_TRANSACTION("KyaEditActorRecords");
+
+    // Pass 2: one Modify per changed record (inside the caller's transaction) and one
+    // dirty marker plus one refresh per affected bank.
+    TSet<UKyaLevelBank*> ChangedBanks;
     for (FEntry& Entry : Entries)
     {
+        if (!Entry.bChanged) continue;
+        ChangedBanks.Add(Entry.Bank);
         Entry.Bank->Modify();
         FKyaActorPlacement* Placement = nullptr;
         if (!Resolve(Entry.Key, Placement, nullptr) || !Placement)
@@ -581,7 +627,7 @@ bool FKyaLevelEditService::ApplyBulk(const TArray<FKyaActorRecordKey>& Keys, con
         }
         *Placement = Entry.Candidate;
     }
-    for (UKyaLevelBank* Bank : Banks)
+    for (UKyaLevelBank* Bank : ChangedBanks)
     {
         Bank->MarkPackageDirty();
         if (OnBankEdited.IsBound()) OnBankEdited.Broadcast(Bank);
@@ -675,6 +721,11 @@ bool FKyaLevelEditService::ApplyWaypoint(const FKyaWaypointRecordKey& Key, const
         if (OutError) *OutError = Error;
         return false;
     }
+    // An unchanged waypoint is not an edit: no transaction, dirty flag or refresh.
+    if (Waypoint->Position.Equals(Candidate.Position) && Waypoint->Rotation.Equals(Candidate.Rotation) &&
+        Waypoint->Parameters.Equals(Candidate.Parameters))
+        return true;
+    KYA_SERVICE_TRANSACTION("KyaEditWaypoint");
 
     Bank->Modify();
     if (!ResolveWaypoint(Key, Waypoint, &Error))
@@ -808,6 +859,8 @@ bool FKyaLevelEditService::ApplyPathPoint(const FKyaPathPointRecordKey& Key, con
         if (OutError) *OutError = Error;
         return false;
     }
+    if (FKyaPath::StaticStruct()->CompareScriptStruct(Path, &Candidate, PPF_None)) return true;
+    KYA_SERVICE_TRANSACTION("KyaEditPathPoint");
 
     Bank->Modify();
     if (!ResolvePathPoint(Key, Path, &Error))
@@ -1081,6 +1134,8 @@ bool FKyaLevelEditService::ApplyLight(const FKyaLightRecordKey& Key, const FKyaL
         if (OutError) *OutError = Error.IsEmpty() ? TEXT("Light values must be finite.") : Error;
         return false;
     }
+    if (FKyaLight::StaticStruct()->CompareScriptStruct(Light, &Candidate, PPF_None)) return true;
+    KYA_SERVICE_TRANSACTION("KyaEditLight");
     Bank->Modify();
     if (!ResolveLight(Key, Light, &Error))
     {
@@ -1139,6 +1194,13 @@ bool FKyaLevelEditService::ApplySceneCamera(const FKyaSceneCameraKey& Key, const
             ? TEXT("Camera FOV must be finite and between 0 and 180 degrees.") : Error;
         return false;
     }
+    // An identical camera is not an edit.
+    if (Bank->SceneEnvironment.CameraPosition.Equals(Candidate.CameraPosition) &&
+        Bank->SceneEnvironment.CameraLookAt.Equals(Candidate.CameraLookAt) &&
+        Bank->SceneEnvironment.CameraUp.Equals(Candidate.CameraUp) &&
+        Bank->SceneEnvironment.CameraFov == Candidate.CameraFov)
+        return true;
+    KYA_SERVICE_TRANSACTION("KyaEditSceneCamera");
     Bank->Modify();
     Bank->SceneEnvironment.CameraPosition = Candidate.CameraPosition;
     Bank->SceneEnvironment.CameraLookAt = Candidate.CameraLookAt;
@@ -1192,13 +1254,20 @@ bool FKyaLevelEditService::ApplySceneSettings(UKyaLevelBank* Bank, const FKyaSce
         if (OutError) *OutError = Error;
         return false;
     }
-    Bank->Modify();
     // Placement records are edited by the actor/waypoint/path services; the settings
     // surface must never overwrite them with a stale snapshot.
     FKyaSceneEnvironment NewEnvironment = Environment;
     NewEnvironment.Actors = Bank->SceneEnvironment.Actors;
     NewEnvironment.Waypoints = Bank->SceneEnvironment.Waypoints;
     NewEnvironment.Paths = Bank->SceneEnvironment.Paths;
+    // Unchanged settings are not an edit.
+    if (FKyaSceneEnvironment::StaticStruct()->CompareScriptStruct(
+            &Bank->SceneEnvironment, &NewEnvironment, PPF_None) &&
+        FKyaSceneConfiguration::StaticStruct()->CompareScriptStruct(
+            &Bank->SceneConfiguration, &Configuration, PPF_None))
+        return true;
+    KYA_SERVICE_TRANSACTION("KyaEditSceneSettings");
+    Bank->Modify();
     Bank->SceneEnvironment = NewEnvironment;
     Bank->SceneConfiguration = Configuration;
     Bank->MarkPackageDirty();

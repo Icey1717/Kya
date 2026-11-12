@@ -231,7 +231,7 @@ void AKyaSpatialRecordHandle::CommitFromActor()
         return Service.ApplyPathPoint(Service.MakePathPointKey(Bank, RecordIndex, PointIndex), Patch, Notify, &Error);
     };
 
-    if (GEditor && !GEditor->IsTransactionActive())
+    if (GEditor && !GIsTransacting)
     {
         FScopedTransaction Transaction(NSLOCTEXT("KyaLevelEditor", "KyaSpatialMove", "Move Kya Spatial Record"));
         bApplied = Run(EKyaEditNotify::Deferred);
@@ -309,7 +309,7 @@ void AKyaSpatialRecordHandle::PostEditChangeProperty(FPropertyChangedEvent& Prop
             return Service.ApplyPathPoint(Service.MakePathPointKey(Bank, RecordIndex, PointIndex), Patch, Notify, &Error);
         };
 
-        if (GEditor && !GEditor->IsTransactionActive())
+        if (GEditor && !GIsTransacting)
         {
             FScopedTransaction Transaction(NSLOCTEXT("KyaLevelEditor", "KyaSpatialProperty", "Edit Kya Spatial Record"));
             bApplied = Run(EKyaEditNotify::Notify);
@@ -359,3 +359,4 @@ void AKyaSpatialRecordHandle::ApplyToBank()
     SyncFromBank();
 #endif
 }
+

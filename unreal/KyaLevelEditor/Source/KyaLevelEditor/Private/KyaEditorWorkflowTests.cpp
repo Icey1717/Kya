@@ -1842,6 +1842,290 @@ bool FKyaViewportClickSelectionTest::RunTest(const FString& Parameters)
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaSharedEditPathTest, "Kya.Editor.SharedEditPath",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaSharedEditPathTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to run the shared edit-path acceptance."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read shared edit-path bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient | RF_Transactional, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import shared edit-path bank"), Bank)) return false;
+    if (!TestTrue(TEXT("The shared bank has actors and paths"),
+        Bank->SceneEnvironment.Actors.Num() > 1 && !Bank->SceneEnvironment.Paths.IsEmpty() &&
+        Bank->SceneEnvironment.Paths[0].Points.Num() > 1)) return false;
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    if (UPackage* Package = Bank->GetOutermost()) Package->SetDirtyFlag(false);
+
+    UWorld* World = UWorld::CreateWorld(EWorldType::EditorPreview, false);
+    if (!TestNotNull(TEXT("Create shared edit-path world"), World)) return false;
+    AKyaLevelPreview* FirstPreview = World->SpawnActor<AKyaLevelPreview>();
+    AKyaLevelPreview* SecondPreview = World->SpawnActor<AKyaLevelPreview>();
+    if (!TestNotNull(TEXT("First preview spawns"), FirstPreview) ||
+        !TestNotNull(TEXT("Second preview spawns"), SecondPreview))
+    {
+        World->DestroyWorld(false);
+        return false;
+    }
+    for (AKyaLevelPreview* Preview : { FirstPreview, SecondPreview })
+    {
+        Preview->Bank = Bank;
+        Preview->bShowRebuildProgress = false;
+        Preview->bSpawnActorHandles = true;
+        Preview->bSpawnWaypointHandles = true;
+        Preview->bSpawnPathPointHandles = true;
+    }
+    FirstPreview->OnConstruction(FTransform::Identity);
+    SecondPreview->OnConstruction(FTransform::Identity);
+    if (UPackage* Package = Bank->GetOutermost())
+        TestFalse(TEXT("Building previews does not dirty the bank"), Package->IsDirty());
+
+    AKyaActorHandle* FirstHandle = Cast<AKyaActorHandle>(FirstPreview->GetActorHandle(0));
+    AKyaActorHandle* SecondHandle = Cast<AKyaActorHandle>(SecondPreview->GetActorHandle(0));
+    if (!TestNotNull(TEXT("First preview handle exists"), FirstHandle) ||
+        !TestNotNull(TEXT("Second preview handle exists"), SecondHandle))
+    {
+        FirstPreview->Destroy();
+        SecondPreview->Destroy();
+        World->DestroyWorld(false);
+        return false;
+    }
+
+    // --- Entry point 1: viewport/gizmo transform (the transaction path) -------------
+    const FVector ActorBefore = Bank->SceneEnvironment.Actors[0].Position;
+    {
+        FScopedTransaction Transaction(NSLOCTEXT("KyaTests", "SharedEditMove", "Shared edit move"));
+        FirstHandle->AddActorWorldOffset(FVector(150.0, 0.0, 225.0));
+        FirstHandle->PostEditMove(true);
+        Service.FlushPendingNotifications();
+    }
+    TestFalse(TEXT("Viewport move writes the authoritative record"),
+        Bank->SceneEnvironment.Actors[0].Position.Equals(ActorBefore));
+    TestTrue(TEXT("The second preview follows the viewport edit"),
+        SecondHandle->GetActorTransform().GetLocation().Equals(
+            FirstHandle->GetActorTransform().GetLocation(), 0.01));
+    TestTrue(TEXT("The second preview mirror matches the bank"),
+        SecondHandle->ActorPosition.Equals(Bank->SceneEnvironment.Actors[0].Position, 1.0e-4));
+
+    // --- Entry point 2: Details property patch -------------------------------------
+    FKyaActorPlacement DetailsCopy = Bank->SceneEnvironment.Actors[0];
+    DetailsCopy.VisibilityDistance = 4321.0f;
+    FKyaActorEditPatch DetailsPatch;
+    FString Error;
+    if (TestTrue(TEXT("Details patch builds"),
+        KyaMakePlacementPropertyPatch(DetailsCopy,
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, VisibilityDistance), DetailsPatch, &Error)))
+    {
+        TestTrue(TEXT("Details edit applies through the shared service"),
+            Service.Apply(Service.MakeKey(Bank, 0), DetailsPatch, EKyaEditNotify::Notify, &Error));
+        Service.FlushPendingNotifications();
+        TestEqual(TEXT("Details edit writes the authoritative record"),
+            Bank->SceneEnvironment.Actors[0].VisibilityDistance, 4321.0f);
+        TestEqual(TEXT("First preview mirror matches Details"),
+            FirstHandle->ActorVisibilityDistance, 4321.0f);
+        TestEqual(TEXT("Second preview mirror matches Details"),
+            SecondHandle->ActorVisibilityDistance, 4321.0f);
+    }
+
+    // --- Entry point 3: scripted ApplyToBank ---------------------------------------
+    SecondHandle->ActorLightingValue = 1234.0f;
+    SecondHandle->ApplyToBank();
+    Service.FlushPendingNotifications();
+    TestEqual(TEXT("Scripted edit writes the authoritative record"),
+        Bank->SceneEnvironment.Actors[0].LightingValue, 1234.0f);
+    TestEqual(TEXT("First preview mirror matches the scripted edit"),
+        FirstHandle->ActorLightingValue, 1234.0f);
+
+    // --- Entry point 4: legacy path-point marker component --------------------------
+    FirstPreview->PreviewPathIndex = 0;
+    FirstPreview->OnConstruction(FTransform::Identity);
+    if (UKyaPathPointComponent* Marker = FirstPreview->GetPathMarker(1))
+    {
+        const FVector4 PointBefore = Bank->SceneEnvironment.Paths[0].Points[1];
+        const int32 PointCount = Bank->SceneEnvironment.Paths[0].Points.Num();
+        Marker->SetRelativeLocation(FVector(200.0, 300.0, 400.0));
+        Marker->PostEditComponentMove(true);
+        Service.FlushPendingNotifications();
+        TestFalse(TEXT("Marker edit writes the authoritative record"),
+            Bank->SceneEnvironment.Paths[0].Points[1].Equals(PointBefore));
+        TestEqual(TEXT("Marker edit keeps the point record count"),
+            Bank->SceneEnvironment.Paths[0].Points.Num(), PointCount);
+    }
+    else
+    {
+        AddWarning(TEXT("No path-point marker was created for path 0; skipping the marker entry point."));
+    }
+
+    // --- Entry point 5: bulk edit over a multi-selection ----------------------------
+    FKyaActorEditPatch BulkPatch;
+    BulkPatch.VisibilityDistance = 777.0f;
+    {
+        TArray<FKyaActorRecordKey> Keys;
+        Keys.Add(Service.MakeKey(Bank, 0));
+        Keys.Add(Service.MakeKey(Bank, 1));
+        TestTrue(TEXT("Bulk edit applies through the shared service"),
+            Service.ApplyBulk(Keys, BulkPatch, EKyaEditNotify::Notify, &Error));
+        Service.FlushPendingNotifications();
+    }
+    TestEqual(TEXT("Bulk edit writes actor 0"), Bank->SceneEnvironment.Actors[0].VisibilityDistance, 777.0f);
+    TestEqual(TEXT("Bulk edit writes actor 1"), Bank->SceneEnvironment.Actors[1].VisibilityDistance, 777.0f);
+    TestEqual(TEXT("First preview agrees on the bulk edit"),
+        FirstHandle->ActorVisibilityDistance, 777.0f);
+    if (AKyaActorHandle* FirstBulk = Cast<AKyaActorHandle>(FirstPreview->GetActorHandle(1)))
+        TestEqual(TEXT("First preview agrees on the second bulk record"),
+            FirstBulk->ActorVisibilityDistance, 777.0f);
+    if (AKyaActorHandle* SecondBulk = Cast<AKyaActorHandle>(SecondPreview->GetActorHandle(1)))
+        TestEqual(TEXT("Second preview agrees on the bulk edit"),
+            SecondBulk->ActorVisibilityDistance, 777.0f);
+
+    // --- Direct service/script edits are undoable and no-ops stay clean ------------
+    Service.FlushPendingNotifications();
+    if (UPackage* Package = Bank->GetOutermost()) Package->SetDirtyFlag(false);
+    {
+        const FKyaActorPlacement Same = Bank->SceneEnvironment.Actors[0];
+        FKyaActorEditPatch NoOpPatch;
+        TestTrue(TEXT("Identical Details patch builds"),
+            KyaMakePlacementPropertyPatch(Same,
+                GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, VisibilityDistance), NoOpPatch, &Error));
+        TestTrue(TEXT("Identical Details patch is accepted"),
+            Service.Apply(Service.MakeKey(Bank, 0), NoOpPatch, EKyaEditNotify::Notify, &Error));
+        Service.FlushPendingNotifications();
+        if (UPackage* Package = Bank->GetOutermost())
+            TestFalse(TEXT("An identical edit does not dirty the bank"), Package->IsDirty());
+        if (AKyaActorHandle* SameHandle = Cast<AKyaActorHandle>(FirstPreview->GetActorHandle(0)))
+        {
+            SameHandle->SyncFromBank();
+            SameHandle->ApplyToBank();
+            Service.FlushPendingNotifications();
+            if (UPackage* Package = Bank->GetOutermost())
+                TestFalse(TEXT("Re-applying a synced record does not dirty the bank"), Package->IsDirty());
+        }
+    }
+
+    const float VisibilityBeforeDirect = Bank->SceneEnvironment.Actors[0].VisibilityDistance;
+    FKyaActorEditPatch DirectPatch;
+    DirectPatch.VisibilityDistance = 2222.0f;
+    TestTrue(TEXT("Direct service edit applies outside a transaction"),
+        Service.Apply(Service.MakeKey(Bank, 0), DirectPatch, EKyaEditNotify::Notify, &Error));
+    Service.FlushPendingNotifications();
+    TestEqual(TEXT("Direct service edit writes the record"),
+        Bank->SceneEnvironment.Actors[0].VisibilityDistance, 2222.0f);
+    if (GEditor)
+    {
+        TestTrue(TEXT("A direct service edit produces an undo step"), GEditor->UndoTransaction());
+        TestEqual(TEXT("Undo restores the direct edit"),
+            Bank->SceneEnvironment.Actors[0].VisibilityDistance, VisibilityBeforeDirect);
+        TestTrue(TEXT("Redo reapplies the direct edit"), GEditor->RedoTransaction());
+        TestEqual(TEXT("Redo restores the direct edit value"),
+            Bank->SceneEnvironment.Actors[0].VisibilityDistance, 2222.0f);
+    }
+
+    const float BulkUndoBefore0 = Bank->SceneEnvironment.Actors[0].VisibilityDistance;
+    const float BulkUndoBefore1 = Bank->SceneEnvironment.Actors[1].VisibilityDistance;
+    FKyaActorEditPatch BulkUndoPatch;
+    BulkUndoPatch.VisibilityDistance = 3333.0f;
+    {
+        TArray<FKyaActorRecordKey> Keys;
+        Keys.Add(Service.MakeKey(Bank, 0));
+        Keys.Add(Service.MakeKey(Bank, 1));
+        TestTrue(TEXT("Bulk edit applies outside a transaction"),
+            Service.ApplyBulk(Keys, BulkUndoPatch, EKyaEditNotify::Notify, &Error));
+        Service.FlushPendingNotifications();
+    }
+    if (GEditor)
+    {
+        TestTrue(TEXT("A bulk edit produces one undo step"), GEditor->UndoTransaction());
+        TestEqual(TEXT("Bulk undo restores the first record"),
+            Bank->SceneEnvironment.Actors[0].VisibilityDistance, BulkUndoBefore0);
+        TestEqual(TEXT("Bulk undo restores the second record"),
+            Bank->SceneEnvironment.Actors[1].VisibilityDistance, BulkUndoBefore1);
+        TestTrue(TEXT("Bulk redo reapplies both records"), GEditor->RedoTransaction());
+        TestEqual(TEXT("Bulk redo restores the first record"),
+            Bank->SceneEnvironment.Actors[0].VisibilityDistance, 3333.0f);
+        TestEqual(TEXT("Bulk redo restores the second record"),
+            Bank->SceneEnvironment.Actors[1].VisibilityDistance, 3333.0f);
+    }
+
+    // --- Spatial entry points: undoable direct edits, clean re-applies ---------------
+    if (Bank->SceneEnvironment.Waypoints.Num() > 0)
+    {
+        const FKyaWaypointRecordKey WaypointKey = Service.MakeWaypointKey(Bank, 0);
+        if (UPackage* Package = Bank->GetOutermost()) Package->SetDirtyFlag(false);
+        FKyaWaypointEditPatch SameWaypoint;
+        SameWaypoint.Position = Bank->SceneEnvironment.Waypoints[0].Position;
+        SameWaypoint.Rotation = Bank->SceneEnvironment.Waypoints[0].Rotation;
+        SameWaypoint.Parameters = Bank->SceneEnvironment.Waypoints[0].Parameters;
+        TestTrue(TEXT("Identical waypoint patch is accepted"),
+            Service.ApplyWaypoint(WaypointKey, SameWaypoint, EKyaEditNotify::Notify, &Error));
+        Service.FlushPendingNotifications();
+        if (UPackage* Package = Bank->GetOutermost())
+            TestFalse(TEXT("An identical waypoint edit does not dirty the bank"), Package->IsDirty());
+
+        if (AKyaSpatialRecordHandle* WaypointHandle =
+            Cast<AKyaSpatialRecordHandle>(FirstPreview->GetWaypointHandle(0)))
+        {
+            if (UPackage* Package = Bank->GetOutermost()) Package->SetDirtyFlag(false);
+            WaypointHandle->SyncFromBank();
+            WaypointHandle->ApplyToBank();
+            Service.FlushPendingNotifications();
+            if (UPackage* Package = Bank->GetOutermost())
+                TestFalse(TEXT("Re-applying a synced waypoint does not dirty the bank"), Package->IsDirty());
+        }
+
+        const FVector WaypointBeforeEdit = Bank->SceneEnvironment.Waypoints[0].Position;
+        FKyaWaypointEditPatch WaypointEdit;
+        WaypointEdit.Position = WaypointBeforeEdit + FVector(1.0, 2.0, 3.0);
+        TestTrue(TEXT("Direct waypoint edit applies outside a transaction"),
+            Service.ApplyWaypoint(WaypointKey, WaypointEdit, EKyaEditNotify::Notify, &Error));
+        Service.FlushPendingNotifications();
+        if (GEditor)
+        {
+            TestTrue(TEXT("A direct waypoint edit produces an undo step"), GEditor->UndoTransaction());
+            TestTrue(TEXT("Waypoint undo restores the record"),
+                Bank->SceneEnvironment.Waypoints[0].Position.Equals(WaypointBeforeEdit));
+            TestTrue(TEXT("Waypoint redo reapplies the record"), GEditor->RedoTransaction());
+            TestTrue(TEXT("Waypoint redo restores the edit"),
+                Bank->SceneEnvironment.Waypoints[0].Position.Equals(WaypointBeforeEdit + FVector(1.0, 2.0, 3.0)));
+        }
+    }
+
+    // --- Rebuilds neither duplicate representations nor dirty the bank -------------
+    const int32 FirstHandleCount = FirstPreview->GetActorHandleCount();
+    const int32 SecondHandleCount = SecondPreview->GetActorHandleCount();
+    const int32 SpatialCount = FirstPreview->GetSpatialHandleCount();
+    if (UPackage* Package = Bank->GetOutermost()) Package->SetDirtyFlag(false);
+    FirstPreview->OnConstruction(FTransform::Identity);
+    SecondPreview->OnConstruction(FTransform::Identity);
+    TestEqual(TEXT("Rebuilding keeps one handle per record"),
+        FirstPreview->GetActorHandleCount(), Bank->SceneEnvironment.Actors.Num());
+    TestEqual(TEXT("Rebuilding does not duplicate the first preview"),
+        FirstPreview->GetActorHandleCount(), FirstHandleCount);
+    TestEqual(TEXT("Rebuilding does not duplicate the second preview"),
+        SecondPreview->GetActorHandleCount(), SecondHandleCount);
+    TestEqual(TEXT("Rebuilding does not duplicate spatial handles"),
+        FirstPreview->GetSpatialHandleCount(), SpatialCount);
+    if (UPackage* Package = Bank->GetOutermost())
+        TestFalse(TEXT("Rebuilding does not dirty an unchanged bank"), Package->IsDirty());
+
+    FirstPreview->Destroy();
+    SecondPreview->Destroy();
+    World->DestroyWorld(false);
+    Service.Reset();
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaMilestoneDGateTest, "Kya.Editor.MilestoneDGate",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
@@ -2192,6 +2476,12 @@ bool FKyaMilestoneCGateTest::RunTest(const FString& Parameters)
         return false;
     };
 
+    // This audit is one scripted bulk operation: participate in a single undo step so
+    // the per-field applies do not create hundreds of undo snapshots.
+    TUniquePtr<FScopedTransaction> AuditTransaction;
+    if (GEditor && !GIsTransacting)
+        AuditTransaction = MakeUnique<FScopedTransaction>(
+            NSLOCTEXT("KyaTests", "MilestoneCAudit", "Audit Kya actor fields"));
     for (TFieldIterator<FProperty> It(FKyaActorPlacement::StaticStruct()); It; ++It)
     {
         const FName PropertyName = It->GetFName();
@@ -2266,6 +2556,7 @@ bool FKyaMilestoneCGateTest::RunTest(const FString& Parameters)
             TEXT("%s: no distinct serialized value to edit in this bank"), *PropertyName.ToString()));
         else UncoveredFields.Add(FString::Printf(TEXT("%s: %s"), *PropertyName.ToString(), *LastError));
     }
+    AuditTransaction.Reset();
     if (!bAuditOk) AddError(AuditError);
     for (const FString& Uncovered : UncoveredFields) AddInfo(FString::Printf(TEXT("Uncovered field: %s"), *Uncovered));
     for (const FString& Skipped : InapplicableFields) AddInfo(FString::Printf(TEXT("Not applicable: %s"), *Skipped));
@@ -2350,6 +2641,10 @@ bool FKyaMilestoneCGateTest::RunTest(const FString& Parameters)
     // the field accepts an edit that the writer actually emits.
     for (int32 Attempt = 0; bFieldExportOk && !MismatchedFields.IsEmpty() && Attempt < 512; ++Attempt)
     {
+        TUniquePtr<FScopedTransaction> RetryTransaction;
+        if (GEditor && !GIsTransacting)
+            RetryTransaction = MakeUnique<FScopedTransaction>(
+                NSLOCTEXT("KyaTests", "MilestoneCRetry", "Retry Kya actor field edits"));
         for (const FName Field : MismatchedFields)
         {
             const int32 ActorIndex = FieldActors.FindRef(Field);
@@ -2368,6 +2663,7 @@ bool FKyaMilestoneCGateTest::RunTest(const FString& Parameters)
                 continue;
             FieldTouchedPaths.Add(Field, Path);
         }
+        RetryTransaction.Reset();
         LeafSkipRemaining = 0;
         bFieldExportOk = ExportAndCompareFields(MismatchedFields);
     }

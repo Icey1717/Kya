@@ -251,7 +251,10 @@ The handle's Details panel shows the bank record itself: one row per editable
 nested fixed-size arrays, class-specific records and behaviour payloads. Edits are
 applied one top-level property at a time through the shared edit service, so a
 nested field or array element change writes only that property and produces one
-undo step. A field capability table (`GetKyaActorFieldCapability`) classifies every
+undo step. The service opens a transaction itself when a scripted or direct call has
+none (actor, bulk, waypoint, path point, light, camera and level settings), and an
+edit that matches the current record is a no-op: no transaction, dirty flag or
+refresh. A field capability table (`GetKyaActorFieldCapability`) classifies every
 property as editable-exportable, editable-presentation-only, inspect-only or
 unsupported, with a reason. Export support comes from the writer's own field
 references (`KyaExportedActorFields.h`), so a field the exporter does not encode is
