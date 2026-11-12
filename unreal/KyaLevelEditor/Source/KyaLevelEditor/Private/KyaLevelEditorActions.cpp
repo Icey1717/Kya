@@ -10,6 +10,7 @@
 #include "EngineUtils.h"
 #include "IAssetTools.h"
 #include "KyaBankExport.h"
+#include "KyaActorCatalog.h"
 #include "KyaActorGroup.h"
 #include "KyaActorHandle.h"
 #include "KyaHierarchyHandle.h"
@@ -17,6 +18,7 @@
 #include "KyaLevelPreview.h"
 #include "KyaLevelSet.h"
 #include "KyaLevelSetFactory.h"
+#include "KyaMessageLog.h"
 #include "KyaSceneVisualizer.h"
 #include "KyaSpatialRecordHandle.h"
 #include "Logging/MessageLog.h"
@@ -363,20 +365,53 @@ FKyaBankValidationReport KyaValidateBank(UKyaLevelBank* Bank){
     if (!Bank)
     {
         Report.UnsupportedReason = TEXT("The bank asset does not exist.");
+        Report.Issues.Add({INDEX_NONE, TEXT("bank"), TEXT("The bank asset does not exist."), true});
         return Report;
     }
     Report.AssetPath = Bank->GetPathName();
+    if (!Bank->HasCurrentImportSchema())
+    {
+        Report.Issues.Add({INDEX_NONE, TEXT("schema"), FString::Printf(
+            TEXT("Stale import schema (bank %d, editor %d): reimport the source bank before editing or exporting."),
+            Bank->ImportSchemaVersion, UKyaLevelBank::CurrentImportSchemaVersion), false});
+    }
+    if (Bank->BankBytes.IsEmpty())
+    {
+        Report.Issues.Add({INDEX_NONE, TEXT("geometry"), TEXT(
+            "No bank bytes are retained, so geometry, textures and records cannot be decoded or exported."), true});
+    }
+    else if (!Bank->Entries.IsValidIndex(Bank->BackgroundMeshEntry))
+    {
+        Report.Issues.Add({INDEX_NONE, TEXT("geometry"), TEXT(
+            "The scene background entry is missing or invalid; world geometry preview is incomplete."), false});
+    }
+    for (int32 ActorIndex = 0; ActorIndex < Bank->SceneEnvironment.Actors.Num(); ++ActorIndex)
+    {
+        for (const FKyaActorReferenceIssue& Issue : ValidateKyaActorReferences(
+            *Bank, Bank->SceneEnvironment.Actors[ActorIndex]))
+        {
+            Report.Issues.Add({ActorIndex, Issue.Field, Issue.Message, Issue.bBlocking});
+            if (Issue.bBlocking && Report.UnsupportedReason.IsEmpty())
+                Report.UnsupportedReason = Issue.Message;
+        }
+    }
     FString Reason;
     Report.bExportSupported = KyaBankSupportsExport(Bank, Reason);
-    Report.UnsupportedReason = Reason;
+    if (!Reason.IsEmpty()) Report.UnsupportedReason = Reason;
     if (!Report.bExportSupported) return Report;
     FKyaBankExportDiagnostics Diagnostics;
     TArray<uint8> Bytes;
     Report.bBytesBuilt = KyaBuildBankExportBytes(Bank, Bytes, Diagnostics);
     Report.Warnings = Diagnostics.Warnings;
+    for (const FString& Warning : Diagnostics.Warnings)
+        Report.Issues.Add({INDEX_NONE, TEXT("export"), Warning, false});
     if (!Report.bBytesBuilt)
     {
-        for (const FString& Error : Diagnostics.Errors) Report.Warnings.Add(Error);
+        for (const FString& Error : Diagnostics.Errors)
+        {
+            Report.Warnings.Add(Error);
+            Report.Issues.Add({INDEX_NONE, TEXT("export"), Error, true});
+        }
         Report.UnsupportedReason = Diagnostics.Errors.IsEmpty() ? TEXT("The bank writer rejected this bank.") : Diagnostics.Errors[0];
     }
     return Report;
@@ -391,18 +426,33 @@ TArray<FKyaBankValidationReport> KyaValidateLevelBanks(const TArray<UKyaLevelBan
     {
         Reports.Add(KyaValidateBank(Bank));
         const FKyaBankValidationReport& Report = Reports.Last();
-        if (Report.bBytesBuilt)
+        const bool bBlockingIssue = Report.Issues.ContainsByPredicate(
+            [](const FKyaValidationIssue& Issue) { return Issue.bBlocking; });
+        // Every entry carries a clickable bank asset token; issue entries add a
+        // "Select actor" action for the affected generated representation.
+        if (Report.bBytesBuilt && !bBlockingIssue)
         {
-            Log.Info(FText::FromString(FString::Printf(TEXT("%s is exportable."), *Report.AssetPath)));
+            Log.AddMessage(KyaMakeBankMessage(EMessageSeverity::Info, Bank,
+                FText::FromString(TEXT("is exportable."))));
         }
         else
         {
             bAnyFailure = true;
-            Log.Error(FText::FromString(FString::Printf(TEXT("%s cannot be exported: %s"), *Report.AssetPath,
-                *Report.UnsupportedReason)));
+            const FString Reason = !Report.UnsupportedReason.IsEmpty()
+                ? Report.UnsupportedReason
+                : FString(TEXT("blocking validation issues must be fixed first."));
+            Log.AddMessage(KyaMakeBankMessage(EMessageSeverity::Error, Bank,
+                FText::FromString(FString::Printf(TEXT("cannot be exported: %s"), *Reason))));
         }
-        for (const FString& Warning : Report.Warnings)
-            Log.Warning(FText::FromString(FString::Printf(TEXT("%s: %s"), *Report.AssetPath, *Warning)));
+        for (const FKyaValidationIssue& Issue : Report.Issues)
+        {
+            const EMessageSeverity::Type Severity = Issue.bBlocking
+                ? EMessageSeverity::Error : EMessageSeverity::Warning;
+            const FText Text = FText::FromString(Issue.Field.IsEmpty()
+                ? Issue.Message
+                : FString::Printf(TEXT("%s: %s"), *Issue.Field, *Issue.Message));
+            Log.AddMessage(KyaMakeBankMessage(Severity, Bank, Text, Issue.ActorIndex));
+        }
         UE_LOG(LogTemp, Display, TEXT("KYA_VALIDATE %s"), *Report.Summary());
     }
     if (bAnyFailure) Log.Open(EMessageSeverity::Error);
@@ -570,13 +620,21 @@ FKyaSectorDiscoveryResult KyaDiscoverSectors(AKyaLevelPreview* Preview, bool bIm
     Preview->RebuildFromBank();
 
     FMessageLog Log("KyaLevelEditor");
-    Log.Info(FText::FromString(Result.Summary()));
+    Log.AddMessage(KyaMakeActorMessage(EMessageSeverity::Info, MainBank, Preview,
+        FText::FromString(Result.Summary())));
     for (const FString& Message : Result.Messages)
-        Log.Warning(FText::FromString(Message));
+        Log.AddMessage(KyaMakeActorMessage(EMessageSeverity::Warning, MainBank, Preview,
+            FText::FromString(Message)));
     for (const int32 Missing : Result.MissingIds)
-        Log.Error(FText::FromString(FString::Printf(TEXT("Missing sector bank for sector %d."), Missing)));
+    {
+        Log.AddMessage(KyaMakeActorMessage(EMessageSeverity::Error, MainBank, Preview, FText::FromString(
+            FString::Printf(TEXT("Missing sector bank for sector %d (SECT%d.BNK): import it and rerun "
+                "Discover Sectors, or associate an existing bank manually."), Missing, Missing))));
+    }
     if (!Result.MissingIds.IsEmpty() || Result.Ambiguous > 0) Log.Open(EMessageSeverity::Warning);
-    if (bCanceled) Log.Warning(FText::FromString(TEXT("Sector discovery stopped early; rerun it to continue.")));
+    if (bCanceled)
+        Log.AddMessage(KyaMakeActorMessage(EMessageSeverity::Warning, MainBank, Preview,
+            FText::FromString(TEXT("Sector discovery stopped early; rerun it to continue."))));
 
     UE_LOG(LogTemp, Display, TEXT("KYA_DISCOVER_SECTORS %s"), *Result.Summary());
     return Result;
@@ -640,17 +698,22 @@ bool KyaExportLevelBanks(const TArray<UKyaLevelBank*>& Banks, const FString& Des
         for (const FString& Warning : Outcome.Warnings) OutMessages.Add(FString::Printf(TEXT("  warning: %s"), *Warning));
         if (!Outcome.bPublished) bAllPublished = false;
         UE_LOG(LogTemp, Display, TEXT("KYA_EXPORT %s %s"), *Outcome.DestinationFilename, State);
-        const FText BankText = FText::FromString(GetNameSafe(Outcome.Bank));
         if (Outcome.bPublished)
-            Log.Info(FText::FromString(FString::Printf(TEXT("%s exported to %s."), *BankText.ToString(),
-                *Outcome.DestinationFilename)));
+        {
+            Log.AddMessage(KyaMakeBankMessage(EMessageSeverity::Info, Outcome.Bank, FText::FromString(
+                FString::Printf(TEXT("Exported to %s."), *Outcome.DestinationFilename))));
+        }
         else
-            Log.Error(FText::FromString(FString::Printf(TEXT("%s was not exported to %s."), *BankText.ToString(),
-                *Outcome.DestinationFilename)));
+        {
+            Log.AddMessage(KyaMakeBankMessage(EMessageSeverity::Error, Outcome.Bank, FText::FromString(
+                FString::Printf(TEXT("Was not exported to %s."), *Outcome.DestinationFilename))));
+        }
         for (const FString& Error : Outcome.Errors)
-            Log.Error(FText::FromString(FString::Printf(TEXT("%s: %s"), *BankText.ToString(), *Error)));
+            Log.AddMessage(KyaMakeBankMessage(EMessageSeverity::Error, Outcome.Bank,
+                FText::FromString(Error)));
         for (const FString& Warning : Outcome.Warnings)
-            Log.Warning(FText::FromString(FString::Printf(TEXT("%s: %s"), *BankText.ToString(), *Warning)));
+            Log.AddMessage(KyaMakeBankMessage(EMessageSeverity::Warning, Outcome.Bank,
+                FText::FromString(Warning)));
     }
     if (!bAllPublished) Log.Open(EMessageSeverity::Error);
     return bAllPublished;

@@ -205,9 +205,14 @@ a sector does not rename existing handles.
 
 Validation, export and sector discovery report through the Message Log
 (`KyaLevelEditor` listing) as well as the dialog summary: one entry per bank or
-sector, with the asset path, the failure reason and any warnings. Sector
-discovery shows a cancellable progress dialog and leaves a coherent partial result
-when cancelled.
+sector, with the asset path, the failure reason and any warnings. Entries are
+tokenized: the bank is a clickable asset link and actor-specific problems add a
+**Select …** action that selects and focuses the generated representation (or the
+level preview for sector/discovery problems). Missing sectors name the expected
+`SECT<id>.BNK` file; stale schemas, missing references, unsupported/missing geometry
+and export restrictions are reported the same way, so a problem can be inspected
+without searching raw logs. Sector discovery shows a cancellable progress dialog and
+leaves a coherent partial result when cancelled.
 
 The handle's Details panel shows the bank record itself: one row per editable
 `FKyaActorPlacement` property, grouped by the schema's own categories, including

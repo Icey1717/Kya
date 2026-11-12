@@ -253,11 +253,15 @@ Last updated: 2026-11-12.
   disambiguated with the record index for duplicate names; labels are derived from
   the whole bank so sector load/unload cannot rename them, and serialized names are
   never modified.
-- Validate, export and sector discovery write `FMessageLog` entries (one per bank
-  or sector, with errors, warnings and asset paths). Sector discovery runs behind
-  a cancellable `FScopedSlowTask` and leaves a coherent partial result when
-  cancelled; `Kya.Export` reports one outcome per file and opens the log on
-  failure. Imports verify the destination asset's source provenance before it is
+- Validate, export and sector discovery write tokenized `FMessageLog` entries (one
+  per bank or sector) with a clickable bank asset link and, for actor-specific
+  issues, a **Select …** action that selects/focuses the generated representation
+  (or the level preview for discovery problems). Validation reports stale schemas,
+  missing/invalid geometry, missing references per actor and export restrictions as
+  structured issues. Sector discovery runs behind a cancellable `FScopedSlowTask`
+  and leaves a coherent partial result when cancelled; `Kya.Export` reports one
+  outcome per file and opens the log on failure. Imports verify the destination
+  asset's source provenance before it is
   associated, so an occupied path from a different level is reported instead of
   being adopted.
 - `UKyaLevelPreviewFactory` (auto-registered `UActorFactory`) lets a bank asset be
@@ -300,8 +304,8 @@ Results: `Kya.Bank.LevelOneRoundTrip`, `Kya.Bank.SmallBankRoundTrip`,
 `Kya.Editor.StructuralCommands`, `Kya.Editor.OutlinerPolicy`,
 `Kya.Editor.PathVisualization`, `Kya.Editor.WaypointOrientation`,
 `Kya.Editor.HierarchyGeometry`, `Kya.Editor.SceneVisualizers`,
-`Kya.Editor.LightExport`, `Kya.Editor.LevelSettings` and `Kya.Editor.AsyncDecode`
-all `Success`.
+`Kya.Editor.LightExport`, `Kya.Editor.LevelSettings`, `Kya.Editor.AsyncDecode` and
+`Kya.Editor.MessageLogLinks` all `Success`.
 
 Coverage added by the new tests:
 
@@ -354,7 +358,8 @@ These remain open in [the checklist](EDITOR_WORKFLOW_PLAN.md):
   limitations and visualizer semantics).
 - `UKyaLevelSet` creation is a command/menu action rather than an asset-type
   Content Browser action; it is not auto-created on import.
-- Message Log entries do not yet have navigation links to affected assets/actors.
+- Several failures are still only logged to the output log rather than the Message
+  Log (for example per-actor decode/diagnostic warnings).
 - Bulk/scripted edits and reimports still rebuild the preview; per-record targeted
   invalidation is used for single actor/waypoint/path/light/camera edits.
 - Serialized hierarchy transform writeback (deliberately disabled until the writer

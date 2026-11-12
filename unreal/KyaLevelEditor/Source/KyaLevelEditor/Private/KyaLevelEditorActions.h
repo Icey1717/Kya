@@ -6,6 +6,15 @@ class AKyaLevelPreview;
 class UKyaLevelBank;
 class UKyaLevelSet;
 
+/** One validation finding that can be linked to an actor in the Message Log. */
+struct FKyaValidationIssue
+{
+    int32 ActorIndex = INDEX_NONE;
+    FString Field;
+    FString Message;
+    bool bBlocking = false;
+};
+
 /** Per-bank validation report used by the Validate/Export editor commands. */
 struct FKyaBankValidationReport
 {
@@ -15,6 +24,7 @@ struct FKyaBankValidationReport
     bool bBytesBuilt = false;
     FString UnsupportedReason;
     TArray<FString> Warnings;
+    TArray<FKyaValidationIssue> Issues;
     FString Summary() const;
 };
 

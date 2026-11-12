@@ -13,6 +13,7 @@
 #include "KyaLevelBankFactory.h"
 #include "KyaCameraStream.h"
 #include "KyaLevelEditorActions.h"
+#include "KyaMessageLog.h"
 #include "KyaLevelPreview.h"
 #include "KyaLevelSettings.h"
 #include "KyaLevelSet.h"
@@ -25,6 +26,8 @@
 #include "Misc/Paths.h"
 #include "HAL/FileManager.h"
 #include "Editor.h"
+#include "Engine/Selection.h"
+#include "Logging/TokenizedMessage.h"
 #include "ScopedTransaction.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
@@ -1344,6 +1347,84 @@ bool FKyaLightExportTest::RunTest(const FString& Parameters)
             Reimported->Lights[0].Position.Equals(Bank->Lights[0].Position, 1.0e-3));
         TestTrue(TEXT("Light multiplier survives export"),
             FMath::IsNearlyEqual(Reimported->Lights[0].Multiplier, Bank->Lights[0].Multiplier, 1.0e-3f));
+    }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaMessageLogLinksTest, "Kya.Editor.MessageLogLinks",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaMessageLogLinksTest::RunTest(const FString& Parameters)
+{
+    UKyaLevelBank* Bank = MakeKyaTestBank(GetTransientPackage(), 0x2c);
+    Bank->SceneEnvironment.Actors[0].ClassId = 0x2c;
+    Bank->BumpEditGeneration();
+    Bank->SceneEnvironment.Actors[0].TrapActorRef = 99;
+
+    // Missing references are reported against the offending actor so the Message Log
+    // can offer a navigation action, not just raw text.
+    const FKyaBankValidationReport BrokenReference = KyaValidateBank(Bank);
+    bool bFoundActorIssue = false;
+    for (const FKyaValidationIssue& Issue : BrokenReference.Issues)
+    {
+        if (Issue.ActorIndex == 0 && Issue.Field == TEXT("TrapActorRef"))
+        {
+            bFoundActorIssue = true;
+            TestTrue(TEXT("Missing reference issue explains the missing actor"), !Issue.Message.IsEmpty());
+        }
+    }
+    TestTrue(TEXT("Validation reports the missing actor reference"), bFoundActorIssue);
+    TestTrue(TEXT("Blocking reference issues are flagged"),
+        BrokenReference.Issues.ContainsByPredicate(
+            [](const FKyaValidationIssue& Issue) { return Issue.bBlocking; }));
+    TestFalse(TEXT("Blocking reference issue preserves an explanatory reason"),
+        BrokenReference.UnsupportedReason.IsEmpty());
+
+    // A stale schema is surfaced as an actionable issue instead of only a raw log line.
+    UKyaLevelBank* StaleBank = MakeKyaTestBank(GetTransientPackage());
+    StaleBank->ImportSchemaVersion = 0;
+    const FKyaBankValidationReport Stale = KyaValidateBank(StaleBank);
+    bool bFoundSchemaIssue = false;
+    for (const FKyaValidationIssue& Issue : Stale.Issues)
+        if (Issue.Field == TEXT("schema")) bFoundSchemaIssue = true;
+    TestTrue(TEXT("Validation reports a stale import schema"), bFoundSchemaIssue);
+
+    // Tokenized messages carry a clickable asset link and (for actor issues) a
+    // select action that resolves the generated representation.
+    const TSharedRef<FTokenizedMessage> BankEntry = KyaMakeBankMessage(
+        EMessageSeverity::Error, Bank, FText::FromString(TEXT("Missing reference")), 0);
+    bool bAssetToken = false;
+    bool bActionToken = false;
+    for (const TSharedRef<IMessageToken>& Token : BankEntry->GetMessageTokens())
+    {
+        if (Token->GetType() == EMessageToken::AssetName) bAssetToken = true;
+        if (Token->GetType() == EMessageToken::Action) bActionToken = true;
+    }
+    TestTrue(TEXT("Bank message links the asset"), bAssetToken);
+    TestTrue(TEXT("Actor issue offers a navigation action"), bActionToken);
+
+    UWorld* World = UWorld::CreateWorld(EWorldType::EditorPreview, false);
+    if (TestNotNull(TEXT("Create message-log world"), World))
+    {
+        AKyaLevelPreview* Preview = World->SpawnActor<AKyaLevelPreview>();
+        if (TestNotNull(TEXT("Spawn message-log preview"), Preview))
+        {
+            Preview->Bank = Bank;
+            Preview->OnConstruction(FTransform::Identity);
+            const TSharedRef<FTokenizedMessage> PreviewEntry = KyaMakeActorMessage(
+                EMessageSeverity::Warning, Bank, Preview, FText::FromString(TEXT("Missing sector")));
+            bool bPreviewAction = false;
+            for (const TSharedRef<IMessageToken>& Token : PreviewEntry->GetMessageTokens())
+                if (Token->GetType() == EMessageToken::Action) bPreviewAction = true;
+            TestTrue(TEXT("Preview message offers a select-preview action"), bPreviewAction);
+            if (AKyaActorHandle* Handle = Cast<AKyaActorHandle>(Preview->GetActorHandle(0)))
+            {
+                TestTrue(TEXT("Select action resolves the generated handle"),
+                    KyaSelectBankActor(Bank, 0, World));
+                TestTrue(TEXT("Select action selects the handle"), Handle->IsSelected());
+            }
+        }
+        World->DestroyWorld(false);
     }
     return true;
 }
