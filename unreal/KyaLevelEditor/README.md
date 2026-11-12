@@ -417,6 +417,14 @@ first and only replaces the asset when parsing succeeds; a dirty asset asks befo
 discarding changes. `Kya.Export` writes `.bnk` files and never overwrites the
 original source bank.
 
+Sector discovery is per level: two levels whose folders contain identically named
+`SECT<digits>.BNK` files import into their own `/Game/KyaLevels/<Level>` folders and
+never share bank objects, so associations stay inside the level that discovered them.
+`Kya.Editor.SectorIsolation` covers this end to end, including saving the descriptor
+and banks, forcing a package reload, and confirming the reopened descriptor restores
+the same sector ids, source filenames and preview mapping while repeated discovery
+still imports nothing.
+
 ### Manual viewport acceptance pass
 
 Slate mouse input and the transform gizmo widget itself cannot be driven from

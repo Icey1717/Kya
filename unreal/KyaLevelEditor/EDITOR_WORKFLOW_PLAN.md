@@ -41,7 +41,7 @@ This is a source review of the current working tree, including the in-progress a
 - [x] Add Refresh Sector Discovery and missing-source resolution actions. Refresh must preserve existing edits and manual overrides rather than silently reimporting banks.
 - [x] Add standard import provenance (`UAssetImportData` or the appropriate supported equivalent) and a reimport handler. Support source-file relocation and Content Browser asset moves without breaking associations.
 - [x] Before reimport, detect local edits and offer explicit discard/reapply/cancel behavior. Initially refuse unsafe merges; later compare original imported values, edited values and new source values per stable record/property.
-- [ ] Acceptance: importing one level discovers its sectors, reopening restores associations, repeated discovery creates no duplicates, and two levels with identically named sector files remain isolated.
+- [x] Acceptance: importing one level discovers its sectors, reopening restores associations, repeated discovery creates no duplicates, and two levels with identically named sector files remain isolated.
 
 ## 3. Select actual actors and use normal viewport tools
 

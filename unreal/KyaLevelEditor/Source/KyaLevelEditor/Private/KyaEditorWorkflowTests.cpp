@@ -2935,6 +2935,279 @@ bool FKyaMilestoneBGateTest::RunTest(const FString& Parameters)
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaSectorIsolationTest, "Kya.Editor.SectorIsolation",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaSectorIsolationTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to run the sector isolation acceptance."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read isolation bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    const FString SourceDirectory = FPaths::GetPath(Filename);
+    TArray<FString> SectorFiles;
+    IFileManager::Get().FindFiles(SectorFiles, *(FPaths::Combine(SourceDirectory, TEXT("SECT*.BNK"))),
+        true, false);
+    if (!TestTrue(TEXT("The isolation bank has sibling sector files"), SectorFiles.Num() > 0)) return false;
+
+    UWorld* World = UWorld::CreateWorld(EWorldType::EditorPreview, false);
+    if (!TestNotNull(TEXT("Create isolation world"), World)) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+
+    struct FIsolatedLevel
+    {
+        FString Tag;
+        FString Root;
+        UKyaLevelBank* Bank = nullptr;
+        AKyaLevelPreview* Preview = nullptr;
+        UKyaLevelSet* LevelSet = nullptr;
+        int32 SectorCount = 0;
+    };
+    TArray<FIsolatedLevel> Levels;
+    TArray<FString> CreatedRoots;
+    bool bSetupOk = true;
+
+    for (const TCHAR* Tag : { TEXT("A"), TEXT("B") })
+    {
+        FIsolatedLevel& Level = Levels.AddDefaulted_GetRef();
+        Level.Tag = Tag;
+        // Two levels whose sector files have identical names but distinct roots.
+        Level.Root = FPaths::Combine(FPaths::ProjectSavedDir(), FString::Printf(
+            TEXT("KyaSectorIsolation%s_%s"), Tag, *FGuid::NewGuid().ToString(EGuidFormats::Digits)));
+        CreatedRoots.Add(Level.Root);
+        IFileManager::Get().MakeDirectory(*Level.Root, true);
+        IFileManager::Get().Copy(*(FPaths::Combine(Level.Root, TEXT("LEVEL.BNK"))), *Filename, true, true);
+        for (const FString& SectorFile : SectorFiles)
+            IFileManager::Get().Copy(*(FPaths::Combine(Level.Root, SectorFile)),
+                *(FPaths::Combine(SourceDirectory, SectorFile)), true, true);
+
+        const uint8* Cursor = Input.GetData();
+        Level.Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+            GetTransientPackage(), NAME_None, RF_Transient | RF_Transactional, nullptr, TEXT("bnk"), Cursor,
+            Input.GetData() + Input.Num(), GWarn));
+        if (!TestNotNull(TEXT("Import isolated main bank"), Level.Bank))
+        {
+            bSetupOk = false;
+            break;
+        }
+        Level.Bank->Rename(*FString::Printf(TEXT("KyaIsolation%s_%s"), Tag,
+            *FGuid::NewGuid().ToString(EGuidFormats::Digits)));
+        Level.Bank->SourceFilename = FPaths::Combine(Level.Root, TEXT("LEVEL.BNK"));
+        if (!Level.Bank->AssetImportData) Level.Bank->AssetImportData = NewObject<UAssetImportData>(Level.Bank);
+        Level.Bank->AssetImportData->Update(Level.Bank->SourceFilename);
+
+        // Discovery needs a saveable main-bank asset for the reopen half of the gate:
+        // the raw import lives in the transient package and cannot be written to disk.
+        {
+            const FString BankName = Level.Bank->GetName();
+            UPackage* BankPackage = CreatePackage(*FString::Printf(TEXT("/Game/KyaLevels/%s/%s"),
+                *BankName, *BankName));
+            UKyaLevelBank* SaveableBank = DuplicateObject<UKyaLevelBank>(Level.Bank, BankPackage, *BankName);
+            if (!TestNotNull(TEXT("Duplicate the isolated main bank for saving"), SaveableBank))
+            {
+                bSetupOk = false;
+                break;
+            }
+            SaveableBank->ClearFlags(RF_Transient);
+            SaveableBank->SetFlags(RF_Public | RF_Standalone);
+            BankPackage->ClearFlags(RF_Transient);
+            BankPackage->SetFlags(RF_Public | RF_Standalone);
+            Level.Bank = SaveableBank;
+        }
+
+        Level.Preview = World->SpawnActor<AKyaLevelPreview>();
+        if (!TestNotNull(TEXT("Spawn isolated preview"), Level.Preview))
+        {
+            bSetupOk = false;
+            break;
+        }
+        Level.Preview->Bank = Level.Bank;
+        Level.Preview->bShowRebuildProgress = false;
+        Level.Preview->OnConstruction(FTransform::Identity);
+
+        FString Error;
+        Level.LevelSet = KyaCreateLevelSetFromPreview(Level.Preview, Error);
+        if (!TestNotNull(TEXT("Create isolated level-set descriptor"), Level.LevelSet))
+        {
+            bSetupOk = false;
+            break;
+        }
+        Level.Preview->LevelSet = Level.LevelSet;
+        const FKyaSectorDiscoveryResult Discovery = KyaDiscoverSectors(Level.Preview, true);
+        TestTrue(TEXT("The isolated level imports fresh sectors"), Discovery.Imported > 0);
+        TestEqual(TEXT("The isolated level reuses nothing on first discovery"), Discovery.Reused, 0);
+        TestEqual(TEXT("Discovery has no ambiguous sectors"), Discovery.Ambiguous, 0);
+        TestEqual(TEXT("Discovery has no missing sectors"), Discovery.MissingIds.Num(), 0);
+        TestEqual(TEXT("Descriptor matches the preview associations"),
+            Level.LevelSet->Sectors.Num(), Level.Preview->SectorBanks.Num());
+        Level.SectorCount = Level.LevelSet->Sectors.Num();
+        TestTrue(TEXT("The isolated level reached a scene"), Level.Preview->BuildCount > 0);
+    }
+    if (!bSetupOk)
+    {
+        for (const FString& Root : CreatedRoots) IFileManager::Get().DeleteDirectory(*Root, false, true);
+        World->DestroyWorld(false);
+        return false;
+    }
+
+    // --- the two levels stay isolated despite identical sector filenames -----------
+    const auto ContainsBank = [](const UKyaLevelSet* Set, const UKyaLevelBank* Bank)
+    {
+        for (const FKyaLevelSetSector& Sector : Set->Sectors)
+            if (Sector.Bank == Bank) return true;
+        return false;
+    };
+    for (int32 Index = 0; Index < Levels.Num(); ++Index)
+    {
+        const FIsolatedLevel& Level = Levels[Index];
+        const FIsolatedLevel& Other = Levels[1 - Index];
+        for (const FKyaLevelSetSector& Sector : Level.LevelSet->Sectors)
+        {
+            TestNotNull(TEXT("Every association resolves to a bank"), Sector.Bank.Get());
+            if (!Sector.Bank) continue;
+            TestTrue(TEXT("Associations stay inside their own source root"),
+                FPaths::ConvertRelativePathToFull(Sector.Bank->SourceFilename)
+                    .StartsWith(FPaths::ConvertRelativePathToFull(Level.Root), ESearchCase::IgnoreCase));
+            TestFalse(TEXT("No association leaks into the other level"),
+                ContainsBank(Other.LevelSet, Sector.Bank));
+        }
+        TestNotNull(TEXT("The descriptor keeps its main bank"), Level.LevelSet->MainBank.Get());
+        TestEqual(TEXT("Both levels share the same sector count"), Level.SectorCount, Levels[0].SectorCount);
+    }
+
+    // --- repeated discovery creates no duplicates or new assets --------------------
+    for (FIsolatedLevel& Level : Levels)
+    {
+        const int32 PreviewCount = Level.Preview->SectorBanks.Num();
+        const int32 DescriptorCount = Level.LevelSet->Sectors.Num();
+        const FKyaSectorDiscoveryResult Again = KyaDiscoverSectors(Level.Preview, true);
+        TestEqual(TEXT("Repeated discovery imports nothing"), Again.Imported, 0);
+        TestTrue(TEXT("Repeated discovery reuses associations"), Again.Reused > 0);
+        TestEqual(TEXT("Repeated discovery keeps preview associations"),
+            Level.Preview->SectorBanks.Num(), PreviewCount);
+        TestEqual(TEXT("Repeated discovery keeps descriptor rows"),
+            Level.LevelSet->Sectors.Num(), DescriptorCount);
+    }
+
+    // --- reopening restores associations from disk ---------------------------------
+    FIsolatedLevel& LevelA = Levels[0];
+    const FString DescriptorPath = LevelA.LevelSet->GetPathName();
+    const FString MainBankPath = LevelA.Bank->GetPathName();
+    TArray<TPair<int32, FString>> ExpectedSectors;
+    for (const FKyaLevelSetSector& Sector : LevelA.LevelSet->Sectors)
+        ExpectedSectors.Add({ Sector.SectorId, Sector.SourceFilename });
+
+    // Drop the previews before unloading: their handles and descriptor pointers would be
+    // stale after the reload. A fresh preview reopens from the reloaded descriptor.
+    for (FIsolatedLevel& Level : Levels)
+    {
+        if (IsValid(Level.Preview)) Level.Preview->Destroy();
+        Level.Preview = nullptr;
+    }
+
+    TArray<UPackage*> PackagesToSave;
+    TArray<TPair<UPackage*, UObject*>> AssetsToSave;
+    const auto AddSavable = [&PackagesToSave, &AssetsToSave](UObject* Asset)
+    {
+        if (!Asset) return;
+        UPackage* Package = Asset->GetOutermost();
+        if (!Package || PackagesToSave.Contains(Package)) return;
+        PackagesToSave.Add(Package);
+        AssetsToSave.Add({ Package, Asset });
+    };
+    AddSavable(LevelA.LevelSet);
+    AddSavable(LevelA.Bank);
+    for (const FKyaLevelSetSector& Sector : LevelA.LevelSet->Sectors) AddSavable(Sector.Bank);
+
+    TArray<FString> SavedPackageNames;
+    for (const TPair<UPackage*, UObject*>& Pair : AssetsToSave)
+        SavedPackageNames.Add(Pair.Key->GetName());
+
+    FSavePackageArgs SaveArgs;
+    SaveArgs.TopLevelFlags = RF_Public | RF_Standalone;
+    SaveArgs.SaveFlags = SAVE_NoError;
+    bool bSaved = true;
+    for (const TPair<UPackage*, UObject*>& Pair : AssetsToSave)
+    {
+        Pair.Key->MarkPackageDirty();
+        const FString PackageFilename = FPackageName::LongPackageNameToFilename(
+            Pair.Key->GetName(), FPackageName::GetAssetPackageExtension());
+        const bool bSavedOne = UPackage::SavePackage(Pair.Key, Pair.Value, *PackageFilename, SaveArgs);
+        if (!bSavedOne)
+            AddInfo(FString::Printf(TEXT("SAVE_FAIL %s -> %s"), *Pair.Key->GetName(), *PackageFilename));
+        bSaved &= bSavedOne;
+    }
+    TestTrue(TEXT("Isolated level assets save for the reopen check"), bSaved);
+
+    FText ReloadError;
+    const bool bReloaded = UPackageTools::ReloadPackages(PackagesToSave, ReloadError,
+        EReloadPackagesInteractionMode::AssumePositive);
+    TestTrue(FString::Printf(TEXT("Reopening the isolated descriptors succeeds (%s)"), *ReloadError.ToString()),
+        bReloaded);
+
+    UKyaLevelSet* ReloadedDescriptor = FindObject<UKyaLevelSet>(nullptr, *DescriptorPath);
+    UKyaLevelBank* ReloadedMainBank = FindObject<UKyaLevelBank>(nullptr, *MainBankPath);
+    if (TestNotNull(TEXT("The descriptor reloads from disk"), ReloadedDescriptor) &&
+        TestNotNull(TEXT("The main bank reloads from disk"), ReloadedMainBank))
+    {
+        TestEqual(TEXT("Reopened descriptor keeps every association"),
+            ReloadedDescriptor->Sectors.Num(), ExpectedSectors.Num());
+        for (const TPair<int32, FString>& Expected : ExpectedSectors)
+        {
+            const FKyaLevelSetSector* Match = ReloadedDescriptor->Sectors.FindByPredicate(
+                [&Expected](const FKyaLevelSetSector& Sector) { return Sector.SectorId == Expected.Key; });
+            TestNotNull(TEXT("Reopened descriptor keeps the sector id"), Match);
+            if (!Match) continue;
+            TestNotNull(TEXT("Reopened association resolves its bank"), Match->Bank.Get());
+            TestEqual(TEXT("Reopened association keeps its source"), Match->SourceFilename, Expected.Value);
+            if (Match->Bank)
+                TestTrue(TEXT("Reopened association stays in its own root"),
+                    FPaths::ConvertRelativePathToFull(Match->Bank->SourceFilename)
+                        .StartsWith(FPaths::ConvertRelativePathToFull(LevelA.Root), ESearchCase::IgnoreCase));
+        }
+        TestEqual(TEXT("Reopened main bank keeps its source"), ReloadedMainBank->SourceFilename,
+            FPaths::Combine(LevelA.Root, TEXT("LEVEL.BNK")));
+
+        // A preview attached to the reopened descriptor restores the same mapping.
+        AKyaLevelPreview* ReopenedPreview = World->SpawnActor<AKyaLevelPreview>();
+        if (TestNotNull(TEXT("Reopened preview spawns"), ReopenedPreview))
+        {
+            ReopenedPreview->Bank = ReloadedMainBank;
+            ReopenedPreview->bShowRebuildProgress = false;
+            ReopenedPreview->LevelSet = ReloadedDescriptor;
+            ReopenedPreview->OnConstruction(FTransform::Identity);
+            TestEqual(TEXT("Reopening restores the preview associations"),
+                ReopenedPreview->SectorBanks.Num(), ExpectedSectors.Num());
+            for (const FKyaLevelSetSector& Sector : ReloadedDescriptor->Sectors)
+            {
+                if (!Sector.Bank) continue;
+                TestEqual(TEXT("Reopened preview resolves the descriptor sector id"),
+                    ReopenedPreview->ResolveSectorId(*Sector.Bank), Sector.SectorId);
+            }
+        }
+
+        // And the other level is untouched by the reopen.
+        TestTrue(TEXT("The other level stays isolated after a reopen"),
+            Levels[1].LevelSet && Levels[1].LevelSet->Sectors.Num() == Levels[1].SectorCount);
+    }
+
+    for (const FString& Root : CreatedRoots) IFileManager::Get().DeleteDirectory(*Root, false, true);
+    // The reload unloaded the original packages, so use the captured names.
+    for (const FString& PackageName : SavedPackageNames)
+    {
+        const FString PackageFilename = FPackageName::LongPackageNameToFilename(
+            PackageName, FPackageName::GetAssetPackageExtension());
+        IFileManager::Get().Delete(*PackageFilename, false, true, true);
+    }
+    for (AKyaLevelPreview* Preview : { Levels[0].Preview, Levels[1].Preview })
+        if (IsValid(Preview)) Preview->Destroy();
+    World->DestroyWorld(false);
+    return true;
+}
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaMilestoneAGateTest, "Kya.Editor.MilestoneAGate",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 

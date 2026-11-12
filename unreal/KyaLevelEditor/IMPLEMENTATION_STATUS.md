@@ -166,6 +166,11 @@ Last updated: 2026-11-12.
   unchanged candidates as no-ops, so identical patches and synchronized re-applies do
   not dirty the bank. A two-preview rebuild keeps one handle per record, does not
   duplicate spatial handles and leaves an unchanged bank clean.
+- Sector discovery/reopen isolation (`Kya.Editor.SectorIsolation`): two levels with
+  identically named sector files but separate source roots import fresh, keep their
+  associations inside their own root with no shared bank objects, stay idempotent on
+  repeated discovery, and restore the descriptor rows plus the preview's sector-id
+  mapping after a forced package save/reload.
 - `FKyaLevelBankReimportHandler` implements `FReimportHandler`: parses into a
   temporary bank, only replaces the asset on success, asks before discarding dirty
   changes (refuses in unattended mode), updates provenance, bumps the edit
@@ -405,7 +410,8 @@ Results: `Kya.Bank.LevelOneRoundTrip`, `Kya.Bank.SmallBankRoundTrip`,
 `Kya.Editor.StructuralEditGate`, `Kya.Editor.ExportAcceptance`,
 `Kya.Editor.MilestoneAGate`, `Kya.Editor.MilestoneBGate`,
 `Kya.Editor.MilestoneCGate`, `Kya.Editor.MilestoneDGate`,
-`Kya.Editor.ViewportClickSelection` and `Kya.Editor.SharedEditPath` all `Success`.
+`Kya.Editor.ViewportClickSelection`, `Kya.Editor.SharedEditPath` and
+`Kya.Editor.SectorIsolation` all `Success`.
 
 Coverage added by the new tests:
 
