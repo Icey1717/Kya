@@ -67,6 +67,69 @@ enum class EKyaEditNotify : uint8
     Silent
 };
 
+/** Stable identity of one bank waypoint record. */
+struct KYALEVEL_API FKyaWaypointRecordKey
+{
+    TWeakObjectPtr<UKyaLevelBank> Bank;
+    int32 WaypointIndex = INDEX_NONE;
+    uint32 Generation = 0;
+
+    bool IsSet() const { return Bank.IsValid() && WaypointIndex >= 0; }
+    bool operator==(const FKyaWaypointRecordKey& Other) const
+    {
+        return Bank == Other.Bank && WaypointIndex == Other.WaypointIndex && Generation == Other.Generation;
+    }
+    friend uint32 GetTypeHash(const FKyaWaypointRecordKey& Key)
+    {
+        return HashCombine(HashCombine(GetTypeHash(Key.Bank), GetTypeHash(Key.WaypointIndex)), GetTypeHash(Key.Generation));
+    }
+    FString ToString() const;
+};
+
+/** Stable identity of one point in one bank path. */
+struct KYALEVEL_API FKyaPathPointRecordKey
+{
+    TWeakObjectPtr<UKyaLevelBank> Bank;
+    int32 PathIndex = INDEX_NONE;
+    int32 PointIndex = INDEX_NONE;
+    uint32 Generation = 0;
+
+    bool IsSet() const { return Bank.IsValid() && PathIndex >= 0 && PointIndex >= 0; }
+    bool operator==(const FKyaPathPointRecordKey& Other) const
+    {
+        return Bank == Other.Bank && PathIndex == Other.PathIndex && PointIndex == Other.PointIndex &&
+            Generation == Other.Generation;
+    }
+    friend uint32 GetTypeHash(const FKyaPathPointRecordKey& Key)
+    {
+        return HashCombine(HashCombine(HashCombine(GetTypeHash(Key.Bank), GetTypeHash(Key.PathIndex)),
+            GetTypeHash(Key.PointIndex)), GetTypeHash(Key.Generation));
+    }
+    FString ToString() const;
+};
+
+/** A change to one waypoint record; unset fields are preserved. */
+struct KYALEVEL_API FKyaWaypointEditPatch
+{
+    TOptional<FVector> Position;
+    TOptional<FVector> Rotation;
+    TOptional<FVector> Parameters;
+    bool IsEmpty() const;
+};
+
+/** A change to one path point and its parallel per-point records. */
+struct KYALEVEL_API FKyaPathPointEditPatch
+{
+    TOptional<FVector4> Point;
+    TOptional<FVector4> Rotation;
+    TOptional<FVector4> ExtraVector;
+    TOptional<float> Delay;
+    TOptional<int64> Flags;
+    TOptional<float> ExtraValue;
+    TOptional<int64> ExtraWord;
+    bool IsEmpty() const;
+};
+
 /**
  * Single edit path for bank actor records.
  *
@@ -91,6 +154,17 @@ public:
         FString* OutError = nullptr);
     bool ApplyPosition(const FKyaActorRecordKey& Key, const FVector& Position, EKyaEditNotify Notify,
         FString* OutError = nullptr);
+
+    FKyaWaypointRecordKey MakeWaypointKey(UKyaLevelBank* Bank, int32 WaypointIndex) const;
+    bool ResolveWaypoint(const FKyaWaypointRecordKey& Key, FKyaWaypoint*& OutWaypoint,
+        FString* OutError = nullptr) const;
+    bool ApplyWaypoint(const FKyaWaypointRecordKey& Key, const FKyaWaypointEditPatch& Patch,
+        EKyaEditNotify Notify, FString* OutError = nullptr);
+
+    FKyaPathPointRecordKey MakePathPointKey(UKyaLevelBank* Bank, int32 PathIndex, int32 PointIndex) const;
+    bool ResolvePathPoint(const FKyaPathPointRecordKey& Key, FKyaPath*& OutPath, FString* OutError = nullptr) const;
+    bool ApplyPathPoint(const FKyaPathPointRecordKey& Key, const FKyaPathPointEditPatch& Patch,
+        EKyaEditNotify Notify, FString* OutError = nullptr);
 
     void RegisterView(UKyaLevelBank* Bank, AKyaLevelPreview* View);
     void UnregisterView(UKyaLevelBank* Bank, AKyaLevelPreview* View);

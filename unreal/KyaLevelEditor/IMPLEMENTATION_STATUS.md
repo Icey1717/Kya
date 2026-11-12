@@ -99,8 +99,30 @@ Last updated: 2026-11-12.
   `/Game/KyaLevels/<Level>`, keeps existing associations and reports actor sector
   references that have no file.
 
-### Editor integration
+### Waypoints and path points
 
+- `FKyaLevelEditService` now also owns waypoint and path-point records:
+  bank + index/path/point + generation keys, per-field patches for the full waypoint
+  triple (position, stored rotation, parameters) and the path point plus its
+  parallel rotation/extra-vector/delay/flags/extra-value/extra-word records.
+  Validation covers index ranges, stale generations, finite values, non-negative
+  delays and missing per-point arrays; edits `Modify()` before mutation, assign the
+  validated candidate and share the same preview notification path as actors.
+- `AKyaSpatialRecordHandle` is a selectable actor for one waypoint or path point
+  with bank/index/generation identity, `Waypoint N` / `Path N Point M` labels, a full
+  record in Details, gizmo and numeric writeback (including undo), and a Details
+  customization that hides the fields that do not apply.
+- `AKyaLevelPreview` gained `Spawn Waypoint Handles` and `Spawn Path Point Handles`.
+  Path-point handles cover every path, so spatial records are discoverable without a
+  numeric preview index. Waypoint arrows and handles are mutually exclusive.
+- The old waypoint and path-point arrow markers now write through the edit service,
+  so markers, handles, Details and scripts share one edit path.
+- Stored waypoint rotation is the game's Euler triple in radians (used by
+  `SetVectorFromAngles`/`InitPositionRotation` in the ported source). It is edited
+  numerically; orientation is not drawn because the arrow convention is not
+  verified. Path timing/lead-in/loop visualization is not implemented.
+
+### Editor integration
 - Real `IModuleInterface` startup/shutdown; a `Kya Level` section in the Tools menu
   owned by the module, plus console commands `Kya.Validate`, `Kya.Export`,
   `Kya.DiscoverSectors`, `Kya.SaveLevel` and the existing `Kya.ViewportTonemapper`.

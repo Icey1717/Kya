@@ -1,4 +1,5 @@
 #include "KyaPathPointComponent.h"
+#include "KyaActorEditService.h"
 #include "KyaLevelPreview.h"
 #include "KyaLevelBank.h"
 
@@ -9,13 +10,24 @@ void UKyaPathPointComponent::WriteBackToBank()
     if (!Preview || !Preview->Bank || !Preview->Bank->SceneEnvironment.Paths.IsValidIndex(PathIndex)) return;
     FKyaPath& Path = Preview->Bank->SceneEnvironment.Paths[PathIndex];
     if (!Path.Points.IsValidIndex(PointIndex)) return;
-    Preview->Bank->Modify();
     const FVector Position = GetRelativeLocation() / 100.0;
-    FVector4& Point = Path.Points[PointIndex];
+    const FVector4& Current = Path.Points[PointIndex];
+    const FVector4 Target(Position.X, Position.Z, Position.Y, Current.W);
+    if (!Target.Equals(Current, 1.0e-5))
+    {
+        FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+        FKyaPathPointEditPatch Patch;
+        Patch.Point = Target;
+        FString Error;
+        if (!Service.ApplyPathPoint(Service.MakePathPointKey(Preview->Bank, PathIndex, PointIndex), Patch,
+            EKyaEditNotify::Deferred, &Error))
+        {
+            UE_LOG(LogTemp, Warning, TEXT("KYA_PATH_WRITE_FAILED path=%d point=%d reason=%s"),
+                PathIndex, PointIndex, *Error);
+        }
+    }
     UE_LOG(LogTemp, Display, TEXT("KYA_PATH_WRITE path=%d point=%d relative=(%.2f,%.2f,%.2f) old=(%.2f,%.2f,%.2f)"),
-        PathIndex, PointIndex, Position.X, Position.Y, Position.Z, Point.X, Point.Y, Point.Z);
-    Point.X = Position.X; Point.Y = Position.Z; Point.Z = Position.Y;
-    Preview->Bank->MarkPackageDirty();
+        PathIndex, PointIndex, Position.X, Position.Y, Position.Z, Current.X, Current.Y, Current.Z);
     Preview->UpdatePathGuidePoint(PathIndex, PointIndex, GetRelativeLocation());
 #endif
 }

@@ -5,6 +5,8 @@
 #include "KyaActorEditService.h"
 #include "KyaActorDetailsCustomization.h"
 #include "KyaActorHandle.h"
+#include "KyaSpatialRecordDetailsCustomization.h"
+#include "KyaSpatialRecordHandle.h"
 #include "KyaLevelActorFactory.h"
 #include "KyaLevelEditorActions.h"
 #include "KyaLevelBankReimportHandler.h"
@@ -167,6 +169,8 @@ public:
             FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
         PropertyModule.RegisterCustomClassLayout(AKyaActorHandle::StaticClass()->GetFName(),
             FOnGetDetailCustomizationInstance::CreateStatic(&FKyaActorDetailsCustomization::MakeInstance));
+        PropertyModule.RegisterCustomClassLayout(AKyaSpatialRecordHandle::StaticClass()->GetFName(),
+            FOnGetDetailCustomizationInstance::CreateStatic(&FKyaSpatialRecordDetailsCustomization::MakeInstance));
 
         UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(
             this, &FKyaLevelEditorModule::RegisterMenus));
@@ -178,7 +182,10 @@ public:
         UToolMenus::UnregisterOwner(this);
         if (FPropertyEditorModule* PropertyModule =
             FModuleManager::GetModulePtr<FPropertyEditorModule>("PropertyEditor"))
+        {
             PropertyModule->UnregisterCustomClassLayout(AKyaActorHandle::StaticClass()->GetFName());
+            PropertyModule->UnregisterCustomClassLayout(AKyaSpatialRecordHandle::StaticClass()->GetFName());
+        }
         if (GEditor)
             GEditor->ActorFactories.RemoveAll([](UActorFactory* Factory)
             {

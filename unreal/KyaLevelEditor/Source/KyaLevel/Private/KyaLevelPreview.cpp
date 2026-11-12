@@ -10,6 +10,7 @@
 #include "KyaActorMarkerComponent.h"
 #include "KyaActorHandle.h"
 #include "KyaActorGroup.h"
+#include "KyaSpatialRecordHandle.h"
 #include "KyaHierarchyHandle.h"
 #include "KyaActorTransform.h"
 #include "KyaActorEditService.h"
@@ -182,11 +183,13 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
         ++BuildCount;
 #if WITH_EDITOR
         RefreshActorHandles();
+        RefreshSpatialHandles();
         RefreshHierarchyHandles();
 #endif
     };
 #if WITH_EDITOR
-    const int32 DesiredMarkers = Bank && bShowWaypoints ? Bank->SceneEnvironment.Waypoints.Num() : 0;
+    const int32 DesiredMarkers = Bank && bShowWaypoints && !bSpawnWaypointHandles
+        ? Bank->SceneEnvironment.Waypoints.Num() : 0;
     if (WaypointMarkerBank != Bank || WaypointMarkers.Num() != DesiredMarkers)
     {
         for (UKyaWaypointComponent* Marker : WaypointMarkers)
@@ -1487,6 +1490,7 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
     ++BuildCount;
 #if WITH_EDITOR
     RefreshActorHandles();
+    RefreshSpatialHandles();
     RefreshHierarchyHandles();
 #endif
 }
@@ -1503,6 +1507,9 @@ void AKyaLevelPreview::Destroyed()
     for (const TPair<int32, TObjectPtr<AKyaActorGroup>>& Pair : ActorSectorGroups)
         if (IsValid(Pair.Value)) Pair.Value->Destroy();
     ActorSectorGroups.Reset();
+    for (const TPair<FString, TObjectPtr<AKyaSpatialRecordHandle>>& Pair : SpatialHandles)
+        if (IsValid(Pair.Value)) Pair.Value->Destroy();
+    SpatialHandles.Reset();
     Super::Destroyed();
 }
 
@@ -1799,8 +1806,86 @@ void AKyaLevelPreview::RefreshActorHandles()
             World->IsGameWorld() ? 1 : 0);
 }
 
-void AKyaLevelPreview::RefreshHierarchyHandles()
+AActor* AKyaLevelPreview::GetWaypointHandle(int32 WaypointIndex) const
 {
+    const TObjectPtr<AKyaSpatialRecordHandle>* Found =
+        SpatialHandles.Find(FString::Printf(TEXT("W:%d"), WaypointIndex));
+    return Found ? Found->Get() : nullptr;
+}
+
+AActor* AKyaLevelPreview::GetPathPointHandle(int32 PathIndex, int32 PointIndex) const
+{
+    const TObjectPtr<AKyaSpatialRecordHandle>* Found =
+        SpatialHandles.Find(FString::Printf(TEXT("P:%d:%d"), PathIndex, PointIndex));
+    return Found ? Found->Get() : nullptr;
+}
+
+void AKyaLevelPreview::RefreshSpatialHandles()
+{
+    UWorld* World = GetWorld();
+    if ((!bSpawnWaypointHandles && !bSpawnPathPointHandles) || !Bank || !World || World->IsGameWorld())
+    {
+        for (const TPair<FString, TObjectPtr<AKyaSpatialRecordHandle>>& Pair : SpatialHandles)
+            if (IsValid(Pair.Value)) Pair.Value->Destroy();
+        SpatialHandles.Reset();
+        return;
+    }
+
+    TSet<FString> Wanted;
+    const auto SpawnOrUpdate = [this, World, &Wanted](const FString& Key, EKyaSpatialRecordKind Kind,
+        int32 Index, int32 PointIndex)
+    {
+        Wanted.Add(Key);
+        if (TObjectPtr<AKyaSpatialRecordHandle>* Existing = SpatialHandles.Find(Key))
+        {
+            if (IsValid(*Existing))
+            {
+                (*Existing)->Bank = Bank;
+                (*Existing)->Preview = this;
+                (*Existing)->Kind = Kind;
+                (*Existing)->RecordIndex = Index;
+                (*Existing)->PointIndex = PointIndex;
+                (*Existing)->SyncFromBank();
+                return;
+            }
+        }
+        FActorSpawnParameters Params;
+        Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        Params.ObjectFlags |= RF_Transient | RF_Transactional;
+        AKyaSpatialRecordHandle* Handle = World->SpawnActor<AKyaSpatialRecordHandle>(
+            AKyaSpatialRecordHandle::StaticClass(), FTransform::Identity, Params);
+        if (!Handle) return;
+        Handle->SetFlags(RF_Transient | RF_Transactional);
+        Handle->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
+        Handle->Initialize(this, Bank, Kind, Index, PointIndex);
+        SpatialHandles.Add(Key, Handle);
+    };
+
+    if (bSpawnWaypointHandles)
+        for (int32 Index = 0; Index < Bank->SceneEnvironment.Waypoints.Num(); ++Index)
+            SpawnOrUpdate(FString::Printf(TEXT("W:%d"), Index), EKyaSpatialRecordKind::Waypoint,
+                Index, INDEX_NONE);
+    if (bSpawnPathPointHandles)
+        for (int32 PathIndex = 0; PathIndex < Bank->SceneEnvironment.Paths.Num(); ++PathIndex)
+        {
+            const FKyaPath& Path = Bank->SceneEnvironment.Paths[PathIndex];
+            for (int32 PointIndex = 0; PointIndex < Path.Points.Num(); ++PointIndex)
+                SpawnOrUpdate(FString::Printf(TEXT("P:%d:%d"), PathIndex, PointIndex),
+                    EKyaSpatialRecordKind::PathPoint, PathIndex, PointIndex);
+        }
+
+    for (auto It = SpatialHandles.CreateIterator(); It; ++It)
+    {
+        if (Wanted.Contains(It.Key())) continue;
+        if (IsValid(It.Value())) It.Value()->Destroy();
+        It.RemoveCurrent();
+    }
+    UE_LOG(LogTemp, Display, TEXT("KYA_SPATIAL_HANDLES waypoints=%d paths=%d handles=%d bank=%s"),
+        bSpawnWaypointHandles ? 1 : 0, bSpawnPathPointHandles ? 1 : 0, SpatialHandles.Num(),
+        *GetNameSafe(Bank));
+}
+
+void AKyaLevelPreview::RefreshHierarchyHandles(){
     UWorld* World = GetWorld();
     if (!bSpawnHierarchyHandles || !World || World->IsGameWorld())
     {

@@ -221,6 +221,21 @@ schema's existing presence flags and edit conditions. Reference pickers, named
 behaviour labels, mixed-value multi-editing and reset-to-imported actions are not
 implemented yet.
 
+Waypoints and path points have the same treatment. `Spawn Waypoint Handles` creates
+one transient `AKyaSpatialRecordHandle` per waypoint (position, stored rotation and
+`CWayPoint` parameter triple) and suppresses the diagnostic waypoint arrows while
+enabled. `Spawn Path Point Handles` creates one handle per point of every path,
+labelled `Path <n> Point <m>`, so spatial records can be found without setting
+`Preview Path Index`; the spline guide still follows that index. Both handle kinds
+have bank + index + generation identity, write through the same edit service as the
+old arrow markers (which now call the service too, so both routes agree), and
+preserve unedited values and undo grouping. Stored waypoint rotation is edited
+numerically: the ported source stores an Euler triple in radians consumed by
+`SetVectorFromAngles`/`InitPositionRotation` (for example `ActorMicken` and actor
+spawn parameters), and orientation is deliberately not drawn because the arrow
+convention is not verified. Path timing, lead-in and loop visualization are not
+implemented.
+
 ## Editor commands
 
 Import a `.bnk` file with the normal Content Browser import (the bank factory is a

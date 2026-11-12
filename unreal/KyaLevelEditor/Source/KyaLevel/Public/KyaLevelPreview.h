@@ -16,6 +16,7 @@ class UKyaPathPointComponent;
 class UKyaActorMarkerComponent;
 class AKyaActorHandle;
 class AKyaActorGroup;
+class AKyaSpatialRecordHandle;
 class AKyaHierarchyHandle;
 class UPostProcessComponent;
 class UMaterialInstanceDynamic;
@@ -191,6 +192,33 @@ public:
     UPROPERTY(EditAnywhere, Category="Kya|Selection")
     bool bShowActorIcons = true;
 
+    /**
+     * Spawn selectable handles for waypoints. When enabled, the diagnostic waypoint
+     * arrows are suppressed to avoid drawing two markers per record.
+     */
+    UPROPERTY(EditAnywhere, Category="Kya|Selection")
+    bool bSpawnWaypointHandles = false;
+
+    /**
+     * Spawn selectable handles for every point of every path, labelled with path and
+     * point index. This makes spatial records discoverable without setting a numeric
+     * preview path index; the spline guide still follows PreviewPathIndex.
+     */
+    UPROPERTY(EditAnywhere, Category="Kya|Selection")
+    bool bSpawnPathPointHandles = false;
+
+    /** Number of live waypoint/path-point handles. */
+    UFUNCTION(BlueprintCallable, Category="Kya|Selection")
+    int32 GetSpatialHandleCount() const { return SpatialHandles.Num(); }
+
+    /** Waypoint handle by waypoint index, or null. */
+    UFUNCTION(BlueprintCallable, Category="Kya|Selection")
+    AActor* GetWaypointHandle(int32 WaypointIndex) const;
+
+    /** Path-point handle by path and point index, or null. */
+    UFUNCTION(BlueprintCallable, Category="Kya|Selection")
+    AActor* GetPathPointHandle(int32 PathIndex, int32 PointIndex) const;
+
     /** True when actor geometry belongs to the actor handles and must not enter the shared mesh. */
     bool ShouldActorHandlesRenderGeometry() const;
     bool ShouldShowActorIcon() const;
@@ -319,6 +347,8 @@ private:
 #if WITH_EDITOR
     /** Create, update, or destroy the selectable actor handles after a rebuild. */
     void RefreshActorHandles();
+    /** Create, update, or destroy the waypoint and path-point handles after a rebuild. */
+    void RefreshSpatialHandles();
     /** Create, update, or destroy the selectable world-geometry hierarchy handles. */
     void RefreshHierarchyHandles();
 #endif
@@ -340,6 +370,9 @@ private:
     /** Editor-only sector grouping actors for the Outliner (sector 0 = global actors). */
     UPROPERTY(Transient)
     TMap<int32, TObjectPtr<AKyaActorGroup>> ActorSectorGroups;
+    /** Editor-only waypoint/path-point handles, keyed by "W:<index>" or "P:<path>:<point>". */
+    UPROPERTY(Transient)
+    TMap<FString, TObjectPtr<AKyaSpatialRecordHandle>> SpatialHandles;
     UPROPERTY(Transient)
     TObjectPtr<UKyaActorMarkerComponent> ActorMarker;
     UPROPERTY(Transient)

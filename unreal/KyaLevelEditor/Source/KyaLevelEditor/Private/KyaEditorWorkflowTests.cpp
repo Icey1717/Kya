@@ -11,6 +11,9 @@
 #include "KyaLevelPreview.h"
 #include "KyaLevelSet.h"
 #include "KyaLevelSetFactory.h"
+#include "KyaPathPointComponent.h"
+#include "KyaSpatialRecordHandle.h"
+#include "KyaWaypointComponent.h"
 #include "Misc/AutomationTest.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
@@ -721,6 +724,227 @@ bool FKyaExportValidationTest::RunTest(const FString& Parameters)
         AddWarning(TEXT("Set KYA_TEST_BANK to run the real-bank export validation."));
     }
     IFileManager::Get().DeleteDirectory(*TempDirectory, false, true);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaSpatialRecordsTest, "Kya.Editor.SpatialRecords",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaSpatialRecordsTest::RunTest(const FString& Parameters)
+{
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    UKyaLevelBank* Bank = MakeKyaTestBank(GetTransientPackage());
+
+    FKyaWaypoint& Waypoint = Bank->SceneEnvironment.Waypoints.AddDefaulted_GetRef();
+    Waypoint.Position = FVector(1.0, 2.0, 3.0);
+    Waypoint.Rotation = FVector(0.1, 0.2, 0.3);
+    Waypoint.Parameters = FVector(0.4, 0.5, 0.6);
+
+    FKyaPath& Path = Bank->SceneEnvironment.Paths.AddDefaulted_GetRef();
+    Path.Points.Add(FVector4(1.0, 2.0, 3.0, 1.0));
+    Path.Points.Add(FVector4(4.0, 5.0, 6.0, 2.0));
+    Path.Rotations.Add(FVector4(0.1, 0.2, 0.3, 0.4));
+    Path.Rotations.Add(FVector4(0.5, 0.6, 0.7, 0.8));
+    Path.Delays.Add(0.25f);
+    Path.Delays.Add(0.5f);
+    Path.PointFlags.Add(3);
+    Path.PointFlags.Add(4);
+    Path.ExtraValues.Add(1.5f);
+    Path.ExtraValues.Add(2.5f);
+    Path.ExtraWords.Add(9);
+    Path.ExtraWords.Add(10);
+    Path.Mode = 1;
+    Path.Type = 2;
+    Path.PathType = 3;
+
+    // A path with only the required point array: optional per-point records absent.
+    FKyaPath& PointsOnlyPath = Bank->SceneEnvironment.Paths.AddDefaulted_GetRef();
+    PointsOnlyPath.Points.Add(FVector4(1.0, 1.0, 1.0, 1.0));
+
+    // --- Service: waypoints -------------------------------------------------------
+    const FKyaWaypointRecordKey WaypointKey = Service.MakeWaypointKey(Bank, 0);
+    FKyaWaypoint* ResolvedWaypoint = nullptr;
+    FString Error;
+    TestTrue(TEXT("Waypoint key resolves"), Service.ResolveWaypoint(WaypointKey, ResolvedWaypoint, &Error));
+    TestTrue(TEXT("Waypoint key resolves to the record"), ResolvedWaypoint == &Bank->SceneEnvironment.Waypoints[0]);
+
+    FKyaWaypointEditPatch WaypointPatch;
+    WaypointPatch.Position = FVector(7.0, 8.0, 9.0);
+    WaypointPatch.Rotation = FVector(1.1, 1.2, 1.3);
+    TestTrue(TEXT("Waypoint patch applies"), Service.ApplyWaypoint(WaypointKey, WaypointPatch, EKyaEditNotify::Silent, &Error));
+    TestTrue(TEXT("Waypoint position written"), Bank->SceneEnvironment.Waypoints[0].Position.Equals(FVector(7.0, 8.0, 9.0)));
+    TestTrue(TEXT("Waypoint rotation written"), Bank->SceneEnvironment.Waypoints[0].Rotation.Equals(FVector(1.1, 1.2, 1.3)));
+    TestTrue(TEXT("Waypoint parameters preserved"),
+        Bank->SceneEnvironment.Waypoints[0].Parameters.Equals(FVector(0.4, 0.5, 0.6)));
+
+    FKyaWaypointEditPatch InvalidWaypoint;
+    InvalidWaypoint.Position = FVector(NAN, 0.0, 0.0);
+    TestFalse(TEXT("NaN waypoint position rejected"),
+        Service.ApplyWaypoint(WaypointKey, InvalidWaypoint, EKyaEditNotify::Silent, &Error));
+    TestFalse(TEXT("Rejected waypoint patch explains why"), Error.IsEmpty());
+    FKyaWaypoint* MissingWaypoint = nullptr;
+    TestFalse(TEXT("Out-of-range waypoint rejected"),
+        Service.ResolveWaypoint(Service.MakeWaypointKey(Bank, 99), MissingWaypoint, &Error));
+
+    // --- Service: path points -----------------------------------------------------
+    const FKyaPathPointRecordKey PointKey = Service.MakePathPointKey(Bank, 0, 1);
+    FKyaPath* ResolvedPath = nullptr;
+    TestTrue(TEXT("Path point key resolves"), Service.ResolvePathPoint(PointKey, ResolvedPath, &Error));
+
+    FKyaPathPointEditPatch PointPatch;
+    PointPatch.Point = FVector4(4.5, 5.5, 6.5, 2.0);
+    PointPatch.Rotation = FVector4(1.5, 1.6, 1.7, 1.8);
+    PointPatch.Delay = 0.75f;
+    PointPatch.Flags = 77;
+    PointPatch.ExtraValue = 3.5f;
+    PointPatch.ExtraWord = 11;
+    TestTrue(TEXT("Path point patch applies"), Service.ApplyPathPoint(PointKey, PointPatch, EKyaEditNotify::Silent, &Error));
+    TestTrue(TEXT("Path point position written"),
+        Bank->SceneEnvironment.Paths[0].Points[1].Equals(FVector4(4.5, 5.5, 6.5, 2.0)));
+    TestTrue(TEXT("Path point rotation written"),
+        Bank->SceneEnvironment.Paths[0].Rotations[1].Equals(FVector4(1.5, 1.6, 1.7, 1.8)));
+    TestEqual(TEXT("Path point delay written"), Bank->SceneEnvironment.Paths[0].Delays[1], 0.75f);
+    TestEqual(TEXT("Path point flags written"), Bank->SceneEnvironment.Paths[0].PointFlags[1], int64(77));
+    TestEqual(TEXT("Path point extra value written"), Bank->SceneEnvironment.Paths[0].ExtraValues[1], 3.5f);
+    TestEqual(TEXT("Path point extra word written"), Bank->SceneEnvironment.Paths[0].ExtraWords[1], int64(11));
+    TestTrue(TEXT("Other path points preserved"),
+        Bank->SceneEnvironment.Paths[0].Points[0].Equals(FVector4(1.0, 2.0, 3.0, 1.0)));
+
+    // A point without a parallel rotation record cannot accept a rotation edit.
+    Bank->SceneEnvironment.Paths[0].Points.Add(FVector4(7.0, 8.0, 9.0, 1.0));
+    FKyaPathPointEditPatch MissingRecord;
+    MissingRecord.Rotation = FVector4(0.0, 0.0, 0.0, 0.0);
+    TestFalse(TEXT("Missing per-point rotation record rejected"),
+        Service.ApplyPathPoint(Service.MakePathPointKey(Bank, 0, 2), MissingRecord, EKyaEditNotify::Silent, &Error));
+    TestTrue(TEXT("Missing per-point record explains why"), Error.Contains(TEXT("rotation")));
+    FKyaPathPointEditPatch MissingFlags;
+    MissingFlags.Flags = 5;
+    TestFalse(TEXT("Path with only points rejects a flags edit"),
+        Service.ApplyPathPoint(Service.MakePathPointKey(Bank, 1, 0), MissingFlags, EKyaEditNotify::Silent, &Error));
+    FKyaPathPointEditPatch PointsOnlyPatch;
+    PointsOnlyPatch.Point = FVector4(2.0, 2.0, 2.0, 1.0);
+    TestTrue(TEXT("Path with only points accepts a point edit"),
+        Service.ApplyPathPoint(Service.MakePathPointKey(Bank, 1, 0), PointsOnlyPatch, EKyaEditNotify::Silent, &Error));
+    TestFalse(TEXT("Negative delay rejected"),
+        Service.ApplyPathPoint(PointKey, [] { FKyaPathPointEditPatch P; P.Delay = -1.0f; return P; }(),
+            EKyaEditNotify::Silent, &Error));
+
+    // Generation guard covers waypoints and path points too.
+    Bank->BumpEditGeneration();
+    TestFalse(TEXT("Stale waypoint key rejected"), Service.ResolveWaypoint(WaypointKey, ResolvedWaypoint, &Error));
+    TestFalse(TEXT("Stale path-point key rejected"), Service.ResolvePathPoint(PointKey, ResolvedPath, &Error));
+
+    // --- Preview handles ----------------------------------------------------------
+    UWorld* World = UWorld::CreateWorld(EWorldType::EditorPreview, false);
+    if (!TestNotNull(TEXT("Create spatial world"), World)) return false;
+    AKyaLevelPreview* Preview = World->SpawnActor<AKyaLevelPreview>();
+    if (!TestNotNull(TEXT("Spawn spatial preview"), Preview))
+    {
+        World->DestroyWorld(false);
+        return false;
+    }
+    Preview->Bank = Bank;
+    Preview->bSpawnActorHandles = false;
+    Preview->bSpawnWaypointHandles = true;
+    Preview->bSpawnPathPointHandles = true;
+    Preview->OnConstruction(FTransform::Identity);
+
+    TArray<UKyaWaypointComponent*> ArrowMarkers;
+    Preview->GetComponents<UKyaWaypointComponent>(ArrowMarkers);
+    TestEqual(TEXT("Waypoint arrows are suppressed when handles are enabled"), ArrowMarkers.Num(), 0);
+    TestEqual(TEXT("One handle per waypoint and path point"), Preview->GetSpatialHandleCount(), 5);
+
+    AKyaSpatialRecordHandle* WaypointHandle = Cast<AKyaSpatialRecordHandle>(Preview->GetWaypointHandle(0));
+    AKyaSpatialRecordHandle* PathHandle = Cast<AKyaSpatialRecordHandle>(Preview->GetPathPointHandle(0, 1));
+    if (TestNotNull(TEXT("Waypoint handle exists"), WaypointHandle) &&
+        TestNotNull(TEXT("Path-point handle exists"), PathHandle))
+    {
+        TestEqual(TEXT("Waypoint handle label"), WaypointHandle->GetActorLabel(), FString(TEXT("Waypoint 0")));
+        TestEqual(TEXT("Path-point handle label"), PathHandle->GetActorLabel(), FString(TEXT("Path 0 Point 1")));
+        TestTrue(TEXT("Spatial handles are transient"), WaypointHandle->HasAnyFlags(RF_Transient));
+
+        // Waypoint translation through the gizmo lifecycle.
+        WaypointHandle->AddActorWorldOffset(FVector(100.0, 0.0, 0.0));
+        WaypointHandle->PostEditMove(true);
+        TestTrue(TEXT("Waypoint handle writes the bank"),
+            Bank->SceneEnvironment.Waypoints[0].Position.Equals(FVector(8.0, 8.0, 9.0)));
+        Service.FlushPendingNotifications();
+
+        // Waypoint rotation is edited numerically and keeps position untouched.
+        WaypointHandle->WaypointRotation = FVector(2.1, 2.2, 2.3);
+        FPropertyChangedEvent RotationEvent(FindFProperty<FProperty>(AKyaSpatialRecordHandle::StaticClass(),
+            GET_MEMBER_NAME_CHECKED(AKyaSpatialRecordHandle, WaypointRotation)));
+        WaypointHandle->PostEditChangeProperty(RotationEvent);
+        TestTrue(TEXT("Waypoint rotation writes the bank"),
+            Bank->SceneEnvironment.Waypoints[0].Rotation.Equals(FVector(2.1, 2.2, 2.3)));
+        TestTrue(TEXT("Waypoint position preserved by rotation edit"),
+            Bank->SceneEnvironment.Waypoints[0].Position.Equals(FVector(8.0, 8.0, 9.0)));
+
+        // Path point translation preserves the serialized fourth component.
+        PathHandle->AddActorWorldOffset(FVector(0.0, 0.0, 100.0));
+        PathHandle->PostEditMove(true);
+        TestTrue(TEXT("Path-point handle writes x/z and keeps w"),
+            Bank->SceneEnvironment.Paths[0].Points[1].Equals(FVector4(4.5, 6.5, 6.5, 2.0)));
+
+        // Flags are edited through the same service path.
+        PathHandle->PathFlags = 123;
+        FPropertyChangedEvent FlagsEvent(FindFProperty<FProperty>(AKyaSpatialRecordHandle::StaticClass(),
+            GET_MEMBER_NAME_CHECKED(AKyaSpatialRecordHandle, PathFlags)));
+        PathHandle->PostEditChangeProperty(FlagsEvent);
+        TestEqual(TEXT("Path-point flags write the bank"), Bank->SceneEnvironment.Paths[0].PointFlags[1], int64(123));
+        Service.FlushPendingNotifications();
+
+        // A points-only path has no optional records: ApplyToBank must still succeed
+        // for the fields that exist instead of rejecting the whole patch.
+        AKyaSpatialRecordHandle* PointsOnlyHandle = Cast<AKyaSpatialRecordHandle>(Preview->GetPathPointHandle(1, 0));
+        if (TestNotNull(TEXT("Points-only path handle exists"), PointsOnlyHandle))
+        {
+            TestFalse(TEXT("Points-only path reports no flags record"), PointsOnlyHandle->bHasFlagsRecord);
+            TestFalse(TEXT("Points-only path reports no rotation record"), PointsOnlyHandle->bHasRotationRecord);
+            PointsOnlyHandle->PathPoint = FVector4(3.0, 4.0, 5.0, 1.0);
+            PointsOnlyHandle->ApplyToBank();
+            TestTrue(TEXT("Points-only ApplyToBank writes the point"),
+                Bank->SceneEnvironment.Paths[1].Points[0].Equals(FVector4(3.0, 4.0, 5.0, 1.0)));
+            TestTrue(TEXT("Points-only path gains no optional records"),
+                Bank->SceneEnvironment.Paths[1].PointFlags.IsEmpty() &&
+                Bank->SceneEnvironment.Paths[1].ExtraValues.IsEmpty());
+        }
+    }
+
+    // Disabling waypoint handles restores the diagnostic arrows.
+    Preview->bSpawnWaypointHandles = false;
+    Preview->bSpawnPathPointHandles = false;
+    Preview->OnConstruction(FTransform::Identity);
+    Preview->GetComponents<UKyaWaypointComponent>(ArrowMarkers);
+    TestEqual(TEXT("Waypoint arrows return when handles are disabled"), ArrowMarkers.Num(), 1);
+    TestEqual(TEXT("Disabling spatial handles destroys them"), Preview->GetSpatialHandleCount(), 0);
+
+    // --- Component migration: the old markers use the same edit service -------------
+    ArrowMarkers[0]->SetRelativeLocation(FVector(100.0, 200.0, 300.0));
+    ArrowMarkers[0]->PostEditComponentMove(true);
+    TestTrue(TEXT("Waypoint arrow writes through the service"),
+        Bank->SceneEnvironment.Waypoints[0].Position.Equals(FVector(1.0, 3.0, 2.0)));
+    TestTrue(TEXT("Waypoint arrow preserves rotation"),
+        Bank->SceneEnvironment.Waypoints[0].Rotation.Equals(FVector(2.1, 2.2, 2.3)));
+
+    Preview->PreviewPathIndex = 0;
+    Preview->OnConstruction(FTransform::Identity);
+    if (UKyaPathPointComponent* PathMarker = Preview->GetPathMarker(1))
+    {
+        PathMarker->SetRelativeLocation(FVector(200.0, 300.0, 400.0));
+        PathMarker->PostEditComponentMove(true);
+        TestTrue(TEXT("Path-point marker writes through the service"),
+            Bank->SceneEnvironment.Paths[0].Points[1].Equals(FVector4(2.0, 4.0, 3.0, 2.0)));
+    }
+    else
+    {
+        AddError(TEXT("Expected a path-point marker for the previewed path"));
+    }
+
+    Preview->Destroy();
+    World->DestroyWorld(false);
+    Service.Reset();
     return true;
 }
 

@@ -11,6 +11,29 @@ FString FKyaActorRecordKey::ToString() const
         RecordIndex, Generation);
 }
 
+FString FKyaWaypointRecordKey::ToString() const
+{
+    return FString::Printf(TEXT("%s waypoint %d@%u"), Bank.IsValid() ? *Bank->GetName() : TEXT("<null>"),
+        WaypointIndex, Generation);
+}
+
+FString FKyaPathPointRecordKey::ToString() const
+{
+    return FString::Printf(TEXT("%s path %d point %d@%u"), Bank.IsValid() ? *Bank->GetName() : TEXT("<null>"),
+        PathIndex, PointIndex, Generation);
+}
+
+bool FKyaWaypointEditPatch::IsEmpty() const
+{
+    return !Position.IsSet() && !Rotation.IsSet() && !Parameters.IsSet();
+}
+
+bool FKyaPathPointEditPatch::IsEmpty() const
+{
+    return !Point.IsSet() && !Rotation.IsSet() && !ExtraVector.IsSet() && !Delay.IsSet() && !Flags.IsSet() &&
+        !ExtraValue.IsSet() && !ExtraWord.IsSet();
+}
+
 bool FKyaActorEditPatch::IsEmpty() const
 {
     return !Name.IsSet() && !MeshIndex.IsSet() && !TextureIndex.IsSet() && !CollisionIndex.IsSet() &&
@@ -59,6 +82,35 @@ bool ApplyPatchToRecord(FKyaActorPlacement& Placement, const FKyaActorEditPatch&
     if (Patch.LightingValue.IsSet()) Placement.LightingValue = Patch.LightingValue.GetValue();
     if (Patch.LightingFlags.IsSet()) Placement.LightingFlags = Patch.LightingFlags.GetValue();
     if (Patch.Custom && !Patch.Custom(Placement, OutError)) return false;
+    return true;
+}
+
+void NotifyAfterEdit(FKyaLevelEditService& Service, UKyaLevelBank* Bank, EKyaEditNotify Notify)
+{
+    if (Service.OnBankEdited.IsBound()) Service.OnBankEdited.Broadcast(Bank);
+    if (Notify == EKyaEditNotify::Notify) Service.NotifyBankChanged(Bank, true);
+    else if (Notify == EKyaEditNotify::Deferred) Service.NotifyBankChangedDeferred(Bank);
+    else Service.NotifyBankChanged(Bank, false);
+}
+
+bool ValidateVector(const FVector& Value, const TCHAR* Label, FString& OutError)
+{
+    if (Value.ContainsNaN() || Value.GetAbsMax() > 1.0e7)
+    {
+        OutError = FString::Printf(TEXT("%s is not a finite value."), Label);
+        return false;
+    }
+    return true;
+}
+
+bool ValidateVector4(const FVector4& Value, const TCHAR* Label, FString& OutError)
+{
+    if (Value.ContainsNaN() || FMath::Max(FMath::Max3(FMath::Abs(Value.X), FMath::Abs(Value.Y),
+        FMath::Abs(Value.Z)), FMath::Abs(Value.W)) > 1.0e7)
+    {
+        OutError = FString::Printf(TEXT("%s is not a finite value."), Label);
+        return false;
+    }
     return true;
 }
 }
@@ -195,10 +247,7 @@ bool FKyaLevelEditService::Apply(const FKyaActorRecordKey& Key, const FKyaActorE
     // stateful custom patch a second time.
     *Placement = Candidate;
     Bank->MarkPackageDirty();
-    if (OnBankEdited.IsBound()) OnBankEdited.Broadcast(Bank);
-    if (Notify == EKyaEditNotify::Notify) NotifyBankChanged(Bank, true);
-    else if (Notify == EKyaEditNotify::Deferred) NotifyBankChangedDeferred(Bank);
-    else PendingBanks.Add(Bank);
+    NotifyAfterEdit(*this, Bank, Notify);
     return true;
 }
 
@@ -208,6 +257,225 @@ bool FKyaLevelEditService::ApplyPosition(const FKyaActorRecordKey& Key, const FV
     FKyaActorEditPatch Patch;
     Patch.Position = Position;
     return Apply(Key, Patch, Notify, OutError);
+}
+
+FKyaWaypointRecordKey FKyaLevelEditService::MakeWaypointKey(UKyaLevelBank* Bank, int32 WaypointIndex) const
+{
+    FKyaWaypointRecordKey Key;
+    Key.Bank = Bank;
+    Key.WaypointIndex = WaypointIndex;
+    Key.Generation = Bank ? uint32(Bank->EditGeneration) : 0;
+    return Key;
+}
+
+bool FKyaLevelEditService::ResolveWaypoint(const FKyaWaypointRecordKey& Key, FKyaWaypoint*& OutWaypoint,
+    FString* OutError) const
+{
+    OutWaypoint = nullptr;
+    UKyaLevelBank* Bank = Key.Bank.Get();
+    if (!Bank)
+    {
+        if (OutError) *OutError = TEXT("The bank asset no longer exists.");
+        return false;
+    }
+    if (Key.Generation != uint32(Bank->EditGeneration))
+    {
+        if (OutError) *OutError = FString::Printf(
+            TEXT("Waypoint identity is stale (bank generation %u, key %u); reselect after reimport."),
+            uint32(Bank->EditGeneration), Key.Generation);
+        return false;
+    }
+    if (!Bank->SceneEnvironment.Waypoints.IsValidIndex(Key.WaypointIndex))
+    {
+        if (OutError) *OutError = FString::Printf(TEXT("Waypoint index %d does not exist in %s."),
+            Key.WaypointIndex, *Bank->GetName());
+        return false;
+    }
+    OutWaypoint = &Bank->SceneEnvironment.Waypoints[Key.WaypointIndex];
+    return true;
+}
+
+bool FKyaLevelEditService::ApplyWaypoint(const FKyaWaypointRecordKey& Key, const FKyaWaypointEditPatch& Patch,
+    EKyaEditNotify Notify, FString* OutError)
+{
+    FString Error;
+    FKyaWaypoint* Waypoint = nullptr;
+    if (!ResolveWaypoint(Key, Waypoint, &Error))
+    {
+        if (OutError) *OutError = Error;
+        return false;
+    }
+    if (Patch.IsEmpty())
+    {
+        if (OutError) *OutError = TEXT("The waypoint patch does not change any property.");
+        return false;
+    }
+    UKyaLevelBank* Bank = Key.Bank.Get();
+
+    FKyaWaypoint Candidate = *Waypoint;
+    bool bValid = true;
+    if (Patch.Position.IsSet())
+    {
+        bValid = ValidateVector(Patch.Position.GetValue(), TEXT("Waypoint position"), Error);
+        if (bValid) Candidate.Position = Patch.Position.GetValue();
+    }
+    if (bValid && Patch.Rotation.IsSet())
+    {
+        bValid = ValidateVector(Patch.Rotation.GetValue(), TEXT("Waypoint rotation"), Error);
+        if (bValid) Candidate.Rotation = Patch.Rotation.GetValue();
+    }
+    if (bValid && Patch.Parameters.IsSet())
+    {
+        bValid = ValidateVector(Patch.Parameters.GetValue(), TEXT("Waypoint parameters"), Error);
+        if (bValid) Candidate.Parameters = Patch.Parameters.GetValue();
+    }
+    if (!bValid)
+    {
+        if (OutError) *OutError = Error;
+        return false;
+    }
+
+    Bank->Modify();
+    if (!ResolveWaypoint(Key, Waypoint, &Error))
+    {
+        if (OutError) *OutError = Error;
+        return false;
+    }
+    *Waypoint = Candidate;
+    Bank->MarkPackageDirty();
+    NotifyAfterEdit(*this, Bank, Notify);
+    return true;
+}
+
+FKyaPathPointRecordKey FKyaLevelEditService::MakePathPointKey(UKyaLevelBank* Bank, int32 PathIndex,
+    int32 PointIndex) const
+{
+    FKyaPathPointRecordKey Key;
+    Key.Bank = Bank;
+    Key.PathIndex = PathIndex;
+    Key.PointIndex = PointIndex;
+    Key.Generation = Bank ? uint32(Bank->EditGeneration) : 0;
+    return Key;
+}
+
+bool FKyaLevelEditService::ResolvePathPoint(const FKyaPathPointRecordKey& Key, FKyaPath*& OutPath,
+    FString* OutError) const
+{
+    OutPath = nullptr;
+    UKyaLevelBank* Bank = Key.Bank.Get();
+    if (!Bank)
+    {
+        if (OutError) *OutError = TEXT("The bank asset no longer exists.");
+        return false;
+    }
+    if (Key.Generation != uint32(Bank->EditGeneration))
+    {
+        if (OutError) *OutError = FString::Printf(
+            TEXT("Path-point identity is stale (bank generation %u, key %u); reselect after reimport."),
+            uint32(Bank->EditGeneration), Key.Generation);
+        return false;
+    }
+    if (!Bank->SceneEnvironment.Paths.IsValidIndex(Key.PathIndex))
+    {
+        if (OutError) *OutError = FString::Printf(TEXT("Path index %d does not exist in %s."),
+            Key.PathIndex, *Bank->GetName());
+        return false;
+    }
+    FKyaPath& Path = Bank->SceneEnvironment.Paths[Key.PathIndex];
+    if (!Path.Points.IsValidIndex(Key.PointIndex))
+    {
+        if (OutError) *OutError = FString::Printf(TEXT("Point %d does not exist in path %d of %s."),
+            Key.PointIndex, Key.PathIndex, *Bank->GetName());
+        return false;
+    }
+    OutPath = &Path;
+    return true;
+}
+
+bool FKyaLevelEditService::ApplyPathPoint(const FKyaPathPointRecordKey& Key, const FKyaPathPointEditPatch& Patch,
+    EKyaEditNotify Notify, FString* OutError)
+{
+    FString Error;
+    FKyaPath* Path = nullptr;
+    if (!ResolvePathPoint(Key, Path, &Error))
+    {
+        if (OutError) *OutError = Error;
+        return false;
+    }
+    if (Patch.IsEmpty())
+    {
+        if (OutError) *OutError = TEXT("The path-point patch does not change any property.");
+        return false;
+    }
+    UKyaLevelBank* Bank = Key.Bank.Get();
+    const int32 PointIndex = Key.PointIndex;
+
+    FKyaPath Candidate = *Path;
+    const auto HasPointRecord = [PointIndex](const auto& Array, const TCHAR* Label, FString& OutError) -> bool
+    {
+        if (Array.IsValidIndex(PointIndex)) return true;
+        OutError = FString::Printf(TEXT("This path has no %s record for point %d."), Label, PointIndex);
+        return false;
+    };
+
+    bool bValid = true;
+    if (Patch.Point.IsSet())
+    {
+        bValid = ValidateVector4(Patch.Point.GetValue(), TEXT("Path point"), Error);
+        if (bValid) Candidate.Points[PointIndex] = Patch.Point.GetValue();
+    }
+    if (bValid && Patch.Rotation.IsSet())
+    {
+        bValid = HasPointRecord(Candidate.Rotations, TEXT("rotation"), Error) &&
+            ValidateVector4(Patch.Rotation.GetValue(), TEXT("Path point rotation"), Error);
+        if (bValid) Candidate.Rotations[PointIndex] = Patch.Rotation.GetValue();
+    }
+    if (bValid && Patch.ExtraVector.IsSet())
+    {
+        bValid = HasPointRecord(Candidate.ExtraVectors, TEXT("extra vector"), Error) &&
+            ValidateVector4(Patch.ExtraVector.GetValue(), TEXT("Path point extra vector"), Error);
+        if (bValid) Candidate.ExtraVectors[PointIndex] = Patch.ExtraVector.GetValue();
+    }
+    if (bValid && Patch.Delay.IsSet())
+    {
+        const float Delay = Patch.Delay.GetValue();
+        bValid = HasPointRecord(Candidate.Delays, TEXT("delay"), Error) && FMath::IsFinite(Delay) && Delay >= 0.0f;
+        if (!bValid && Error.IsEmpty()) Error = TEXT("Path point delay must be finite and non-negative.");
+        if (bValid) Candidate.Delays[PointIndex] = Delay;
+    }
+    if (bValid && Patch.Flags.IsSet())
+    {
+        bValid = HasPointRecord(Candidate.PointFlags, TEXT("flags"), Error);
+        if (bValid) Candidate.PointFlags[PointIndex] = Patch.Flags.GetValue();
+    }
+    if (bValid && Patch.ExtraValue.IsSet())
+    {
+        const float ExtraValue = Patch.ExtraValue.GetValue();
+        bValid = HasPointRecord(Candidate.ExtraValues, TEXT("extra value"), Error) && FMath::IsFinite(ExtraValue);
+        if (!bValid && Error.IsEmpty()) Error = TEXT("Path point extra value must be finite.");
+        if (bValid) Candidate.ExtraValues[PointIndex] = ExtraValue;
+    }
+    if (bValid && Patch.ExtraWord.IsSet())
+    {
+        bValid = HasPointRecord(Candidate.ExtraWords, TEXT("extra word"), Error);
+        if (bValid) Candidate.ExtraWords[PointIndex] = Patch.ExtraWord.GetValue();
+    }
+    if (!bValid)
+    {
+        if (OutError) *OutError = Error;
+        return false;
+    }
+
+    Bank->Modify();
+    if (!ResolvePathPoint(Key, Path, &Error))
+    {
+        if (OutError) *OutError = Error;
+        return false;
+    }
+    *Path = Candidate;
+    Bank->MarkPackageDirty();
+    NotifyAfterEdit(*this, Bank, Notify);
+    return true;
 }
 
 void FKyaLevelEditService::RegisterView(UKyaLevelBank* Bank, AKyaLevelPreview* View)
