@@ -101,7 +101,7 @@ This is a source review of the current working tree, including the in-progress a
 
 ## 8. Make editing responsive and diagnosable
 
-- [ ] Replace full preview rebuilds for simple transform/property changes with targeted invalidation. Cache decoded meshes/textures by source revision and refresh only affected geometry, materials, lighting or visualizers.
+- [x] Replace full preview rebuilds for simple transform/property changes with targeted invalidation. Cache decoded meshes/textures by source revision and refresh only affected geometry, materials, lighting or visualizers.
 - [x] Preserve selection and actor identity through refresh. A property edit should not collapse the Details panel, reset Outliner state or destroy the selected object.
 - [x] Remove per-actor polling where change notifications suffice. Measure editor frame time, drag latency, rebuild time, memory and component count on a representative large level before choosing further batching work.
 - [ ] Support progress and cancellation for expensive import/decode/rebuild operations. Keep UObject/editor mutations on the appropriate thread and discard stale background work after asset changes.

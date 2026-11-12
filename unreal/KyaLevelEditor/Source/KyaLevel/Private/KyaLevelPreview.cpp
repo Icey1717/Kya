@@ -57,6 +57,64 @@ struct FMaterialSectionKey
 };
 using FMaterialSections = TMap<FMaterialSectionKey, int32>;
 
+/** Hash the actor inputs that affect captured mesh sections and vertex lighting. */
+uint64 HashActorSectionRevision(const FKyaActorPlacement& Actor, const UKyaLevelBank* Bank, int32 Generation,
+    uint32 LightingRevision)
+{
+    uint32 Hash = ::GetTypeHash(Generation);
+    Hash = HashCombine(Hash, ::GetTypeHash(Bank));
+    Hash = HashCombine(Hash, LightingRevision);
+    Hash = HashCombine(Hash, ::GetTypeHash(Actor.MeshIndex));
+    Hash = HashCombine(Hash, ::GetTypeHash(Actor.TextureIndex));
+    Hash = HashCombine(Hash, ::GetTypeHash(Actor.ClassId));
+    Hash = HashCombine(Hash, ::GetTypeHash(Actor.SectorId));
+    Hash = HashCombine(Hash, ::GetTypeHash(Actor.LightingValue));
+    Hash = HashCombine(Hash, ::GetTypeHash(Actor.LightingFlags));
+    const auto HashFloat = [&Hash](double Value)
+    {
+        Hash = HashCombine(Hash, ::GetTypeHash(FMath::RoundToInt(Value * 10000.0)));
+    };
+    HashFloat(Actor.Rotation.X); HashFloat(Actor.Rotation.Y); HashFloat(Actor.Rotation.Z);
+    HashFloat(Actor.Scale.X); HashFloat(Actor.Scale.Y); HashFloat(Actor.Scale.Z);
+    HashFloat(Actor.Position.X); HashFloat(Actor.Position.Y); HashFloat(Actor.Position.Z);
+    for (const FKyaActorModelReference& Model : Actor.Models)
+    {
+        Hash = HashCombine(Hash, FCrc::StrCrc32(*Model.MeshName));
+        Hash = HashCombine(Hash, FCrc::StrCrc32(*Model.TextureName));
+    }
+    Hash = HashCombine(Hash, ::GetTypeHash(Actor.Models.Num()));
+    return uint64(Hash);
+}
+
+/** Hash all lighting inputs that affect captured vertex colours. */
+uint32 HashActorLighting(const UKyaLevelBank* Bank, const TArray<TObjectPtr<UKyaLevelBank>>& Sectors, bool bApply)
+{
+    uint32 Hash = ::GetTypeHash(bApply);
+    const auto HashBankLights = [&Hash](const UKyaLevelBank* Source)
+    {
+        if (!Source) return;
+        Hash = HashCombine(Hash, ::GetTypeHash(Source->EditGeneration));
+        Hash = HashCombine(Hash, ::GetTypeHash(Source->Lights.Num()));
+        for (const FKyaLight& Light : Source->Lights)
+        {
+            Hash = HashCombine(Hash, ::GetTypeHash(Light.LightType));
+            Hash = HashCombine(Hash, ::GetTypeHash(Light.ShapeType));
+            Hash = HashCombine(Hash, FMath::RoundToInt(Light.Multiplier * 10000.0f));
+            Hash = HashCombine(Hash, FMath::RoundToInt(Light.Falloff0 * 1000.0f));
+            Hash = HashCombine(Hash, FMath::RoundToInt(Light.Falloff1 * 1000.0f));
+            const float Channels[] = {Light.Color.R, Light.Color.G, Light.Color.B, Light.Color.A,
+                Light.AmbientColor.R, Light.AmbientColor.G, Light.AmbientColor.B, Light.AmbientColor.A,
+                Light.Direction.X, Light.Direction.Y, Light.Direction.Z,
+                Light.Position.X, Light.Position.Y, Light.Position.Z};
+            for (const float Channel : Channels)
+                Hash = HashCombine(Hash, FMath::RoundToInt(Channel * 1000.0f));
+        }
+    };
+    HashBankLights(Bank);
+    for (const TObjectPtr<UKyaLevelBank>& Sector : Sectors) HashBankLights(Sector);
+    return Hash;
+}
+
 void AppendUnrealTriangles(TArray<int32>& Target, TConstArrayView<uint32> Indices, int32 Base)
 {
     for (int32 I = 0; I + 2 < Indices.Num(); I += 3)
@@ -179,7 +237,33 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
     ClusterVisibilityRanges.Reset();
     ClusterBaseIndices.Reset();
     HierarchySelectionInfo.Reset();
-    ActorMeshSections.Reset();
+    // Actor captures are cached by source revision: a rebuild that does not change an
+    // actor's render inputs reuses its decoded sections instead of re-decoding.
+    const bool bCachingActorGeometry = ShouldActorHandlesRenderGeometry();
+    const bool bBankChanged = ActorSectionBank.Get() != Bank;
+    if (!bCachingActorGeometry || bBankChanged || !Bank || ActorSectionGeneration != Bank->EditGeneration)
+    {
+        ActorMeshSections.Reset();
+        ActorSectionRevisions.Reset();
+        ActorCapturedPositions.Reset();
+        ActorSectionBank = Bank;
+        ActorSectionGeneration = Bank ? Bank->EditGeneration : -1;
+    }
+    bHasGroundLightData = false;
+    for (const TObjectPtr<UKyaLevelBank>& Sector : SectorBanks)
+    {
+        if (!Sector) continue;
+        for (const FKyaBankEntry& Entry : Sector->Entries)
+        {
+            if (Entry.Type == 7 && Entry.Subtype == 1 && Entry.Size >= 88)
+            {
+                bHasGroundLightData = true;
+                break;
+            }
+        }
+        if (bHasGroundLightData) break;
+    }
+    ActorLightingRevision = HashActorLighting(Bank, SectorBanks, bApplyActorLighting);
     FlareMaterials.Reset();
     FlarePostProcess->Settings.WeightedBlendables.Array.Reset();
     BindBankNotifications();
@@ -950,8 +1034,18 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
         {
         if (!bShowAllActorMeshes && !bActorHandlesOwnGeometry && ActorIndex != PreviewActorIndex) continue;
         const FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+        if (bActorHandlesOwnGeometry)
+        {
+            const uint64 Revision = HashActorSectionRevision(Actor, Bank, Bank->EditGeneration,
+                ActorLightingRevision);
+            if (ActorSectionRevisions.FindRef(ActorIndex) == Revision && ActorMeshSections.Contains(ActorIndex))
+                continue;
+            ActorSectionRevisions.Add(ActorIndex, Revision);
+            ActorCapturedPositions.Add(ActorIndex, Actor.Position);
+        }
         TArray<FKyaActorMeshSection>* CapturedSections =
             bActorHandlesOwnGeometry ? &ActorMeshSections.FindOrAdd(ActorIndex) : nullptr;
+        if (CapturedSections) CapturedSections->Reset();
         const bool bUseNativeTransform = ActorIndex == PreviewActorIndex && PreviewActorNativeTransform.Num() == 4;
         const FVector ActorPosition = bUseNativeTransform ? PreviewActorNativeTransform[3] : Actor.Position;
         const auto TransformActorVector = [&](const FVector& Vector) {
@@ -1702,6 +1796,115 @@ void AKyaLevelPreview::HandleBankEdited(UKyaLevelBank* InBank)
     RebuildFromBank();
 }
 
+void AKyaLevelPreview::HandleActorEdited(UKyaLevelBank* InBank, int32 ActorIndex, bool bDeferred)
+{
+#if WITH_EDITOR
+    // Handles are index-keyed by the main bank; sector-bank actor notifications must
+    // never rebind a main-bank handle.
+    if (!InBank || InBank != Bank) return;
+    // Shared diagnostic meshes bake actor transforms; they need the full capture path.
+    if (!ShouldActorHandlesRenderGeometry())
+    {
+        if (bDeferred) FKyaLevelEditService::Get().NotifyBankChangedDeferred(InBank);
+        else FKyaLevelEditService::Get().NotifyBankChanged(InBank, true);
+        return;
+    }
+    const FKyaActorPlacement* Placement = InBank->SceneEnvironment.Actors.IsValidIndex(ActorIndex)
+        ? &InBank->SceneEnvironment.Actors[ActorIndex] : nullptr;
+    if (!Placement) return;
+    // Ground-light sampling is position-dependent; a pure translate changes baked
+    // vertex colours, so defer a capture rebuild until all selected commits finish.
+    const bool bGroundLighting = bApplyActorLighting && (Placement->LightingFlags & 2) == 0 && bHasGroundLightData;
+    const FVector* CapturedPosition = ActorCapturedPositions.Find(ActorIndex);
+    if (bGroundLighting && CapturedPosition && !CapturedPosition->Equals(Placement->Position, 1.0e-4))
+    {
+        ActorSectionRevisions.Remove(ActorIndex);
+        ActorCapturedPositions.Remove(ActorIndex);
+        if (bDeferred) FKyaLevelEditService::Get().NotifyBankChangedDeferred(InBank);
+        else FKyaLevelEditService::Get().NotifyBankChanged(InBank, true);
+        return;
+    }
+    AKyaActorHandle* Handle = Cast<AKyaActorHandle>(GetActorHandle(ActorIndex));
+    if (!Handle)
+    {
+        // The actor is outside the loaded sectors or handles were toggled; the cheap
+        // handle refresh recreates/disambiguates labels.
+        RefreshActorHandles();
+        ApplyGeneratedActorPresentation();
+        RefreshSceneVisualizers();
+        return;
+    }
+    const int32 PreviousSector = Handle->ActorSectorId;
+    Handle->Bank = InBank;
+    Handle->Preview = this;
+    Handle->ActorIndex = ActorIndex;
+    Handle->SyncFromBank();
+    if (Handle->ActorSectorId != PreviousSector)
+    {
+        // Sector grouping changed; reattach through the full handle pass.
+        RefreshActorHandles();
+    }
+    else
+    {
+        Handle->SetGeneratedLabel(GetActorDisplayLabel(ActorIndex));
+        Handle->SetIconEnabled(ShouldShowActorIcon());
+    }
+    ApplyGeneratedActorPresentation();
+    RefreshSceneVisualizers();
+#endif
+}
+
+void AKyaLevelPreview::HandleWaypointEdited(UKyaLevelBank* InBank, int32 WaypointIndex)
+{
+#if WITH_EDITOR
+    if (!InBank || InBank != Bank) return;
+    if (AKyaSpatialRecordHandle* Handle = Cast<AKyaSpatialRecordHandle>(
+        GetWaypointHandle(WaypointIndex)))
+    {
+        Handle->Bank = InBank;
+        Handle->Preview = this;
+        Handle->SyncFromBank();
+    }
+    RefreshSceneVisualizers();
+#endif
+}
+
+void AKyaLevelPreview::HandlePathPointEdited(UKyaLevelBank* InBank, int32 PathIndex, int32 PointIndex)
+{
+#if WITH_EDITOR
+    if (!InBank || InBank != Bank) return;
+    if (AKyaSpatialRecordHandle* Handle = Cast<AKyaSpatialRecordHandle>(
+        GetPathPointHandle(PathIndex, PointIndex)))
+    {
+        Handle->Bank = InBank;
+        Handle->Preview = this;
+        Handle->SyncFromBank();
+    }
+    RefreshSceneVisualizers();
+#endif
+}
+
+void AKyaLevelPreview::HandleLightEdited(UKyaLevelBank* InBank, bool bDeferred)
+{
+#if WITH_EDITOR
+    if (!InBank) return;
+    // Light data is baked into captured vertex colours; invalidate the actor capture
+    // cache and coalesce the rebuilt capture for deferred commits.
+    ActorSectionRevisions.Reset();
+    ActorCapturedPositions.Reset();
+    if (bDeferred) FKyaLevelEditService::Get().NotifyBankChangedDeferred(InBank);
+    else FKyaLevelEditService::Get().NotifyBankChanged(InBank, true);
+#endif
+}
+
+void AKyaLevelPreview::HandleSceneCameraEdited(UKyaLevelBank* InBank)
+{
+#if WITH_EDITOR
+    if (!InBank) return;
+    RefreshSceneVisualizers();
+#endif
+}
+
 void AKyaLevelPreview::BindBankNotifications()
 {
 #if WITH_EDITOR
@@ -1768,9 +1971,13 @@ void AKyaLevelPreview::OnMonitoredObjectTransacted(UObject* Object, const FTrans
     if (bIsRebuildingPreview) return;
     UKyaLevelBank* ChangedBank = Cast<UKyaLevelBank>(Object);
     if (!ChangedBank || (ChangedBank != Bank && !SectorBanks.Contains(ChangedBank))) return;
-    // Coalesce transaction notifications (including our own edit commits and undo)
-    // into one refresh at the end of the frame, so a multi-actor operation does not
-    // rebuild the whole preview once per record.
+    // A targeted record edit already synchronized the affected displays; its own
+    // transaction event must not trigger a full rebuild. Undo/redo later has no
+    // pending suppression and still rebuilds.
+    if (FKyaLevelEditService::Get().ConsumeTargetedTransaction(ChangedBank)) return;
+    // Coalesce transaction notifications (including undo) into one refresh at the end
+    // of the frame, so a multi-actor operation does not rebuild the whole preview once
+    // per record.
     FKyaLevelEditService::Get().NotifyBankChangedDeferred(ChangedBank);
 #endif
 }

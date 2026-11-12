@@ -331,13 +331,28 @@ bool FKyaActorEditServiceTest::RunTest(const FString& Parameters)
 
     const int64 BuildsA = PreviewA->BuildCount;
     const int64 BuildsB = PreviewB->BuildCount;
+    AKyaActorHandle* HandleBeforeEdit = Cast<AKyaActorHandle>(PreviewA->GetActorHandle(1));
     const FKyaActorRecordKey CurrentKey = Service.MakeKey(Bank, 1);
     FKyaActorEditPatch SecondPatch;
-    SecondPatch.SectorId = 3;
+    SecondPatch.VisibilityDistance = 11.0f;
     TestTrue(TEXT("Apply patch through the service"), Service.Apply(CurrentKey, SecondPatch, EKyaEditNotify::Notify, &Error));
-    TestEqual(TEXT("Preview A refreshed exactly once"), PreviewA->BuildCount, BuildsA + 1);
-    TestEqual(TEXT("Preview B refreshed exactly once"), PreviewB->BuildCount, BuildsB + 1);
-    TestEqual(TEXT("Sector written"), Bank->SceneEnvironment.Actors[1].SectorId, 3);
+    TestEqual(TEXT("Targeted property edit does not rebuild preview A"), PreviewA->BuildCount, BuildsA);
+    TestEqual(TEXT("Targeted property edit does not rebuild preview B"), PreviewB->BuildCount, BuildsB);
+    TestEqual(TEXT("Visibility written"), Bank->SceneEnvironment.Actors[1].VisibilityDistance, 11.0f);
+    if (AKyaActorHandle* EditedHandle = Cast<AKyaActorHandle>(PreviewA->GetActorHandle(1)))
+        TestEqual(TEXT("Targeted edit synchronizes the handle"), EditedHandle->ActorVisibilityDistance, 11.0f);
+    TestTrue(TEXT("Targeted edit preserves the selected handle object"),
+        PreviewA->GetActorHandle(1) == HandleBeforeEdit);
+
+    // Geometry-affecting reference changes still need a capture rebuild.
+    FKyaBankEntry& TextureEntry = Bank->Entries.AddDefaulted_GetRef();
+    TextureEntry.Type = 5;
+    TextureEntry.Subtype = 1;
+    FKyaActorEditPatch TexturePatch;
+    TexturePatch.TextureIndex = 0;
+    TestTrue(TEXT("Apply texture patch through the service"),
+        Service.Apply(CurrentKey, TexturePatch, EKyaEditNotify::Notify, &Error));
+    TestEqual(TEXT("Geometry-affecting edit rebuilds preview A"), PreviewA->BuildCount, BuildsA + 1);
 
     // Silent edits defer the refresh until the flush (one rebuild per drag).
     FKyaActorEditPatch Silent;
@@ -416,7 +431,7 @@ bool FKyaActorHandleTransformTest::RunTest(const FString& Parameters)
         Bank->SceneEnvironment.Actors[0].Position.Equals(FVector(2.0, 2.0, 3.0)));
     TestEqual(TEXT("Drag commit defers the refresh"), Preview->BuildCount, BuildsBeforeMove);
     Service.FlushPendingNotifications();
-    TestEqual(TEXT("One rebuild per drag"), Preview->BuildCount, BuildsBeforeMove + 1);
+    TestEqual(TEXT("Targeted transform edit never rebuilds the preview"), Preview->BuildCount, BuildsBeforeMove);
     TestTrue(TEXT("Rotation preserved by translate"),
         Bank->SceneEnvironment.Actors[0].Rotation.Equals(FVector(0.0, 0.6, 0.0)));
     TestTrue(TEXT("Scale preserved by translate"),
@@ -443,9 +458,29 @@ bool FKyaActorHandleTransformTest::RunTest(const FString& Parameters)
     Second->PostEditMove(true);
     TestEqual(TEXT("Multi-actor drag does not refresh per actor"), Preview->BuildCount, BuildsBeforeMulti);
     Service.FlushPendingNotifications();
-    TestEqual(TEXT("Multi-actor drag refreshes once"), Preview->BuildCount, BuildsBeforeMulti + 1);
+    TestEqual(TEXT("Multi-actor targeted drag never rebuilds"), Preview->BuildCount, BuildsBeforeMulti);
     TestTrue(TEXT("First actor moved by the multi-drag"),
         Bank->SceneEnvironment.Actors[0].Position.Equals(FVector(3.0, 2.0, 3.0)));
+    TestTrue(TEXT("Second actor keeps its own multi-drag movement"),
+        Bank->SceneEnvironment.Actors[1].Position.Equals(FVector(-4.0, 1.0, 1.5)));
+
+    // Multi-selection rotation/scale must also finish all commits before any rebuild.
+    const FVector FirstRotationBefore = Bank->SceneEnvironment.Actors[0].Rotation;
+    const FVector SecondRotationBefore = Bank->SceneEnvironment.Actors[1].Rotation;
+    const int64 BuildsBeforeRotate = Preview->BuildCount;
+    First->SetActorRelativeRotation(FQuat(FVector::UpVector, 0.4));
+    Second->SetActorRelativeRotation(FQuat(FVector::UpVector, 0.7));
+    First->PostEditMove(true);
+    Second->PostEditMove(true);
+    TestTrue(TEXT("First actor rotation committed"),
+        !Bank->SceneEnvironment.Actors[0].Rotation.Equals(FirstRotationBefore, 1.0e-4));
+    TestTrue(TEXT("Second actor rotation committed"),
+        !Bank->SceneEnvironment.Actors[1].Rotation.Equals(SecondRotationBefore, 1.0e-4));
+    TestEqual(TEXT("Multi-rotation commits coalesce before rebuilding"),
+        Preview->BuildCount, BuildsBeforeRotate);
+    Service.FlushPendingNotifications();
+    TestEqual(TEXT("Multi-rotation rebuilds once after all commits"),
+        Preview->BuildCount, BuildsBeforeRotate + 1);
 
     // A click or a canceled drag restores the original transform and writes nothing.
     const FVector BeforeNoop = Bank->SceneEnvironment.Actors[0].Position;
@@ -466,6 +501,36 @@ bool FKyaActorHandleTransformTest::RunTest(const FString& Parameters)
     Second->SetActorRelativeRotation(FRotator(25.0, 40.0, 0.0));
     Second->PostEditMove(true);
     TestTrue(TEXT("Yaw-only rotation edit rejected"), Bank->SceneEnvironment.Actors[1].Rotation.Equals(BeforeRejected));
+
+    // Shared diagnostic mesh mode also coalesces transform commits before rebuilding.
+    {
+        Preview->bShowAllActorMeshes = true;
+        Preview->OnConstruction(FTransform::Identity);
+        AKyaActorHandle* SharedFirst = Cast<AKyaActorHandle>(Preview->GetActorHandle(0));
+        AKyaActorHandle* SharedSecond = Cast<AKyaActorHandle>(Preview->GetActorHandle(1));
+        if (TestNotNull(TEXT("Shared-mode first handle"), SharedFirst) &&
+            TestNotNull(TEXT("Shared-mode second handle"), SharedSecond))
+        {
+            const FVector FirstBefore = Bank->SceneEnvironment.Actors[0].Position;
+            const FVector SecondBefore = Bank->SceneEnvironment.Actors[1].Position;
+            const int64 BuildsBeforeShared = Preview->BuildCount;
+            SharedFirst->AddActorWorldOffset(FVector(100.0, 0.0, 0.0));
+            SharedSecond->AddActorWorldOffset(FVector(0.0, 100.0, 0.0));
+            SharedFirst->PostEditMove(true);
+            SharedSecond->PostEditMove(true);
+            TestTrue(TEXT("Shared-mode first commit keeps its movement"),
+                Bank->SceneEnvironment.Actors[0].Position.Equals(FirstBefore + FVector(1.0, 0.0, 0.0)));
+            TestTrue(TEXT("Shared-mode second commit keeps its movement"),
+                Bank->SceneEnvironment.Actors[1].Position.Equals(SecondBefore + FVector(0.0, 0.0, 1.0)));
+            TestEqual(TEXT("Shared-mode commits do not rebuild mid-commit"),
+                Preview->BuildCount, BuildsBeforeShared);
+            Service.FlushPendingNotifications();
+            TestEqual(TEXT("Shared-mode commits rebuild once after flush"),
+                Preview->BuildCount, BuildsBeforeShared + 1);
+        }
+        Preview->bShowAllActorMeshes = false;
+        Preview->OnConstruction(FTransform::Identity);
+    }
 
     // Details edits write only the edited field and never the whole record.
     Bank->SceneEnvironment.Actors[0].CullingDistance = 12.5f;
@@ -1501,10 +1566,16 @@ bool FKyaSceneVisualizersTest::RunTest(const FString& Parameters)
         TestEqual(TEXT("Rejected light shape edit leaves the record"), Bank->Lights[0].ShapeType, 4);
 
         // Light gizmo move and rotation write through the service.
+        const int64 BuildsBeforeLightEdit = Preview->BuildCount;
         Light->AddActorWorldOffset(FVector(100.0, 0.0, 0.0));
         Light->PostEditMove(true);
         TestTrue(TEXT("Light position edit writes the bank"),
             Bank->Lights[0].Position.Equals(FVector(2.0, 2.0, 3.0), 1.0e-4));
+        TestEqual(TEXT("Light edit defers the capture rebuild"),
+            Preview->BuildCount, BuildsBeforeLightEdit);
+        Service.FlushPendingNotifications();
+        TestEqual(TEXT("Light edit rebuilds captured lighting after flush"),
+            Preview->BuildCount, BuildsBeforeLightEdit + 1);
         TestTrue(TEXT("Translating a light preserves its direction"),
             Bank->Lights[0].Direction.Equals(FVector(0.0, 0.0, 1.0), 1.0e-4));
         Light->SetActorRelativeRotation(FQuat(FVector::UpVector, HALF_PI));
@@ -1514,6 +1585,26 @@ bool FKyaSceneVisualizersTest::RunTest(const FString& Parameters)
         TestTrue(TEXT("Spot light rotation writes the bank direction"),
             Bank->Lights[0].Direction.Equals(ExpectedDirection, 1.0e-3));
         Service.FlushPendingNotifications();
+
+        // Two light commits coalesce their capture rebuilds.
+        AKyaSceneVisualizer* SunVisualizer = Preview->GetSceneVisualizer(
+            FString::Printf(TEXT("light:%s:1"), *Bank->GetName()));
+        if (TestNotNull(TEXT("Second light visualizer exists"), SunVisualizer))
+        {
+            const int64 BuildsBeforeTwoLights = Preview->BuildCount;
+            Light->AddActorWorldOffset(FVector(100.0, 0.0, 0.0));
+            SunVisualizer->AddActorWorldOffset(FVector(100.0, 0.0, 0.0));
+            Light->PostEditMove(true);
+            SunVisualizer->PostEditMove(true);
+            TestTrue(TEXT("Both light moves write the bank"),
+                Bank->Lights[0].Position.Equals(FVector(3.0, 2.0, 3.0), 1.0e-4) &&
+                Bank->Lights[1].Position.Equals(FVector(6.0, 5.0, 5.0), 1.0e-4));
+            TestEqual(TEXT("Two light moves do not rebuild mid-commit"),
+                Preview->BuildCount, BuildsBeforeTwoLights);
+            Service.FlushPendingNotifications();
+            TestEqual(TEXT("Two light moves rebuild once after flush"),
+                Preview->BuildCount, BuildsBeforeTwoLights + 1);
+        }
 
         // Camera move writes the serialized camera position.
         Camera->AddActorWorldOffset(FVector(0.0, 100.0, 0.0));
@@ -2483,6 +2574,7 @@ bool FKyaSpatialRecordsTest::RunTest(const FString& Parameters)
     TestFalse(TEXT("Stale path-point key rejected"), Service.ResolvePathPoint(PointKey, ResolvedPath, &Error));
 
     // --- Preview handles ----------------------------------------------------------
+    Service.FlushPendingNotifications();
     UWorld* World = UWorld::CreateWorld(EWorldType::EditorPreview, false);
     if (!TestNotNull(TEXT("Create spatial world"), World)) return false;
     AKyaLevelPreview* Preview = World->SpawnActor<AKyaLevelPreview>();
@@ -2512,11 +2604,16 @@ bool FKyaSpatialRecordsTest::RunTest(const FString& Parameters)
         TestTrue(TEXT("Spatial handles are transient"), WaypointHandle->HasAnyFlags(RF_Transient));
 
         // Waypoint translation through the gizmo lifecycle.
+        const int64 BuildsBeforeWaypointMove = Preview->BuildCount;
         WaypointHandle->AddActorWorldOffset(FVector(100.0, 0.0, 0.0));
         WaypointHandle->PostEditMove(true);
         TestTrue(TEXT("Waypoint handle writes the bank"),
             Bank->SceneEnvironment.Waypoints[0].Position.Equals(FVector(8.0, 8.0, 9.0)));
+        TestEqual(TEXT("Waypoint edit does not rebuild level geometry"),
+            Preview->BuildCount, BuildsBeforeWaypointMove);
         Service.FlushPendingNotifications();
+        TestEqual(TEXT("Waypoint edit still does not rebuild after flush"),
+            Preview->BuildCount, BuildsBeforeWaypointMove);
 
         // Waypoint rotation is edited numerically and keeps position untouched.
         WaypointHandle->WaypointRotation = FVector(2.1, 2.2, 2.3);

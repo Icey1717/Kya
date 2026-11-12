@@ -279,6 +279,12 @@ available as `Kya.HideSelected`, `Kya.ShowSelected`, `Kya.IsolateSelected` and
 preview's `Lock Generated Actor Selection` / a handle's `Selection Locked`) keeps
 representations visible but stops viewport picking.
 
+Transform and property edits are applied in place: the affected handles are
+resynchronized, labels/grouping and light/camera/link/trigger visualizers update,
+and the level geometry is **not** decoded or rebuilt. Mesh/texture changes and level
+settings still rebuild the capture; undo/redo and reimports keep the full-refresh
+path. A multi-actor drag or waypoint edit therefore does not rebuild the level.
+
 Renaming follows an explicit policy: the Outliner label is presentation and the
 serialized actor name is the edit. A rename strips the generated `[class <id>]` and
 duplicate `[<index>]` suffixes, then validates the result: single-byte ASCII, at

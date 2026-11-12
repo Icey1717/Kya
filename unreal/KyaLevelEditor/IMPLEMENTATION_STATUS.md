@@ -232,6 +232,13 @@ Last updated: 2026-11-12.
   block through `ApplySceneSettings` (validation, one undo step, preview refresh);
   preview properties are split into `Kya|Authoring` and `Kya|Diagnostics|*` so
   comparison/capture options are separate from authoring.
+- Targeted invalidation: actor transform/property edits synchronize existing handles
+  (`HandleActorEdited`) without re-decoding geometry or rebuilding the preview;
+  mesh/texture edits and scene settings still take the rebuild path. Waypoint/path
+  edits refresh spatial handles, guides and visualizers only, and light/camera edits
+  refresh scene visualizers only. A targeted edit's own transaction event is
+  suppressed per preview, while undo/redo still rebuilds. `Silent` bulk edits keep
+  deferred full-refresh semantics.
 - Generated actors are grouped in the Outliner under one transient grouping actor  per sector, attached to the preview. Labels are `<serialized name> [class <id>]`,
   disambiguated with the record index for duplicate names; labels are derived from
   the whole bank so sector load/unload cannot rename them, and serialized names are
@@ -337,8 +344,8 @@ These remain open in [the checklist](EDITOR_WORKFLOW_PLAN.md):
 - `UKyaLevelSet` creation is a command/menu action rather than an asset-type
   Content Browser action; it is not auto-created on import.
 - Progress/cancel UI for export; Message Log entries do not have navigation links.
-- Targeted per-actor invalidation: a committed transform edit still rebuilds the
-  preview once (the drag itself is live and does not rebuild).
+- Bulk/scripted edits and reimports still rebuild the preview; per-record targeted
+  invalidation is used for single actor/waypoint/path/light/camera edits.
 - Serialized hierarchy transform writeback (deliberately disabled until the writer
   milestone defines it) and path playback.
 - Interactive viewport acceptance pass (click a mesh, W/E/R, save/reopen,

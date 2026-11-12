@@ -315,6 +315,16 @@ public:
     const TArray<FKyaActorMeshSection>* FindActorMeshSections(int32 ActorIndex) const;
     /** Refresh after an edit to a bank this preview displays; rebuilds once. */
     void HandleBankEdited(UKyaLevelBank* InBank);
+    /** Targeted: one actor record changed (properties/transform), no level decode. */
+    void HandleActorEdited(UKyaLevelBank* InBank, int32 ActorIndex, bool bDeferred);
+    /** Targeted: one waypoint changed; its handle, guide and visualizers only. */
+    void HandleWaypointEdited(UKyaLevelBank* InBank, int32 WaypointIndex);
+    /** Targeted: one path point changed; its handle, guide and visualizers only. */
+    void HandlePathPointEdited(UKyaLevelBank* InBank, int32 PathIndex, int32 PointIndex);
+    /** Targeted: one light record changed; refresh lighting and visualizers. */
+    void HandleLightEdited(UKyaLevelBank* InBank, bool bDeferred);
+    /** Targeted: main camera changed; refresh scene visualizers only. */
+    void HandleSceneCameraEdited(UKyaLevelBank* InBank);
 
     /**
      * Spawn selectable handles for static world-geometry hierarchies (the smallest
@@ -508,6 +518,14 @@ private:
     TObjectPtr<UKyaLevelBank> ActorMarkerBank;
     /** Per-actor game mesh captured during the last build, keyed by bank actor index. */
     TMap<int32, TArray<FKyaActorMeshSection>> ActorMeshSections;
+    /** Source revision of each captured actor section (bank generation + actor render inputs). */
+    TMap<int32, uint64> ActorSectionRevisions;
+    TWeakObjectPtr<UKyaLevelBank> ActorSectionBank;
+    int32 ActorSectionGeneration = -1;
+    uint32 ActorLightingRevision = 0;
+    /** Actor positions used for the cached captured lighting. */
+    TMap<int32, FVector> ActorCapturedPositions;
+    bool bHasGroundLightData = false;
     /** Level-set sector ID mapping (descriptor-authoritative), bank to ID. */
     TMap<int32, TObjectPtr<UKyaLevelBank>> LevelSetSectors;
     /** Editor only: bank notification binding so asset edits and undo refresh the preview. */

@@ -257,11 +257,15 @@ public:
     void NotifyBankChanged(UKyaLevelBank* Bank, bool bImmediate = true);
     /** Queue a refresh for the end of the current frame; multiple edits coalesce. */
     void NotifyBankChangedDeferred(UKyaLevelBank* Bank);
+    /**
+     * True when a transaction notification for Bank belongs to a targeted record edit
+     * that has already refreshed the view; call once per preview.
+     */
+    bool ConsumeTargetedTransaction(UKyaLevelBank* Bank);
     /** Notify observers that the bank's typed data was replaced (reimport/reload). */
     void NotifyBankReloaded(UKyaLevelBank* Bank);
     void FlushPendingNotifications();
     int32 GetViewCount(UKyaLevelBank* Bank) const;
-
     /** Fired after a successful edit; asset editors and tooling can observe bank changes. */
     FOnBankRecordEdited OnBankEdited;
 
@@ -271,8 +275,17 @@ public:
 private:
     TMap<TWeakObjectPtr<UKyaLevelBank>, TArray<TWeakObjectPtr<AKyaLevelPreview>>> Views;
     TSet<TWeakObjectPtr<UKyaLevelBank>> PendingBanks;
+    /** Remaining previews allowed to ignore the next transaction event per bank. */
+    TMap<TWeakObjectPtr<UKyaLevelBank>, int32> SuppressedTransactions;
     bool bFlushing = false;
     bool bFlushScheduled = false;
+
+    /** Update only the displays affected by one record edit (no full decode). */
+    void NotifyActorRecordEdit(UKyaLevelBank* Bank, int32 ActorIndex, bool bDeferred);
+    void NotifyWaypointEdit(UKyaLevelBank* Bank, int32 WaypointIndex);
+    void NotifyPathPointEdit(UKyaLevelBank* Bank, int32 PathIndex, int32 PointIndex);
+    void NotifyLightEdit(UKyaLevelBank* Bank, bool bDeferred);
+    void NotifySceneCameraEdit(UKyaLevelBank* Bank);
 };
 
 /** Validate a record before it is written; used by the edit service and by export preflight. */

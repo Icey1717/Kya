@@ -5,6 +5,9 @@
 #include "KyaLevelPreview.h"
 #include "KyaActorCatalog.h"
 #include "KyaExportedActorFields.h"
+#if WITH_EDITOR
+#include "Editor.h"
+#endif
 #include "Containers/Ticker.h"
 
 FString FKyaActorRecordKey::ToString() const
@@ -85,14 +88,6 @@ bool ApplyPatchToRecord(FKyaActorPlacement& Placement, const FKyaActorEditPatch&
     if (Patch.LightingFlags.IsSet()) Placement.LightingFlags = Patch.LightingFlags.GetValue();
     if (Patch.Custom && !Patch.Custom(Placement, OutError)) return false;
     return true;
-}
-
-void NotifyAfterEdit(FKyaLevelEditService& Service, UKyaLevelBank* Bank, EKyaEditNotify Notify)
-{
-    if (Service.OnBankEdited.IsBound()) Service.OnBankEdited.Broadcast(Bank);
-    if (Notify == EKyaEditNotify::Notify) Service.NotifyBankChanged(Bank, true);
-    else if (Notify == EKyaEditNotify::Deferred) Service.NotifyBankChangedDeferred(Bank);
-    else Service.NotifyBankChanged(Bank, false);
 }
 
 bool ValidateVector(const FVector& Value, const TCHAR* Label, FString& OutError)
@@ -484,9 +479,39 @@ bool FKyaLevelEditService::Apply(const FKyaActorRecordKey& Key, const FKyaActorE
     }
     // The candidate was validated above; assign it rather than executing a possibly
     // stateful custom patch a second time.
+    bool bModelsChanged = Candidate.Models.Num() != Placement->Models.Num();
+    for (int32 ModelIndex = 0; !bModelsChanged && ModelIndex < Candidate.Models.Num(); ++ModelIndex)
+    {
+        if (Candidate.Models[ModelIndex].MeshName != Placement->Models[ModelIndex].MeshName ||
+            Candidate.Models[ModelIndex].TextureName != Placement->Models[ModelIndex].TextureName)
+            bModelsChanged = true;
+    }
+    const bool bGeometryChanged = Candidate.MeshIndex != Placement->MeshIndex ||
+        Candidate.TextureIndex != Placement->TextureIndex ||
+        Candidate.SectorId != Placement->SectorId ||
+        Candidate.LightingValue != Placement->LightingValue ||
+        Candidate.LightingFlags != Placement->LightingFlags ||
+        !Candidate.Rotation.Equals(Placement->Rotation, 1.0e-5) ||
+        !Candidate.Scale.Equals(Placement->Scale, 1.0e-5) ||
+        bModelsChanged;
     *Placement = Candidate;
     Bank->MarkPackageDirty();
-    NotifyAfterEdit(*this, Bank, Notify);
+    if (OnBankEdited.IsBound()) OnBankEdited.Broadcast(Bank);
+    if (Notify == EKyaEditNotify::Silent)
+    {
+        PendingBanks.Add(Bank);
+    }
+    else if (bGeometryChanged)
+    {
+        // Mesh/texture/lighting/rotation changes need a rebuilt capture. Deferred
+        // (drag) commits coalesce until all selected records have committed.
+        if (Notify == EKyaEditNotify::Deferred) NotifyBankChangedDeferred(Bank);
+        else NotifyBankChanged(Bank, true);
+    }
+    else
+    {
+        NotifyActorRecordEdit(Bank, Key.RecordIndex, Notify == EKyaEditNotify::Deferred);
+    }
     return true;
 }
 
@@ -656,7 +681,9 @@ bool FKyaLevelEditService::ApplyWaypoint(const FKyaWaypointRecordKey& Key, const
     }
     *Waypoint = Candidate;
     Bank->MarkPackageDirty();
-    NotifyAfterEdit(*this, Bank, Notify);
+    if (OnBankEdited.IsBound()) OnBankEdited.Broadcast(Bank);
+    if (Notify == EKyaEditNotify::Silent) PendingBanks.Add(Bank);
+    else NotifyWaypointEdit(Bank, Key.WaypointIndex);
     return true;
 }
 
@@ -787,7 +814,9 @@ bool FKyaLevelEditService::ApplyPathPoint(const FKyaPathPointRecordKey& Key, con
     }
     *Path = Candidate;
     Bank->MarkPackageDirty();
-    NotifyAfterEdit(*this, Bank, Notify);
+    if (OnBankEdited.IsBound()) OnBankEdited.Broadcast(Bank);
+    if (Notify == EKyaEditNotify::Silent) PendingBanks.Add(Bank);
+    else NotifyPathPointEdit(Bank, Key.PathIndex, Key.PointIndex);
     return true;
 }
 
@@ -857,9 +886,60 @@ void FKyaLevelEditService::NotifyBankReloaded(UKyaLevelBank* Bank)
     NotifyBankChanged(Bank, true);
 }
 
+void FKyaLevelEditService::NotifyActorRecordEdit(UKyaLevelBank* Bank, int32 ActorIndex, bool bDeferred)
+{
+    TArray<TWeakObjectPtr<AKyaLevelPreview>>* BankViews = Views.Find(Bank);
+    if (!BankViews) return;
+    if (BankViews->Num() > 0 && GEditor && GEditor->IsTransactionActive()) SuppressedTransactions.Add(Bank, BankViews->Num());
+    const TArray<TWeakObjectPtr<AKyaLevelPreview>> Snapshot = *BankViews;
+    for (const TWeakObjectPtr<AKyaLevelPreview>& View : Snapshot)
+        if (View.IsValid()) View->HandleActorEdited(Bank, ActorIndex, bDeferred);
+}
+
+void FKyaLevelEditService::NotifyWaypointEdit(UKyaLevelBank* Bank, int32 WaypointIndex)
+{
+    TArray<TWeakObjectPtr<AKyaLevelPreview>>* BankViews = Views.Find(Bank);
+    if (!BankViews) return;
+    if (BankViews->Num() > 0 && GEditor && GEditor->IsTransactionActive()) SuppressedTransactions.Add(Bank, BankViews->Num());
+    const TArray<TWeakObjectPtr<AKyaLevelPreview>> Snapshot = *BankViews;
+    for (const TWeakObjectPtr<AKyaLevelPreview>& View : Snapshot)
+        if (View.IsValid()) View->HandleWaypointEdited(Bank, WaypointIndex);
+}
+
+void FKyaLevelEditService::NotifyPathPointEdit(UKyaLevelBank* Bank, int32 PathIndex, int32 PointIndex)
+{
+    TArray<TWeakObjectPtr<AKyaLevelPreview>>* BankViews = Views.Find(Bank);
+    if (!BankViews) return;
+    if (BankViews->Num() > 0 && GEditor && GEditor->IsTransactionActive()) SuppressedTransactions.Add(Bank, BankViews->Num());
+    const TArray<TWeakObjectPtr<AKyaLevelPreview>> Snapshot = *BankViews;
+    for (const TWeakObjectPtr<AKyaLevelPreview>& View : Snapshot)
+        if (View.IsValid()) View->HandlePathPointEdited(Bank, PathIndex, PointIndex);
+}
+
+void FKyaLevelEditService::NotifyLightEdit(UKyaLevelBank* Bank, bool bDeferred)
+{
+    TArray<TWeakObjectPtr<AKyaLevelPreview>>* BankViews = Views.Find(Bank);
+    if (!BankViews) return;
+    if (BankViews->Num() > 0 && GEditor && GEditor->IsTransactionActive()) SuppressedTransactions.Add(Bank, BankViews->Num());
+    const TArray<TWeakObjectPtr<AKyaLevelPreview>> Snapshot = *BankViews;
+    for (const TWeakObjectPtr<AKyaLevelPreview>& View : Snapshot)
+        if (View.IsValid()) View->HandleLightEdited(Bank, bDeferred);
+}
+
+void FKyaLevelEditService::NotifySceneCameraEdit(UKyaLevelBank* Bank)
+{
+    TArray<TWeakObjectPtr<AKyaLevelPreview>>* BankViews = Views.Find(Bank);
+    if (!BankViews) return;
+    if (BankViews->Num() > 0 && GEditor && GEditor->IsTransactionActive()) SuppressedTransactions.Add(Bank, BankViews->Num());
+    const TArray<TWeakObjectPtr<AKyaLevelPreview>> Snapshot = *BankViews;
+    for (const TWeakObjectPtr<AKyaLevelPreview>& View : Snapshot)
+        if (View.IsValid()) View->HandleSceneCameraEdited(Bank);
+}
+
 void FKyaLevelEditService::FlushPendingNotifications()
 {
     bFlushScheduled = false;
+    SuppressedTransactions.Reset();
     if (bFlushing || PendingBanks.IsEmpty()) return;
     TGuardValue<bool> Guard(bFlushing, true);
     TArray<TWeakObjectPtr<UKyaLevelBank>> Banks = PendingBanks.Array();
@@ -876,10 +956,19 @@ void FKyaLevelEditService::FlushPendingNotifications()
     }
 }
 
+bool FKyaLevelEditService::ConsumeTargetedTransaction(UKyaLevelBank* Bank)
+{
+    int32* Remaining = SuppressedTransactions.Find(Bank);
+    if (!Remaining || *Remaining <= 0) return false;
+    if (--(*Remaining) == 0) SuppressedTransactions.Remove(Bank);
+    return true;
+}
+
 void FKyaLevelEditService::Reset()
 {
     Views.Reset();
     PendingBanks.Reset();
+    SuppressedTransactions.Reset();
     OnBankEdited.Clear();
 }
 
@@ -997,7 +1086,9 @@ bool FKyaLevelEditService::ApplyLight(const FKyaLightRecordKey& Key, const FKyaL
     }
     *Light = Candidate;
     Bank->MarkPackageDirty();
-    NotifyAfterEdit(*this, Bank, Notify);
+    if (OnBankEdited.IsBound()) OnBankEdited.Broadcast(Bank);
+    if (Notify == EKyaEditNotify::Silent) PendingBanks.Add(Bank);
+    else NotifyLightEdit(Bank, Notify == EKyaEditNotify::Deferred);
     return true;
 }
 
@@ -1051,7 +1142,9 @@ bool FKyaLevelEditService::ApplySceneCamera(const FKyaSceneCameraKey& Key, const
     Bank->SceneEnvironment.CameraUp = Candidate.CameraUp;
     Bank->SceneEnvironment.CameraFov = Candidate.CameraFov;
     Bank->MarkPackageDirty();
-    NotifyAfterEdit(*this, Bank, Notify);
+    if (OnBankEdited.IsBound()) OnBankEdited.Broadcast(Bank);
+    if (Notify == EKyaEditNotify::Silent) PendingBanks.Add(Bank);
+    else NotifySceneCameraEdit(Bank);
     return true;
 }
 
@@ -1106,8 +1199,15 @@ bool FKyaLevelEditService::ApplySceneSettings(UKyaLevelBank* Bank, const FKyaSce
     Bank->SceneEnvironment = NewEnvironment;
     Bank->SceneConfiguration = Configuration;
     Bank->MarkPackageDirty();
-    NotifyAfterEdit(*this, Bank, Notify);
+    if (OnBankEdited.IsBound()) OnBankEdited.Broadcast(Bank);
+    // Settings can affect background/camera rendering, so refresh through the full
+    // preview path (this is not on the transform hot path).
+    if (Notify == EKyaEditNotify::Silent) PendingBanks.Add(Bank);
+    else NotifyBankChanged(Bank, Notify == EKyaEditNotify::Notify);
     return true;
 }
 
 #endif
+
+
+
