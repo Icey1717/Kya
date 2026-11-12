@@ -4,6 +4,7 @@
 #include "KyaActorHandle.h"
 #include "KyaActorTransform.h"
 #include "KyaBankExport.h"
+#include "KyaLevelActorFactory.h"
 #include "KyaLevelBank.h"
 #include "KyaLevelBankFactory.h"
 #include "KyaLevelPreview.h"
@@ -717,6 +718,35 @@ bool FKyaExportValidationTest::RunTest(const FString& Parameters)
         AddWarning(TEXT("Set KYA_TEST_BANK to run the real-bank export validation."));
     }
     IFileManager::Get().DeleteDirectory(*TempDirectory, false, true);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaLevelPreviewPlacementTest, "Kya.Editor.LevelPreviewPlacement",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaLevelPreviewPlacementTest::RunTest(const FString& Parameters)
+{
+    UKyaLevelBank* Bank = MakeKyaTestBank(GetTransientPackage());
+    UKyaLevelPreviewFactory* Factory = NewObject<UKyaLevelPreviewFactory>();
+    if (!TestNotNull(TEXT("Create level preview factory"), Factory)) return false;
+
+    FText Error;
+    TestTrue(TEXT("Factory accepts a Kya bank asset"), Factory->CanCreateActorFrom(FAssetData(Bank), Error));
+    TestFalse(TEXT("Factory rejects an empty asset"), Factory->CanCreateActorFrom(FAssetData(), Error));
+    TestTrue(TEXT("Factory has an error message"), !Error.IsEmpty());
+
+    UWorld* World = UWorld::CreateWorld(EWorldType::EditorPreview, false);
+    if (!TestNotNull(TEXT("Create placement world"), World)) return false;
+    AActor* Spawned = Factory->SpawnActor(Bank, World->PersistentLevel, FTransform::Identity, FActorSpawnParameters());
+    AKyaLevelPreview* Preview = Cast<AKyaLevelPreview>(Spawned);
+    if (TestNotNull(TEXT("Factory spawns a level preview actor"), Preview))
+    {
+        TestEqual(TEXT("Placed preview uses the dragged bank"), Preview->Bank.Get(), Bank);
+        TestTrue(TEXT("Placed preview builds its scene"), Preview->BuildCount > 0);
+        TestTrue(TEXT("Placed preview creates actor handles"), Preview->GetActorHandleCount() > 0);
+        Preview->Destroy();
+    }
+    World->DestroyWorld(false);
     return true;
 }
 #endif

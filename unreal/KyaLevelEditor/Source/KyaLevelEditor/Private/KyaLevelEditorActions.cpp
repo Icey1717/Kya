@@ -261,23 +261,43 @@ FKyaSectorDiscoveryResult KyaDiscoverSectors(AKyaLevelPreview* Preview, bool bIm
             Result.MissingIds.Add(SectorId);
             continue;
         }
-        UAssetImportTask* Task = NewObject<UAssetImportTask>();
-        Task->Filename = Filename;
-        Task->DestinationPath = DestinationPath;
-        Task->DestinationName = FPaths::GetBaseFilename(Filename).ToUpper();
-        Task->bAutomated = true;
-        Task->bReplaceExisting = false;
-        Task->bSave = false;
-        Task->bAsync = false;
-        IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
-        AssetTools.ImportAssetTasks({Task});
+        const FString DestinationName = FPaths::GetBaseFilename(Filename).ToUpper();
         const FString ObjectPath = FString::Printf(TEXT("%s/%s.%s"), *DestinationPath,
-            *Task->DestinationName, *Task->DestinationName);
+            *DestinationName, *DestinationName);
+        // Never adopt an unrelated asset that happens to occupy the destination path:
+        // two levels can have identically named main banks, and a skipped import must
+        // not silently associate the wrong sector.
+        if (UKyaLevelBank* Occupied = LoadObject<UKyaLevelBank>(nullptr, *ObjectPath))
+        {
+            if (!Occupied->SourceFilename.Equals(Filename, ESearchCase::IgnoreCase))
+            {
+                ++Result.Ambiguous;
+                Result.MissingIds.Add(SectorId);
+                Result.Messages.Add(FString::Printf(
+                    TEXT("Destination %s already contains a bank from %s; %s was not imported."),
+                    *ObjectPath, *Occupied->SourceFilename, *Filename));
+                continue;
+            }
+        }
+        else
+        {
+            UAssetImportTask* Task = NewObject<UAssetImportTask>();
+            Task->Filename = Filename;
+            Task->DestinationPath = DestinationPath;
+            Task->DestinationName = DestinationName;
+            Task->bAutomated = true;
+            Task->bReplaceExisting = false;
+            Task->bSave = false;
+            Task->bAsync = false;
+            IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
+            AssetTools.ImportAssetTasks({Task});
+        }
         UKyaLevelBank* Imported = LoadObject<UKyaLevelBank>(nullptr, *ObjectPath);
-        if (!Imported)
+        if (!Imported || !Imported->SourceFilename.Equals(Filename, ESearchCase::IgnoreCase))
         {
             Result.MissingIds.Add(SectorId);
-            Result.Messages.Add(FString::Printf(TEXT("Failed to import %s."), *Filename));
+            Result.Messages.Add(FString::Printf(TEXT("Failed to import %s (destination provenance does not match)."),
+                *Filename));
             continue;
         }
         ++Result.Imported;

@@ -5,6 +5,7 @@
 #include "KyaActorEditService.h"
 #include "KyaActorDetailsCustomization.h"
 #include "KyaActorHandle.h"
+#include "KyaLevelActorFactory.h"
 #include "KyaLevelEditorActions.h"
 #include "KyaLevelBankReimportHandler.h"
 #include "KyaLevelBank.h"
@@ -126,6 +127,16 @@ public:
         ReimportHandler = MakeUnique<FKyaLevelBankReimportHandler>();
         FReimportManager::Instance()->RegisterHandler(*ReimportHandler);
 
+        // Actor factories auto-register from UClass discovery at editor startup; when
+        // the plugin is loaded later, add the factory explicitly.
+        if (GEditor && !GEditor->ActorFactories.ContainsByPredicate([](UActorFactory* Factory)
+        {
+            return Factory && Factory->IsA<UKyaLevelPreviewFactory>();
+        }))
+        {
+            GEditor->ActorFactories.Add(NewObject<UKyaLevelPreviewFactory>(GetTransientPackage()));
+        }
+
         FPropertyEditorModule& PropertyModule =
             FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
         PropertyModule.RegisterCustomClassLayout(AKyaActorHandle::StaticClass()->GetFName(),
@@ -142,6 +153,11 @@ public:
         if (FPropertyEditorModule* PropertyModule =
             FModuleManager::GetModulePtr<FPropertyEditorModule>("PropertyEditor"))
             PropertyModule->UnregisterCustomClassLayout(AKyaActorHandle::StaticClass()->GetFName());
+        if (GEditor)
+            GEditor->ActorFactories.RemoveAll([](UActorFactory* Factory)
+            {
+                return Factory && Factory->IsA<UKyaLevelPreviewFactory>();
+            });
         // The handler unregisters itself from FReimportManager on destruction.
         ReimportHandler.Reset();
         FKyaLevelEditService::Get().Reset();

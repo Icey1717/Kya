@@ -223,6 +223,13 @@ implemented yet.
 
 ## Editor commands
 
+Import a `.bnk` file with the normal Content Browser import (the bank factory is a
+standard binary import), then drag the bank asset into the level viewport. The
+`Kya Level Preview` actor factory places an `AKyaLevelPreview` that points at the
+dragged bank and builds its scene immediately, so editing does not require a
+capture script or a manually configured preview. Dragging an actor class from the
+Place Actors panel still works for an empty preview.
+
 The plugin registers a `Kya Level` section in the editor's Tools menu and the
 following console commands. They operate on the selected `KyaLevelPreview`
 actors, or on every preview in the level when nothing is selected.
@@ -231,7 +238,7 @@ actors, or on every preview in the level when nothing is selected.
 | --- | --- |
 | `Kya.Validate` | Validate every bank of the level set and report which banks the writer cannot export, without writing anything. |
 | `Kya.Export [dir]` | Validate, stage and publish the level's banks to `Saved/KyaExport/<BankName>.bnk` (or `dir`). Existing files are only replaced after every staged output validated. |
-| `Kya.DiscoverSectors [0]` | Find sibling `SECT<digits>.BNK` files next to the main bank's source, reuse already-imported assets by source provenance, and import missing ones into `/Game/KyaLevels/<Level>`. `0` disables importing. |
+| `Kya.DiscoverSectors [0]` | Find sibling `SECT<digits>.BNK` files next to the main bank's source, reuse already-imported assets by source provenance, and import missing ones into `/Game/KyaLevels/<Level>`. `0` disables importing. Duplicate numeric IDs are reported as ambiguous, actor sector references with no file are reported as missing, destinations already occupied by a bank from a different source are rejected, and cancelling leaves a coherent partial result. |
 | `Kya.SaveLevel` | Save the bank packages used by the preview (saving Unreal assets is separate from exporting game banks). |
 
 The bank assets record `UAssetImportData` provenance, so they can be reimported

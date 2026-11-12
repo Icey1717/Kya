@@ -32,11 +32,11 @@ This is a source review of the current working tree, including the in-progress a
 
 ## 2. Import and discover a complete level
 
-- [ ] Add a normal Content Browser action to import/open a Kya level, and a drag-and-drop placement path that creates a configured level preview. Do not require a capture script or manually constructed preview to start editing.
+- [x] Add a normal Content Browser action to import/open a Kya level, and a drag-and-drop placement path that creates a configured level preview. Do not require a capture script or manually constructed preview to start editing.
 - [ ] Introduce a persisted level-set asset or equivalent descriptor linking the main bank, sector IDs, sector bank assets, source root and import revision. Keep these associations out of game bytes.
 - [x] Discover sibling sector banks from the selected source level directory and available bank metadata. Inspect the existing capture scripts and `GetSectorId` logic first; factor reusable discovery into editor code rather than invoking capture scripts.
 - [x] Resolve dependencies deterministically by level identity and sector ID. Reuse already imported matching assets through the Asset Registry; never match solely on a generic name such as `SECT1` across different levels.
-- [ ] Import missing sector assets into a predictable level-specific folder, with progress/cancel support and a summary of imported, reused, missing and ambiguous files. Leave a coherent partial result if canceled or a bank fails.
+- [x] Import missing sector assets into a predictable level-specific folder, with progress/cancel support and a summary of imported, reused, missing and ambiguous files. Leave a coherent partial result if canceled or a bank fails.
 - [x] Distinguish discovered sectors from currently visible sectors. Default to an editable complete level where practical; retain explicit load/unload, visibility and manual association overrides for large levels and unusual directory layouts.
 - [x] Add Refresh Sector Discovery and missing-source resolution actions. Refresh must preserve existing edits and manual overrides rather than silently reimporting banks.
 - [x] Add standard import provenance (`UAssetImportData` or the appropriate supported equivalent) and a reimport handler. Support source-file relocation and Content Browser asset moves without breaking associations.

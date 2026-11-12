@@ -120,7 +120,11 @@ Last updated: 2026-11-12.
   or sector, with errors, warnings and asset paths). Sector discovery runs behind
   a cancellable `FScopedSlowTask` and leaves a coherent partial result when
   cancelled; `Kya.Export` reports one outcome per file and opens the log on
-  failure.
+  failure. Imports verify the destination asset's source provenance before it is
+  associated, so an occupied path from a different level is reported instead of
+  being adopted.
+- `UKyaLevelPreviewFactory` (auto-registered `UActorFactory`) lets a bank asset be
+  dragged into the viewport to place a configured `AKyaLevelPreview`.
 
 ## 3. Verification
 
