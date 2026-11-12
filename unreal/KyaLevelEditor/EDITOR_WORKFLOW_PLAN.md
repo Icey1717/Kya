@@ -77,7 +77,7 @@ This is a source review of the current working tree, including the in-progress a
 - [x] Save changed bank packages through normal Save/Save All workflows and expose unsaved bank changes clearly when the map itself is clean. Verify toolbar Save behavior; if it only saves the map, provide an obvious Save Kya Level action that saves its dirty dependencies.
 - [x] Separate Save Unreal Assets from Export Game Banks. Saving must not silently overwrite source `.bnk` files. Show which bank packages changed and which have changes not yet exported.
 - [x] Validate transient/editor-only flags, transactional flags, object references, map duplication, PIE and map reload. Generated editing actors should not accidentally appear in packaged runtime worlds.
-- [ ] Acceptance: edit, undo, redo, save, close and reopen; both Details and rendered placement agree. Repeat with multiple previews sharing a bank and with rapid consecutive property edits.
+- [x] Acceptance: edit, undo, redo, save, close and reopen; both Details and rendered placement agree. Repeat with multiple previews sharing a bank and with rapid consecutive property edits.
 
 ## 6. Outliner and normal level organization
 

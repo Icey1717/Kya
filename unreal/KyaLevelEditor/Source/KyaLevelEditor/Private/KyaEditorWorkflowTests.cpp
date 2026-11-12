@@ -3208,6 +3208,247 @@ bool FKyaSectorIsolationTest::RunTest(const FString& Parameters)
     World->DestroyWorld(false);
     return true;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaSaveReopenConsistencyTest, "Kya.Editor.SaveReopenConsistency",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaSaveReopenConsistencyTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to run the save/reopen consistency acceptance."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read the save/reopen bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    Factory->AddToRoot();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Imported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient | RF_Transactional, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import the save/reopen bank"), Imported) ||
+        !TestTrue(TEXT("The save/reopen bank has actors"), Imported->SceneEnvironment.Actors.Num() > 0))
+    {
+        Factory->RemoveFromRoot();
+        return false;
+    }
+
+    const FString PackageName = FString::Printf(TEXT("/Game/KyaSaveReopenTest/Bank_%s"),
+        *FGuid::NewGuid().ToString(EGuidFormats::Digits));
+    UPackage* Package = CreatePackage(*PackageName);
+    UKyaLevelBank* Bank = DuplicateObject<UKyaLevelBank>(Imported, Package, TEXT("Bank"));
+    if (!TestNotNull(TEXT("Duplicate the save/reopen bank into a saveable package"), Bank))
+    {
+        Factory->RemoveFromRoot();
+        return false;
+    }
+    Bank->ClearFlags(RF_Transient);
+    Bank->SetFlags(RF_Public | RF_Standalone | RF_Transactional);
+    Package->ClearFlags(RF_Transient);
+    Package->SetFlags(RF_Public | RF_Standalone);
+    Bank->SourceFilename = Filename;
+    if (!Bank->AssetImportData) Bank->AssetImportData = NewObject<UAssetImportData>(Bank);
+    Bank->AssetImportData->Update(Bank->SourceFilename);
+    Package->SetDirtyFlag(false);
+
+    const FTransform PreviewTransformA(FRotator(0.0, 23.0, 0.0), FVector(1400.0, -600.0, 300.0));
+    const FTransform PreviewTransformB(FRotator(0.0, -41.0, 0.0), FVector(-900.0, 750.0, 120.0));
+    UWorld* World = UWorld::CreateWorld(EWorldType::EditorPreview, false);
+    if (!TestNotNull(TEXT("Create the save/reopen world"), World))
+    {
+        Factory->RemoveFromRoot();
+        return false;
+    }
+    const auto SpawnPreview = [World](UKyaLevelBank* InBank, const FTransform& Transform)
+        -> AKyaLevelPreview*
+    {
+        AKyaLevelPreview* Spawned = World->SpawnActor<AKyaLevelPreview>(
+            AKyaLevelPreview::StaticClass(), Transform);
+        if (!Spawned) return nullptr;
+        Spawned->Bank = InBank;
+        Spawned->bShowRebuildProgress = false;
+        Spawned->bSpawnActorHandles = true;
+        Spawned->OnConstruction(Transform);
+        return Spawned;
+    };
+    AKyaLevelPreview* PreviewA = SpawnPreview(Bank, PreviewTransformA);
+    AKyaLevelPreview* PreviewB = SpawnPreview(Bank, PreviewTransformB);
+    if (!TestNotNull(TEXT("First preview spawns"), PreviewA) ||
+        !TestNotNull(TEXT("Second preview spawns"), PreviewB))
+    {
+        if (PreviewA) PreviewA->Destroy();
+        if (PreviewB) PreviewB->Destroy();
+        World->DestroyWorld(false);
+        Factory->RemoveFromRoot();
+        return false;
+    }
+    AKyaActorHandle* HandleA = Cast<AKyaActorHandle>(PreviewA->GetActorHandle(0));
+    AKyaActorHandle* HandleB = Cast<AKyaActorHandle>(PreviewB->GetActorHandle(0));
+    if (!TestNotNull(TEXT("First preview has the shared actor"), HandleA) ||
+        !TestNotNull(TEXT("Second preview has the shared actor"), HandleB))
+    {
+        PreviewA->Destroy();
+        PreviewB->Destroy();
+        World->DestroyWorld(false);
+        Factory->RemoveFromRoot();
+        return false;
+    }
+    TestTrue(TEXT("Both previews show the same record"),
+        HandleA->ActorPosition.Equals(HandleB->ActorPosition, 1.0e-4));
+
+    const int32 TargetIndex = 0;
+    const FKyaActorPlacement Original = Bank->SceneEnvironment.Actors[TargetIndex];
+    const float DetailsValue = Original.VisibilityDistance + 1234.0f;
+
+    // --- Details edit on the first preview, with undo and redo --------------------
+    {
+        FScopedTransaction Transaction(NSLOCTEXT("KyaTests", "DetailsEdit", "Details edit"));
+        HandleA->ActorVisibilityDistance = DetailsValue;
+        FPropertyChangedEvent ChangedEvent(FindFProperty<FProperty>(AKyaActorHandle::StaticClass(),
+            GET_MEMBER_NAME_CHECKED(AKyaActorHandle, ActorVisibilityDistance)));
+        HandleA->PostEditChangeProperty(ChangedEvent);
+        Service.FlushPendingNotifications();
+    }
+    TestEqual(TEXT("The Details edit writes the bank"), Bank->SceneEnvironment.Actors[TargetIndex].VisibilityDistance, DetailsValue);
+    TestEqual(TEXT("The edited preview mirrors the Details value"), HandleA->ActorVisibilityDistance, DetailsValue);
+    TestEqual(TEXT("The other preview mirrors the Details value"), HandleB->ActorVisibilityDistance, DetailsValue);
+    TestTrue(TEXT("The Details edit keeps the placement"), Bank->SceneEnvironment.Actors[TargetIndex].Position.Equals(Original.Position, 1.0e-4));
+    TestTrue(TEXT("The Details edit keeps the selected handle"), PreviewA->GetActorHandle(TargetIndex) == HandleA);
+
+    if (GEditor)
+    {
+        TestTrue(TEXT("Undo returns the Details transaction"), GEditor->UndoTransaction());
+        Service.FlushPendingNotifications();
+        TestEqual(TEXT("Undo restores the Details value"), Bank->SceneEnvironment.Actors[TargetIndex].VisibilityDistance, Original.VisibilityDistance);
+        TestEqual(TEXT("Undo refreshes the first preview"), HandleA->ActorVisibilityDistance, Original.VisibilityDistance);
+        TestEqual(TEXT("Undo refreshes the second preview"), HandleB->ActorVisibilityDistance, Original.VisibilityDistance);
+        GEditor->RedoTransaction();
+        Service.FlushPendingNotifications();
+        TestEqual(TEXT("Redo reapplies the Details value"), Bank->SceneEnvironment.Actors[TargetIndex].VisibilityDistance, DetailsValue);
+        TestTrue(TEXT("Redo refreshes both previews"),
+            HandleA->ActorVisibilityDistance == DetailsValue && HandleB->ActorVisibilityDistance == DetailsValue);
+    }
+
+    // --- rapid consecutive property edits in one transaction ----------------------
+    const float RapidStart = Bank->SceneEnvironment.Actors[TargetIndex].VisibilityDistance;
+    const int32 RapidEdits = 25;
+    {
+        FScopedTransaction Transaction(NSLOCTEXT("KyaTests", "RapidEdits", "Rapid property edits"));
+        for (int32 Edit = 1; Edit <= RapidEdits; ++Edit)
+        {
+            FKyaActorEditPatch Patch;
+            Patch.VisibilityDistance = RapidStart + float(Edit);
+            FString Error;
+            TestTrue(TEXT("Each rapid property edit applies"),
+                Service.Apply(Service.MakeKey(Bank, TargetIndex), Patch, EKyaEditNotify::Deferred, &Error));
+        }
+        Service.FlushPendingNotifications();
+    }
+    const float RapidEnd = RapidStart + float(RapidEdits);
+    TestEqual(TEXT("Rapid edits leave the final value"), Bank->SceneEnvironment.Actors[TargetIndex].VisibilityDistance, RapidEnd);
+    TestEqual(TEXT("Rapid edits refresh the first preview"), HandleA->ActorVisibilityDistance, RapidEnd);
+    TestEqual(TEXT("Rapid edits refresh the second preview"), HandleB->ActorVisibilityDistance, RapidEnd);
+    TestTrue(TEXT("Rapid edits keep the first handle"), PreviewA->GetActorHandle(TargetIndex) == HandleA);
+    TestTrue(TEXT("Rapid edits keep the second handle"), PreviewB->GetActorHandle(TargetIndex) == HandleB);
+    if (GEditor)
+    {
+        TestTrue(TEXT("Undo returns the rapid-edit transaction"), GEditor->UndoTransaction());
+        Service.FlushPendingNotifications();
+        TestEqual(TEXT("One undo reverts every rapid edit"), Bank->SceneEnvironment.Actors[TargetIndex].VisibilityDistance, RapidStart);
+        TestEqual(TEXT("The first preview shows the undone value"), HandleA->ActorVisibilityDistance, RapidStart);
+        TestEqual(TEXT("The second preview shows the undone value"), HandleB->ActorVisibilityDistance, RapidStart);
+        GEditor->RedoTransaction();
+        Service.FlushPendingNotifications();
+        TestEqual(TEXT("Redo restores every rapid edit"), Bank->SceneEnvironment.Actors[TargetIndex].VisibilityDistance, RapidEnd);
+    }
+
+    // --- save, close and reopen from disk -----------------------------------------
+    const FKyaActorPlacement Expected = Bank->SceneEnvironment.Actors[TargetIndex];
+    const FString PackageFilename = FPackageName::LongPackageNameToFilename(PackageName,
+        FPackageName::GetAssetPackageExtension());
+    Package->MarkPackageDirty();
+    FSavePackageArgs SaveArgs;
+    SaveArgs.TopLevelFlags = RF_Public | RF_Standalone;
+    SaveArgs.SaveFlags = SAVE_NoError;
+    const bool bSaved = UPackage::SavePackage(Package, Bank, *PackageFilename, SaveArgs);
+    TestTrue(TEXT("The edited save/reopen bank saves"), bSaved);
+
+    PreviewA->Destroy();
+    PreviewB->Destroy();
+    World->DestroyWorld(false);
+    Service.Reset();
+
+    FText ReloadError;
+    const bool bReloaded = bSaved && UPackageTools::ReloadPackages({ Package }, ReloadError,
+        EReloadPackagesInteractionMode::AssumePositive);
+    TestTrue(FString::Printf(TEXT("The edited save/reopen bank reopens from disk (%s)"), *ReloadError.ToString()),
+        bReloaded);
+    UPackage* LoadedPackage = FindPackage(nullptr, *PackageName);
+    UKyaLevelBank* LoadedBank = LoadedPackage ? FindObject<UKyaLevelBank>(LoadedPackage, TEXT("Bank")) : nullptr;
+    if (TestNotNull(TEXT("The reopened package holds the bank"), LoadedBank))
+    {
+        const FKyaActorPlacement& Reopened = LoadedBank->SceneEnvironment.Actors[TargetIndex];
+        TestEqual(TEXT("Reopen preserves the edited Details value"), Reopened.VisibilityDistance, Expected.VisibilityDistance);
+        TestTrue(TEXT("Reopen preserves the placement"), Reopened.Position.Equals(Expected.Position, 1.0e-4) &&
+            Reopened.Rotation.Equals(Expected.Rotation, 1.0e-5) && Reopened.Scale.Equals(Expected.Scale, 1.0e-4));
+
+        UWorld* ReopenedWorld = UWorld::CreateWorld(EWorldType::EditorPreview, false);
+        if (TestNotNull(TEXT("Create the reopened world"), ReopenedWorld))
+        {
+            const auto SpawnReopened = [ReopenedWorld](UKyaLevelBank* InBank, const FTransform& Transform)
+                -> AKyaLevelPreview*
+            {
+                AKyaLevelPreview* Spawned = ReopenedWorld->SpawnActor<AKyaLevelPreview>(
+                    AKyaLevelPreview::StaticClass(), Transform);
+                if (!Spawned) return nullptr;
+                Spawned->Bank = InBank;
+                Spawned->bShowRebuildProgress = false;
+                Spawned->bSpawnActorHandles = true;
+                Spawned->OnConstruction(Transform);
+                return Spawned;
+            };
+            AKyaLevelPreview* ReopenedA = SpawnReopened(LoadedBank, PreviewTransformA);
+            AKyaLevelPreview* ReopenedB = SpawnReopened(LoadedBank, PreviewTransformB);
+            if (TestNotNull(TEXT("The reopened first preview spawns"), ReopenedA) &&
+                TestNotNull(TEXT("The reopened second preview spawns"), ReopenedB))
+            {
+                FTransform Forward;
+                KyaActorTransform::MakeUnrealTransform(Expected.Position, Expected.Rotation,
+                    Expected.Scale, Expected.ClassId, Forward);
+                for (AKyaLevelPreview* ReopenedPreview : { ReopenedA, ReopenedB })
+                {
+                    AKyaActorHandle* Handle = Cast<AKyaActorHandle>(ReopenedPreview->GetActorHandle(TargetIndex));
+                    if (!TestNotNull(TEXT("The reopened preview shows the actor"), Handle)) continue;
+                    TestEqual(TEXT("Reopened Details show the saved value"),
+                        Handle->ActorVisibilityDistance, Expected.VisibilityDistance);
+                    TestTrue(TEXT("Reopened Details show the saved position"),
+                        Handle->ActorPosition.Equals(Expected.Position, 1.0e-4));
+                    const FTransform Local = Handle->GetActorTransform().GetRelativeTransform(
+                        ReopenedPreview->GetActorTransform());
+                    TestTrue(TEXT("The reopened rendered placement matches the record"),
+                        Local.GetLocation().Equals(Forward.GetLocation(), 0.1) &&
+                        Local.GetRotation().Equals(Forward.GetRotation(), 1.0e-4) &&
+                        Local.GetScale3D().Equals(Forward.GetScale3D(), 1.0e-4));
+                }
+            }
+            if (ReopenedA) ReopenedA->Destroy();
+            if (ReopenedB) ReopenedB->Destroy();
+            ReopenedWorld->DestroyWorld(false);
+        }
+    }
+
+    if (LoadedPackage) LoadedPackage->SetDirtyFlag(false);
+    IFileManager::Get().Delete(*PackageFilename, false, true, true);
+    Service.Reset();
+    Factory->RemoveFromRoot();
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaRepresentativeActorEditsTest, "Kya.Editor.RepresentativeActorEdits",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 

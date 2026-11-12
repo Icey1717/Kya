@@ -205,7 +205,10 @@ Actor records are identified by bank asset, actor index and a bank edit
 generation. Reimport or replacement bumps the generation, so a stale handle fails
 to resolve instead of editing a different record. Handles and other views
 subscribed to a bank refresh once per edit, including for undo/redo and for
-changes made in the bank's own asset editor.
+changes made in the bank's own asset editor. Two previews of the same bank stay
+synchronized through Details edits, undo/redo and rapid consecutive property edits,
+and reopening the saved package recreates both Details and the rendered placement
+from the stored record (`Kya.Editor.SaveReopenConsistency`).
 
 Handles are grouped in the World Outliner under one transient grouping actor per
 sector (attached to the level preview, labelled `<bank> sector <n>` or

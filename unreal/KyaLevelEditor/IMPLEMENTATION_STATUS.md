@@ -182,6 +182,10 @@ Last updated: 2026-11-12.
   Wolfen fight configuration, hero blow damage, checkpoint flags, meshless
   visibility distance); every edited property and the placement survive
   export/reimport.
+- Save/close/reopen consistency (`Kya.Editor.SaveReopenConsistency`): two previews
+  sharing a bank stay synchronized through a Details edit, undo/redo and 25 rapid
+  consecutive property patches; saving, closing and reloading the package restores
+  the Details values and the rendered placement in two fresh previews.
 - `FKyaLevelBankReimportHandler` implements `FReimportHandler`: parses into a
   temporary bank, only replaces the asset on success, asks before discarding dirty
   changes (refuses in unattended mode), updates provenance, bumps the edit
@@ -422,8 +426,9 @@ Results: `Kya.Bank.LevelOneRoundTrip`, `Kya.Bank.SmallBankRoundTrip`,
 `Kya.Editor.MilestoneAGate`, `Kya.Editor.MilestoneBGate`,
 `Kya.Editor.MilestoneCGate`, `Kya.Editor.MilestoneDGate`,
 `Kya.Editor.ViewportClickSelection`, `Kya.Editor.SharedEditPath`,
-`Kya.Editor.SectorIsolation`, `Kya.Editor.GizmoAcceptance` and
-`Kya.Editor.RepresentativeActorEdits` all `Success`.
+`Kya.Editor.SectorIsolation`, `Kya.Editor.GizmoAcceptance`,
+`Kya.Editor.RepresentativeActorEdits` and `Kya.Editor.SaveReopenConsistency` all
+`Success`.
 
 Coverage added by the new tests:
 
