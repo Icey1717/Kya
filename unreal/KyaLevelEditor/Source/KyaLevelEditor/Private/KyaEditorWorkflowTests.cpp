@@ -32,6 +32,7 @@
 #include "HAL/FileManager.h"
 #include "HAL/PlatformProcess.h"
 #include "Editor.h"
+#include "Editor/UnrealEdEngine.h"
 #include "Engine/Selection.h"
 #include "IMessageLogListing.h"
 #include "Logging/TokenizedMessage.h"
@@ -2281,6 +2282,13 @@ bool FKyaMilestoneDGateTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Blocking diagnostics identify the affected actor"), bNamedIssue);
     Bank->SceneEnvironment.Actors[Found->ActorIndex].MeshIndex = SavedMesh;
 
+    // Drop the transient selection before the preview is destroyed so typed-element
+    // selection state does not outlive the actors it references.
+    if (GEditor)
+    {
+        GEditor->SelectNone(false, true, false);
+        GEditor->NoteSelectionChange();
+    }
     Preview->Destroy();
     World->DestroyWorld(false);
     Service.Reset();
@@ -3208,6 +3216,472 @@ bool FKyaSectorIsolationTest::RunTest(const FString& Parameters)
     World->DestroyWorld(false);
     return true;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaSelectionOrganisationTest, "Kya.Editor.SelectionOrganisation",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaSelectionOrganisationTest::RunTest(const FString& Parameters)
+{
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    UKyaLevelBank* Bank = MakeKyaTestBank(GetTransientPackage());
+    Bank->SceneEnvironment.Waypoints.AddDefaulted();
+
+    UWorld* World = UWorld::CreateWorld(EWorldType::EditorPreview, false);
+    if (!TestNotNull(TEXT("Create the organization world"), World)) return false;
+    AKyaLevelPreview* Preview = World->SpawnActor<AKyaLevelPreview>();
+    if (!TestNotNull(TEXT("Spawn the organization preview"), Preview))
+    {
+        World->DestroyWorld(false);
+        return false;
+    }
+    Preview->Bank = Bank;
+    Preview->bShowRebuildProgress = false;
+    Preview->bSpawnActorHandles = true;
+    Preview->bSpawnWaypointHandles = true;
+    Preview->OnConstruction(FTransform::Identity);
+
+    AKyaActorHandle* First = Cast<AKyaActorHandle>(Preview->GetActorHandle(0));
+    AKyaActorHandle* Second = Cast<AKyaActorHandle>(Preview->GetActorHandle(1));
+    if (!TestNotNull(TEXT("First organization handle exists"), First) ||
+        !TestNotNull(TEXT("Second organization handle exists"), Second))
+    {
+        Preview->Destroy();
+        World->DestroyWorld(false);
+        return false;
+    }
+
+    const auto CountActorHandles = [World]()
+    {
+        int32 Count = 0;
+        for (TActorIterator<AKyaActorHandle> It(World); It; ++It) ++Count;
+        return Count;
+    };
+    const int32 HandleCountBefore = CountActorHandles();
+    const int32 BankActorCount = Bank->SceneEnvironment.Actors.Num();
+    const int32 EditGenerationBefore = Bank->EditGeneration;
+    const FKyaActorPlacement FirstBefore = Bank->SceneEnvironment.Actors[0];
+    const FKyaActorPlacement SecondBefore = Bank->SceneEnvironment.Actors[1];
+
+    // --- familiar selection commands ----------------------------------------------
+    if (UUnrealEdEngine* EdEngine = Cast<UUnrealEdEngine>(GEditor))
+    {
+        EdEngine->SelectNone(false, true, false);
+        TestFalse(TEXT("Select None clears the generated selection"), KyaSelectionContainsGeneratedActor());
+        EdEngine->edactSelectAll(World);
+        TestTrue(TEXT("Select All includes generated representations"), KyaSelectionContainsGeneratedActor());
+        TestTrue(TEXT("Select All selects every actor handle"), First->IsSelected() && Second->IsSelected());
+        EdEngine->SelectNone(false, true, false);
+        EdEngine->SelectActor(First, true, true);
+        TestTrue(TEXT("A single actor handle is selected"), First->IsSelected());
+        EdEngine->edactSelectInvert(World);
+        TestFalse(TEXT("Select Invert deselects the previous handle"), First->IsSelected());
+        TestTrue(TEXT("Select Invert selects the preview"), Preview->IsSelected());
+        EdEngine->SelectNone(false, true, false);
+        EdEngine->SelectActor(First, true, true);
+        EdEngine->SelectActor(Second, true, true);
+        TestTrue(TEXT("Multi-selection keeps both handles"), First->IsSelected() && Second->IsSelected());
+        TestTrue(TEXT("Multi-selection detects generated actors"), KyaSelectionContainsGeneratedActor());
+        EdEngine->SelectNone(false, true, false);
+    }
+
+    // --- organization commands keep the bank untouched ----------------------------
+    Preview->SetGeneratedActorTemporarilyHidden(First, true);
+    TestTrue(TEXT("Hide command hides the representation"), First->IsTemporarilyHiddenInEditor());
+    TestTrue(TEXT("Hide command does not change the bank"), Bank->SceneEnvironment.Actors[0].Position.Equals(FirstBefore.Position));
+    Preview->SetGeneratedActorTemporarilyHidden(First, false);
+    TestFalse(TEXT("Show command restores the representation"), First->IsTemporarilyHiddenInEditor());
+
+    Preview->IsolateGeneratedActors({ First });
+    TestTrue(TEXT("Isolate command isolates the representation"), Preview->IsGeneratedActorIsolated(First));
+    TestTrue(TEXT("Isolate command hides other handles"), Second->IsTemporarilyHiddenInEditor());
+    Preview->ClearGeneratedActorIsolation();
+
+    Preview->bLockGeneratedActorSelection = true;
+    TestFalse(TEXT("Lock command blocks viewport picking"), First->IsSelectable());
+    Preview->bLockGeneratedActorSelection = false;
+    TestTrue(TEXT("Unlock command restores viewport picking"), First->IsSelectable());
+
+    // --- unsupported structural operations keep map and bank consistent -----------
+    FActorSpawnParameters Params;
+    Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    Params.ObjectFlags |= RF_Transient | RF_Transactional;
+    AKyaActorHandle* Duplicate = World->SpawnActor<AKyaActorHandle>(
+        AKyaActorHandle::StaticClass(), FTransform::Identity, Params);
+    if (TestNotNull(TEXT("A duplicated representation spawns"), Duplicate))
+    {
+        Duplicate->Initialize(Preview, Bank, 0, true);
+        Duplicate->AddActorWorldOffset(FVector(300.0, 0.0, 0.0));
+        Duplicate->PostEditMove(true);
+        TestTrue(TEXT("A duplicated handle cannot move the bank record"),
+            Bank->SceneEnvironment.Actors[0].Position.Equals(FirstBefore.Position));
+        TestTrue(TEXT("Stray cleanup removes the duplicated representation"), KyaDestroyStrayGeneratedActors(World) >= 1);
+        TestFalse(TEXT("The duplicated representation is gone"), IsValid(Duplicate));
+    }
+
+    AKyaActorHandle* Pasted = World->SpawnActor<AKyaActorHandle>(
+        AKyaActorHandle::StaticClass(), FTransform::Identity, Params);
+    if (TestNotNull(TEXT("A pasted representation spawns"), Pasted))
+    {
+        Pasted->Initialize(Preview, Bank, 1, true);
+        TestTrue(TEXT("Stray cleanup removes the pasted representation"), KyaDestroyStrayGeneratedActors(World) >= 1);
+        TestFalse(TEXT("The pasted representation is gone"), IsValid(Pasted));
+    }
+
+    FText DeleteReason;
+    TestFalse(TEXT("Delete is rejected for generated handles"), First->CanDeleteSelectedActor(DeleteReason));
+    TestTrue(TEXT("The delete rejection names the bank record"),
+        DeleteReason.ToString().Contains(TEXT("bank")));
+    TestTrue(TEXT("The rejected delete keeps the handle"), IsValid(First) && Preview->GetActorHandle(0) == First);
+
+    TestEqual(TEXT("Structural commands keep the world representation count"), CountActorHandles(), HandleCountBefore);
+    TestEqual(TEXT("Structural commands keep the bank actor count"),
+        Bank->SceneEnvironment.Actors.Num(), BankActorCount);
+    TestEqual(TEXT("Structural commands do not bump the bank generation"),
+        Bank->EditGeneration, EditGenerationBefore);
+    TestTrue(TEXT("Structural commands keep the first record"), Bank->SceneEnvironment.Actors[0].Position.Equals(FirstBefore.Position) &&
+        Bank->SceneEnvironment.Actors[0].VisibilityDistance == FirstBefore.VisibilityDistance &&
+        Bank->SceneEnvironment.Actors[0].SectorId == FirstBefore.SectorId);
+    TestTrue(TEXT("Structural commands keep the second record"), Bank->SceneEnvironment.Actors[1].Position.Equals(SecondBefore.Position) &&
+        Bank->SceneEnvironment.Actors[1].VisibilityDistance == SecondBefore.VisibilityDistance &&
+        Bank->SceneEnvironment.Actors[1].SectorId == SecondBefore.SectorId);
+
+    Preview->Destroy();
+    World->DestroyWorld(false);
+    Service.Reset();
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaSpatialRecordAcceptanceTest, "Kya.Editor.SpatialRecordAcceptance",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaSpatialRecordAcceptanceTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to run the spatial-record acceptance."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read the spatial-record bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    Factory->AddToRoot();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Imported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient | RF_Transactional, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import the spatial-record bank"), Imported) ||
+        !TestTrue(TEXT("The spatial-record bank has waypoints and paths"),
+            Imported->SceneEnvironment.Waypoints.Num() > 0 && !Imported->SceneEnvironment.Paths.IsEmpty() &&
+            !Imported->SceneEnvironment.Paths[0].Points.IsEmpty()))
+    {
+        Factory->RemoveFromRoot();
+        return false;
+    }
+
+    const FString PackageName = FString::Printf(TEXT("/Game/KyaSpatialTest/Bank_%s"),
+        *FGuid::NewGuid().ToString(EGuidFormats::Digits));
+    UPackage* Package = CreatePackage(*PackageName);
+    UKyaLevelBank* Bank = DuplicateObject<UKyaLevelBank>(Imported, Package, TEXT("Bank"));
+    if (!TestNotNull(TEXT("Duplicate the spatial bank into a saveable package"), Bank))
+    {
+        Factory->RemoveFromRoot();
+        return false;
+    }
+    Bank->ClearFlags(RF_Transient);
+    Bank->SetFlags(RF_Public | RF_Standalone | RF_Transactional);
+    Package->ClearFlags(RF_Transient);
+    Package->SetFlags(RF_Public | RF_Standalone);
+    Bank->SourceFilename = Filename;
+    if (!Bank->AssetImportData) Bank->AssetImportData = NewObject<UAssetImportData>(Bank);
+    Bank->AssetImportData->Update(Bank->SourceFilename);
+    Package->SetDirtyFlag(false);
+
+    UWorld* World = UWorld::CreateWorld(EWorldType::EditorPreview, false);
+    if (!TestNotNull(TEXT("Create the spatial-record world"), World))
+    {
+        Factory->RemoveFromRoot();
+        return false;
+    }
+    AKyaLevelPreview* Preview = World->SpawnActor<AKyaLevelPreview>();
+    if (!TestNotNull(TEXT("Spawn the spatial-record preview"), Preview))
+    {
+        World->DestroyWorld(false);
+        Factory->RemoveFromRoot();
+        return false;
+    }
+    Preview->Bank = Bank;
+    Preview->bShowRebuildProgress = false;
+    Preview->bSpawnActorHandles = false;
+    Preview->bSpawnWaypointHandles = true;
+    Preview->bSpawnPathPointHandles = true;
+    Preview->OnConstruction(FTransform::Identity);
+
+    const auto FindHandle = [World](EKyaSpatialRecordKind Kind, const TCHAR* Prefix)
+        -> AKyaSpatialRecordHandle*
+    {
+        for (TActorIterator<AKyaSpatialRecordHandle> It(World); It; ++It)
+            if (It->Kind == Kind && It->GetActorLabel().StartsWith(Prefix)) return *It;
+        return nullptr;
+    };
+    AKyaSpatialRecordHandle* Waypoint = FindHandle(EKyaSpatialRecordKind::Waypoint, TEXT("Waypoint "));
+    AKyaSpatialRecordHandle* PathPoint = FindHandle(EKyaSpatialRecordKind::PathPoint, TEXT("Path "));
+    if (!TestNotNull(TEXT("A waypoint is discoverable from the Outliner"), Waypoint) ||
+        !TestNotNull(TEXT("A path point is discoverable from the Outliner"), PathPoint))
+    {
+        Preview->Destroy();
+        World->DestroyWorld(false);
+        Factory->RemoveFromRoot();
+        return false;
+    }
+    const int32 WaypointIndex = Waypoint->RecordIndex;
+    const int32 PathIndex = PathPoint->RecordIndex;
+    const int32 PointIndex = PathPoint->PointIndex;
+    TestTrue(TEXT("The waypoint label identifies its kind and position"),
+        Waypoint->GetActorLabel().Contains(TEXT("Waypoint")) && Waypoint->GetActorLabel().Contains(TEXT("(")));
+    TestTrue(TEXT("The path-point label identifies its path, point and position"),
+        PathPoint->GetActorLabel().Contains(FString::Printf(TEXT("Path %d Point %d"), PathIndex, PointIndex)));
+    TestTrue(TEXT("The waypoint describes its editable scope"), Waypoint->EditableScope.Contains(TEXT("Editable")));
+    TestEqual(TEXT("The waypoint mirrors the recorded position"),
+        Waypoint->WaypointPosition, Bank->SceneEnvironment.Waypoints[WaypointIndex].Position);
+    TestTrue(TEXT("The path point mirrors the recorded position"),
+        PathPoint->PathPoint.Equals(Bank->SceneEnvironment.Paths[PathIndex].Points[PointIndex]));
+
+    // Scope hints must match the arrays actually serialized for this path.
+    const FKyaPath& Path = Bank->SceneEnvironment.Paths[PathIndex];
+    TestEqual(TEXT("The rotation hint matches the serialized record"),
+        PathPoint->bHasRotationRecord, Path.Rotations.IsValidIndex(PointIndex));
+    TestEqual(TEXT("The delay hint matches the serialized record"),
+        PathPoint->bHasDelayRecord, Path.Delays.IsValidIndex(PointIndex));
+    TestEqual(TEXT("The flags hint matches the serialized record"),
+        PathPoint->bHasFlagsRecord, Path.PointFlags.IsValidIndex(PointIndex));    TestTrue(TEXT("The path-point scope states rotation is numeric only"),
+        PathPoint->EditableScope.Contains(TEXT("numeric only")));
+
+    // --- waypoint Details edit, undo and redo -------------------------------------
+    const FKyaWaypoint WaypointBefore = Bank->SceneEnvironment.Waypoints[WaypointIndex];
+    const FVector EditedWaypoint = WaypointBefore.Position + FVector(2.5, 1.5, -0.5);
+    {
+        FScopedTransaction Transaction(NSLOCTEXT("KyaTests", "WaypointDetails", "Waypoint details"));
+        Waypoint->WaypointPosition = EditedWaypoint;
+        FPropertyChangedEvent ChangedEvent(FindFProperty<FProperty>(AKyaSpatialRecordHandle::StaticClass(),
+            GET_MEMBER_NAME_CHECKED(AKyaSpatialRecordHandle, WaypointPosition)));
+        Waypoint->PostEditChangeProperty(ChangedEvent);
+        Service.FlushPendingNotifications();
+    }
+    TestTrue(TEXT("The waypoint Details edit writes its position"),
+        Bank->SceneEnvironment.Waypoints[WaypointIndex].Position.Equals(EditedWaypoint, 1.0e-4));
+    TestTrue(TEXT("The waypoint edit preserves its rotation"),
+        Bank->SceneEnvironment.Waypoints[WaypointIndex].Rotation.Equals(WaypointBefore.Rotation, 1.0e-5));
+    TestTrue(TEXT("The waypoint edit preserves its parameters"),
+        Bank->SceneEnvironment.Waypoints[WaypointIndex].Parameters.Equals(WaypointBefore.Parameters, 1.0e-5));
+    TestTrue(TEXT("The waypoint label refreshes to the edited position"),
+        Waypoint->GetActorLabel().Contains(FString::Printf(TEXT("(%.1f, %.1f, %.1f)"),
+            EditedWaypoint.X, EditedWaypoint.Y, EditedWaypoint.Z)));
+    if (GEditor)
+    {
+        TestTrue(TEXT("Undo returns the waypoint transaction"), GEditor->UndoTransaction());
+        Service.FlushPendingNotifications();
+        TestTrue(TEXT("Undo restores the waypoint position"),
+            Bank->SceneEnvironment.Waypoints[WaypointIndex].Position.Equals(WaypointBefore.Position, 1.0e-4));
+        TestEqual(TEXT("Undo refreshes the waypoint handle"), Waypoint->WaypointPosition, WaypointBefore.Position);
+        GEditor->RedoTransaction();
+        Service.FlushPendingNotifications();
+        TestTrue(TEXT("Redo reapplies the waypoint position"),
+            Bank->SceneEnvironment.Waypoints[WaypointIndex].Position.Equals(EditedWaypoint, 1.0e-4));
+    }
+
+    // --- path-point Details edits -------------------------------------------------
+    const FVector4 PointBefore = Bank->SceneEnvironment.Paths[PathIndex].Points[PointIndex];
+    const FVector4 EditedPoint(PointBefore.X + 3.0, PointBefore.Y - 1.5, PointBefore.Z + 0.5, PointBefore.W);
+    {
+        FScopedTransaction Transaction(NSLOCTEXT("KyaTests", "PathPointDetails", "Path point details"));
+        PathPoint->PathPoint = EditedPoint;
+        FPropertyChangedEvent ChangedEvent(FindFProperty<FProperty>(AKyaSpatialRecordHandle::StaticClass(),
+            GET_MEMBER_NAME_CHECKED(AKyaSpatialRecordHandle, PathPoint)));
+        PathPoint->PostEditChangeProperty(ChangedEvent);
+        Service.FlushPendingNotifications();
+    }
+    TestTrue(TEXT("The path-point Details edit writes its position"),
+        Bank->SceneEnvironment.Paths[PathIndex].Points[PointIndex].Equals(EditedPoint));
+    TestTrue(TEXT("The path-point label refreshes to the edited position"),
+        PathPoint->GetActorLabel().Contains(FString::Printf(TEXT("(%.1f, %.1f, %.1f)"),
+            EditedPoint.X, EditedPoint.Y, EditedPoint.Z)));
+
+    if (PathPoint->bHasDelayRecord)
+    {
+        const float DelayBefore = Bank->SceneEnvironment.Paths[PathIndex].Delays[PointIndex];
+        const float EditedDelay = DelayBefore + 0.25f;
+        FScopedTransaction Transaction(NSLOCTEXT("KyaTests", "PathDelayDetails", "Path delay details"));
+        PathPoint->PathDelay = EditedDelay;
+        FPropertyChangedEvent ChangedEvent(FindFProperty<FProperty>(AKyaSpatialRecordHandle::StaticClass(),
+            GET_MEMBER_NAME_CHECKED(AKyaSpatialRecordHandle, PathDelay)));
+        PathPoint->PostEditChangeProperty(ChangedEvent);
+        Service.FlushPendingNotifications();
+        TestEqual(TEXT("The path-point Details edit writes its delay"),
+            Bank->SceneEnvironment.Paths[PathIndex].Delays[PointIndex], EditedDelay);
+    }
+
+    if (PathPoint->bHasRotationRecord)
+    {
+        const FVector4 RotationBefore = Bank->SceneEnvironment.Paths[PathIndex].Rotations[PointIndex];
+        const FVector4 EditedRotation(RotationBefore.X + 0.1, RotationBefore.Y + 0.2,
+            RotationBefore.Z + 0.3, RotationBefore.W);
+        FScopedTransaction Transaction(NSLOCTEXT("KyaTests", "PathRotationDetails", "Path rotation details"));
+        PathPoint->PathRotation = EditedRotation;
+        FPropertyChangedEvent ChangedEvent(FindFProperty<FProperty>(AKyaSpatialRecordHandle::StaticClass(),
+            GET_MEMBER_NAME_CHECKED(AKyaSpatialRecordHandle, PathRotation)));
+        PathPoint->PostEditChangeProperty(ChangedEvent);
+        Service.FlushPendingNotifications();
+        TestEqual(TEXT("The path-point Details edit writes its rotation"),
+            Bank->SceneEnvironment.Paths[PathIndex].Rotations[PointIndex], EditedRotation);
+    }
+    else
+    {
+        const int32 RotationCount = Bank->SceneEnvironment.Paths[PathIndex].Rotations.Num();
+        const FVector4 Before = PathPoint->PathRotation;
+        FScopedTransaction Transaction(NSLOCTEXT("KyaTests", "PathRotationReject", "Path rotation reject"));
+        PathPoint->PathRotation = FVector4(1.0, 2.0, 3.0, 4.0);
+        FPropertyChangedEvent ChangedEvent(FindFProperty<FProperty>(AKyaSpatialRecordHandle::StaticClass(),
+            GET_MEMBER_NAME_CHECKED(AKyaSpatialRecordHandle, PathRotation)));
+        PathPoint->PostEditChangeProperty(ChangedEvent);
+        Service.FlushPendingNotifications();
+        TestEqual(TEXT("A path without rotation records keeps that array unchanged"),
+            Bank->SceneEnvironment.Paths[PathIndex].Rotations.Num(), RotationCount);
+        TestTrue(TEXT("A rejected path rotation resynchronizes the handle"),
+            PathPoint->PathRotation.Equals(Before));
+        TestTrue(TEXT("The scope explains the rejected rotation"),
+            PathPoint->EditableScope.Contains(TEXT("Missing per-point records")));
+    }
+
+    // --- save, close, reopen and export ------------------------------------------
+    const FKyaWaypoint ExpectedWaypoint = Bank->SceneEnvironment.Waypoints[WaypointIndex];
+    const FVector4 ExpectedPoint = Bank->SceneEnvironment.Paths[PathIndex].Points[PointIndex];
+    const int32 ExpectedRotationCount = Bank->SceneEnvironment.Paths[PathIndex].Rotations.Num();
+    const bool bHadRotationRecord = PathPoint->bHasRotationRecord;
+    const bool bHadDelayRecord = PathPoint->bHasDelayRecord;
+    const FVector4 ExpectedRotation = bHadRotationRecord
+        ? Bank->SceneEnvironment.Paths[PathIndex].Rotations[PointIndex] : FVector4(0, 0, 0, 0);
+    const float ExpectedDelay = bHadDelayRecord
+        ? Bank->SceneEnvironment.Paths[PathIndex].Delays[PointIndex] : 0.0f;
+
+    const FString PackageFilename = FPackageName::LongPackageNameToFilename(PackageName,
+        FPackageName::GetAssetPackageExtension());
+    Package->MarkPackageDirty();
+    FSavePackageArgs SaveArgs;
+    SaveArgs.TopLevelFlags = RF_Public | RF_Standalone;
+    SaveArgs.SaveFlags = SAVE_NoError;
+    const bool bSaved = UPackage::SavePackage(Package, Bank, *PackageFilename, SaveArgs);
+    TestTrue(TEXT("The edited spatial bank saves"), bSaved);
+
+    Preview->Destroy();
+    World->DestroyWorld(false);
+    Service.Reset();
+
+    FText ReloadError;
+    const bool bReloaded = bSaved && UPackageTools::ReloadPackages({ Package }, ReloadError,
+        EReloadPackagesInteractionMode::AssumePositive);
+    TestTrue(FString::Printf(TEXT("The edited spatial bank reopens from disk (%s)"), *ReloadError.ToString()),
+        bReloaded);
+    UPackage* LoadedPackage = FindPackage(nullptr, *PackageName);
+    UKyaLevelBank* LoadedBank = LoadedPackage ? FindObject<UKyaLevelBank>(LoadedPackage, TEXT("Bank")) : nullptr;
+    if (TestNotNull(TEXT("The reopened package holds the spatial bank"), LoadedBank) &&
+        TestTrue(TEXT("The reopened bank keeps the waypoint and path"),
+            LoadedBank->SceneEnvironment.Waypoints.IsValidIndex(WaypointIndex) &&
+            LoadedBank->SceneEnvironment.Paths.IsValidIndex(PathIndex) &&
+            LoadedBank->SceneEnvironment.Paths[PathIndex].Points.IsValidIndex(PointIndex)))
+    {
+        TestTrue(TEXT("Reopen preserves the waypoint position"),
+            LoadedBank->SceneEnvironment.Waypoints[WaypointIndex].Position.Equals(ExpectedWaypoint.Position, 1.0e-4));
+        TestTrue(TEXT("Reopen preserves the waypoint rotation"),
+            LoadedBank->SceneEnvironment.Waypoints[WaypointIndex].Rotation.Equals(ExpectedWaypoint.Rotation, 1.0e-5));
+        TestTrue(TEXT("Reopen preserves the path point"),
+            LoadedBank->SceneEnvironment.Paths[PathIndex].Points[PointIndex].Equals(ExpectedPoint));
+
+        UWorld* ReopenedWorld = UWorld::CreateWorld(EWorldType::EditorPreview, false);
+        if (TestNotNull(TEXT("Create the reopened spatial world"), ReopenedWorld))
+        {
+            AKyaLevelPreview* ReopenedPreview = ReopenedWorld->SpawnActor<AKyaLevelPreview>();
+            if (TestNotNull(TEXT("Spawn the reopened spatial preview"), ReopenedPreview))
+            {
+                ReopenedPreview->Bank = LoadedBank;
+                ReopenedPreview->bShowRebuildProgress = false;
+                ReopenedPreview->bSpawnActorHandles = false;
+                ReopenedPreview->bSpawnWaypointHandles = true;
+                ReopenedPreview->bSpawnPathPointHandles = true;
+                ReopenedPreview->OnConstruction(FTransform::Identity);
+                AKyaSpatialRecordHandle* ReopenedWaypoint = nullptr;
+                AKyaSpatialRecordHandle* ReopenedPoint = nullptr;
+                for (TActorIterator<AKyaSpatialRecordHandle> It(ReopenedWorld); It; ++It)
+                {
+                    if (It->Kind == EKyaSpatialRecordKind::Waypoint && It->RecordIndex == WaypointIndex)
+                        ReopenedWaypoint = *It;
+                    if (It->Kind == EKyaSpatialRecordKind::PathPoint &&
+                        It->RecordIndex == PathIndex && It->PointIndex == PointIndex)
+                        ReopenedPoint = *It;
+                    if (ReopenedWaypoint && ReopenedPoint) break;
+                }
+                if (TestNotNull(TEXT("The reopened preview shows the waypoint"), ReopenedWaypoint))
+                {
+                    TestTrue(TEXT("The reopened waypoint mirrors the saved position"),
+                        ReopenedWaypoint->WaypointPosition.Equals(ExpectedWaypoint.Position, 1.0e-4));
+                    TestTrue(TEXT("The reopened waypoint keeps its editable scope"),
+                        ReopenedWaypoint->EditableScope.Contains(TEXT("Editable")));
+                }
+                if (TestNotNull(TEXT("The reopened preview shows the path point"), ReopenedPoint))
+                {
+                    TestTrue(TEXT("The reopened path point mirrors the saved position"),
+                        ReopenedPoint->PathPoint.Equals(ExpectedPoint));
+                    TestEqual(TEXT("The reopened path point keeps its record hints"),
+                        ReopenedPoint->bHasRotationRecord, ExpectedRotationCount > PointIndex);
+                }
+            }
+            if (ReopenedPreview) ReopenedPreview->Destroy();
+            ReopenedWorld->DestroyWorld(false);
+        }
+
+        FKyaBankExportDiagnostics Diagnostics;
+        TArray<uint8> Exported;
+        if (TestTrue(TEXT("Export the reopened spatial bank"),
+            KyaBuildBankExportBytes(LoadedBank, Exported, Diagnostics)))
+        {
+            const uint8* ExportedCursor = Exported.GetData();
+            UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(
+                UKyaLevelBank::StaticClass(), GetTransientPackage(), NAME_None, RF_Transient, nullptr,
+                TEXT("bnk"), ExportedCursor, Exported.GetData() + Exported.Num(), GWarn));
+            if (TestNotNull(TEXT("Reimport the exported spatial bank"), Reimported) &&
+                TestTrue(TEXT("The reimported bank keeps the waypoint and path"),
+                    Reimported->SceneEnvironment.Waypoints.IsValidIndex(WaypointIndex) &&
+                    Reimported->SceneEnvironment.Paths.IsValidIndex(PathIndex) &&
+                    Reimported->SceneEnvironment.Paths[PathIndex].Points.IsValidIndex(PointIndex)))
+            {
+                TestTrue(TEXT("Export preserves the waypoint position"),
+                    Reimported->SceneEnvironment.Waypoints[WaypointIndex].Position.Equals(ExpectedWaypoint.Position, 1.0e-4));
+                TestTrue(TEXT("Export preserves the waypoint rotation"),
+                    Reimported->SceneEnvironment.Waypoints[WaypointIndex].Rotation.Equals(ExpectedWaypoint.Rotation, 1.0e-5));
+                TestTrue(TEXT("Export preserves the path point"),
+                    Reimported->SceneEnvironment.Paths[PathIndex].Points[PointIndex].Equals(ExpectedPoint));
+                if (bHadRotationRecord)
+                    TestTrue(TEXT("Export preserves the path-point rotation"),
+                        Reimported->SceneEnvironment.Paths[PathIndex].Rotations[PointIndex].Equals(
+                            ExpectedRotation, 1.0e-4));
+                if (bHadDelayRecord)
+                    TestEqual(TEXT("Export preserves the path-point delay"),
+                        Reimported->SceneEnvironment.Paths[PathIndex].Delays[PointIndex], ExpectedDelay);
+            }
+        }
+    }
+
+    if (LoadedPackage) LoadedPackage->SetDirtyFlag(false);
+    IFileManager::Get().Delete(*PackageFilename, false, true, true);
+    Service.Reset();
+    Factory->RemoveFromRoot();
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaSectorAssignmentTest, "Kya.Editor.SectorAssignment",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
@@ -4426,6 +4900,11 @@ bool FKyaMilestoneAGateTest::RunTest(const FString& Parameters)
                 Reimported->SceneEnvironment.Actors[0].Position.Equals(MovedPosition, 1.0e-3));
     }
 
+    if (GEditor)
+    {
+        GEditor->SelectNone(false, true, false);
+        GEditor->NoteSelectionChange();
+    }
     Preview->Destroy();
     World->DestroyWorld(false);
     Service.Reset();
@@ -4880,6 +5359,11 @@ bool FKyaTargetedWorkflowAcceptanceTest::RunTest(const FString& Parameters)
         }
     }
 
+    if (GEditor)
+    {
+        GEditor->SelectNone(false, true, false);
+        GEditor->NoteSelectionChange();
+    }
     Preview->Destroy();
     World->DestroyWorld(false);
     Service.Reset();

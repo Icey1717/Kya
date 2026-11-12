@@ -86,7 +86,7 @@ This is a source review of the current working tree, including the in-progress a
 - [x] Define Outliner rename behavior explicitly: presentation label versus serialized actor name, including encoded-length limits. Do not silently truncate a game name.
 - [x] Define Delete, Duplicate, Alt-drag, copy/paste and cut behavior. While the bank writer requires fixed counts, block unsupported structural commands with a clear explanation rather than allowing a generated actor to disappear and respawn mysteriously.
 - [x] Keep assigning an actor's sector explicit until reliable spatial sector membership exists. Add candidate-sector diagnostics for moved actors; do not infer membership from arbitrary mesh bounds or change it silently.
-- [ ] Acceptance: familiar selection and organization commands work, and unsupported structural operations cannot leave map and bank state inconsistent.
+- [x] Acceptance: familiar selection and organization commands work, and unsupported structural operations cannot leave map and bank state inconsistent.
 
 ## 7. Extend editing beyond actor placements
 
@@ -97,7 +97,7 @@ This is a source review of the current working tree, including the in-progress a
 - [x] Keep hierarchy hide/isolate actions clearly presentation-only. Enable hierarchy transforms only after implementing and validating serialized hierarchy writeback; a movable-looking handle must not imply export support.
 - [x] Add selectable visualizers for supported lights, cameras, zones, trigger bounds and actor links. Use the same Details/edit service and distinguish approximate preview shapes from verified native semantics.
 - [x] Put level environment, camera, fog and scene configuration on a discoverable level settings surface. Separate authoring properties from render comparison and capture diagnostics.
-- [ ] Acceptance: users can find spatial records through the viewport/Outliner, understand their editable scope, and save/export supported changes without global-array hunting.
+- [x] Acceptance: users can find spatial records through the viewport/Outliner, understand their editable scope, and save/export supported changes without global-array hunting.
 
 ## 8. Make editing responsive and diagnosable
 

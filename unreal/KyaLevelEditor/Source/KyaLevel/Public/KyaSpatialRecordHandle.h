@@ -152,6 +152,10 @@ public:
     UPROPERTY(EditAnywhere, Category="Kya|Selection")
     bool bSelectionLocked = false;
 
+    /** Human-readable summary of the editable scope and read-only/absent records. */
+    UPROPERTY(VisibleAnywhere, Category="Kya|Scope")
+    FString EditableScope;
+
 private:
     bool bSyncing = false;
     /** Set while the preview assigns the derived label, so it is not treated as a rename. */

@@ -86,6 +86,8 @@ void AKyaSpatialRecordHandle::MirrorFromBank()
         WaypointPosition = Waypoint.Position;
         WaypointRotation = Waypoint.Rotation;
         WaypointParameters = Waypoint.Parameters;
+        EditableScope = TEXT("Editable: position, stored Euler rotation (radians) and the parameter triple. "
+            "The orientation arrow shows the stored basis. Movement uses the shared edit service.");
         return;
     }
     if (!Bank->SceneEnvironment.Paths.IsValidIndex(RecordIndex)) return;
@@ -107,6 +109,19 @@ void AKyaSpatialRecordHandle::MirrorFromBank()
     PathFlags = Path.PointFlags.IsValidIndex(PointIndex) ? Path.PointFlags[PointIndex] : 0;
     PathExtraValue = Path.ExtraValues.IsValidIndex(PointIndex) ? Path.ExtraValues[PointIndex] : 0.0f;
     PathExtraWord = Path.ExtraWords.IsValidIndex(PointIndex) ? Path.ExtraWords[PointIndex] : 0;
+
+    EditableScope = TEXT("Editable: the point position and the per-point records present for this path. "
+        "Rotation is numeric only; path timing, lead-in and loop playback are not visualized.");
+    TArray<FString> Missing;
+    if (!bHasRotationRecord) Missing.Add(TEXT("rotation"));
+    if (!bHasExtraVectorRecord) Missing.Add(TEXT("extra vector"));
+    if (!bHasDelayRecord) Missing.Add(TEXT("delay"));
+    if (!bHasFlagsRecord) Missing.Add(TEXT("flags"));
+    if (!bHasExtraValueRecord) Missing.Add(TEXT("extra value"));
+    if (!bHasExtraWordRecord) Missing.Add(TEXT("extra word"));
+    if (!Missing.IsEmpty())
+        EditableScope += FString::Printf(TEXT(" Missing per-point records (edits rejected): %s."),
+            *FString::Join(Missing, TEXT(", ")));
 }
 
 void AKyaSpatialRecordHandle::SyncFromBank()

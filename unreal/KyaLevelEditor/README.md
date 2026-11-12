@@ -227,6 +227,13 @@ never changes membership; it is not derived from the actor's own mesh bounds.
 SECT1 background bounds, confirms the explicit id survives the move and
 export/reimport, and checks the diagnostic wording.
 
+`Kya.Editor.SelectionOrganisation` covers the familiar selection and organization
+commands: Select All/Select Invert/Select None and multi-selection over the generated
+representations, hide/show, isolate/clear and lock/unlock (all presentation-only),
+plus duplicate/paste cleanup and delete refusal. It asserts the world handle count,
+bank actor count, edited records and `EditGeneration` are unchanged, so unsupported
+structural commands cannot leave the map and bank out of sync.
+
 Validation, export and sector discovery report through the Message Log
 (`KyaLevelEditor` listing) as well as the dialog summary: one entry per bank or
 sector, with the asset path, the failure reason and any warnings. Entries are
@@ -376,6 +383,17 @@ labelled `Path <n> Point <m> (<x>, <y>, <z>)`, so spatial records can be found
 without setting `Preview Path Index`; waypoint labels carry their game-space position
 too and refresh after edits, so a record is identifiable in the Outliner without
 knowing its index. The spline guide still follows that index.
+
+Every spatial handle also exposes an `Editable Scope` string in Details. Waypoints
+state that position, the stored Euler rotation (radians) and the parameter triple
+are editable and that the orientation arrow shows the stored basis. Path points
+state that the point and the per-point records present on that path are editable,
+that rotation is numeric only, that timing/lead-in/loop playback is not visualized,
+and which per-point records are missing (those edits are rejected and the handle
+resynchronizes). `Kya.Editor.SpatialRecordAcceptance` finds a waypoint and path point
+by label, edits them through Details with undo/redo, saves, closes and reopens the
+package, verifies the reopened mirrors and scope hints, then exports/reimports and
+compares the changed waypoint/path values.
 
 `Kya.Editor.MilestoneDGate` exercises this as a session on the real bank: it selects
 an actor by its Outliner label with no capture camera or `PreviewActorIndex`, uses

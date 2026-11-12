@@ -192,6 +192,16 @@ Last updated: 2026-11-12.
   the position, explicitly as a diagnostic that is never applied. The gate moves an
   actor into loaded SECT1 bounds and confirms the id survives the move and
   export/reimport.
+- Selection and organization (`Kya.Editor.SelectionOrganisation`): Select All/Invert/
+  None, multi-selection, hide/show, isolate/clear and lock/unlock work over the
+  generated representations, while duplicate/paste cleanup and delete refusal keep
+  the world handle count, bank records, bank actor count and `EditGeneration`
+  unchanged.
+- Spatial-record acceptance (`Kya.Editor.SpatialRecordAcceptance`): waypoints and path
+  points are found by Outliner label, their `Editable Scope` text describes the
+  supported fields and missing per-point records, and Details edits (with rotation
+  rejection when the record is absent) survive undo/redo, save/close/reopen and
+  export/reimport.
 - `FKyaLevelBankReimportHandler` implements `FReimportHandler`: parses into a
   temporary bank, only replaces the asset on success, asks before discarding dirty
   changes (refuses in unattended mode), updates provenance, bumps the edit
@@ -433,8 +443,9 @@ Results: `Kya.Bank.LevelOneRoundTrip`, `Kya.Bank.SmallBankRoundTrip`,
 `Kya.Editor.MilestoneCGate`, `Kya.Editor.MilestoneDGate`,
 `Kya.Editor.ViewportClickSelection`, `Kya.Editor.SharedEditPath`,
 `Kya.Editor.SectorIsolation`, `Kya.Editor.GizmoAcceptance`,
-`Kya.Editor.RepresentativeActorEdits`, `Kya.Editor.SaveReopenConsistency` and
-`Kya.Editor.SectorAssignment` all `Success`.
+`Kya.Editor.RepresentativeActorEdits`, `Kya.Editor.SaveReopenConsistency`,
+`Kya.Editor.SectorAssignment`, `Kya.Editor.SelectionOrganisation` and
+`Kya.Editor.SpatialRecordAcceptance` all `Success`.
 
 Coverage added by the new tests:
 
