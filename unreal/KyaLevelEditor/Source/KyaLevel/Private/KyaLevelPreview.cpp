@@ -1137,6 +1137,12 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
             KyaG2D::ReadMaterials(CommonClusterTextures, CommonClusterMaterials);
         }
     }
+    // Only capture hierarchy geometry when handles will actually render; in a game
+    // world (PIE/packaged) the shared mesh remains the only draw path.
+    bool bCaptureHierarchyGeometry = false;
+#if WITH_EDITOR
+    bCaptureHierarchyGeometry = bSpawnHierarchyHandles && GetWorld() && !GetWorld()->IsGameWorld();
+#endif
     for (const UKyaLevelBank* Sector : ClusterBanks)
     {
         if (!Sector) continue;
@@ -1404,7 +1410,7 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
                             HierarchyInfo.Origin = HierarchyTransform.GetOrigin();
                             ++HierarchyInfo.Strips;
                             HierarchyInfo.Triangles += Strip.Indices.Num() / 3;
-                            if (bSpawnHierarchyHandles && HiddenHierarchies.Contains(HierarchyKey))
+                            if (bCaptureHierarchyGeometry && HiddenHierarchies.Contains(HierarchyKey))
                             {
                                 ++HiddenStrips;
                                 continue;
@@ -1412,6 +1418,51 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
                             FSectionData* Textured = ClusterMaterialOffsets.Contains(Strip.MaterialHash)
                                 ? GetTexturedSection(Strip.MaterialHash, ClusterTextureData, ClusterMaterialOffsets, ClusterMaterialSections, TEXT("Cluster"), Strip.Primitive)
                                 : GetTexturedSection(Strip.MaterialHash, CommonClusterTextures, CommonClusterMaterials, CommonClusterSections, TEXT("CommonCluster"), Strip.Primitive);
+
+                            // Editing mode: the hierarchy handle owns its strips so the
+                            // rendered geometry itself is clickable at hierarchy
+                            // granularity. Shared-mesh ranges are skipped to avoid
+                            // drawing two copies; cluster visibility is the handle's
+                            // presentation-only bVisible toggle in this mode.
+                            if (bCaptureHierarchyGeometry)
+                            {
+                                const int32 SectionKey = Textured ? Textured->Section : 0;
+                                FKyaActorMeshSection* Capture = nullptr;
+                                for (FKyaActorMeshSection& Section : HierarchyInfo.Sections)
+                                {
+                                    if (Section.StripIndex == SectionKey) { Capture = &Section; break; }
+                                }
+                                if (!Capture)
+                                {
+                                    Capture = &HierarchyInfo.Sections.AddDefaulted_GetRef();
+                                    Capture->StripIndex = SectionKey;
+                                    Capture->MaterialHash = Strip.MaterialHash;
+                                    Capture->Material = Textured ? Textured->Material : GeneratedUntexturedMaterial.Get();
+                                    HierarchyInfo.MaterialHashes.Add(Strip.MaterialHash);
+                                    HierarchyInfo.Materials.Add(Capture->Material
+                                        ? Capture->Material->GetName()
+                                        : FString::Printf(TEXT("hash %016llx"), Strip.MaterialHash));
+                                }
+                                const int32 Base = Capture->Positions.Num();
+                                for (const FKyaG3DVertex& Vertex : Strip.Vertices)
+                                {
+                                    const FVector P = HierarchyTransform.TransformPosition(FVector(Vertex.Position));
+                                    const FVector Position = FVector(P.X, P.Z, P.Y) * 100.0;
+                                    Capture->Positions.Add(Position);
+                                    HierarchyInfo.Bounds += Position;
+                                }
+                                for (const FKyaG3DVertexAttributes& Attribute : Strip.Attributes)
+                                {
+                                    Capture->UVs.Add(FVector2D(Attribute.UV));
+                                    Capture->Colors.Add(Attribute.Color);
+                                }
+                                AppendUnrealTriangles(Capture->Triangles, Strip.Indices, Base);
+                                ++Included;
+                                if (Textured) ++HierarchyTextured;
+                                HierarchyTriangles += Strip.Indices.Num() / 3;
+                                continue;
+                            }
+
                             TArray<FVector>& TargetPositions = Textured ? Textured->Positions : Positions;
                             TArray<int32>& TargetTriangles = Textured ? Textured->Triangles : Triangles;
                             TArray<FVector2D>& TargetUVs = Textured ? Textured->UVs : UVs;
@@ -2135,8 +2186,9 @@ void AKyaLevelPreview::RefreshHierarchyHandles(){
     {
         const FHierarchySelectionInfo& Info = Pair.Value;
         if (!Info.Bank) continue;
-        const FVector WorldOrigin = ActorTransform.TransformPosition(
-            FVector(Info.Origin.X, Info.Origin.Z, Info.Origin.Y) * 100.0);
+        const FVector LocalOrigin = FVector(Info.Origin.X, Info.Origin.Z, Info.Origin.Y) * 100.0;
+        const FBox WorldBounds = Info.Bounds.IsValid
+            ? Info.Bounds.TransformBy(ActorTransform.ToMatrixWithScale()) : FBox(ForceInit);
         AKyaHierarchyHandle* Existing = nullptr;
         for (const TObjectPtr<AKyaHierarchyHandle>& Candidate : HierarchyHandles)
         {
@@ -2150,10 +2202,11 @@ void AKyaLevelPreview::RefreshHierarchyHandles(){
         {
             Existing->Preview = this;
             Existing->SectorId = Info.SectorId;
+            Existing->SourceOrigin = Info.Origin;
             Existing->StripCount = Info.Strips;
             Existing->TriangleCount = Info.Triangles;
             Existing->bVisible = !HiddenHierarchies.Contains(Pair.Key);
-            Existing->SetActorLocation(WorldOrigin, false, nullptr, ETeleportType::TeleportPhysics);
+            Existing->SetHierarchyGeometry(Info.Sections, WorldBounds, Info.Materials, Info.MaterialHashes);
             continue;
         }
         FActorSpawnParameters Params;
@@ -2163,8 +2216,9 @@ void AKyaLevelPreview::RefreshHierarchyHandles(){
             AKyaHierarchyHandle::StaticClass(), FTransform::Identity, Params);
         if (!Handle) continue;
         Handle->SetFlags(RF_Transient | RF_Transactional);
-        Handle->Initialize(this, Info.Bank, Info.SectorId, Info.Offset, WorldOrigin, Info.Strips, Info.Triangles,
-            !HiddenHierarchies.Contains(Pair.Key));
+        Handle->Initialize(this, Info.Bank, Info.SectorId, Info.Offset, LocalOrigin, Info.Origin,
+            Info.Strips, Info.Triangles, !HiddenHierarchies.Contains(Pair.Key));
+        Handle->SetHierarchyGeometry(Info.Sections, WorldBounds, Info.Materials, Info.MaterialHashes);
         HierarchyHandles.Add(Handle);
     }
 

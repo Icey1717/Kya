@@ -316,6 +316,18 @@ public:
     UFUNCTION(BlueprintCallable, Category="Kya|Selection")
     int32 GetActorHandleCount() const { return ActorHandles.Num(); }
 
+#if WITH_EDITOR
+    /** Number of decoded world-geometry hierarchies available for selection. */
+    int32 GetHierarchySelectionCount() const { return HierarchySelectionInfo.Num(); }
+    /** Number of live hierarchy handles. */
+    int32 GetHierarchyHandleCount() const { return HierarchyHandles.Num(); }
+    /** Live hierarchy handle by index, or null. */
+    AKyaHierarchyHandle* GetHierarchyHandle(int32 HandleIndex) const
+    {
+        return HierarchyHandles.IsValidIndex(HandleIndex) ? HierarchyHandles[HandleIndex].Get() : nullptr;
+    }
+#endif
+
     /** Handle for a bank actor index, or null. */
     UFUNCTION(BlueprintCallable, Category="Kya|Selection")
     AActor* GetActorHandle(int32 ActorIndex) const;
@@ -414,6 +426,14 @@ private:
         int32 Strips = 0;
         int32 Triangles = 0;
         FVector Origin = FVector::ZeroVector;
+        /** Preview-local bounds of the captured hierarchy geometry (cm). */
+        FBox Bounds = FBox(ForceInit);
+        /** Captured material sections, one per material used by this hierarchy. */
+        TArray<FKyaActorMeshSection> Sections;
+        /** Material names (or hash fallbacks) for the Details panel. */
+        TArray<FString> Materials;
+        /** Raw material hashes, parallel to Materials. */
+        TArray<uint64> MaterialHashes;
     };
     FString MakeHierarchyKey(const UKyaLevelBank* InBank, int32 HierarchyOffset) const;
     TMap<FString, FHierarchySelectionInfo> HierarchySelectionInfo;

@@ -205,6 +205,13 @@ Last updated: 2026-11-12.
   service. Rejected renames leave the bank unchanged, restore the derived label and
   explain the limit without truncating; spatial, hierarchy and group labels are
   generated and rename attempts are reverted.
+- Hierarchy handles own the rendered strips of one static cluster hierarchy (one
+  procedural section per material) so clicking visible geometry selects it; the
+  shared mesh skips captured strips to avoid duplicate draws. Details reports the
+  owning bank/sector, source byte offset, serialized origin, strip/triangle counts,
+  world bounds and material names/hashes. Handles are location-locked and reset
+  transform edits because hierarchy transforms are not serialized; visibility and
+  selection stay presentation-only.
 - Generated actors are grouped in the Outliner under one transient grouping actor  per sector, attached to the preview. Labels are `<serialized name> [class <id>]`,
   disambiguated with the record index for duplicate names; labels are derived from
   the whole bank so sector load/unload cannot rename them, and serialized names are
@@ -254,7 +261,8 @@ Results: `Kya.Bank.LevelOneRoundTrip`, `Kya.Bank.SmallBankRoundTrip`,
 `Kya.Editor.LevelSet`, `Kya.Editor.SpatialRecords`, `Kya.Editor.ActorCatalog`,
 `Kya.Editor.MultiEditBaseline`, `Kya.Editor.GeneratedActorLifecycle`,
 `Kya.Editor.StructuralCommands`, `Kya.Editor.OutlinerPolicy`,
-`Kya.Editor.PathVisualization` and `Kya.Editor.WaypointOrientation` all `Success`.
+`Kya.Editor.PathVisualization`, `Kya.Editor.WaypointOrientation` and
+`Kya.Editor.HierarchyGeometry` all `Success`.
 
 Coverage added by the new tests:
 
@@ -309,7 +317,8 @@ These remain open in [the checklist](EDITOR_WORKFLOW_PLAN.md):
 - Progress/cancel UI for export; Message Log entries do not have navigation links.
 - Targeted per-actor invalidation: a committed transform edit still rebuilds the
   preview once (the drag itself is live and does not rebuild).
-- Hierarchy transforms, waypoint orientation visualization, path playback.
+- Hierarchy transform writeback (presentation-only handles by design) and path
+  playback.
 - Interactive viewport acceptance pass (click a mesh, W/E/R, save/reopen,
   export/reimport) in a live editor session, and Milestone A–E gates.
 

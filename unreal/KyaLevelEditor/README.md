@@ -357,10 +357,18 @@ markers for scripted checks.
 
 Enable `Spawn Hierarchy Handles` to create one selectable handle per static
 cluster node (a hierarchy's strip group) instead of the thousands of individual
-strips. Handles are labelled with the bank name and hierarchy offset and expose
-sector, hierarchy offset, strip/triangle counts and a `Visible` toggle that hides
-the hierarchy in the preview and rebuilds it. The toggle is an editor inspection
-state (`Hidden Hierarchies` on the preview); it does not modify bank bytes.
+strips. Each handle owns the hierarchy's rendered strips (one procedural section
+per material, captured with the shared geometry removed so only one draw path
+exists), so clicking any visible strip selects that hierarchy. Handles are
+labelled with the bank name and hierarchy offset; Details reports the owning
+bank/sector (or global scene mesh), source byte offset, serialized origin,
+strip/triangle counts, world bounds and material names/hashes. A `Visible` toggle
+hides the hierarchy in the preview and rebuilds it; hidden hierarchies show only
+the fallback marker. Visibility and selection are editor inspection state
+(`Hidden Hierarchies` on the preview) and do not modify bank bytes. The handle is
+location-locked and resets translate/rotate/scale edits because the game stores no
+independent hierarchy transform, so a movable-looking handle would imply export
+support that does not exist.
 
 Enable `Log Sector Diagnostics` on the preview actor to log bank entries, cluster
 and hierarchy strip counts, material coverage, and bounds. For a camera-aligned

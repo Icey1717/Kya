@@ -4,6 +4,7 @@
 #include "KyaActorCatalog.h"
 #include "KyaActorGroup.h"
 #include "KyaActorHandle.h"
+#include "KyaHierarchyHandle.h"
 #include "KyaActorTransform.h"
 #include "KyaBankExport.h"
 #include "KyaLevelActorFactory.h"
@@ -1176,6 +1177,193 @@ bool FKyaStructuralCommandsTest::RunTest(const FString& Parameters)
         TestTrue(TEXT("Selection reports generated actors"), KyaSelectionContainsGeneratedActor());
         GEditor->SelectNone(false, true);
         TestFalse(TEXT("Empty selection has no generated actors"), KyaSelectionContainsGeneratedActor());
+    }
+
+    Preview->Destroy();
+    World->DestroyWorld(false);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaHierarchyGeometryTest, "Kya.Editor.HierarchyGeometry",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaHierarchyGeometryTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to run the hierarchy geometry test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read hierarchy bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import hierarchy bank"), Bank)) return false;
+
+    // Cluster hierarchies come from sector banks; load one alongside the main bank.
+    const FString SectorFilename = FPaths::Combine(FPaths::GetPath(Filename), TEXT("SECT1.BNK"));
+    TArray<uint8> SectorInput;
+    UKyaLevelBank* SectorBank = nullptr;
+    if (TestTrue(TEXT("Read sector bank"), FFileHelper::LoadFileToArray(SectorInput, *SectorFilename)))
+    {
+        const uint8* SectorCursor = SectorInput.GetData();
+        SectorBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+            GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), SectorCursor,
+            SectorInput.GetData() + SectorInput.Num(), GWarn));
+        if (TestNotNull(TEXT("Import sector bank"), SectorBank))
+            SectorBank->SourceFilename = SectorFilename;
+    }
+
+    UWorld* World = UWorld::CreateWorld(EWorldType::EditorPreview, false);
+    if (!TestNotNull(TEXT("Create hierarchy world"), World)) return false;
+    AKyaLevelPreview* Preview = World->SpawnActor<AKyaLevelPreview>();
+    if (!TestNotNull(TEXT("Spawn hierarchy preview"), Preview))
+    {
+        World->DestroyWorld(false);
+        return false;
+    }
+    Preview->Bank = Bank;
+    if (SectorBank) Preview->SectorBanks.Add(SectorBank);
+    Preview->bSpawnActorHandles = false;
+    Preview->bShowClusterMeshes = true;
+
+    const auto CountMesh = [](UProceduralMeshComponent* Mesh, int32& OutVertices, int32& OutTriangles)
+    {
+        OutVertices = 0;
+        OutTriangles = 0;
+        for (int32 Section = 0; Section < Mesh->GetNumSections(); ++Section)
+        {
+            if (const FProcMeshSection* MeshSection = Mesh->GetProcMeshSection(Section))
+            {
+                OutVertices += MeshSection->ProcVertexBuffer.Num();
+                OutTriangles += MeshSection->ProcIndexBuffer.Num() / 3;
+            }
+        }
+    };
+
+    // Baseline: hierarchy geometry lives in the shared preview mesh.
+    Preview->bSpawnHierarchyHandles = false;
+    Preview->OnConstruction(FTransform::Identity);
+    int32 SharedVertices = 0, SharedTriangles = 0;
+    CountMesh(Preview->Mesh, SharedVertices, SharedTriangles);
+    TestTrue(TEXT("The level has decoded hierarchies"), Preview->GetHierarchySelectionCount() > 0);
+
+    // Editing mode: each hierarchy owns its rendered strips and is selectable by click.
+    Preview->bSpawnHierarchyHandles = true;
+    Preview->OnConstruction(FTransform::Identity);
+    TestEqual(TEXT("One handle per decoded hierarchy"),
+        Preview->GetHierarchyHandleCount(), Preview->GetHierarchySelectionCount());
+    int32 HandleTriangles = 0;
+    int32 MeshedHandles = 0;
+    AKyaHierarchyHandle* Sample = nullptr;
+    for (int32 HandleIndex = 0; HandleIndex < Preview->GetHierarchyHandleCount(); ++HandleIndex)
+    {
+        AKyaHierarchyHandle* Handle = Preview->GetHierarchyHandle(HandleIndex);
+        if (!IsValid(Handle)) continue;
+        int32 HandleVertices = 0, Triangles = 0;
+        CountMesh(Handle->HierarchyMesh, HandleVertices, Triangles);
+        if (Triangles == 0) continue;
+        ++MeshedHandles;
+        HandleTriangles += Triangles;
+        if (!Sample) Sample = Handle;
+    }
+    int32 SharedVerticesWithHandles = 0, SharedTrianglesWithHandles = 0;
+    CountMesh(Preview->Mesh, SharedVerticesWithHandles, SharedTrianglesWithHandles);
+    AddInfo(FString::Printf(TEXT("hierarchies=%d meshed=%d handle_triangles=%d shared_before=%d shared_after=%d"),
+        Preview->GetHierarchyHandleCount(), MeshedHandles, HandleTriangles, SharedTriangles, SharedTrianglesWithHandles));
+
+    TestTrue(TEXT("Hierarchy handles own rendered geometry"), MeshedHandles > 0);
+    TestTrue(TEXT("Hierarchy handles carry triangles"), HandleTriangles > 0);
+    TestTrue(TEXT("Hierarchy geometry is not duplicated in the shared mesh"),
+        SharedTrianglesWithHandles < SharedTriangles);
+    if (TestNotNull(TEXT("A meshed hierarchy handle exists"), Sample))
+    {
+        TestTrue(TEXT("Handle reports valid world bounds"), Sample->WorldBounds.IsValid != 0);
+        TestTrue(TEXT("Handle reports material information"), !Sample->MaterialNames.IsEmpty());
+        TestTrue(TEXT("Handle reports its source offset"), Sample->HierarchyOffset >= 0);
+        TestTrue(TEXT("Handle reports its owning sector"), Sample->SectorId >= -1);
+        TestTrue(TEXT("Handle mesh sections are selectable"), Sample->HierarchyMesh->bSelectable);
+        TestFalse(TEXT("Meshed handles hide the fallback marker"),
+            Sample->Marker && Sample->Marker->GetVisibleFlag());
+
+        // Hierarchy transforms are presentation-only and cannot drift.
+        Sample->AddActorWorldOffset(FVector(100.0, 0.0, 0.0));
+        Sample->PostEditMove(true);
+        TestTrue(TEXT("Hierarchy handle transform is reset"),
+            Sample->GetActorTransform().GetRelativeTransform(Preview->GetActorTransform())
+                .Equals(FTransform::Identity, 0.01));
+        TestTrue(TEXT("Hierarchy mesh stays at the preview transform"),
+            Sample->HierarchyMesh->GetComponentLocation().Equals(Preview->GetActorLocation(), 0.01));
+
+        // Source origin is serialized game-space data and must not change with the
+        // preview transform or a rebuild.
+        const int32 Offset = Sample->HierarchyOffset;
+        UKyaLevelBank* SampleBank = Sample->Bank;
+        const FVector SourceOrigin = Sample->SourceOrigin;
+        Preview->SetActorRotation(FRotator(0.0, 30.0, 0.0).Quaternion());
+        Preview->OnConstruction(Preview->GetActorTransform());
+        for (int32 HandleIndex = 0; HandleIndex < Preview->GetHierarchyHandleCount(); ++HandleIndex)
+        {
+            AKyaHierarchyHandle* Rebuilt = Preview->GetHierarchyHandle(HandleIndex);
+            if (IsValid(Rebuilt) && Rebuilt->Bank == SampleBank && Rebuilt->HierarchyOffset == Offset)
+            {
+                TestTrue(TEXT("Source origin is stable across a transformed rebuild"),
+                    Rebuilt->SourceOrigin.Equals(SourceOrigin, 1.0e-4));
+                break;
+            }
+        }
+        Preview->SetActorRotation(FQuat::Identity);
+        Preview->OnConstruction(Preview->GetActorTransform());
+
+        // Visibility remains presentation-only: hiding removes the geometry, showing
+        // rebuilds it, and the bank bytes are untouched.
+        const int64 BeforeBytes = SampleBank ? SampleBank->BankBytes.Num() : 0;
+        Preview->SetHierarchyVisible(SampleBank, Offset, false);
+        AKyaHierarchyHandle* Hidden = nullptr;
+        for (int32 HandleIndex = 0; HandleIndex < Preview->GetHierarchyHandleCount(); ++HandleIndex)
+        {
+            AKyaHierarchyHandle* Handle = Preview->GetHierarchyHandle(HandleIndex);
+            if (IsValid(Handle) && Handle->Bank == SampleBank && Handle->HierarchyOffset == Offset)
+                Hidden = Handle;
+        }
+        if (TestNotNull(TEXT("Hidden hierarchy handle still exists"), Hidden))
+        {
+            TestFalse(TEXT("Hidden hierarchy reports not visible"), Hidden->bVisible);
+            int32 HiddenVertices = 0, HiddenTriangles = 0;
+            CountMesh(Hidden->HierarchyMesh, HiddenVertices, HiddenTriangles);
+            TestEqual(TEXT("Hidden hierarchy has no rendered geometry"), HiddenTriangles, 0);
+            TestTrue(TEXT("Hidden hierarchy shows its fallback marker"), Hidden->Marker->GetVisibleFlag());
+        }
+        Preview->SetHierarchyVisible(SampleBank, Offset, true);
+        TestEqual(TEXT("Visibility toggles do not modify bank bytes"),
+            int64(SampleBank ? SampleBank->BankBytes.Num() : 0), BeforeBytes);
+    }
+
+    // A game/PIE world has no handles, so the shared mesh must keep the geometry.
+    UWorld* GameWorld = UWorld::CreateWorld(EWorldType::Game, false);
+    if (TestNotNull(TEXT("Create hierarchy game world"), GameWorld))
+    {
+        AKyaLevelPreview* GamePreview = GameWorld->SpawnActor<AKyaLevelPreview>();
+        if (TestNotNull(TEXT("Spawn hierarchy game preview"), GamePreview))
+        {
+            GamePreview->Bank = Bank;
+            if (SectorBank) GamePreview->SectorBanks.Add(SectorBank);
+            GamePreview->bSpawnActorHandles = false;
+            GamePreview->bShowClusterMeshes = true;
+            GamePreview->bSpawnHierarchyHandles = true;
+            GamePreview->OnConstruction(FTransform::Identity);
+            int32 GameVertices = 0, GameTriangles = 0;
+            CountMesh(GamePreview->Mesh, GameVertices, GameTriangles);
+            TestEqual(TEXT("Game worlds create no hierarchy handles"), GamePreview->GetHierarchyHandleCount(), 0);
+            TestEqual(TEXT("Game worlds keep hierarchy geometry in the shared mesh"),
+                GameTriangles, SharedTriangles);
+            GamePreview->Destroy();
+        }
+        GameWorld->DestroyWorld(false);
     }
 
     Preview->Destroy();
