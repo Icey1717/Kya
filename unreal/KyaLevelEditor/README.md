@@ -220,7 +220,14 @@ Validation, export and sector discovery report through the Message Log
 sector, with the asset path, the failure reason and any warnings. Entries are
 tokenized: the bank is a clickable asset link and actor-specific problems add a
 **Select …** action that selects and focuses the generated representation (or the
-level preview for sector/discovery problems). Missing sectors name the expected
+level preview for sector/discovery problems). Each actor issue names the index, the
+serialized name, the recovered class and the property path (for example
+`Actor 3 "BRIDGE" (Bridge).TrapActorRef`), so selecting it opens that record in
+Details. `Export Kya Level` validates the linked set first and logs the same
+findings, plus an actionable entry for unsupported dependency banks, before any
+output is replaced. A blocking issue (including a writer rejection attributed to an
+actor record and property, such as a name that no longer fits its serialized slot)
+stops the export before staging, so no destination is replaced. Missing sectors name the expected
 `SECT<id>.BNK` file; stale schemas, missing references, unsupported/missing geometry
 and export restrictions are reported the same way, so a problem can be inspected
 without searching raw logs. Sector discovery shows a cancellable progress dialog and

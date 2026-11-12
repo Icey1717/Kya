@@ -407,10 +407,27 @@ FKyaBankValidationReport KyaValidateBank(UKyaLevelBank* Bank){
         Report.Issues.Add({INDEX_NONE, TEXT("export"), Warning, false});
     if (!Report.bBytesBuilt)
     {
-        for (const FString& Error : Diagnostics.Errors)
+        if (Diagnostics.Errors.IsEmpty() && Diagnostics.FailedActorIndex != INDEX_NONE)
         {
+            Diagnostics.Errors.Add(FString::Printf(TEXT("The bank writer rejected actor %d (%s)."),
+                Diagnostics.FailedActorIndex,
+                Diagnostics.FailedProperty.IsEmpty() ? TEXT("record") : *Diagnostics.FailedProperty));
+        }
+        const bool bHasActorContext = Diagnostics.FailedActorIndex != INDEX_NONE && !Diagnostics.Errors.IsEmpty();
+        for (int32 ErrorIndex = 0; ErrorIndex < Diagnostics.Errors.Num(); ++ErrorIndex)
+        {
+            const FString& Error = Diagnostics.Errors[ErrorIndex];
             Report.Warnings.Add(Error);
-            Report.Issues.Add({INDEX_NONE, TEXT("export"), Error, true});
+            if (bHasActorContext && ErrorIndex == 0)
+            {
+                // Attach the writer's rejection to the offending record so the Message
+                // Log can select the actor and show the property path.
+                Report.Issues.Add({Diagnostics.FailedActorIndex, Diagnostics.FailedProperty, Error, true});
+            }
+            else
+            {
+                Report.Issues.Add({INDEX_NONE, TEXT("export"), Error, true});
+            }
         }
         Report.UnsupportedReason = Diagnostics.Errors.IsEmpty() ? TEXT("The bank writer rejected this bank.") : Diagnostics.Errors[0];
     }
@@ -448,10 +465,8 @@ TArray<FKyaBankValidationReport> KyaValidateLevelBanks(const TArray<UKyaLevelBan
         {
             const EMessageSeverity::Type Severity = Issue.bBlocking
                 ? EMessageSeverity::Error : EMessageSeverity::Warning;
-            const FText Text = FText::FromString(Issue.Field.IsEmpty()
-                ? Issue.Message
-                : FString::Printf(TEXT("%s: %s"), *Issue.Field, *Issue.Message));
-            Log.AddMessage(KyaMakeBankMessage(Severity, Bank, Text, Issue.ActorIndex));
+            Log.AddMessage(KyaMakeValidationIssueMessage(Severity, Bank, Issue.ActorIndex, Issue.Field,
+                FText::FromString(Issue.Message)));
         }
         UE_LOG(LogTemp, Display, TEXT("KYA_VALIDATE %s"), *Report.Summary());
     }
@@ -686,9 +701,21 @@ bool KyaExportLevelBanks(const TArray<UKyaLevelBank*>& Banks, const FString& Des
     TArray<FString>& OutMessages)
 {
     TArray<FKyaBankExportRequest> Requests;
+    FMessageLog Log("KyaLevelEditor");
+    bool bBlockingIssues = false;
     for (UKyaLevelBank* Bank : Banks)
     {
         if (!Bank) continue;
+        // Report every finding by bank, actor identity and property path before any
+        // output is replaced; the same entries select the actor so Details navigates.
+        const FKyaBankValidationReport Report = KyaValidateBank(Bank);
+        for (const FKyaValidationIssue& Issue : Report.Issues)
+        {
+            bBlockingIssues |= Issue.bBlocking;
+            Log.AddMessage(KyaMakeValidationIssueMessage(Issue.bBlocking
+                ? EMessageSeverity::Error : EMessageSeverity::Warning, Bank, Issue.ActorIndex,
+                Issue.Field, FText::FromString(Issue.Message)));
+        }
         FString Reason;
         if (!KyaBankSupportsExport(Bank, Reason))
         {
@@ -697,6 +724,8 @@ bool KyaExportLevelBanks(const TArray<UKyaLevelBank*>& Banks, const FString& Des
             // whole level export or rewriting them.
             OutMessages.Add(FString::Printf(TEXT("%s: unchanged dependency, not written (%s)"),
                 *Bank->GetName(), *Reason));
+            Log.AddMessage(KyaMakeBankMessage(EMessageSeverity::Warning, Bank, FText::FromString(
+                FString::Printf(TEXT("Unchanged dependency: not written (%s)."), *Reason))));
             UE_LOG(LogTemp, Display, TEXT("KYA_EXPORT_SKIP %s %s"), *Bank->GetName(), *Reason);
             continue;
         }
@@ -704,13 +733,20 @@ bool KyaExportLevelBanks(const TArray<UKyaLevelBank*>& Banks, const FString& Des
         Request.Bank = Bank;
         Request.DestinationFilename = FPaths::Combine(DestinationDirectory, Bank->GetName() + TEXT(".bnk"));
     }
+    if (bBlockingIssues)
+    {
+        OutMessages.Add(TEXT("Export stopped: blocking validation issues must be fixed first; no destination was replaced."));
+        Log.AddMessage(KyaMakeBankMessage(EMessageSeverity::Error, nullptr, FText::FromString(
+            TEXT("Export stopped before staging: fix the blocking issues above; no destination was replaced."))));
+        Log.Open(EMessageSeverity::Error);
+        return false;
+    }
     if (Requests.IsEmpty())
     {
         OutMessages.Add(TEXT("No banks in this level can be exported by the current writer."));
         return false;
     }
     const TArray<FKyaBankExportOutcome> Outcomes = KyaWriteValidatedExportSet(Requests);
-    FMessageLog Log("KyaLevelEditor");
     bool bAllPublished = !Outcomes.IsEmpty();
     for (const FKyaBankExportOutcome& Outcome : Outcomes)
     {

@@ -1354,6 +1354,152 @@ bool FKyaLightExportTest::RunTest(const FString& Parameters)
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaLevelActionsReportingTest, "Kya.Editor.LevelActionsReporting",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaLevelActionsReportingTest::RunTest(const FString& Parameters)
+{
+    UKyaLevelBank* Bank = MakeKyaTestBank(GetTransientPackage(), 0x2c);
+    Bank->SceneEnvironment.Actors[0].ClassId = 0x2c;
+    Bank->SceneEnvironment.Actors[0].Name = TEXT("FIRST");
+    Bank->SceneEnvironment.Actors[0].TrapActorRef = 99;
+    Bank->ImportSchemaVersion = 0;
+
+    FMessageLogModule& MessageLogModule = FModuleManager::LoadModuleChecked<FMessageLogModule>("MessageLog");
+    const TSharedRef<IMessageLogListing> Listing = MessageLogModule.GetLogListing("KyaLevelEditor");
+    Listing->ClearMessages();
+    AddExpectedError(TEXT("cannot be exported"), EAutomationExpectedErrorFlags::Contains, 0);
+    AddExpectedError(TEXT("No bank bytes are retained"), EAutomationExpectedErrorFlags::Contains, 0);
+    AddExpectedError(TEXT("TrapActorRef"), EAutomationExpectedErrorFlags::Contains, 0);
+    AddExpectedError(TEXT("Export stopped"), EAutomationExpectedErrorFlags::Contains, 0);
+
+    // Validate Kya Level reports bank + actor identity + property path, and the
+    // Message Log entry carries navigation tokens.
+    const TArray<FKyaBankValidationReport> Reports = KyaValidateLevelBanks({ Bank });
+    TestEqual(TEXT("Validate reports the linked bank"), Reports.Num(), 1);
+    bool bIdentity = false;
+    bool bPropertyPath = false;
+    bool bAction = false;
+    for (const TSharedRef<FTokenizedMessage>& Message : Listing->GetFilteredMessages())
+    {
+        const FString Text = Message->ToText().ToString();
+        if (Text.Contains(TEXT("FIRST")) && Text.Contains(TEXT("Actor 0"))) bIdentity = true;
+        if (Text.Contains(TEXT(".TrapActorRef"))) bPropertyPath = true;
+        for (const TSharedRef<IMessageToken>& Token : Message->GetMessageTokens())
+            if (Token->GetType() == EMessageToken::Action) bAction = true;
+    }
+    TestTrue(TEXT("Validation names the actor identity (index, name, class)"), bIdentity);
+    TestTrue(TEXT("Validation names the property path"), bPropertyPath);
+    TestTrue(TEXT("Validation offers Details navigation"), bAction);
+
+    // Export Kya Level reports the same findings before replacing any output and logs
+    // the unsupported bank with a bank link instead of only a dialog line.
+    Listing->ClearMessages();
+    TArray<FString> Messages;
+    const FString Destination = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("KyaExportReportingTest"));
+    const bool bExported = KyaExportLevelBanks({ Bank }, Destination, Messages);
+    TestFalse(TEXT("Unsupported bank is not exported"), bExported);
+    bool bExportSkip = false;
+    bool bExportIssue = false;
+    for (const TSharedRef<FTokenizedMessage>& Message : Listing->GetFilteredMessages())
+    {
+        const FString Text = Message->ToText().ToString();
+        if (Text.Contains(TEXT("Unchanged dependency"))) bExportSkip = true;
+        if (Text.Contains(TEXT("TrapActorRef"))) bExportIssue = true;
+    }
+    TestTrue(TEXT("Export logs the unsupported bank actionably"), bExportSkip);
+    TestTrue(TEXT("Export reports actor/property findings"), bExportIssue);
+
+    // A writer rejection with actor context is reported by record identity and
+    // property path, and blocks publication before any destination is replaced.
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (!Filename.IsEmpty())
+    {
+        TArray<uint8> Input;
+        if (TestTrue(TEXT("Read reporting bank"), FFileHelper::LoadFileToArray(Input, *Filename)))
+        {
+            const uint8* Cursor = Input.GetData();
+            UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+            UKyaLevelBank* RealBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(
+                UKyaLevelBank::StaticClass(), GetTransientPackage(), NAME_None, RF_Transient, nullptr,
+                TEXT("bnk"), Cursor, Input.GetData() + Input.Num(), GWarn));
+            if (TestNotNull(TEXT("Import reporting bank"), RealBank) &&
+                TestTrue(TEXT("Reporting bank has actors"), RealBank->SceneEnvironment.Actors.Num() > 0))
+            {
+                const FString OriginalName = RealBank->SceneEnvironment.Actors[0].Name;
+                FString FailingName;
+                for (const FString& Candidate : {FString::ChrN(61, TEXT('A')), FString(TEXT("AB"))})
+                {
+                    RealBank->SceneEnvironment.Actors[0].Name = Candidate;
+                    FKyaBankExportDiagnostics NameDiagnostics;
+                    TArray<uint8> NameBytes;
+                    if (!KyaBuildBankExportBytes(RealBank, NameBytes, NameDiagnostics))
+                    {
+                        if (NameDiagnostics.FailedActorIndex == 0 && NameDiagnostics.FailedProperty == TEXT("Name"))
+                        {
+                            FailingName = Candidate;
+                            break;
+                        }
+                    }
+                }
+                RealBank->SceneEnvironment.Actors[0].Name = OriginalName;
+                if (TestFalse(TEXT("A name-slot change is detectable"), FailingName.IsEmpty()))
+                {
+                    RealBank->SceneEnvironment.Actors[0].Name = FailingName;
+                    Listing->ClearMessages();
+                    AddExpectedError(TEXT("name needs"), EAutomationExpectedErrorFlags::Contains, 0);
+                    AddExpectedError(TEXT("Export stopped"), EAutomationExpectedErrorFlags::Contains, 0);
+                    TArray<FString> NameMessages;
+                    const FString NameDestination = FPaths::Combine(FPaths::ProjectSavedDir(),
+                        TEXT("KyaExportReportingNameTest"));
+                    TestFalse(TEXT("Blocking writer issues stop export"),
+                        KyaExportLevelBanks({ RealBank }, NameDestination, NameMessages));
+                    bool bNamedProperty = false;
+                    for (const TSharedRef<FTokenizedMessage>& Message : Listing->GetFilteredMessages())
+                        if (Message->ToText().ToString().Contains(TEXT(".Name"))) bNamedProperty = true;
+                    TestTrue(TEXT("Writer rejection names the actor property path"), bNamedProperty);
+                    TestFalse(TEXT("Blocked export writes no output"),
+                        FPaths::FileExists(FPaths::Combine(NameDestination,
+                            RealBank->GetName() + TEXT(".bnk"))));
+                    RealBank->SceneEnvironment.Actors[0].Name = OriginalName;
+
+                    // A model-count change also carries actor/property context, and one
+                    // bad bank must stop publication for every bank in the set.
+                    FKyaActorPlacement& ModelActor = RealBank->SceneEnvironment.Actors[0];
+                    const TArray<FKyaActorModelReference> OriginalModels = ModelActor.Models;
+                    ModelActor.Models.AddDefaulted();
+                    const uint8* SecondCursor = Input.GetData();
+                    UKyaLevelBank* ValidBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(
+                        UKyaLevelBank::StaticClass(), GetTransientPackage(), NAME_None, RF_Transient, nullptr,
+                        TEXT("bnk"), SecondCursor, Input.GetData() + Input.Num(), GWarn));
+                    if (TestNotNull(TEXT("Import second reporting bank"), ValidBank))
+                    {
+                        Listing->ClearMessages();
+                        AddExpectedError(TEXT("model reference count changed"), EAutomationExpectedErrorFlags::Contains, 0);
+                        TArray<FString> ModelMessages;
+                        const FString ModelDestination = FPaths::Combine(FPaths::ProjectSavedDir(),
+                            TEXT("KyaExportReportingModelTest"));
+                        TestFalse(TEXT("Model-count failure stops the linked-set export"),
+                            KyaExportLevelBanks({ RealBank, ValidBank }, ModelDestination, ModelMessages));
+                        TestFalse(TEXT("Blocked linked-set export writes the bad bank"),
+                            FPaths::FileExists(FPaths::Combine(ModelDestination,
+                                RealBank->GetName() + TEXT(".bnk"))));
+                        TestFalse(TEXT("Blocked linked-set export writes the valid bank"),
+                            FPaths::FileExists(FPaths::Combine(ModelDestination,
+                                ValidBank->GetName() + TEXT(".bnk"))));
+                        bool bModelProperty = false;
+                        for (const TSharedRef<FTokenizedMessage>& Message : Listing->GetFilteredMessages())
+                            if (Message->ToText().ToString().Contains(TEXT(".Models"))) bModelProperty = true;
+                        TestTrue(TEXT("Model failure names the actor property path"), bModelProperty);
+                    }
+                    ModelActor.Models = OriginalModels;
+                }
+            }
+        }
+    }
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaTargetedWorkflowAcceptanceTest, "Kya.Editor.TargetedWorkflowAcceptance",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 

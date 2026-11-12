@@ -111,7 +111,7 @@ This is a source review of the current working tree, including the in-progress a
 
 ## 9. Export validation and structural editing roadmap
 
-- [ ] Add Validate Kya Level and Export Kya Level actions for the linked bank set. Report errors by bank, actor identity and property path, with navigation back to Details.
+- [x] Add Validate Kya Level and Export Kya Level actions for the linked bank set. Report errors by bank, actor identity and property path, with navigation back to Details.
 - [x] Preflight all affected banks before writing, stage output, and publish only validated results with clear partial-failure handling. Export unchanged banks only when requested or required by the chosen output layout.
 - [x] Retain original unknown bytes and existing fixed-size restrictions. Surface incompatible schema and unsupported edit failures before output files are replaced.
 - [ ] Extend existing round-trip tests to selected-actor edits: export, reimport and compare typed values; compare unchanged byte regions too. Clearly distinguish synthetic fixtures from real-bank coverage.

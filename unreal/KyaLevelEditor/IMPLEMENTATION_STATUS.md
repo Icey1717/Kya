@@ -269,9 +269,13 @@ Last updated: 2026-11-12.
 - Validate, export and sector discovery write tokenized `FMessageLog` entries (one
   per bank or sector) with a clickable bank asset link and, for actor-specific
   issues, a **Select …** action that selects/focuses the generated representation
-  (or the level preview for discovery problems). Validation reports stale schemas,
+  (or the level preview for discovery problems) so Details shows the record. Each
+  actor issue names the index, serialized name, recovered class and property path
+  (`Actor 3 "BRIDGE" (Bridge).TrapActorRef`). Validation reports stale schemas,
   missing/invalid geometry, missing references per actor and export restrictions as
-  structured issues. Sector discovery runs behind a cancellable `FScopedSlowTask`
+  structured issues; `Export Kya Level` validates the linked set first and logs the
+  same findings plus an actionable entry for unsupported dependency banks before
+  replacing any output. Sector discovery runs behind a cancellable `FScopedSlowTask`
   and leaves a coherent partial result when cancelled; `Kya.Export` reports one
   outcome per file and opens the log on failure. Imports verify the destination
   asset's source provenance before it is
@@ -318,8 +322,9 @@ Results: `Kya.Bank.LevelOneRoundTrip`, `Kya.Bank.SmallBankRoundTrip`,
 `Kya.Editor.PathVisualization`, `Kya.Editor.WaypointOrientation`,
 `Kya.Editor.HierarchyGeometry`, `Kya.Editor.SceneVisualizers`,
 `Kya.Editor.LightExport`, `Kya.Editor.LevelSettings`, `Kya.Editor.AsyncDecode` and
-`Kya.Editor.MessageLogLinks`, `Kya.Editor.AuthoringVisibility` and
-`Kya.Editor.TargetedWorkflowAcceptance` all `Success`.
+`Kya.Editor.MessageLogLinks`, `Kya.Editor.AuthoringVisibility`,
+`Kya.Editor.TargetedWorkflowAcceptance` and `Kya.Editor.LevelActionsReporting` all
+`Success`.
 
 Coverage added by the new tests:
 

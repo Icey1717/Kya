@@ -145,7 +145,15 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
         if (Actor.Index != int32(ReadU32(Offsets.Chunk + 8)) || Actor.ClassId != ReadU32(Offsets.Chunk + 12) ||
             Actor.MacroAnimations.Num() != Offsets.MacroCount || Actor.HashCode < 0 || Actor.HashCode > MAX_uint32 ||
             Actor.LightingFlags < 0 || Actor.LightingFlags > MAX_uint32 || Actor.Behaviours.Num() != Offsets.Behaviours.Num() ||
-            Actor.Conditions.Num() != Offsets.ConditionCount) return false;
+            Actor.Conditions.Num() != Offsets.ConditionCount)
+        {
+            Diagnostics.FailedActorIndex = Index;
+            Diagnostics.FailedProperty = TEXT("Actor");
+            Diagnostics.Errors.Add(FString::Printf(
+                TEXT("Actor %d record layout changed (identity, class, lighting, behaviours or conditions); "
+                    "structural record changes are not supported."), Index));
+            return false;
+        }
         FKyaPlatformPrefixOffsets Platform;
         const bool HasPlatform = Actor.ClassId == 0x0d && KyaReadPlatformPrefix(MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Platform);
         FKyaPlatformDetailsOffsets Details;
@@ -619,14 +627,53 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
                 if (ReadU32(Checkpoints[Checkpoint] + 20) != uint32(Actor.Checkpoints[Checkpoint].ActorWaypoints.Num()) ||
                     Actor.Checkpoints[Checkpoint].Flags < 0 || Actor.Checkpoints[Checkpoint].Flags > MAX_uint32) return false;
         }
-        for (TCHAR Char : Actor.Name) if (Char < 1 || Char > 127) return false;
-        if (Align(Actor.Name.Len() + 1, 4) != Offsets.NameCapacity || Actor.Models.Num() * 2 != Offsets.ModelStrings.Num()) return false;
+        for (TCHAR Char : Actor.Name) if (Char < 1 || Char > 127)
+        {
+            Diagnostics.FailedActorIndex = Index;
+            Diagnostics.FailedProperty = TEXT("Name");
+            return false;
+        }
+        if (Align(Actor.Name.Len() + 1, 4) != Offsets.NameCapacity)
+        {
+            Diagnostics.FailedActorIndex = Index;
+            Diagnostics.FailedProperty = TEXT("Name");
+            Diagnostics.Errors.Add(FString::Printf(
+                TEXT("Actor %d name needs %d serialized bytes but the record slot holds %d; names cannot be resized."),
+                Index, Align(Actor.Name.Len() + 1, 4), int32(Offsets.NameCapacity)));
+            return false;
+        }
+        if (Actor.Models.Num() * 2 != Offsets.ModelStrings.Num())
+        {
+            Diagnostics.FailedActorIndex = Index;
+            Diagnostics.FailedProperty = TEXT("Models");
+            Diagnostics.Errors.Add(FString::Printf(
+                TEXT("Actor %d model reference count changed (%d models, %d serialized strings); "
+                    "model lists cannot be resized."), Index, Actor.Models.Num(),
+                int32(Offsets.ModelStrings.Num())));
+            return false;
+        }
         for (int32 Model = 0; Model < Actor.Models.Num(); ++Model)
             for (int32 Part = 0; Part < 2; ++Part)
             {
                 const FString& Name = Part == 0 ? Actor.Models[Model].MeshName : Actor.Models[Model].TextureName;
-                for (TCHAR Char : Name) if (Char < 1 || Char > 127) return false;
-                if (Align(Name.Len() + 1, 4) != Offsets.ModelStrings[Model * 2 + Part].Capacity) return false;
+                for (TCHAR Char : Name) if (Char < 1 || Char > 127)
+                {
+                    Diagnostics.FailedActorIndex = Index;
+                    Diagnostics.FailedProperty = TEXT("Models");
+                    Diagnostics.Errors.Add(FString::Printf(
+                        TEXT("Actor %d model name uses characters that cannot be serialized."), Index));
+                    return false;
+                }
+                if (Align(Name.Len() + 1, 4) != Offsets.ModelStrings[Model * 2 + Part].Capacity)
+                {
+                    Diagnostics.FailedActorIndex = Index;
+                    Diagnostics.FailedProperty = TEXT("Models");
+                    Diagnostics.Errors.Add(FString::Printf(
+                        TEXT("Actor %d model name needs %d serialized bytes but its slot holds %d; "
+                            "model names cannot be resized."), Index, Align(Name.Len() + 1, 4),
+                        int32(Offsets.ModelStrings[Model * 2 + Part].Capacity)));
+                    return false;
+                }
             }
     }
     for (int32 Index = 0; Index < Paths.Num(); ++Index)

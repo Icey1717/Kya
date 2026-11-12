@@ -9,6 +9,9 @@ struct FKyaBankExportDiagnostics
 {
     TArray<FString> Errors;
     TArray<FString> Warnings;
+    /** When a writer check rejects one actor record, identify it for Message Log navigation. */
+    int32 FailedActorIndex = INDEX_NONE;
+    FString FailedProperty;
     bool HasErrors() const { return !Errors.IsEmpty(); }
     FString Summary() const;
 };

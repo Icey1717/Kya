@@ -2,6 +2,7 @@
 
 #include "Editor.h"
 #include "EngineUtils.h"
+#include "KyaActorCatalog.h"
 #include "KyaActorHandle.h"
 #include "KyaLevelBank.h"
 #include "KyaLevelPreview.h"
@@ -48,13 +49,21 @@ TSharedRef<FTokenizedMessage> KyaMakeActorMessage(EMessageSeverity::Type Severit
     }
     if (ActorIndex >= 0)
     {
-        const FString Label = Bank ? FString::Printf(TEXT("%s [%d]"), *Bank->GetName(), ActorIndex)
+        FString ActorName;
+        if (Bank && Bank->SceneEnvironment.Actors.IsValidIndex(ActorIndex))
+        {
+            const FKyaActorPlacement& Placement = Bank->SceneEnvironment.Actors[ActorIndex];
+            ActorName = Placement.Name.IsEmpty()
+                ? FString::Printf(TEXT("#%d"), ActorIndex) : Placement.Name;
+        }
+        const FString Label = Bank
+            ? FString::Printf(TEXT("%s: actor %d \"%s\""), *Bank->GetName(), ActorIndex, *ActorName)
             : FString::Printf(TEXT("Actor %d"), ActorIndex);
         const TWeakObjectPtr<UKyaLevelBank> WeakBank(Bank);
         Entry->AddToken(FActionToken::Create(
             FText::FromString(FString::Printf(TEXT("Select %s"), *Label)),
             NSLOCTEXT("KyaLevelEditor", "SelectBankActorTip",
-                "Select and focus this actor's generated representation in the editor."),
+                "Select and focus this actor's generated representation; the Details panel then shows the record."),
             FOnActionTokenExecuted::CreateLambda([WeakBank, ActorIndex]()
             {
                 UKyaLevelBank* Target = WeakBank.Get();
@@ -85,4 +94,21 @@ TSharedRef<FTokenizedMessage> KyaMakeBankMessage(EMessageSeverity::Type Severity
     const FText& Message, int32 ActorIndex)
 {
     return KyaMakeActorMessage(Severity, Bank, nullptr, Message, ActorIndex);
+}
+
+TSharedRef<FTokenizedMessage> KyaMakeValidationIssueMessage(EMessageSeverity::Type Severity,
+    UKyaLevelBank* Bank, int32 ActorIndex, const FString& FieldPath, const FText& Message)
+{
+    FString Identity = TEXT("Bank");
+    if (Bank && Bank->SceneEnvironment.Actors.IsValidIndex(ActorIndex))
+    {
+        const FKyaActorPlacement& Placement = Bank->SceneEnvironment.Actors[ActorIndex];
+        const FString Name = Placement.Name.IsEmpty() ? TEXT("<unnamed>") : Placement.Name;
+        Identity = FString::Printf(TEXT("Actor %d \"%s\" (%s)"), ActorIndex, *Name,
+            *GetKyaActorClassLabel(Placement.ClassId));
+    }
+    const FString Path = FieldPath.IsEmpty() ? FString() : FString::Printf(TEXT(".%s"), *FieldPath);
+    const FString Text = FString::Printf(TEXT("%s%s: %s"), *Identity, *Path, *Message.ToString());
+    return KyaMakeActorMessage(Severity, Bank, nullptr, FText::FromString(Text),
+        Bank && Bank->SceneEnvironment.Actors.IsValidIndex(ActorIndex) ? ActorIndex : INDEX_NONE);
 }
