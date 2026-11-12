@@ -53,6 +53,8 @@ public:
     void SyncFromBank();
     /** Set the Outliner label without treating it as a user rename. */
     void SetGeneratedLabel(const FString& Label);
+    /** Generated label derived from the record kind, index and position. */
+    FString MakeGeneratedLabel() const;
     /** Apply the current mirrored fields (used by scripts and the Details panel). */
     void ApplyToBank();
 

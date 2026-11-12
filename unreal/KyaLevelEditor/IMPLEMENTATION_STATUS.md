@@ -138,6 +138,15 @@ Last updated: 2026-11-12.
   shared picker commit (`KyaSetActorReferencePick`) is exercised for both a valid and
   an out-of-range choice. Nested model edits, the reference picker and a two-actor
   bulk edit are exported and reimported with all values compared.
+- Milestone D gate (`Kya.Editor.MilestoneDGate`): a representative session on the
+  real bank finds and selects an actor by its Outliner label (no numeric actor index,
+  no capture camera or `PreviewActorIndex`), exercises hide/isolate/lock and the
+  delete-refusal reason, locates waypoint/path handles by their labels, drags a
+  waypoint and a path point and the actor, and verifies the bank writes, refreshed
+  spatial labels and that `BuildCount`/geometry decodes never increase. Unresolved
+  references produce blocking diagnostics whose message names the actor and property.
+  Spatial handle labels now include the game-space position, so waypoints and path
+  points are identifiable in the Outliner without knowing their indices.
 - `FKyaLevelBankReimportHandler` implements `FReimportHandler`: parses into a
   temporary bank, only replaces the asset on success, asks before discarding dirty
   changes (refuses in unattended mode), updates provenance, bumps the edit
@@ -375,8 +384,8 @@ Results: `Kya.Bank.LevelOneRoundTrip`, `Kya.Bank.SmallBankRoundTrip`,
 `Kya.Editor.TargetedWorkflowAcceptance`, `Kya.Editor.LevelActionsReporting`,
 `Kya.Bank.SelectedActorRoundTrip`, `Kya.Editor.RunningPortExportValidation`,
 `Kya.Editor.StructuralEditGate`, `Kya.Editor.ExportAcceptance`,
-`Kya.Editor.MilestoneAGate`, `Kya.Editor.MilestoneBGate` and
-`Kya.Editor.MilestoneCGate` all `Success`.
+`Kya.Editor.MilestoneAGate`, `Kya.Editor.MilestoneBGate`,
+`Kya.Editor.MilestoneCGate` and `Kya.Editor.MilestoneDGate` all `Success`.
 
 Coverage added by the new tests:
 

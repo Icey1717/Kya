@@ -144,13 +144,19 @@ void AKyaSpatialRecordHandle::SyncFromBank()
 #endif
 
 #if WITH_EDITOR
-    FString Label;
-    if (Kind == EKyaSpatialRecordKind::Waypoint)
-        Label = FString::Printf(TEXT("Waypoint %d"), RecordIndex);
-    else
-        Label = FString::Printf(TEXT("Path %d Point %d"), RecordIndex, PointIndex);
-    SetGeneratedLabel(Label);
+    // Self-describing labels: the position lets a user identify a record in the
+    // Outliner without knowing its numeric index.
+    SetGeneratedLabel(MakeGeneratedLabel());
 #endif
+}
+
+FString AKyaSpatialRecordHandle::MakeGeneratedLabel() const
+{
+    if (Kind == EKyaSpatialRecordKind::Waypoint)
+        return FString::Printf(TEXT("Waypoint %d (%.1f, %.1f, %.1f)"), RecordIndex,
+            WaypointPosition.X, WaypointPosition.Y, WaypointPosition.Z);
+    return FString::Printf(TEXT("Path %d Point %d (%.1f, %.1f, %.1f)"), RecordIndex, PointIndex,
+        PathPoint.X, PathPoint.Y, PathPoint.Z);
 }
 
 void AKyaSpatialRecordHandle::SetGeneratedLabel(const FString& Label)
@@ -264,10 +270,7 @@ void AKyaSpatialRecordHandle::PostEditChangeProperty(FPropertyChangedEvent& Prop
     // Outliner rename is reverted and explained instead of silently diverging.
     if (!bApplyingGeneratedLabel && Matches(TEXT("ActorLabel")))
     {
-        FString Label = Kind == EKyaSpatialRecordKind::Waypoint
-            ? FString::Printf(TEXT("Waypoint %d"), RecordIndex)
-            : FString::Printf(TEXT("Path %d Point %d"), RecordIndex, PointIndex);
-        SetGeneratedLabel(Label);
+        SetGeneratedLabel(MakeGeneratedLabel());
         UE_LOG(LogTemp, Warning, TEXT("KYA_SPATIAL_RENAME_REJECTED bank=%s kind=%d index=%d: labels are generated"),
             *GetNameSafe(Bank), int32(Kind), RecordIndex);
         if (!FApp::IsUnattended())

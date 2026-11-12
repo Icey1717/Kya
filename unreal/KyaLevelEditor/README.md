@@ -352,8 +352,17 @@ Waypoints and path points have the same treatment. `Spawn Waypoint Handles` crea
 one transient `AKyaSpatialRecordHandle` per waypoint (position, stored rotation and
 `CWayPoint` parameter triple) and suppresses the diagnostic waypoint arrows while
 enabled. `Spawn Path Point Handles` creates one handle per point of every path,
-labelled `Path <n> Point <m>`, so spatial records can be found without setting
-`Preview Path Index`; the spline guide still follows that index.
+labelled `Path <n> Point <m> (<x>, <y>, <z>)`, so spatial records can be found
+without setting `Preview Path Index`; waypoint labels carry their game-space position
+too and refresh after edits, so a record is identifiable in the Outliner without
+knowing its index. The spline guide still follows that index.
+
+`Kya.Editor.MilestoneDGate` exercises this as a session on the real bank: it selects
+an actor by its Outliner label with no capture camera or `PreviewActorIndex`, uses
+hide/isolate/lock and the delete-refusal reason, drags waypoint/path/actor handles
+found by label, and asserts the bank writes while the level never rebuilds or
+re-decodes geometry; unresolved references surface as blocking diagnostics naming the
+actor and property.
 
 `Show All Paths` (`Kya.ShowAllPaths [1|0]`, or the `Show All Paths` menu entries)
 draws a guide for every non-empty path and spawns its selectable points, so no

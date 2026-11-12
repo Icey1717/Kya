@@ -1644,6 +1644,167 @@ bool FKyaStructuralEditGateTest::RunTest(const FString& Parameters)
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaMilestoneDGateTest, "Kya.Editor.MilestoneDGate",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaMilestoneDGateTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to run the Milestone D gate."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read Milestone D bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient | RF_Transactional, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Milestone D bank"), Bank)) return false;
+    if (!TestTrue(TEXT("Milestone D bank has actors"), Bank->SceneEnvironment.Actors.Num() > 0)) return false;
+    if (!TestTrue(TEXT("Milestone D bank has waypoints and paths"),
+        Bank->SceneEnvironment.Waypoints.Num() > 0 && !Bank->SceneEnvironment.Paths.IsEmpty() &&
+        !Bank->SceneEnvironment.Paths[0].Points.IsEmpty())) return false;
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+
+    UWorld* World = UWorld::CreateWorld(EWorldType::EditorPreview, false);
+    if (!TestNotNull(TEXT("Create Milestone D world"), World)) return false;
+    AKyaLevelPreview* Preview = World->SpawnActor<AKyaLevelPreview>();
+    if (!TestNotNull(TEXT("Spawn Milestone D preview"), Preview))
+    {
+        World->DestroyWorld(false);
+        return false;
+    }
+    Preview->Bank = Bank;
+    Preview->bShowRebuildProgress = false;
+    Preview->bSpawnActorHandles = true;
+    Preview->bSpawnWaypointHandles = true;
+    Preview->bSpawnPathPointHandles = true;
+    Preview->OnConstruction(FTransform::Identity);
+
+    // --- 1: discovery and selection from the Outliner label, not a numeric index ---
+    const FString TargetName = Bank->SceneEnvironment.Actors[0].Name;
+    AKyaActorHandle* Found = nullptr;
+    for (TActorIterator<AKyaActorHandle> It(World); It; ++It)
+    {
+        if (!It->GetActorLabel().StartsWith(TargetName + TEXT(" [class"))) continue;
+        Found = *It;
+        break;
+    }
+    if (!TestNotNull(TEXT("Actor is discoverable by its Outliner label"), Found))
+    {
+        Preview->Destroy();
+        World->DestroyWorld(false);
+        return false;
+    }
+    TestTrue(TEXT("The label identifies the serialized record"), Found->ActorName == TargetName);
+    TestFalse(TEXT("No capture camera is required"), Preview->HasExplicitPreviewCamera());
+    TestEqual(TEXT("No capture actor index is required"), Preview->PreviewActorIndex, -1);
+    TestTrue(TEXT("Authoring discovery is active by default"), Preview->IsAuthoringVisibilityActive());
+    if (GEditor)
+    {
+        GEditor->SelectNone(false, true, false);
+        GEditor->SelectActor(Found, true, true);
+    }
+    TestTrue(TEXT("Outliner selection selects the representation"), Found->IsSelected());
+
+    // --- 2: organization commands and unsupported-command diagnostics --------------
+    Preview->SetGeneratedActorTemporarilyHidden(Found, true);
+    TestTrue(TEXT("Hide works from the session"), Found->IsTemporarilyHiddenInEditor());
+    Preview->SetGeneratedActorTemporarilyHidden(Found, false);
+    Preview->IsolateGeneratedActors({Found});
+    TestTrue(TEXT("Isolate works from the session"), Preview->IsGeneratedActorIsolated(Found));
+    Preview->ClearGeneratedActorIsolation();
+    TestFalse(TEXT("Clearing isolation restores the session"), Found->IsTemporarilyHiddenInEditor());
+    Preview->bLockGeneratedActorSelection = true;
+    TestFalse(TEXT("Selection lock prevents picking"), Found->IsSelectable());
+    Preview->bLockGeneratedActorSelection = false;
+    FText DeleteReason;
+    TestFalse(TEXT("Generated actors cannot be structurally deleted"), Found->CanDeleteSelectedActor(DeleteReason));
+    TestTrue(TEXT("Delete refusal points at the bank record"),
+        DeleteReason.ToString().Contains(TEXT("bank")));
+
+    // --- 3: spatial records are identifiable and editable without indices ----------
+    // Find the spatial representations the way a user would: by their labels in the
+    // Outliner, without supplying a record index.
+    AKyaSpatialRecordHandle* Waypoint = nullptr;
+    AKyaSpatialRecordHandle* PathPoint = nullptr;
+    for (TActorIterator<AKyaSpatialRecordHandle> It(World); It; ++It)
+    {
+        if (It->Kind == EKyaSpatialRecordKind::Waypoint && !Waypoint) Waypoint = *It;
+        if (It->Kind == EKyaSpatialRecordKind::PathPoint && !PathPoint) PathPoint = *It;
+        if (Waypoint && PathPoint) break;
+    }
+    const int32 WaypointIndex = Waypoint ? Waypoint->RecordIndex : INDEX_NONE;
+    const int32 PathIndex = PathPoint ? PathPoint->RecordIndex : INDEX_NONE;
+    const int32 PathPointIndex = PathPoint ? PathPoint->PointIndex : INDEX_NONE;
+    if (!TestNotNull(TEXT("Waypoint handle exists"), Waypoint) ||
+        !TestNotNull(TEXT("Path point handle exists"), PathPoint))
+    {
+        Preview->Destroy();
+        World->DestroyWorld(false);
+        return false;
+    }
+    TestTrue(TEXT("Waypoint label carries its position"), Waypoint->GetActorLabel().Contains(TEXT("(")));
+    TestTrue(TEXT("Path point label carries its position"), PathPoint->GetActorLabel().Contains(TEXT("(")));
+
+    const int64 BuildsBefore = Preview->BuildCount;
+    const int32 DecodesBefore = Preview->GetGeometryDecodeCount();
+    const FString WaypointLabelBefore = Waypoint->GetActorLabel();
+    const FVector WaypointBefore = Bank->SceneEnvironment.Waypoints[WaypointIndex].Position;
+    Waypoint->AddActorWorldOffset(FVector(150.0, 0.0, 0.0));
+    Waypoint->PostEditMove(true);
+    Service.FlushPendingNotifications();
+    TestFalse(TEXT("Waypoint drag writes the bank without an index"),
+        Bank->SceneEnvironment.Waypoints[WaypointIndex].Position.Equals(WaypointBefore));
+    TestFalse(TEXT("Waypoint label refreshes after the edit"),
+        Waypoint->GetActorLabel() == WaypointLabelBefore);
+
+    const FVector4 PathBefore = Bank->SceneEnvironment.Paths[PathIndex].Points[PathPointIndex];
+    PathPoint->AddActorWorldOffset(FVector(0.0, 150.0, 0.0));
+    PathPoint->PostEditMove(true);
+    Service.FlushPendingNotifications();
+    TestFalse(TEXT("Path point drag writes the bank without an index"),
+        Bank->SceneEnvironment.Paths[PathIndex].Points[PathPointIndex].Equals(PathBefore));
+
+    // --- 4: actor transform editing is incremental (no rebuild, no re-decode) ------
+    const FVector ActorBefore = Bank->SceneEnvironment.Actors[Found->ActorIndex].Position;
+    Found->AddActorWorldOffset(FVector(100.0, 0.0, 0.0));
+    Found->PostEditMove(true);
+    Service.FlushPendingNotifications();
+    TestFalse(TEXT("Actor drag writes the bank"), 
+        Bank->SceneEnvironment.Actors[Found->ActorIndex].Position.Equals(ActorBefore));
+    TestEqual(TEXT("The editing session never rebuilds the level"), Preview->BuildCount, BuildsBefore);
+    TestEqual(TEXT("The editing session never re-decodes level geometry"),
+        Preview->GetGeometryDecodeCount(), DecodesBefore);
+
+    // --- 5: diagnostics name the record without searching raw logs -----------------
+    const int32 SavedMesh = Bank->SceneEnvironment.Actors[Found->ActorIndex].MeshIndex;
+    Bank->SceneEnvironment.Actors[Found->ActorIndex].MeshIndex = 99999;
+    const FKyaBankValidationReport Report = KyaValidateBank(Bank);
+    bool bNamedIssue = false;
+    for (const FKyaValidationIssue& Issue : Report.Issues)
+    {
+        if (Issue.ActorIndex != Found->ActorIndex || Issue.Field != TEXT("MeshIndex")) continue;
+        bNamedIssue = Issue.bBlocking && !Issue.Message.IsEmpty();
+        const FString Text = KyaMakeValidationIssueMessage(EMessageSeverity::Error, Bank, Issue.ActorIndex,
+            Issue.Field, FText::FromString(Issue.Message))->ToText().ToString();
+        TestTrue(TEXT("The diagnostic names the actor and property"),
+            Text.Contains(TargetName) && Text.Contains(TEXT("MeshIndex")));
+    }
+    TestTrue(TEXT("Blocking diagnostics identify the affected actor"), bNamedIssue);
+    Bank->SceneEnvironment.Actors[Found->ActorIndex].MeshIndex = SavedMesh;
+
+    Preview->Destroy();
+    World->DestroyWorld(false);
+    Service.Reset();
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaMilestoneCGateTest, "Kya.Editor.MilestoneCGate",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
@@ -4375,8 +4536,10 @@ bool FKyaSpatialRecordsTest::RunTest(const FString& Parameters)
     if (TestNotNull(TEXT("Waypoint handle exists"), WaypointHandle) &&
         TestNotNull(TEXT("Path-point handle exists"), PathHandle))
     {
-        TestEqual(TEXT("Waypoint handle label"), WaypointHandle->GetActorLabel(), FString(TEXT("Waypoint 0")));
-        TestEqual(TEXT("Path-point handle label"), PathHandle->GetActorLabel(), FString(TEXT("Path 0 Point 1")));
+        TestTrue(TEXT("Waypoint handle label"),
+            WaypointHandle->GetActorLabel().StartsWith(TEXT("Waypoint 0 (")));
+        TestTrue(TEXT("Path-point handle label"),
+            PathHandle->GetActorLabel().StartsWith(TEXT("Path 0 Point 1 (")));
         TestTrue(TEXT("Spatial handles are transient"), WaypointHandle->HasAnyFlags(RF_Transient));
 
         // Waypoint translation through the gizmo lifecycle.
