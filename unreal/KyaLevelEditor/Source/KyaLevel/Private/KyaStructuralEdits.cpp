@@ -146,6 +146,8 @@ bool ValidateKyaStructLayout(const UScriptStruct* Struct, const void* Current, c
         {
             FScriptArrayHelper CurrentArray(Array, CurrentValue);
             FScriptArrayHelper CandidateArray(Array, CandidateValue);
+            if (Struct == FKyaActorPlacement::StaticStruct() &&
+                Property->GetFName() == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Conditions)) continue;
             if (CurrentArray.Num() != CandidateArray.Num())
             {
                 OutError = FString::Printf(TEXT("%s count changed (%d -> %d). %s"), *PropertyPath,

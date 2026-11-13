@@ -1,9 +1,43 @@
 #include "KyaLevelBankExporter.h"
+#include "Actors/KyaHunter.h"
+#include "Actors/KyaHelperSign.h"
+#include "Actors/KyaWoodMonster.h"
+#include "Actors/KyaShockerCmd.h"
+#include "Actors/KyaAcceleratos.h"
+#include "Actors/KyaAddOnPurchase.h"
+#include "Actors/KyaAmortosCmd.h"
+#include "Actors/KyaPatternCmd.h"
+#include "Actors/KyaEgg.h"
+#include "Actors/KyaCareBoy.h"
+#include "Actors/KyaElectrolla.h"
+#include "Actors/KyaBombLauncher.h"
+#include "Actors/KyaBlazer.h"
+#include "Actors/KyaWoof.h"
+#include "Actors/KyaMiniGamesSupport.h"
+#include "Actors/KyaCredits.h"
+#include "Actors/KyaWantedZoo.h"
+#include "Actors/KyaJamGut.h"
 #include "KyaLevelBank.h"
 #include "KyaActorCatalog.h"
 #include "KyaBankExport.h"
 #include "KyaSectorBankExport.h"
 #include "KyaCameraStream.h"
+#include "Actors/KyaHedgehog.h"
+#include "Actors/KyaProjectile.h"
+#include "Actors/KyaMovingPlatform.h"
+#include "Actors/KyaSwitch.h"
+#include "Actors/KyaWind.h"
+#include "Actors/KyaTrap.h"
+#include "Actors/KyaWeapon.h"
+#include "Actors/KyaAraignos.h"
+#include "Actors/KyaBonus.h"
+#include "Actors/KyaTeleporter.h"
+#include "Actors/KyaAmortos.h"
+#include "Actors/KyaDca.h"
+#include "Actors/KyaFruit.h"
+#include "Actors/KyaNativ.h"
+#include "KyaBankStructuralWriter.h"
+#include "UObject/StrongObjectPtr.h"
 #include "Misc/FeedbackContext.h"
 
 UKyaLevelBankExporter::UKyaLevelBankExporter()
@@ -149,6 +183,20 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
     }
     for (int32 Index = 0; Index < Actors.Num(); ++Index)
     {
+        if (Bank->SceneEnvironment.Actors[Index].Conditions.Num() == Actors[Index].ConditionCount) continue;
+        // Relocate a temporary bank so exporting does not mutate the asset or its undo history.
+        TStrongObjectPtr<UKyaLevelBank> Resized(DuplicateObject<UKyaLevelBank>(Bank, GetTransientPackage()));
+        bool bChanged = false;
+        FString Error;
+        if (!KyaResizeActorConditions(*Resized.Get(), bChanged, Error))
+        {
+            Diagnostics.Errors.Add(Error);
+            return false;
+        }
+        return KyaBuildBankExportBytes(Resized.Get(), OutBytes, Diagnostics);
+    }
+    for (int32 Index = 0; Index < Actors.Num(); ++Index)
+    {
         const FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[Index];
         const FKyaActorOffsets& Offsets = Actors[Index];
         if (Actor.Index != int32(ReadU32(Offsets.Chunk + 8)) || Actor.ClassId != ReadU32(Offsets.Chunk + 12) ||
@@ -179,6 +227,9 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
         FKyaProjectileOffsets Projectile;
         const bool HasProjectile = Actor.ClassId == 0x1c && KyaReadProjectileOffsets(
             MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Projectile);
+        FKyaHedgehogOffsets Hedgehog;
+        const bool HasHedgehog = Actor.ClassId == 0x22 && KyaReadHedgehogOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Hedgehog);
         FKyaWindOffsets Wind;
         const bool HasWind = Actor.ClassId == 0x12 && KyaReadWindOffsets(
             MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Wind);
@@ -188,8 +239,8 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
         FKyaWeaponOffsets Weapon;
         const bool HasWeapon = Actor.ClassId == 0x20 && KyaReadWeaponOffsets(
             MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Weapon);
-        FKyaSwitchOffsets SwitchData;
-        const bool HasSwitch = Actor.ClassId == 0x11 && KyaReadSwitchOffsets(
+        FKyaSwitchActorOffsets SwitchData;
+        const bool HasSwitch = Actor.ClassId == 0x11 && KyaReadSwitchActorOffsets(
             MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, SwitchData);
         FKyaBonusOffsets Bonus;
         const bool HasBonus = Actor.ClassId == 0x0e && KyaReadBonusOffsets(
@@ -239,8 +290,8 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
         FKyaRuneOffsets Rune;
         const bool HasRune = Actor.ClassId == 0x51 && KyaReadRuneOffsets(
             MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Rune);
-        FKyaBonusFountainOffsets Fountain;
-        const bool HasFountain = Actor.ClassId == 0x52 && KyaReadBonusFountainOffsets(
+        FKyaFountainOffsets Fountain;
+        const bool HasFountain = Actor.ClassId == 0x52 && KyaReadFountainOffsets(
             MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Fountain);
         FKyaRopeOffsets Rope;
         const bool HasRope = Actor.ClassId == 0x0f && KyaReadRopeOffsets(
@@ -251,10 +302,9 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
         FKyaNativCmdOffsets Command;
         const bool HasNativCmd = Actor.ClassId == 0x3c && KyaReadNativCmdOffsets(
             MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Command);
-        TArray<int64> CheckpointOffsets;
-        int64 CheckpointTail = 0;
-        const bool HasCheckpoints = Actor.ClassId == 0x1e && KyaReadCheckpointOffsets(
-            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, CheckpointOffsets, &CheckpointTail);
+        FKyaCheckpointsOffsets CheckpointData;
+        const bool HasCheckpoints = Actor.ClassId == 0x1e && KyaReadCheckpointsOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, CheckpointData);
         FKyaCompanionOffsets Companion;
         const bool HasCompanion = Actor.ClassId == 0x19 && KyaReadCompanionOffsets(
             MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Companion);
@@ -270,11 +320,102 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
         FKyaKimOffsets Kim;
         const bool HasKim = Actor.ClassId == 0x06 && KyaReadKimOffsets(
             MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Kim);
-        const int64 RawOffset = HasAton ? Aton.Tail : (HasBridge ? Bridge.Tail : (HasCompanion ? Companion.Tail : (HasGravity ? Gravity.Tail : (HasNativCmd ? Command.Tail : (HasCheckpoints ? CheckpointTail : (HasRope ? Rope.Tail : (HasFountain ? Fountain.Tail : (HasRune ? Rune.Tail : (HasStiller ? Stiller.Tail : (HasAmbre ? Ambre.Tail : (HasShoot ? Shoot.Tail : (HasFog ? Fog.Tail : (HasMoney ? Money.Tail : (HasBoxClass ? BoxClass.Tail : (HasDca ? Dca.Tail : (HasTeleporter ? Teleporter.Tail : (HasAmortos ? Amortos.Tail : (HasNativ ? Nativ.Tail : (HasCommander ? Commander.Tail : (HasFruit ? Fruit.Tail : (HasWolfen ? Wolfen.WeaponIndex : (HasMicken ? Micken.Tail : (HasBonus ? Bonus.Tail : (HasSwitch ? SwitchData.Tail : (HasWeapon ? Weapon.Tail : (HasTrap ? Trap.Tail : (HasWind ? Wind.Tail : (HasProjectile ? Projectile.Tail : (HasAraignos ? Araignos.Tail : (HasFx ? Fx.Tail : (HasBox ? Box.Tail : (HasDetails ? Details.Tail : (HasPlatform ? Platform.Suffix : Offsets.ClassData)))))))))))))))))))))))))))))))));
+        if (Actor.bHasHunterData != (Actor.ClassId == 0x48 && Offsets.ClassDataSize >= 40)) return false;
+        if (Actor.bHasWoodMonsterData != (Actor.ClassId == 0x27 && Offsets.ClassDataSize >= 16)) return false;
+        FKyaShockerCmdOffsets ShockerCmd;
+        const bool HasShockerCmd = Actor.ClassId == 0x50 && KyaReadShockerCmdOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, ShockerCmd);
+        if (HasShockerCmd != Actor.bHasShockerCmdData) return false;
+        if (HasShockerCmd)
+        {
+            if (Actor.ShockerCmdField168 < 0 || Actor.ShockerCmdField168 > MAX_uint32 ||
+                Actor.ShockerCmdSequences.Num() != ShockerCmd.Sequences.Num()) return false;
+            for (int32 Sequence = 0; Sequence < ShockerCmd.Counts.Num(); ++Sequence)
+                if (Actor.ShockerCmdSequences[Sequence].Values.Num() != ShockerCmd.Counts[Sequence]) return false;
+        }
+        if (Actor.bHasAcceleratosData != (Actor.ClassId == 0x3a && Offsets.ClassDataSize >= 20)) return false;
+        FKyaAddOnPurchaseOffsets AddOnPurchase;
+        const bool HasAddOnPurchase = Actor.ClassId == 0x49 && KyaReadAddOnPurchaseOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, AddOnPurchase);
+        if (HasAddOnPurchase != Actor.bHasAddOnPurchaseData) return false;
+        FKyaAmortosCmdOffsets AmortosCmd;
+        const bool HasAmortosCmd = Actor.ClassId == 0x31 && KyaReadAmortosCmdOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, AmortosCmd);
+        if (HasAmortosCmd != Actor.bHasAmortosCmdData ||
+            (HasAmortosCmd && Actor.AmortosCmdActorRefs.Num() != AmortosCmd.Count)) return false;
+        FKyaPatternCmdOffsets PatternCmd;
+        const bool HasPatternCmd = Actor.ClassId == 0x40 && KyaReadPatternCmdOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, PatternCmd);
+        if (HasPatternCmd != Actor.bHasPatternCmdData || (HasPatternCmd &&
+            (Actor.PatternCmdActorRefs.Num() != PatternCmd.Count || Actor.PatternCmdPattern.bHasField24 != PatternCmd.bHasField24 ||
+                Actor.PatternCmdField164 < 0 || Actor.PatternCmdField164 > MAX_uint32 ||
+                Actor.PatternCmdField160 < 0 || Actor.PatternCmdField160 > MAX_uint32))) return false;
+        FKyaEggOffsets Egg;
+        const bool HasEgg = Actor.ClassId == 0x2f && KyaReadEggOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Egg);
+        if (HasEgg != Actor.bHasEggData || (HasEgg &&
+            (Actor.EggPathIndices.Num() != Egg.Count || Actor.EggField1DC < 0 || Actor.EggField1DC > MAX_uint32 ||
+                Actor.EggField1E0 < 0 || Actor.EggField1E0 > MAX_uint32))) return false;
+        if (Actor.bHasCareBoyData != (Actor.ClassId == 0x37 && Offsets.ClassDataSize >= 12)) return false;
+        FKyaElectrollaOffsets Electrolla;
+        const bool HasElectrolla = Actor.ClassId == 0x0b && KyaReadElectrollaOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Electrolla);
+        if (HasElectrolla != Actor.bHasElectrollaData || (HasElectrolla &&
+            (Actor.ElectrollaSwitch.Targets.Num() != Electrolla.Switch.Count || Actor.ElectrollaSparkCount < 0))) return false;
+        FKyaBombLauncherOffsets BombLauncher;
+        const bool HasBombLauncher = Actor.ClassId == 0x53 && KyaReadBombLauncherOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, BombLauncher);
+        if (HasBombLauncher != Actor.bHasBombLauncherData ||
+            (HasBombLauncher && Actor.BombLauncherActorRefs.Num() != BombLauncher.Count)) return false;
+        FKyaBlazerOffsets Blazer;
+        const bool HasBlazer = Actor.ClassId == 0x4d && KyaReadBlazerOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Blazer);
+        if (HasBlazer != Actor.bHasBlazerData || (HasBlazer &&
+            (Actor.BlazerData.ActorRefs.Num() != Blazer.Count || Actor.BlazerData.bHasWaypointRefs != Blazer.bHasWaypointRefs))) return false;
+        FKyaWoofOffsets Woof;
+        const bool HasWoof = Actor.ClassId == 0x2a && KyaReadWoofOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Woof);
+        if (HasWoof != Actor.bHasWoofData || (HasWoof && Actor.WoofData.ActorRefs.Num() != Woof.Count)) return false;
+        FKyaMiniGamesSupportOffsets MiniGamesSupport;
+        const bool HasMiniGamesSupport = KyaReadMiniGamesSupportOffsets(Actor.ClassId,
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, MiniGamesSupport);
+        if (Actor.bHasMiniGamesManagerData != (HasMiniGamesSupport && Actor.ClassId == 0x42) ||
+            Actor.bHasMiniGamesOrganizerData != (HasMiniGamesSupport && Actor.ClassId == 0x43)) return false;
+        if (HasMiniGamesSupport && (Actor.ClassId == 0x42 ? Actor.MiniGamesManagerOrganizerRefs.Num() :
+            Actor.MiniGamesOrganizerData.MiniGameRefs.Num()) != MiniGamesSupport.Count) return false;
+        FKyaCreditsOffsets Credits;
+        const bool HasCredits = Actor.ClassId == 0x56 && KyaReadCreditsOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Credits);
+        if (HasCredits != Actor.bHasCreditsData || (HasCredits &&
+            (Actor.CreditsData.MessageKeys.Num() != Credits.Count || Actor.CreditsData.CompletionSwitch.Targets.Num() != Credits.Switch.Count ||
+                Actor.CreditsData.MusicIndex < 0 || Actor.CreditsData.MusicIndex > MAX_uint32))) return false;
+        FKyaWantedZooOffsets WantedZoo;
+        const bool HasWantedZoo = Actor.ClassId == 0x54 && KyaReadWantedZooOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, WantedZoo);
+        if (HasWantedZoo != Actor.bHasWantedZooData) return false;
+        if (HasWantedZoo)
+        {
+            const FKyaWantedZooData& Zoo = Actor.WantedZooData;
+            if (Zoo.TextPositions.Num() != WantedZoo.TextCount || Zoo.NumberPositions.Num() != WantedZoo.NumberCount ||
+                Zoo.Entries.Num() != WantedZoo.Entries.Num()) return false;
+            for (int32 Entry = 0; Entry < Zoo.Entries.Num(); ++Entry)
+                if (Zoo.Entries[Entry].Conditions.Num() != WantedZoo.Entries[Entry].ConditionCount ||
+                    Zoo.Entries[Entry].MessageKeys.Num() != WantedZoo.Entries[Entry].KeyCount ||
+                    Zoo.Entries[Entry].Numbers.Num() != WantedZoo.Entries[Entry].NumberCount) return false;
+        }
+        FKyaJamGutOffsets JamGut;
+        const bool HasJamGut = Actor.ClassId == 0x33 && KyaReadJamGutOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, JamGut);
+        if (HasJamGut != Actor.bHasJamGutData || (HasJamGut &&
+            (Actor.JamGutData.bHasField41C != JamGut.bHasField41C || Actor.JamGutData.Checkpoints.Num() != JamGut.CheckpointCount ||
+                Actor.JamGutData.Paths.Num() != JamGut.PathCount))) return false;
+        const int64 RawOffset = HasJamGut ? JamGut.Tail : HasWantedZoo ? WantedZoo.Tail : HasCredits ? Credits.Tail : HasMiniGamesSupport ? MiniGamesSupport.Tail : HasWoof ? Woof.Tail : HasBlazer ? Blazer.Tail : HasBombLauncher ? BombLauncher.Tail : HasElectrolla ? Electrolla.Tail : (Actor.ClassId == 0x37 && Actor.bHasCareBoyData) ? Offsets.ClassData + 12 : HasEgg ? Egg.Tail : HasPatternCmd ? PatternCmd.Tail : HasAmortosCmd ? AmortosCmd.Tail : HasAddOnPurchase ? AddOnPurchase.Tail : (Actor.ClassId == 0x3a && Actor.bHasAcceleratosData) ? Offsets.ClassData + 20 : HasShockerCmd ? ShockerCmd.Tail : (Actor.ClassId == 0x27 && Actor.bHasWoodMonsterData) ? Offsets.ClassData + 16 : (Actor.ClassId == 0x2b && Actor.bHasHelperSignData) ? Offsets.ClassData + 12 : (Actor.ClassId == 0x48 && Actor.bHasHunterData) ? Offsets.ClassData + 40 : HasAton ? Aton.Tail : (HasBridge ? Bridge.Tail : (HasCompanion ? Companion.Tail : (HasGravity ? Gravity.Tail : (HasNativCmd ? Command.Tail : (HasCheckpoints ? CheckpointData.Tail : (HasRope ? Rope.Tail : (HasFountain ? Fountain.Tail : (HasRune ? Rune.Tail : (HasStiller ? Stiller.Tail : (HasAmbre ? Ambre.Tail : (HasShoot ? Shoot.Tail : (HasFog ? Fog.Tail : (HasMoney ? Money.Tail : (HasBoxClass ? BoxClass.Tail : (HasDca ? Dca.Tail : (HasTeleporter ? Teleporter.Tail : (HasAmortos ? Amortos.Tail : (HasNativ ? Nativ.Tail : (HasCommander ? Commander.Tail : (HasFruit ? Fruit.Tail : (HasWolfen ? Wolfen.WeaponIndex : (HasMicken ? Micken.Tail : (HasBonus ? Bonus.Tail : (HasSwitch ? SwitchData.Tail : (HasWeapon ? Weapon.Tail : (HasTrap ? Trap.Tail : (HasWind ? Wind.Tail : (HasProjectile ? Projectile.Tail : (HasHedgehog ? Hedgehog.Tail : (HasAraignos ? Araignos.Tail : (HasFx ? Fx.Tail : (HasBox ? Box.Tail : (HasDetails ? Details.Tail : (HasPlatform ? Platform.Suffix : Offsets.ClassData))))))))))))))))))))))))))))))))));
         const int64 BoomyRawOffset = HasBoomy ? Boomy.Tail : RawOffset;
+        if (Actor.bHasHelperSignData != (Actor.ClassId == 0x2b && Offsets.ClassDataSize >= 12)) return false;
         const int64 KimRawOffset = HasKim ? Kim.Tail : RawOffset;
         if (HasPlatform != Actor.bHasPlatformPrefix || HasDetails != Actor.bHasPlatformDetails || HasBox != Actor.bHasBasicBoxData ||
             HasFx != Actor.bHasFxData || HasAraignos != Actor.bHasAraignosData || HasProjectile != Actor.bHasProjectileData ||
+            HasHedgehog != Actor.bHasHedgehogData ||
             HasWind != Actor.bHasWindData || HasTrap != Actor.bHasTrapData || HasWeapon != Actor.bHasWeaponData ||
             HasSwitch != Actor.bHasSwitchData || HasBonus != Actor.bHasBonusData || HasMicken != Actor.bHasMickenData ||
             HasWolfen != Actor.bHasWolfenData || HasFruit != Actor.bHasFruitData || HasCommander != Actor.bHasCommanderData ||
@@ -308,7 +449,8 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
                     Actor.TeleporterConditionedOperations[Block].Conditions.Num() != Teleporter.BlockCondCountValues[Block]) return false;
         if (HasDca && Actor.DcaShotActorRefs.Num() != Dca.ShotCountValue) return false;
         if (HasFog && Actor.FogHierarchies.Num() != Fog.CountValue) return false;
-        if (HasShoot && Actor.ShootAddOn.SubObjMode != Shoot.SubObjModeValue) return false;
+        if (HasShoot && (Actor.ShootAddOn.SubObjMode != Shoot.SubObjModeValue ||
+            Actor.ShootLifeMax < 0 || Actor.ShootLifeMax > MAX_uint32)) return false;
         if (HasAmbre && Actor.AmbreSwitch.Targets.Num() != Ambre.Switch.Count) return false;
         if (HasStiller && (Actor.StillerActorRefs.Num() != Stiller.ActorCountValue ||
             Actor.StillerSwitch208.Targets.Num() != Stiller.Switches[0].Count ||
@@ -316,8 +458,9 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
             Actor.StillerAddOn.SubObjMode != Stiller.SubObjModeValue)) return false;
         if (HasFountain && Actor.BonusFountainAddOn.SubObjMode != Fountain.SubObjModeValue) return false;
         if (HasRope && Actor.RopeSwitch.Targets.Num() != Rope.Switch.Count) return false;
-        if (HasCheckpoints && Actor.Checkpoints.Num() != CheckpointOffsets.Num()) return false;
+        if (HasCheckpoints && Actor.Checkpoints.Num() != CheckpointData.CountValue) return false;
         if (HasBridge && Actor.BridgeActorRefs.Num() != Bridge.ActorCountValue) return false;
+        if (HasAton && (Actor.AtonLifeMax < 0 || Actor.AtonLifeMax > MAX_uint32)) return false;
         if (HasAton && (Actor.AtonPathIndices.Num() != Aton.PathCountValue ||
             Actor.AtonOtherSubObjs.Num() != Aton.OtherCountValue ||
             Actor.AtonSubObjs.Num() != Aton.AtonCountValue)) return false;
@@ -329,12 +472,12 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
                 if (Actor.AtonSubObjs[SubIndex].CinematicIds.Num() != int32(ReadU32(Aton.AtonOffsets[SubIndex] + 8))) return false;
         }
         if (HasBoomy && (Actor.BoomyTypes.Num() != Boomy.TypeCountValue ||
-            Actor.BoomyCamera.Conditions.Num() != Boomy.ConditionCount ||
-            Actor.BoomyCamera.bHasSwitch != Boomy.bHasSwitch ||
-            (Boomy.bHasSwitch && (Actor.BoomyCamera.SwitchActorsA.Num() != Boomy.SwitchCountA ||
-                Actor.BoomyCamera.SwitchActorsB.Num() != Boomy.SwitchCountB)) ||
-            Actor.BoomyCamera.ConfigOptionalValues.Num() != (Boomy.ConfigMode == 1 ? 5 : 0) ||
-            Actor.BoomyCamera.ExtraValues.Num() != (Boomy.ExtraCount == 1 ? 12 : 0))) return false;
+            Actor.BoomyCamera.Conditions.Num() != Boomy.Camera.ConditionCount ||
+            Actor.BoomyCamera.bHasSwitch != Boomy.Camera.bHasSwitch ||
+            (Boomy.Camera.bHasSwitch && (Actor.BoomyCamera.SwitchActorsA.Num() != Boomy.Camera.SwitchCountA ||
+                Actor.BoomyCamera.SwitchActorsB.Num() != Boomy.Camera.SwitchCountB)) ||
+            Actor.BoomyCamera.ConfigOptionalValues.Num() != (Boomy.Camera.ConfigMode == 1 ? 5 : 0) ||
+            Actor.BoomyCamera.ExtraValues.Num() != (Boomy.Camera.ExtraCount == 1 ? 12 : 0))) return false;
         if (HasKim)
         {
             if (ReadU32(Kim.Fighter.Blows) != uint32(Actor.FighterBlows.Num()) ||
@@ -370,7 +513,8 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
                 }
             }
         }
-        if (HasBoxClass && (Actor.BoxActorRefs.Num() != BoxClass.ActorCountValue ||
+        if (HasBoxClass && (Actor.BoxLifeMax < 0 || Actor.BoxLifeMax > MAX_uint32 ||
+            Actor.BoxActorRefs.Num() != BoxClass.ActorCountValue ||
             Actor.BoxSwitch.Targets.Num() != BoxClass.Switch.Count ||
             Actor.BoxAddOn.SubObjMode != BoxClass.SubObjModeValue)) return false;
         if (HasWolfen)
@@ -388,11 +532,14 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
                 Actor.WolfenFightParamData.Capability2Fields.Num() != 5 ||
                 Actor.WolfenFightParamData.ConfigurationValues.Num() != 4 ||
                 Actor.WolfenFightParamData.TuningValues.Num() != 6 ||
-                Actor.WolfenFightParamData.Knowledge.Num() != 4) return false;
+                Actor.WolfenFightParamData.Knowledge.Num() != 4)
+            return false;
             for (int32 Cap = 0; Cap < 3; ++Cap)
-                if (Actor.WolfenFightParamData.Capabilities[Cap].Items.Num() != Params.Capabilities[Cap].Items.Num()) return false;
+                if (Actor.WolfenFightParamData.Capabilities[Cap].Items.Num() != Params.Capabilities[Cap].Items.Num())
+                return false;
             if (Actor.WolfenFightParamData.ComboList1.Num() != int32(ReadU32(Params.ComboList1Count)) ||
-                Actor.WolfenFightParamData.ComboList2.Num() != int32(ReadU32(Params.ComboList2Count))) return false;
+                Actor.WolfenFightParamData.ComboList2.Num() != int32(ReadU32(Params.ComboList2Count)))
+            return false;
         }
         else if (Actor.ClassData.Num() != Offsets.ClassData + Offsets.ClassDataSize - (HasKim ? Kim.Tail : BoomyRawOffset)) return false;
         if (HasPlatform)
@@ -411,10 +558,15 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
         if (HasBox)
         {
             if (Actor.BasicBoxActorRefs.Num() != Box.ActorCount || Actor.BasicBoxSwitch.Targets.Num() != Box.SwitchTargetCount ||
-                Actor.BasicBoxAddOn.SubObjMode != Box.SubObjModeValue || Actor.BasicBoxLifeMax < 0) return false;
+                Actor.BasicBoxAddOn.SubObjMode != Box.SubObjModeValue || Actor.BasicBoxLifeMax < 0 || Actor.BasicBoxLifeMax > MAX_uint32) return false;
         }
         if (HasAraignos && Actor.AraignosAddOn.SubObjMode != Araignos.SubObjModeValue) return false;
-        if (HasProjectile && (Actor.ProjectileLifeMax < 0 || Actor.ProjectilePattern.bHasField24 != Projectile.bHasPatternField24)) return false;
+        if (HasHedgehog && (Actor.HedgehogAddOn.SubObjMode != Hedgehog.SubObjModeValue ||
+            Actor.HedgehogLifeMax < 0 || Actor.HedgehogLifeMax > MAX_uint32)) return false;
+        if (HasProjectile && (Actor.ProjectileLifeMax < 0 || Actor.ProjectileLifeMax > MAX_uint32 ||
+            Actor.ProjectilePattern.bHasField24 != Projectile.bHasPatternField24)) return false;
+        if (HasFruit && (Actor.FruitLifeMax < 0 || Actor.FruitLifeMax > MAX_uint32)) return false;
+        if (HasNativ && (Actor.NativLifeMax < 0 || Actor.NativLifeMax > MAX_uint32)) return false;
         if (HasWind)
         {
             if (Actor.WindActorRefs.Num() != Wind.ActorCount) return false;
@@ -433,6 +585,15 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
             const FKyaActorBehaviour& Source = Actor.Behaviours[Behaviour];
             const FKyaBehaviourOffsets& Location = Offsets.Behaviours[Behaviour];
             if (Source.Data.Num() != Location.Size) return false;
+            if (Source.bHasTypedJamGutBehaviour && (Actor.ClassId != 0x33 || Source.Id != 4 || Location.Size != 16 ||
+                Source.JamGutMusicIndex < 0 || Source.JamGutMusicIndex > MAX_uint32)) return false;
+            if (Source.bHasTypedEmptyBehaviour &&
+                (Location.Size != 0 || !KyaActorFamilies::HasEmptyPayload(Actor.ClassId, Source.Id))) return false;
+            if (Source.bHasTypedWoodMonsterBehaviour &&
+                (Actor.ClassId != 0x27 || Source.Id != 2 || Location.Size != 12)) return false;
+            if (Source.bHasTypedHelperSignBehaviour &&
+                (Actor.ClassId != 0x2b || (Source.Id != 2 && Source.Id != 3) ||
+                    Location.Size != (Source.Id == 3 ? 4 : 0))) return false;
             if (Source.bHasTypedFxBehaviour)
             {
                 FKyaFxBehaviourValues Values;
@@ -442,6 +603,13 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
             }
             if (Source.bHasTypedTrapBehaviour &&
                 (Actor.ClassId != 0x2c || (Source.Id != 2 && Source.Id != 3) || Location.Size != 12)) return false;
+            if (Source.bHasTypedHedgehogBehaviour)
+            {
+                FKyaHedgehogBehaviourValues Values;
+                if (Actor.ClassId != 0x22 ||
+                    !KyaReadHedgehogBehaviour(Source.Id, MakeArrayView(Bytes.GetData(), int32(SceneEnd)),
+                        Location.Payload, Location.Size, Values)) return false;
+            }
             if (Source.bHasTypedWeaponBehaviour)
             {
                 FKyaWeaponBehaviourValues Values;
@@ -464,10 +632,11 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
             if (Source.bHasTypedFruitBehaviour)
             {
                 if (Actor.ClassId != 0x16) return false;
+                FKyaFruitInventoryOffsets Off;
                 if (Source.Id == 5)
                 {
-                    FKyaFruitInventoryValues Values;
-                    if (!KyaReadFruitInventory(MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Location.Payload, Location.Size, Values)) return false;
+                    if (!KyaReadFruitInventoryOffsets(MakeArrayView(Bytes.GetData(), int32(SceneEnd)),
+                        Location.Payload, Location.Size, Off)) return false;
                 }
                 else if ((Source.Id != 4 || Location.Size != 4) && (Source.Id != 6 || Location.Size != 8)) return false;
             }
@@ -479,10 +648,14 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
             }
             if (Source.bHasTypedNativBehaviour)
             {
-                FKyaNativTakePutOffsets Off;
-                if (Actor.ClassId != 0x0a || Source.Id != 6 ||
-                    !KyaReadNativTakePutOffsets(MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Location.Payload, Location.Payload + Location.Size, Off) ||
-                    Off.Items.Num() != Source.NativTrajectories.Num()) return false;
+                FKyaActorBehaviour Parsed;
+                if (Actor.ClassId != 0x0a ||
+                    !KyaReadNativBehaviour(Parsed, Source.Id, MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Location.Payload, Location.Size) ||
+                    Parsed.NativTrajectories.Num() != Source.NativTrajectories.Num() ||
+                    Parsed.NativSpeakValues.Num() != Source.NativSpeakValues.Num() ||
+                    Parsed.NativSellerSubObjs.Num() != Source.NativSellerSubObjs.Num()) return false;
+                for (int32 Sub = 0; Sub < Parsed.NativSellerSubObjs.Num(); ++Sub)
+                    if (Parsed.NativSellerSubObjs[Sub].CinematicIds.Num() != Source.NativSellerSubObjs[Sub].CinematicIds.Num()) return false;
             }
             if (Source.bHasTypedCinematicBehaviour &&
                 (Source.Id != 1 || Location.Size != 4)) return false;
@@ -490,13 +663,13 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
             {
                 FKyaDcaBehaviourOffsets Off;
                 if (Actor.ClassId != 0x1b || Source.Id != 3 ||
-                    !KyaReadDcaBehaviour(3, MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Location.Payload, Location.Size, Off) || !Off.bControlled) return false;
+                    !KyaReadDcaBehaviourOffsets(3, MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Location.Payload, Location.Size, Off) || !Off.bControlled) return false;
             }
             if (Source.bHasTypedDcaTrajectoryBehaviour)
             {
                 FKyaDcaBehaviourOffsets Off;
                 if (Actor.ClassId != 0x1b || Source.Id != 5 ||
-                    !KyaReadDcaBehaviour(5, MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Location.Payload, Location.Size, Off) || !Off.bTrajectory) return false;
+                    !KyaReadDcaBehaviourOffsets(5, MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Location.Payload, Location.Size, Off) || !Off.bTrajectory) return false;
             }
             if (Source.bHasTypedFogBehaviour)
             {
@@ -504,6 +677,12 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
                 if (Actor.ClassId != 0x3d || Source.Id != 2 ||
                     !KyaReadFogZoneOffsets(MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Location.Payload, Location.Payload + Location.Size, Off) ||
                     Off.CountValue != Source.FogZones.Num()) return false;
+            }
+            if (Source.bHasTypedMoneyFlockBehaviour)
+            {
+                FKyaMoneyFlockOffsets Off;
+                if (Actor.ClassId != 0x32 || Source.Id != 2 ||
+                    !KyaReadMoneyFlockOffsets(MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Location.Payload, Location.Size, Off)) return false;
             }
             if (Source.bHasTypedShootFireBehaviour)
             {
@@ -518,19 +697,17 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
                 if (Actor.ClassId != 0x3e || Source.Id != 4 || Source.ShootWaveValues.Num() != 7 ||
                     !KyaReadShootWaveOffsets(MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Location.Payload, Location.Size, Off)) return false;
             }
-            if (Source.bHasTypedGravityFallBehaviour &&
-                (Actor.ClassId != 0x10 || Source.Id != 3 || Location.Size != 4)) return false;
-            if (Source.bHasTypedGravityBellBehaviour)
+            if (Source.bHasTypedGravityFallBehaviour || Source.bHasTypedGravityBellBehaviour)
             {
-                FKyaGravityBellOffsets Off;
-                if (Actor.ClassId != 0x10 || Source.Id != 4 ||
-                    !KyaReadGravityBellOffsets(MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Location.Payload, Location.Payload + Location.Size, Off) ||
-                    Source.GravityBellSwitch.Targets.Num() != Off.Switch.Count) return false;
+                FKyaActorBehaviour Parsed;
+                if (Actor.ClassId != 0x10 ||
+                    !KyaReadGravityBehaviour(Parsed, Source.Id, MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Location.Payload, Location.Size) ||
+                    Parsed.GravityBellSwitch.Targets.Num() != Source.GravityBellSwitch.Targets.Num()) return false;
             }
             if (Source.bHasTypedCatchByTrapBehaviour)
             {
                 FKyaCatchByTrapOffsets Off;
-                if ((Actor.ClassId != 0x07 && Actor.ClassId != 0x0a) || Source.Id != 2 ||
+                if (!KyaActorFamilies::UsesCatchByTrap(Actor.ClassId, Source.Id) ||
                     !KyaReadCatchByTrapOffsets(MakeArrayView(Bytes.GetData(), int32(SceneEnd)),
                         Location.Payload, Location.Size, Off) ||
                     Off.Blocks.Num() != Source.CatchOperations.Num()) return false;
@@ -547,9 +724,9 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
             }
             if (Source.bHasTypedInventoryBehaviour)
             {
-                FKyaInventoryOffsets Off;
+                FKyaProjectileInventoryOffsets Off;
                 if (Actor.ClassId != 0x1c || Source.Id != 9 ||
-                    !KyaReadInventoryOffsets(MakeArrayView(Bytes.GetData(), int32(SceneEnd)),
+                    !KyaReadProjectileInventoryOffsets(MakeArrayView(Bytes.GetData(), int32(SceneEnd)),
                         Location.Payload, Location.Size, Off)) return false;
             }
             if (Source.bHasTypedWolfenBehaviour)
@@ -629,11 +806,11 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
         if (Actor.bHasTypedCheckpoints)
         {
             if (Actor.ClassId != 0x1e) return false;
-            TArray<int64> Checkpoints;
-            if (!KyaReadCheckpointOffsets(MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Checkpoints) ||
-                Checkpoints.Num() != Actor.Checkpoints.Num()) return false;
-            for (int32 Checkpoint = 0; Checkpoint < Checkpoints.Num(); ++Checkpoint)
-                if (ReadU32(Checkpoints[Checkpoint] + 20) != uint32(Actor.Checkpoints[Checkpoint].ActorWaypoints.Num()) ||
+            FKyaCheckpointsOffsets CheckpointValidation;
+            if (!KyaReadCheckpointsOffsets(MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, CheckpointValidation) ||
+                CheckpointValidation.CountValue != Actor.Checkpoints.Num()) return false;
+            for (int32 Checkpoint = 0; Checkpoint < CheckpointValidation.CountValue; ++Checkpoint)
+                if (CheckpointValidation.Records[Checkpoint].ActorWaypointCount != Actor.Checkpoints[Checkpoint].ActorWaypoints.Num() ||
                     Actor.Checkpoints[Checkpoint].Flags < 0 || Actor.Checkpoints[Checkpoint].Flags > MAX_uint32) return false;
         }
         for (TCHAR Char : Actor.Name) if (Char < 1 || Char > 127)
@@ -785,9 +962,10 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
     // Shared CActorFighter prefix writer used by Wolfen (0x09) and Kim (0x06).
     auto WriteFighterPrefix = [&](const FKyaActorPlacement& Actor, const FKyaFighterPrefixOffsets& Offsets) -> bool
     {
+        if (Actor.FighterLifeMax < 0 || Actor.FighterLifeMax > MAX_uint32) return false;
         const int64 F = Offsets.Fixed;
         WriteFloat(Offsets.Weight, Actor.FighterWeightB);
-        WriteU32(Offsets.Autonomous, uint32(Actor.FighterLifeMax));
+        WriteU32(Offsets.Autonomous, uint32(uint64(Actor.FighterLifeMax)));
         WriteFloat(Offsets.Autonomous + 4, Actor.FighterGravityScale);
         WriteFloat(Offsets.Autonomous + 8, Actor.FighterDynamicExtField4);
         WriteFloat(Offsets.Autonomous + 12, Actor.FighterDynamicExtField8);
@@ -939,14 +1117,28 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
             WriteU32(BehaviourOffset.Id, uint32(Actor.Behaviours[Behaviour].Id));
             if (BehaviourOffset.Size)
                 FMemory::Memcpy(Bytes.GetData() + BehaviourOffset.Payload, Actor.Behaviours[Behaviour].Data.GetData(), BehaviourOffset.Size);
+            if (Actor.Behaviours[Behaviour].bHasTypedHedgehogBehaviour)
+            {
+                const FKyaActorBehaviour& Source = Actor.Behaviours[Behaviour];
+                if (!KyaWriteHedgehogBehaviour(Source, Bytes, BehaviourOffset.Payload,
+                    BehaviourOffset.Size)) return false;
+            }
+            if (Actor.Behaviours[Behaviour].bHasTypedHelperSignBehaviour)
+            {
+                const FKyaActorBehaviour& Source = Actor.Behaviours[Behaviour];
+                if (!KyaWriteHelperSignBehaviour(Source, Bytes, BehaviourOffset.Payload,
+                    BehaviourOffset.Size)) return false;
+            }
+            if (Actor.Behaviours[Behaviour].bHasTypedWoodMonsterBehaviour)
+            {
+                if (!KyaWriteWoodMonsterBehaviour(Actor.Behaviours[Behaviour], Bytes,
+                    BehaviourOffset.Payload, BehaviourOffset.Size)) return false;
+            }
             if (Actor.Behaviours[Behaviour].bHasTypedFxBehaviour)
             {
                 const FKyaActorBehaviour& Source = Actor.Behaviours[Behaviour];
-                WriteU32(BehaviourOffset.Payload, uint32(Source.FxBehaviourValue));
-                if (Source.Id == 3) WriteU32(BehaviourOffset.Payload + 4, uint32(Source.FxPathFollowIndex));
-                if (Source.Id == 4)
-                    for (int32 Item = 0; Item < Source.FxUnknownValues.Num(); ++Item)
-                        WriteU32(BehaviourOffset.Payload + 4 + Item * 4, uint32(Source.FxUnknownValues[Item]));
+                if (!KyaWriteFxBehaviour(Source, Bytes, BehaviourOffset.Payload,
+                    BehaviourOffset.Size)) return false;
             }
             if (Actor.Behaviours[Behaviour].bHasTypedTrapBehaviour)
             {
@@ -958,221 +1150,80 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
             if (Actor.Behaviours[Behaviour].bHasTypedWeaponBehaviour)
             {
                 const FKyaActorBehaviour& Source = Actor.Behaviours[Behaviour];
-                for (int32 Item = 0; Item < Source.WeaponBurst.Num(); ++Item)
-                {
-                    const FKyaWeaponAdvancedEntry& Entry = Source.WeaponBurst[Item];
-                    const int64 E = BehaviourOffset.Payload + int64(Item) * 16;
-                    WriteFloat(E, Entry.FieldC); WriteU32(E + 4, uint32(Entry.Field4));
-                    WriteFloat(E + 8, Entry.Field0); WriteFloat(E + 12, Entry.Field8);
-                }
-                if (Source.Id == 3 || Source.Id == 4)
-                {
-                    const int64 B = BehaviourOffset.Payload + 32;
-                    WriteU32(B, uint32(Source.WeaponField40)); WriteU32(B + 4, uint32(Source.WeaponField44));
-                    WriteU32(B + 8, uint32(Source.WeaponSoundIndex));
-                    if (Source.Id == 3)
-                    {
-                        WriteU32(B + 12, uint32(Source.WeaponPistolField2E0));
-                        WriteU32(B + 16, uint32(Source.WeaponPistolField2E4));
-                    }
-                    else
-                    {
-                        WriteU32(B + 12, uint32(Source.WeaponSniperTextureIndex));
-                        WriteU32(B + 16, uint32(Source.WeaponSniperMeshIndex));
-                        WriteU32(B + 20, uint32(Source.WeaponSniperMaterialId));
-                    }
-                }
-                else if (Source.Id == 6)
-                    for (int32 Item = 0; Item < Source.WeaponRpgActorRefs.Num(); ++Item)
-                        WriteU32(BehaviourOffset.Payload + 36 + Item * 4, uint32(Source.WeaponRpgActorRefs[Item]));
+                if (!KyaWriteWeaponBehaviour(Source, Bytes, BehaviourOffset.Payload,
+                    BehaviourOffset.Size)) return false;
             }
             if (Actor.Behaviours[Behaviour].bHasTypedBonusBehaviour)
             {
                 const FKyaActorBehaviour& Source = Actor.Behaviours[Behaviour];
-                if (Source.Id == 3)
-                {
-                    WriteFloat(BehaviourOffset.Payload, Source.BonusField14);
-                    WriteFloat(BehaviourOffset.Payload + 4, Source.BonusField1B8);
-                    WriteFloat(BehaviourOffset.Payload + 8, Source.BonusField1B4);
-                    WriteU32(BehaviourOffset.Payload + 12, uint32(Source.BonusMaterialId));
-                    WriteFloat(BehaviourOffset.Payload + 16, Source.BonusField1B0);
-                    WriteU32(BehaviourOffset.Payload + 20, uint32(Source.BonusFxTailCount));
-                    WriteU32(BehaviourOffset.Payload + 24, uint32(Source.BonusG2DIndex));
-                    WriteFloat(BehaviourOffset.Payload + 28, Source.BonusTurnValue);
-                }
-                else if (Source.Id == 5) WriteU32(BehaviourOffset.Payload, uint32(Source.BonusFlockPathIndex));
-                else if (Source.Id == 6) WriteFloat(BehaviourOffset.Payload, Source.BonusAddOnField18);
+                if (!KyaWriteBonusBehaviour(Source, Bytes, BehaviourOffset.Payload,
+                    BehaviourOffset.Size)) return false;
             }
             if (Actor.Behaviours[Behaviour].bHasTypedMickenBehaviour)
             {
                 const FKyaActorBehaviour& Source = Actor.Behaviours[Behaviour];
-                WriteFloat(BehaviourOffset.Payload, Source.MickenEatField8);
-                WriteFloat(BehaviourOffset.Payload + 4, Source.MickenEatFieldC);
-                WriteU32(BehaviourOffset.Payload + 8, uint32(Source.MickenEatField10));
-                WriteU32(BehaviourOffset.Payload + 12, uint32(Source.MickenEatPathIndex));
+                if (!KyaWriteMickenBehaviour(Source, Bytes, BehaviourOffset.Payload,
+                    BehaviourOffset.Size)) return false;
             }
-            if (Actor.Behaviours[Behaviour].bHasTypedCommanderBehaviour)
+                        if (Actor.Behaviours[Behaviour].bHasTypedCommanderBehaviour)
             {
                 const FKyaActorBehaviour& Source = Actor.Behaviours[Behaviour];
-                FKyaCommanderBehaviourOffsets Off;
-                if (!KyaReadCommanderBehaviourOffsets(MakeArrayView(Bank->BankBytes.GetData(), int32(SceneEnd)),
-                    BehaviourOffset.Payload, BehaviourOffset.Payload + BehaviourOffset.Size, Off)) return false;
-                WriteU32(Off.SquadConfig, uint32(Source.CommanderSquadConfig[0]));
-                WriteU32(Off.SquadConfig + 4, uint32(Source.CommanderSquadConfig[1]));
-                for (int32 Item = 0; Item < Source.CommanderSwitch.Targets.Num(); ++Item)
-                {
-                    const FKyaSwitchTarget& Target = Source.CommanderSwitch.Targets[Item];
-                    const int64 T = Off.Switch + 4 + int64(Item) * 28;
-                    WriteU32(T, uint32(Target.TargetRef)); WriteU32(T + 4, uint32(Target.CutsceneId));
-                    WriteU32(T + 8, uint32(Target.Flags)); WriteU32(T + 12, uint32(Target.MessageId));
-                    WriteU32(T + 16, uint32(Target.MessageFlags)); WriteU32(T + 20, uint32(Target.Field14));
-                    WriteU32(T + 24, uint32(Target.Field18));
-                }
-                const int64 Camera = Off.Switch + 4 + int64(Source.CommanderSwitch.Targets.Num()) * 28;
-                const FKyaStreamEventCamera& Cam = Source.CommanderSwitch.Camera;
-                WriteU32(Camera, uint32(Cam.CameraIndex)); WriteU32(Camera + 4, uint32(Cam.Flags));
-                WriteFloat(Camera + 8, Cam.Field8); WriteFloat(Camera + 12, Cam.FieldC); WriteFloat(Camera + 16, Cam.Field10);
-                WriteU32(Camera + 20, uint32(Cam.ActorRef)); WriteU32(Camera + 24, uint32(Cam.ZoneRef));
-                WriteFloat(Camera + 28, Cam.Field1C);
+                if (!KyaWriteCommanderBehaviour(Source, Bytes, BehaviourOffset.Payload,
+                    BehaviourOffset.Size)) return false;
             }
             if (Actor.Behaviours[Behaviour].bHasTypedNativBehaviour)
             {
                 const FKyaActorBehaviour& Source = Actor.Behaviours[Behaviour];
-                FKyaNativTakePutOffsets Off;
-                if (!KyaReadNativTakePutOffsets(MakeArrayView(Bank->BankBytes.GetData(), int32(SceneEnd)),
-                    BehaviourOffset.Payload, BehaviourOffset.Payload + BehaviourOffset.Size, Off) ||
-                    Off.Items.Num() != Source.NativTrajectories.Num()) return false;
-                for (int32 Item = 0; Item < Source.NativTrajectories.Num(); ++Item)
-                {
-                    const FKyaNativTrajectory& Trajectory = Source.NativTrajectories[Item];
-                    const int64 P = Off.Items[Item];
-                    WriteFloat(P, Trajectory.Field0);
-                    WriteU32(P + 4, uint32(Trajectory.PathFollowIndex));
-                    WriteU32(P + 8, uint32(Trajectory.Field14));
-                    WriteFloat(P + 12, Trajectory.Field18);
-                }
+                if (!KyaWriteNativBehaviour(Source, Bytes, BehaviourOffset.Payload,
+                    BehaviourOffset.Size)) return false;
+            }
+            if (Actor.Behaviours[Behaviour].bHasTypedJamGutBehaviour)
+            {
+                if (!KyaWriteJamGutBehaviour(Actor.Behaviours[Behaviour], Bytes, BehaviourOffset.Payload, BehaviourOffset.Size)) return false;
             }
             if (Actor.Behaviours[Behaviour].bHasTypedCinematicBehaviour)
             {
                 const FKyaActorBehaviour& Source = Actor.Behaviours[Behaviour];
                 WriteU32(BehaviourOffset.Payload, uint32(Source.CinematicLeaveBehaviourId));
             }
-            if (Actor.Behaviours[Behaviour].bHasTypedDcaControlledBehaviour)
+            if (Actor.Behaviours[Behaviour].bHasTypedDcaControlledBehaviour ||
+                Actor.Behaviours[Behaviour].bHasTypedDcaTrajectoryBehaviour)
             {
                 const FKyaActorBehaviour& Source = Actor.Behaviours[Behaviour];
-                const int64 P = BehaviourOffset.Payload;
-                WriteFloat(P, Source.DcaControlledField0);
-                WriteFloat(P + 4, Source.DcaControlledField4);
-                WriteFloat(P + 8, Source.DcaControlledField8);
-                WriteFloat(P + 12, Source.DcaControlledFovDegrees);
-                for (int32 Axis = 0; Axis < 3; ++Axis) WriteFloat(P + 16 + Axis * 4, float(Source.DcaControlledVector10[Axis]));
-                for (int32 Axis = 0; Axis < 3; ++Axis) WriteFloat(P + 28 + Axis * 4, float(Source.DcaControlledVector20[Axis]));
-            }
-            if (Actor.Behaviours[Behaviour].bHasTypedDcaTrajectoryBehaviour)
-            {
-                const FKyaActorBehaviour& Source = Actor.Behaviours[Behaviour];
-                const int64 P = BehaviourOffset.Payload;
-                WriteU32(P, uint32(Source.DcaTrajectoryActorRef));
-                WriteFloat(P + 4, Source.DcaTrajectoryField18);
-                WriteU32(P + 8, uint32(Source.DcaTrajectoryField8));
+                if (!KyaWriteDcaBehaviour(Source, Bytes, BehaviourOffset.Payload,
+                    BehaviourOffset.Size)) return false;
             }
             if (Actor.Behaviours[Behaviour].bHasTypedFogBehaviour)
             {
                 const FKyaActorBehaviour& Source = Actor.Behaviours[Behaviour];
-                for (int32 Item = 0; Item < Source.FogZones.Num(); ++Item)
-                {
-                    const FKyaFogZone& Zone = Source.FogZones[Item];
-                    const int64 Z = BehaviourOffset.Payload + 4 + int64(Item) * 28;
-                    WriteU32(Z, uint32(Zone.Flags));
-                    WriteU32(Z + 4, uint32(Zone.ZoneRef));
-                    WriteFloat(Z + 8, Zone.ClipValue);
-                    WriteFloat(Z + 12, Zone.Field4);
-                    WriteU32(Z + 16, uint32(Zone.FogRGBA));
-                    WriteU32(Z + 20, uint32(Zone.FogFlags));
-                    WriteFloat(Z + 24, Zone.Field18);
-                }
+                if (!KyaWriteFogBehaviour(Source, Bytes, BehaviourOffset.Payload,
+                    BehaviourOffset.Size)) return false;
             }
-            if (Actor.Behaviours[Behaviour].bHasTypedShootFireBehaviour)
+            if (Actor.Behaviours[Behaviour].bHasTypedMoneyFlockBehaviour)
             {
                 const FKyaActorBehaviour& Source = Actor.Behaviours[Behaviour];
-                const int64 P = BehaviourOffset.Payload;
-                WriteU32(P, uint32(Source.ShootFireField2B0));
-                WriteFloat(P + 4, Source.ShootFireField8);
-                WriteFloat(P + 8, Source.ShootFireField2B4);
-                for (int32 Item = 0; Item < Source.ShootFireActorRefs.Num(); ++Item)
-                    WriteU32(P + 16 + Item * 4, uint32(Source.ShootFireActorRefs[Item]));
+                if (!KyaWriteMoneyBehaviour(Source, Bytes, BehaviourOffset.Payload,
+                    BehaviourOffset.Size)) return false;
             }
-            if (Actor.Behaviours[Behaviour].bHasTypedShootWaveBehaviour)
+            if (Actor.Behaviours[Behaviour].bHasTypedShootFireBehaviour ||
+                Actor.Behaviours[Behaviour].bHasTypedShootWaveBehaviour)
             {
                 const FKyaActorBehaviour& Source = Actor.Behaviours[Behaviour];
-                for (int32 Item = 0; Item < Source.ShootWaveValues.Num(); ++Item)
-                    WriteFloat(BehaviourOffset.Payload + Item * 4, Source.ShootWaveValues[Item]);
+                if (!KyaWriteShootBehaviour(Source, Bytes, BehaviourOffset.Payload,
+                    BehaviourOffset.Size)) return false;
             }
             if (Actor.Behaviours[Behaviour].bHasTypedFruitBehaviour)
             {
                 const FKyaActorBehaviour& Source = Actor.Behaviours[Behaviour];
-                if (Source.Id == 4) WriteFloat(BehaviourOffset.Payload, Source.FruitSquashedValue);
-                else if (Source.Id == 6)
-                {
-                    WriteU32(BehaviourOffset.Payload, uint32(Source.FruitBonusActorRef));
-                    WriteU32(BehaviourOffset.Payload + 4, uint32(Source.FruitBonusInitialBehaviour));
-                }
-                else if (Source.Id == 5)
-                {
-                    const int64 P = BehaviourOffset.Payload;
-                    if (BehaviourOffset.Size == 8) WriteU32(P + 4, uint32(Source.FruitInventoryInitialBehaviour));
-                    else
-                    {
-                        WriteU32(P + 4, uint32(uint64(Source.FruitInventoryField8)));
-                        WriteU32(P + 8, uint32(uint64(Source.FruitInventoryField8) >> 32));
-                        WriteU32(P + 12, uint32(uint64(Source.FruitInventoryField10)));
-                        WriteU32(P + 16, uint32(uint64(Source.FruitInventoryField10) >> 32));
-                        WriteU32(P + 20, uint32(Source.FruitInventoryPurchaseId));
-                        WriteU32(P + 24, uint32(Source.FruitInventoryField28));
-                        WriteU32(P + 28, uint32(Source.FruitInventoryMoneyCost));
-                        WriteU32(P + 32, uint32(Source.FruitInventoryField2C));
-                        if (BehaviourOffset.Size == 40) WriteU32(P + 36, uint32(Source.FruitInventoryInitialBehaviour));
-                        else
-                        {
-                            WriteU32(P + 36, Source.FruitInventoryHasObject ? 1 : 0);
-                            if (Source.FruitInventoryHasObject)
-                            {
-                                WriteU32(P + 40, uint32(Source.FruitInventoryObjectId));
-                                WriteU32(P + 44, uint32(uint64(Source.FruitInventoryField18)));
-                                WriteU32(P + 48, uint32(uint64(Source.FruitInventoryField18) >> 32));
-                                WriteU32(P + 52, uint32(Source.FruitInventoryInitialBehaviour));
-                            }
-                            else WriteU32(P + 40, uint32(Source.FruitInventoryInitialBehaviour));
-                        }
-                    }
-                }
+                if (!KyaWriteFruitBehaviour(Source, Bytes, BehaviourOffset.Payload,
+                    BehaviourOffset.Size)) return false;
             }
-            if (Actor.Behaviours[Behaviour].bHasTypedGravityFallBehaviour)
+            if (Actor.Behaviours[Behaviour].bHasTypedGravityFallBehaviour ||
+                Actor.Behaviours[Behaviour].bHasTypedGravityBellBehaviour)
             {
                 const FKyaActorBehaviour& Source = Actor.Behaviours[Behaviour];
-                WriteU32(BehaviourOffset.Payload, uint32(Source.GravityFallSoundRef));
-            }
-            if (Actor.Behaviours[Behaviour].bHasTypedGravityBellBehaviour)
-            {
-                const FKyaActorBehaviour& Source = Actor.Behaviours[Behaviour];
-                const int64 P = BehaviourOffset.Payload;
-                WriteU32(P, uint32(Source.GravityBellSoundRef));
-                WriteFloat(P + 4, Source.GravityBellFieldC);
-                for (int32 Item = 0; Item < Source.GravityBellSwitch.Targets.Num(); ++Item)
-                {
-                    const FKyaSwitchTarget& Target = Source.GravityBellSwitch.Targets[Item];
-                    const int64 T = P + 12 + int64(Item) * 28;
-                    WriteU32(T, uint32(Target.TargetRef)); WriteU32(T + 4, uint32(Target.CutsceneId));
-                    WriteU32(T + 8, uint32(Target.Flags)); WriteU32(T + 12, uint32(Target.MessageId));
-                    WriteU32(T + 16, uint32(Target.MessageFlags)); WriteU32(T + 20, uint32(Target.Field14));
-                    WriteU32(T + 24, uint32(Target.Field18));
-                }
-                const FKyaStreamEventCamera& Camera = Source.GravityBellSwitch.Camera;
-                const int64 C = P + 12 + int64(Source.GravityBellSwitch.Targets.Num()) * 28;
-                WriteU32(C, uint32(Camera.CameraIndex)); WriteU32(C + 4, uint32(Camera.Flags));
-                WriteFloat(C + 8, Camera.Field8); WriteFloat(C + 12, Camera.FieldC); WriteFloat(C + 16, Camera.Field10);
-                WriteU32(C + 20, uint32(Camera.ActorRef)); WriteU32(C + 24, uint32(Camera.ZoneRef));
-                WriteFloat(C + 28, Camera.Field1C);
+                if (!KyaWriteGravityBehaviour(Source, Bytes, BehaviourOffset.Payload,
+                    BehaviourOffset.Size)) return false;
             }
             if (Actor.Behaviours[Behaviour].bHasTypedCatchByTrapBehaviour)
             {
@@ -1221,501 +1272,51 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
             if (Actor.Behaviours[Behaviour].bHasTypedInventoryBehaviour)
             {
                 const FKyaActorBehaviour& Source = Actor.Behaviours[Behaviour];
-                FKyaInventoryOffsets Off;
-                if (!KyaReadInventoryOffsets(MakeArrayView(Bank->BankBytes.GetData(), int32(SceneEnd)),
-                    BehaviourOffset.Payload, BehaviourOffset.Size, Off)) return false;
-                const FKyaInventoryInfo& Values = Source.InventoryInfo;
-                WriteU32(Off.Field0, uint32(Values.Field0));
-                if (Off.Field8 != 0)
-                {
-                    WriteU32(Off.Field8, uint32(uint64(Values.Field8)));
-                    WriteU32(Off.Field8 + 4, uint32(uint64(Values.Field8) >> 32));
-                    WriteU32(Off.Field10, uint32(uint64(Values.Field10)));
-                    WriteU32(Off.Field10 + 4, uint32(uint64(Values.Field10) >> 32));
-                    WriteU32(Off.PurchaseId, uint32(Values.PurchaseId));
-                    WriteU32(Off.Field28, uint32(Values.Field28));
-                    WriteU32(Off.MoneyCost, uint32(Values.MoneyCost));
-                    WriteU32(Off.Field2C, uint32(Values.Field2C));
-                }
-                if (Off.bHasObject)
-                {
-                    WriteU32(Off.ObjectId, uint32(Values.ObjectId));
-                    WriteU32(Off.Field18, uint32(uint64(Values.Field18)));
-                    WriteU32(Off.Field18 + 4, uint32(uint64(Values.Field18) >> 32));
-                }
-                WriteU32(Off.InitialBehaviourId, uint32(Values.InitialBehaviourId));
+                if (!KyaWriteProjectileInventory(Source.InventoryInfo, Bytes, BehaviourOffset.Payload,
+                    BehaviourOffset.Size)) return false;
             }
             if (Actor.Behaviours[Behaviour].bHasTypedWolfenBehaviour)
             {
                 const FKyaActorBehaviour& Source = Actor.Behaviours[Behaviour];
-                FKyaWolfenBehaviourOffsets Off;
-                if (!KyaReadWolfenBehaviourOffsets(Source.Id, MakeArrayView(Bank->BankBytes.GetData(), int32(SceneEnd)),
-                    BehaviourOffset.Payload, BehaviourOffset.Size, Off)) return false;
-                const FKyaWolfenBehaviour& Values = Source.WolfenBehaviour;
-                if (!Off.bExorcism) WriteU32(Off.Flags, uint32(Values.Flags));
-                if (Off.bTrack) WriteFloat(Off.TrackField, Values.TrackField);
-                if (Off.bDca)
-                {
-                    WriteU32(Off.DcaActorRef, uint32(Values.DcaActorRef));
-                    WriteFloat(Off.DcaShootCooldown, Values.DcaShootCooldown);
-                }
-                if (Off.bAvoid)
-                {
-                    WriteFloat(Off.Avoid80, Values.AvoidField80);
-                    WriteFloat(Off.Avoid84, Values.AvoidField84);
-                }
-                if (Off.bWeaponStand || Off.bWeapon || Off.bWeaponSnipe)
-                {
-                    WriteFloat(Off.WeaponField90, Values.WeaponField90);
-                    WriteU32(Off.WeaponField94, uint32(Values.WeaponField94));
-                    WriteU32(Off.WeaponField98, uint32(Values.WeaponField98));
-                    for (int32 SubObjIndex = 0; SubObjIndex < Values.WeaponSubObjs.Num() && SubObjIndex < Off.SubObjs.Num(); ++SubObjIndex)
-                    {
-                        const FKyaTrackSubObj& SubObj = Values.WeaponSubObjs[SubObjIndex];
-                        const FKyaTrackSubObjOffsets& SubObjOffsets = Off.SubObjs[SubObjIndex];
-                        WriteU32(SubObjOffsets.Field0, uint32(SubObj.Field0));
-                        WriteU32(SubObjOffsets.AField0, uint32(SubObj.AField0));
-                        WriteFloat(SubObjOffsets.AField4, SubObj.AField4);
-                        WriteFloat(SubObjOffsets.AField8, SubObj.AField8);
-                        WriteU32(SubObjOffsets.Field10, uint32(SubObj.Field10));
-                    }
-                    if (Off.bWeapon || Off.bWeaponSnipe) WriteFloat(Off.WeaponFieldF0, Values.WeaponFieldF0);
-                    if (Off.bWeapon) WriteFloat(Off.WeaponTargetField, Values.WeaponTargetField);
-                }
-                auto WriteSwitchScript = [&](const FKyaSwitchScriptOffsets& Script) -> bool {
-                    if (Values.SwitchRecords.Num() != Script.RecordOffsets.Num()) return false;
-                    int32 CategoryCounts[4] = { 0, 0, 0, 0 };
-                    for (const FKyaSwitchBehaviourRecord& Record : Values.SwitchRecords)
-                    {
-                        if (Record.Category < 0 || Record.Category > 3) return false;
-                        ++CategoryCounts[Record.Category];
-                    }
-                    for (int32 Category = 0; Category < 4; ++Category)
-                    {
-                        if (CategoryCounts[Category] != Script.CountValues[Category]) return false;
-                        WriteU32(Script.Counts[Category], uint32(Script.CountValues[Category]));
-                    }
-                    for (int32 ScriptIndex = 0; ScriptIndex < Values.SwitchRecords.Num(); ++ScriptIndex)
-                    {
-                        const FKyaSwitchBehaviourRecord& Record = Values.SwitchRecords[ScriptIndex];
-                        const int64 P = Script.RecordOffsets[ScriptIndex];
-                        if (Record.Category == 0)
-                        {
-                            WriteU32(P, uint32(Record.MessageType));
-                            WriteU32(P + 4, uint32(Record.BehaviourId));
-                        }
-                        else if (Record.Category == 3)
-                        {
-                            WriteU32(P, uint32(Record.SeeActorRef));
-                            WriteU32(P + 4, uint32(Record.BehaviourId));
-                        }
-                        else
-                        {
-                            WriteU32(P, uint32(Record.ActorRef));
-                            WriteU32(P + 4, uint32(Record.ZoneRef));
-                            WriteU32(P + 8, uint32(Record.Flags));
-                            WriteU32(P + 12, uint32(Record.BehaviourId));
-                        }
-                    }
-                    return true;
-                };
-                if (Off.bLost && !WriteSwitchScript(Off.Switch)) return false;
-                if (Off.bWatchDog)
-                {
-                    WriteU32(Off.Field80, uint32(Values.Field80));
-                    WriteU32(Off.TrackBehaviourId, uint32(Values.TrackBehaviourId));
-                    if (!WriteSwitchScript(Off.Switch)) return false;
-                    if (Values.OnOffTargets.Num() != Off.OnOffCountValue) return false;
-                    for (int32 TargetIndex = 0; TargetIndex < Values.OnOffTargets.Num(); ++TargetIndex)
-                    {
-                        const FKyaSwitchTarget& Target = Values.OnOffTargets[TargetIndex];
-                        const int64 T = Off.OnOffEntries + int64(TargetIndex) * 28;
-                        WriteU32(T, uint32(Target.TargetRef)); WriteU32(T + 4, uint32(Target.CutsceneId));
-                        WriteU32(T + 8, uint32(Target.Flags)); WriteU32(T + 12, uint32(Target.MessageId));
-                        WriteU32(T + 16, uint32(Target.MessageFlags)); WriteU32(T + 20, uint32(Target.Field14));
-                        WriteU32(T + 24, uint32(Target.Field18));
-                    }
-                    const int64 C = Off.OnOffCamera;
-                    WriteU32(C, uint32(Values.OnOffCamera.CameraIndex)); WriteU32(C + 4, uint32(Values.OnOffCamera.Flags));
-                    WriteFloat(C + 8, Values.OnOffCamera.Field8); WriteFloat(C + 12, Values.OnOffCamera.FieldC);
-                    WriteFloat(C + 16, Values.OnOffCamera.Field10); WriteU32(C + 20, uint32(Values.OnOffCamera.ActorRef));
-                    WriteU32(C + 24, uint32(Values.OnOffCamera.ZoneRef)); WriteFloat(C + 28, Values.OnOffCamera.Field1C);
-                }
-                if (Off.bExorcism)
-                {
-                    if (Values.ExorcismWords.Num() != 5) return false;
-                    WriteU32(Off.ExorcismMaterial, uint32(Values.ExorcismDigitMaterialId));
-                    WriteU32(Off.ExorcismField24, uint32(Values.ExorcismField24));
-                    WriteU32(Off.ExorcismMeshes, uint32(Values.ExorcismTextureA));
-                    WriteU32(Off.ExorcismMeshes + 4, uint32(Values.ExorcismMeshA));
-                    WriteU32(Off.ExorcismMeshes + 8, uint32(Values.ExorcismTextureB));
-                    WriteU32(Off.ExorcismMeshes + 12, uint32(Values.ExorcismMeshB));
-                    WriteU32(Off.ExorcismField18, uint32(Values.ExorcismField18));
-                    for (int32 WordIndex = 0; WordIndex < Values.ExorcismWords.Num(); ++WordIndex)
-                        WriteU32(Off.ExorcismWords + WordIndex * 4, uint32(Values.ExorcismWords[WordIndex]));
-                }
-                if (Off.bGuard)
-                {
-                    WriteU32(Off.GuardPath, uint32(Values.GuardPathIndex));
-                    WriteFloat(Off.GuardField98, Values.GuardField98);
-                    WriteU32(Off.GuardTrack, uint32(Values.GuardTrackBehaviourId));
-                    WriteU32(Off.GuardField90, uint32(Values.GuardField90));
-                    if (!WriteSwitchScript(Off.Switch)) return false;
-                    if (Values.OnOffTargets.Num() != Off.OnOffCountValue) return false;
-                    for (int32 TargetIndex = 0; TargetIndex < Values.OnOffTargets.Num(); ++TargetIndex)
-                    {
-                        const FKyaSwitchTarget& Target = Values.OnOffTargets[TargetIndex];
-                        const int64 T = Off.OnOffEntries + int64(TargetIndex) * 28;
-                        WriteU32(T, uint32(Target.TargetRef)); WriteU32(T + 4, uint32(Target.CutsceneId));
-                        WriteU32(T + 8, uint32(Target.Flags)); WriteU32(T + 12, uint32(Target.MessageId));
-                        WriteU32(T + 16, uint32(Target.MessageFlags)); WriteU32(T + 20, uint32(Target.Field14));
-                        WriteU32(T + 24, uint32(Target.Field18));
-                    }
-                    const int64 C = Off.OnOffCamera;
-                    WriteU32(C, uint32(Values.OnOffCamera.CameraIndex)); WriteU32(C + 4, uint32(Values.OnOffCamera.Flags));
-                    WriteFloat(C + 8, Values.OnOffCamera.Field8); WriteFloat(C + 12, Values.OnOffCamera.FieldC);
-                    WriteFloat(C + 16, Values.OnOffCamera.Field10); WriteU32(C + 20, uint32(Values.OnOffCamera.ActorRef));
-                    WriteU32(C + 24, uint32(Values.OnOffCamera.ZoneRef)); WriteFloat(C + 28, Values.OnOffCamera.Field1C);
-                }
-                if (Off.bEscape)
-                {
-                    if (Values.EscapePathIndices.Num() != Off.EscapeCountValue) return false;
-                    for (int32 PathIndex = 0; PathIndex < Values.EscapePathIndices.Num(); ++PathIndex)
-                        WriteU32(Off.EscapeEntries + PathIndex * 4, uint32(Values.EscapePathIndices[PathIndex]));
-                    WriteU32(Off.EscapeField88, uint32(Values.EscapeField88));
-                    WriteFloat(Off.EscapeFloats, Values.EscapeField9C);
-                    WriteFloat(Off.EscapeFloats + 4, Values.EscapeField90);
-                    WriteFloat(Off.EscapeFloats + 8, Values.EscapeField8C);
-                    WriteFloat(Off.EscapeFloats + 12, Values.EscapeField94);
-                    WriteFloat(Off.EscapeFloats + 16, Values.EscapeField98);
-                    WriteU32(Off.EscapeFieldA0, uint32(Values.EscapeFieldA0));
-                    if (!WriteSwitchScript(Off.Switch)) return false;
-                }
-                if (Off.bSnipe)
-                {
-                    WriteU32(Off.SnipeField90, uint32(Values.SnipeField90));
-                    WriteFloat(Off.SnipeField94, Values.SnipeField94);
-                    WriteFloat(Off.SnipeField94 + 4, Values.SnipeField98);
-                    WriteFloat(Off.SnipeField94 + 8, Values.SnipeField9C);
-                    WriteFloat(Off.SnipeField94 + 12, Values.SnipeFieldA0);
-                    WriteU32(Off.SpotTrack, uint32(Values.SpotTrackBehaviourId));
-                    WriteU32(Off.SnipeTrack, uint32(Values.SnipeTrackBehaviourId));
-                    WriteU32(Off.ShadowMaterial, uint32(Values.ShadowMaterialId));
-                    WriteU32(Off.SnipeFieldAC, uint32(Values.SnipeFieldAC));
-                    WriteFloat(Off.SnipeFieldB0, Values.SnipeFieldB0);
-                    WriteFloat(Off.SnipeFieldB4, Values.SnipeFieldB4);
-                    WriteU32(Off.NbSpot, uint32(Values.NbSpot));
-                    WriteU32(Off.NbShadow, uint32(Values.NbShadow));
-                    WriteFloat(Off.RotationSpeed, Values.RotationSpeed);
-                    WriteU32(Off.SnipeFieldB8, uint32(Values.SnipeFieldB8));
-                    if (!WriteSwitchScript(Off.Switch)) return false;
-                }
+                if (!KyaWriteWolfenBehaviour(Source, Bytes, BehaviourOffset.Payload,
+                    BehaviourOffset.Size)) return false;
             }
             if (Actor.Behaviours[Behaviour].bHasTypedProjectileBehaviour)
             {
                 const FKyaActorBehaviour& Source = Actor.Behaviours[Behaviour];
-                FKyaProjectileBehaviourOffsets Off;
-                if (!KyaReadProjectileBehaviourOffsets(Source.Id, MakeArrayView(Bank->BankBytes.GetData(), int32(SceneEnd)),
-                    BehaviourOffset.Payload, BehaviourOffset.Size, Off)) return false;
-                const FKyaProjectileBehaviour& Values = Source.ProjectileBehaviour;
-                WriteU32(Off.BehaviourId, uint32(Values.BehaviourId));
-                WriteU32(Off.Field0C, uint32(Values.Field0C));
-                if (Off.bStand) WriteU32(Off.MaterialId, uint32(Values.MaterialId));
-                if (Off.bStraight)
-                {
-                    WriteFloat(Off.Speed, Values.Speed);
-                    WriteFloat(Off.Acceleration, Values.Acceleration);
-                    WriteFloat(Off.Field18, Values.Field18);
-                }
-                if (Off.bPortable) WriteFloat(Off.Field10, Values.Field10);
-                if (Off.bExcuse) WriteU32(Off.ActorRef, uint32(Values.ActorRef));
+                if (!KyaWriteProjectileBehaviour(Source, Bytes, BehaviourOffset.Payload,
+                    BehaviourOffset.Size)) return false;
             }
             if (Actor.Behaviours[Behaviour].bHasTypedSwitchBehaviour)
             {
                 const FKyaActorBehaviour& Source = Actor.Behaviours[Behaviour];
-                FKyaSwitchBehaviourOffsets Off;
-                if (!KyaReadSwitchBehaviourOffsets(Source.Id, MakeArrayView(Bank->BankBytes.GetData(), int32(SceneEnd)),
-                    BehaviourOffset.Payload, BehaviourOffset.Size, Off)) return false;
-                const FKyaSwitchBehaviour& Values = Source.SwitchBehaviour;
-                if (Off.bLever)
-                {
-                    WriteU32(Off.LeverRefA, uint32(Values.LeverRefA));
-                    WriteU32(Off.LeverRefB, uint32(Values.LeverRefB));
-                }
-                if (Off.bMagic)
-                {
-                    WriteFloat(Off.MagicField08, Values.MagicField08);
-                    WriteFloat(Off.MagicField10, Values.MagicField10);
-                    WriteU32(Off.MagicFxDigits, uint32(Values.MagicFxDigits));
-                    WriteFloat(Off.MagicField14, Values.MagicField14);
-                    WriteU32(Off.MagicField4C, uint32(Values.MagicField4C));
-                    WriteU32(Off.MagicField18, uint32(Values.MagicField18));
-                    WriteU32(Off.MagicField28, uint32(Values.MagicField28));
-                    WriteU32(Off.MagicField24, uint32(Values.MagicField24));
-                    WriteU32(Off.MagicField30, uint32(Values.MagicField30));
-                    WriteU32(Off.OpenTextureId, uint32(Values.OpenTextureId));
-                    WriteU32(Off.OpenMeshId, uint32(Values.OpenMeshId));
-                    const int64 C = Off.MagicCamera;
-                    WriteU32(C, uint32(Values.MagicCamera.CameraIndex)); WriteU32(C + 4, uint32(Values.MagicCamera.Flags));
-                    WriteFloat(C + 8, Values.MagicCamera.Field8); WriteFloat(C + 12, Values.MagicCamera.FieldC);
-                    WriteFloat(C + 16, Values.MagicCamera.Field10); WriteU32(C + 20, uint32(Values.MagicCamera.ActorRef));
-                    WriteU32(C + 24, uint32(Values.MagicCamera.ZoneRef)); WriteFloat(C + 28, Values.MagicCamera.Field1C);
-                }
-                if (Off.bMultiCondition)
-                {
-                    WriteU32(Off.MultiField14, uint32(Values.MultiField14));
-                    WriteU32(Off.MultiField08, uint32(Values.MultiField08));
-                    WriteU32(Off.MultiField0C, uint32(Values.MultiField0C));
-                }
-                if (Off.bTarget)
-                {
-                    WriteFloat(Off.TargetDisplacement, Values.TargetDisplacement);
-                    WriteFloat(Off.TargetSpringStrength, Values.TargetSpringStrength);
-                    WriteFloat(Off.TargetDamping, Values.TargetDamping);
-                }
+                if (!KyaWriteSwitchBehaviour(Source, Bytes, BehaviourOffset.Payload,
+                    BehaviourOffset.Size)) return false;
             }
             if (Actor.Behaviours[Behaviour].bHasTypedPlatformBehaviour)
             {
                 const FKyaActorBehaviour& Source = Actor.Behaviours[Behaviour];
-                FKyaPlatformBehaviourOffsets Off;
-                if (!KyaReadPlatformBehaviourOffsets(Source.Id, MakeArrayView(Bank->BankBytes.GetData(), int32(SceneEnd)),
-                    BehaviourOffset.Payload, BehaviourOffset.Size, Off)) return false;
-                const FKyaPlatformBehaviour& Values = Source.PlatformBehaviour;
-                if (Off.bStand)
-                {
-                    WriteU32(Off.SoundRef, uint32(Values.SoundRef));
-                    WriteU32(Off.Field0C, uint32(Values.Field0C));
-                }
-                if (Off.bTrajectory)
-                {
-                    WriteU32(Off.PathIndex, uint32(Values.PathIndex));
-                    WriteU32(Off.Timing, uint32(Values.Timing));
-                    WriteFloat(Off.PathField4, Values.PathField4);
-                    WriteFloat(Off.PathTotalTime, Values.PathTotalTime);
-                    WriteFloat(Off.SegmentStartTime, Values.SegmentStartTime);
-                    WriteFloat(Off.LoopDelay, Values.LoopDelay);
-                }
-                if (Off.bSlab)
-                {
-                    if (Values.SlabSwitch.Targets.Num() != Off.SlabSwitch.Count) return false;
-                    for (int32 TargetIndex = 0; TargetIndex < Values.SlabSwitch.Targets.Num(); ++TargetIndex)
-                    {
-                        const FKyaSwitchTarget& Target = Values.SlabSwitch.Targets[TargetIndex];
-                        const int64 T = Off.SlabSwitch.Targets + int64(TargetIndex) * 28;
-                        WriteU32(T, uint32(Target.TargetRef)); WriteU32(T + 4, uint32(Target.CutsceneId));
-                        WriteU32(T + 8, uint32(Target.Flags)); WriteU32(T + 12, uint32(Target.MessageId));
-                        WriteU32(T + 16, uint32(Target.MessageFlags)); WriteU32(T + 20, uint32(Target.Field14));
-                        WriteU32(T + 24, uint32(Target.Field18));
-                    }
-                    {
-                        const FKyaStreamEventCamera& Camera = Values.SlabSwitch.Camera;
-                        const int64 C = Off.SlabSwitch.Camera;
-                        WriteU32(C, uint32(Camera.CameraIndex)); WriteU32(C + 4, uint32(Camera.Flags));
-                        WriteFloat(C + 8, Camera.Field8); WriteFloat(C + 12, Camera.FieldC); WriteFloat(C + 16, Camera.Field10);
-                        WriteU32(C + 20, uint32(Camera.ActorRef)); WriteU32(C + 24, uint32(Camera.ZoneRef));
-                        WriteFloat(C + 28, Camera.Field1C);
-                    }
-                    WriteFloat(Off.SlabFloats, Values.SlabField10);
-                    WriteFloat(Off.SlabFloats + 4, Values.SlabField14);
-                    WriteFloat(Off.SlabFloats + 8, Values.SlabField18);
-                    WriteFloat(Off.SlabFloats + 12, Values.SlabField1C);
-                    WriteU32(Off.SlabField20, uint32(Values.SlabField20));
-                }
-                if (Off.bMaster)
-                {
-                    WriteU32(Off.MasterPath, uint32(Values.MasterPathIndex));
-                    WriteU32(Off.MasterPath + 4, uint32(Values.MasterTiming));
-                    WriteU32(Off.MasterStream, uint32(Values.MasterStreamActor));
-                    WriteFloat(Off.MasterFloats, Values.MasterField40);
-                    WriteFloat(Off.MasterFloats + 4, Values.MasterField44);
-                    if (Values.AnalogTargets.Num() != Off.AnalogCountValue) return false;
-                    for (int32 TargetIndex = 0; TargetIndex < Values.AnalogTargets.Num(); ++TargetIndex)
-                    {
-                        const FKyaAnalogTarget& Target = Values.AnalogTargets[TargetIndex];
-                        const int64 T = Off.AnalogEntries + int64(TargetIndex) * 40;
-                        WriteU32(T, uint32(Target.ActorRef)); WriteU32(T + 4, uint32(Target.CutsceneId));
-                        WriteU32(T + 8, uint32(Target.Flags)); WriteU32(T + 12, uint32(Target.Field0C));
-                        WriteU32(T + 16, uint32(Target.Field10)); WriteU32(T + 20, uint32(Target.Field14));
-                        WriteU32(T + 24, uint32(Target.Field18)); WriteU32(T + 28, uint32(Target.Field1C));
-                        WriteFloat(T + 32, Target.Field20); WriteFloat(T + 36, Target.Field24);
-                    }
-                    {
-                        const FKyaStreamEventCamera& Camera = Values.AnalogCamera;
-                        const int64 C = Off.AnalogCamera;
-                        WriteU32(C, uint32(Camera.CameraIndex)); WriteU32(C + 4, uint32(Camera.Flags));
-                        WriteFloat(C + 8, Camera.Field8); WriteFloat(C + 12, Camera.FieldC); WriteFloat(C + 16, Camera.Field10);
-                        WriteU32(C + 20, uint32(Camera.ActorRef)); WriteU32(C + 24, uint32(Camera.ZoneRef));
-                        WriteFloat(C + 28, Camera.Field1C);
-                    }
-                }
-                if (Off.bSelectorMaster)
-                {
-                    WriteU32(Off.Field18, uint32(Values.Field18));
-                    WriteU32(Off.MaterialId, uint32(Values.MaterialId));
-                    WriteFloat(Off.Field8, Values.Field8);
-                    WriteFloat(Off.FieldC, Values.FieldC);
-                    WriteFloat(Off.Field10, Values.Field10);
-                    WriteU32(Off.SoundRef, uint32(Values.SoundRef));
-                    if (Values.SelectorActorRefs.Num() != Off.SelectorActorCountValue) return false;
-                    for (int32 TargetIndex = 0; TargetIndex < Values.SelectorActorRefs.Num(); ++TargetIndex)
-                        WriteU32(Off.SelectorActorEntries + TargetIndex * 4, uint32(Values.SelectorActorRefs[TargetIndex]));
-                    if (Values.SelectorSwitchEx.Num() != Off.SelectorSwitchCountValue) return false;
-                    for (int32 TargetIndex = 0; TargetIndex < Values.SelectorSwitchEx.Num(); ++TargetIndex)
-                    {
-                        const FKyaSwitchExTarget& Target = Values.SelectorSwitchEx[TargetIndex];
-                        const int64 T = Off.SelectorSwitchEntries + int64(TargetIndex) * 16;
-                        WriteU32(T, uint32(Target.ActorRef)); WriteU32(T + 4, uint32(Target.CutsceneId));
-                        WriteU32(T + 8, uint32(Target.Flags)); WriteU32(T + 12, uint32(Target.MessageId));
-                    }
-                    {
-                        const FKyaStreamEventCamera& Camera = Values.SelectorCamera;
-                        const int64 C = Off.SelectorCamera;
-                        WriteU32(C, uint32(Camera.CameraIndex)); WriteU32(C + 4, uint32(Camera.Flags));
-                        WriteFloat(C + 8, Camera.Field8); WriteFloat(C + 12, Camera.FieldC); WriteFloat(C + 16, Camera.Field10);
-                        WriteU32(C + 20, uint32(Camera.ActorRef)); WriteU32(C + 24, uint32(Camera.ZoneRef));
-                        WriteFloat(C + 28, Camera.Field1C);
-                    }
-                }
-                if (Off.bSlave)
-                {
-                    WriteU32(Off.PathIndex, uint32(Values.PathIndex));
-                    WriteU32(Off.Timing, uint32(Values.Timing));
-                }
-                if (Off.bDestroyed)
-                {
-                    WriteU32(Off.PathIndex, uint32(Values.PathIndex));
-                    WriteU32(Off.Timing, uint32(Values.Timing));
-                    WriteFloat(Off.PathField4, Values.PathField4);
-                    WriteFloat(Off.PathTotalTime, Values.PathTotalTime);
-                    WriteU32(Off.Field40, uint32(Values.Field40));
-                    WriteU32(Off.AltModelId, uint32(Values.AltModelId));
-                }
-                if (Off.bSelectorSlave)
-                {
-                    WriteU32(Off.Field18, uint32(Values.Field18));
-                    WriteU32(Off.MaterialId, uint32(Values.MaterialId));
-                    WriteFloat(Off.Field8, Values.Field8);
-                    WriteFloat(Off.FieldC, Values.FieldC);
-                    WriteFloat(Off.Field10, Values.Field10);
-                    WriteU32(Off.SoundRef, uint32(Values.SoundRef));
-                }
+                if (!KyaWriteMovingPlatformBehaviour(Source, Bytes, BehaviourOffset.Payload,
+                    BehaviourOffset.Size)) return false;
             }
             if (Actor.Behaviours[Behaviour].bHasTypedCompanionBehaviour)
             {
                 const FKyaActorBehaviour& Source = Actor.Behaviours[Behaviour];
-                FKyaCompanionBehaviourOffsets Off;
-                const bool ReadOk = KyaReadCompanionBehaviourOffsets(MakeArrayView(Bank->BankBytes.GetData(), int32(SceneEnd)),
-                    BehaviourOffset.Payload, BehaviourOffset.Size, Off);
-                if (!ReadOk) return false;
-                for (int32 AlertIndex = 0; AlertIndex < Source.CompanionAlerts.Num(); ++AlertIndex)
-                {
-                    const FKyaCompanionAlert& Alert = Source.CompanionAlerts[AlertIndex];
-                    const FKyaCompanionAlertOffsets& AlertOffsets = Off.Alerts[AlertIndex];
-                    for (int32 Item = 0; Item < Alert.Conditions.Num(); ++Item)
-                    {
-                        const FKyaScenarioCondition& Condition = Alert.Conditions[Item];
-                        const int64 C = AlertOffsets.Conditions.Entries + int64(Item) * 16;
-                        WriteU32(C, uint32(Condition.Combiner));
-                        WriteU32(C + 4, uint32(Condition.Variable));
-                        WriteU32(C + 8, uint32(Condition.Comparison));
-                        WriteU32(C + 12, uint32(Condition.Value));
-                    }
-                    WriteU32(AlertOffsets.Flags, uint32(Alert.Flags));
-                    WriteU32(AlertOffsets.Field08, uint32(Alert.Field08));
-                    WriteU32(AlertOffsets.Field10, uint32(Alert.Field10));
-                    WriteU32(AlertOffsets.Field14, uint32(Alert.Field14));
-                    WriteFloat(AlertOffsets.Field18, Alert.Field18);
-                    WriteU32(AlertOffsets.ActorRef, uint32(Alert.ActorRef));
-                    for (int32 Axis = 0; Axis < 3; ++Axis)
-                        WriteFloat(AlertOffsets.Vector20 + Axis * 4, float(Alert.Field20[Axis]));
-                    WriteU32(AlertOffsets.CameraRef, uint32(Alert.CameraRef));
-                    for (int32 Item = 0; Item < Alert.Field34.Num(); ++Item)
-                        WriteU32(AlertOffsets.ListEntries + Item * 4, uint32(Alert.Field34[Item]));
-                    WriteU32(AlertOffsets.LevelStringKey, uint32(uint64(Alert.LevelStringKey)));
-                    WriteU32(AlertOffsets.LevelStringKey + 4, uint32(uint64(Alert.LevelStringKey) >> 32));
-                    WriteFloat(AlertOffsets.Field50, Alert.Field50);
-                    WriteU32(AlertOffsets.Field58, uint32(Alert.Field58));
-                    WriteFloat(AlertOffsets.Field5C, Alert.Field5C);
-                    for (int32 Item = 0; Item < Alert.TargetSwitch.Targets.Num(); ++Item)
-                    {
-                        const FKyaSwitchTarget& Target = Alert.TargetSwitch.Targets[Item];
-                        const int64 T = AlertOffsets.Switch.Targets + int64(Item) * 28;
-                        WriteU32(T, uint32(Target.TargetRef)); WriteU32(T + 4, uint32(Target.CutsceneId));
-                        WriteU32(T + 8, uint32(Target.Flags)); WriteU32(T + 12, uint32(Target.MessageId));
-                        WriteU32(T + 16, uint32(Target.MessageFlags)); WriteU32(T + 20, uint32(Target.Field14));
-                        WriteU32(T + 24, uint32(Target.Field18));
-                    }
-                    {
-                        const FKyaStreamEventCamera& Camera = Alert.TargetSwitch.Camera;
-                        const int64 C = AlertOffsets.Switch.Camera;
-                        WriteU32(C, uint32(Camera.CameraIndex)); WriteU32(C + 4, uint32(Camera.Flags));
-                        WriteFloat(C + 8, Camera.Field8); WriteFloat(C + 12, Camera.FieldC); WriteFloat(C + 16, Camera.Field10);
-                        WriteU32(C + 20, uint32(Camera.ActorRef)); WriteU32(C + 24, uint32(Camera.ZoneRef));
-                        WriteFloat(C + 28, Camera.Field1C);
-                    }
-                    for (int32 Block = 0; Block < Alert.Field70.Num(); ++Block)
-                    {
-                        const FKyaConditionedOperation& Result = Alert.Field70[Block];
-                        const FKyaConditionedOffsets& BlockOffsets = AlertOffsets.Blocks[Block];
-                        for (int32 Item = 0; Item < Result.Operations.Num(); ++Item)
-                        {
-                            const FKyaScenarioOperation& Op = Result.Operations[Item];
-                            const int64 O = BlockOffsets.Operations[Item];
-                            WriteU32(O, uint32(Op.Variable));
-                            WriteU32(O + 4, uint32(Op.Type));
-                            WriteU32(O + 8, uint32(Op.Value));
-                        }
-                        for (int32 Item = 0; Item < Result.Conditions.Num(); ++Item)
-                        {
-                            const FKyaScenarioCondition& Condition = Result.Conditions[Item];
-                            const int64 C = BlockOffsets.Conditions[Item];
-                            WriteU32(C, uint32(Condition.Combiner));
-                            WriteU32(C + 4, uint32(Condition.Variable));
-                            WriteU32(C + 8, uint32(Condition.Comparison));
-                            WriteU32(C + 12, uint32(Condition.Value));
-                        }
-                    }
-                }
+                if (!KyaWriteCompanionBehaviour(Source, Bytes, BehaviourOffset.Payload,
+                    BehaviourOffset.Size)) return false;
             }
-            if (Actor.Behaviours[Behaviour].bHasTypedBridgeBasicBehaviour)
+            if (Actor.Behaviours[Behaviour].bHasTypedBridgeBasicBehaviour ||
+                Actor.Behaviours[Behaviour].bHasTypedBridgeWindBehaviour)
             {
                 const FKyaActorBehaviour& Source = Actor.Behaviours[Behaviour];
-                const int64 P = BehaviourOffset.Payload;
-                for (int32 Axis = 0; Axis < 3; ++Axis) WriteFloat(P + Axis * 4, float(Source.BridgeBasicDirection[Axis]));
-                WriteFloat(P + 12, Source.BridgeBasicField40);
-                WriteFloat(P + 16, Source.BridgeBasicField44);
-                WriteFloat(P + 20, Source.BridgeBasicField48);
-                WriteFloat(P + 24, Source.BridgeBasicField4C);
-                WriteFloat(P + 28, Source.BridgeBasicField50);
-            }
-            if (Actor.Behaviours[Behaviour].bHasTypedBridgeWindBehaviour)
-            {
-                const FKyaActorBehaviour& Source = Actor.Behaviours[Behaviour];
-                for (int32 Item = 0; Item < Source.BridgeWindValues.Num(); ++Item)
-                    WriteFloat(BehaviourOffset.Payload + Item * 4, Source.BridgeWindValues[Item]);
+                if (!KyaWriteBridgeBehaviour(Source, Bytes, BehaviourOffset.Payload,
+                    BehaviourOffset.Size)) return false;
             }
             if (Actor.Behaviours[Behaviour].bHasTypedClusterZones)
             {
-                TArray<FKyaClusterZoneOffsets> Zones;
-                if (!KyaReadClusterZoneOffsets(MakeArrayView(Bank->BankBytes.GetData(), int32(SceneEnd)), BehaviourOffset.Payload, BehaviourOffset.Size, Zones)) return false;
-                for (int32 ZoneIndex = 0; ZoneIndex < Zones.Num(); ++ZoneIndex)
-                {
-                    const FKyaClusterZone& Zone = Actor.Behaviours[Behaviour].ClusterZones[ZoneIndex];
-                    const FKyaClusterZoneOffsets& Location = Zones[ZoneIndex];
-                    WriteU32(Location.Header, uint32(Zone.Flags));
-                    WriteU32(Location.Header + 4, uint32(Zone.ZoneRef));
-                    const TArray<int32>* Lists[] = { &Zone.Actors, &Zone.OtherActors, &Zone.Cameras, &Zone.Lights };
-                    for (int32 List = 0; List < 4; ++List)
-                        for (int32 Item = 0; Item < Lists[List]->Num(); ++Item)
-                            WriteU32(Location.Lists[List] + Item * 4, uint32((*Lists[List])[Item]));
-                    for (int32 Item = 0; Item < Zone.Hashes.Num(); ++Item)
-                    {
-                        const uint64 Hash = uint64(Zone.Hashes[Item]);
-                        WriteU32(Location.Lists[4] + int64(Item) * 8, uint32(Hash));
-                        WriteU32(Location.Lists[4] + int64(Item) * 8 + 4, uint32(Hash >> 32));
-                    }
-                    WriteU32(Location.Tail, uint32(Zone.OtherZoneRef));
-                }
+                const FKyaActorBehaviour& Source = Actor.Behaviours[Behaviour];
+                if (!KyaWriteClusteriserBehaviour(Source, Bytes, BehaviourOffset.Payload,
+                    BehaviourOffset.Size)) return false;
             }
         }
         const int64 Common = Offsets.Common;
@@ -1759,6 +1360,9 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
         FKyaProjectileOffsets Projectile;
         const bool HasProjectile = Actor.ClassId == 0x1c && KyaReadProjectileOffsets(
             MakeArrayView(Bank->BankBytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Projectile);
+        FKyaHedgehogOffsets Hedgehog;
+        const bool HasHedgehog = Actor.ClassId == 0x22 && KyaReadHedgehogOffsets(
+            MakeArrayView(Bank->BankBytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Hedgehog);
         FKyaWindOffsets Wind;
         const bool HasWind = Actor.ClassId == 0x12 && KyaReadWindOffsets(
             MakeArrayView(Bank->BankBytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Wind);
@@ -1768,8 +1372,8 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
         FKyaWeaponOffsets Weapon;
         const bool HasWeapon = Actor.ClassId == 0x20 && KyaReadWeaponOffsets(
             MakeArrayView(Bank->BankBytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Weapon);
-        FKyaSwitchOffsets SwitchData;
-        const bool HasSwitch = Actor.ClassId == 0x11 && KyaReadSwitchOffsets(
+        FKyaSwitchActorOffsets SwitchData;
+        const bool HasSwitch = Actor.ClassId == 0x11 && KyaReadSwitchActorOffsets(
             MakeArrayView(Bank->BankBytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, SwitchData);
         FKyaBonusOffsets Bonus;
         const bool HasBonus = Actor.ClassId == 0x0e && KyaReadBonusOffsets(
@@ -1819,8 +1423,8 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
         FKyaRuneOffsets Rune;
         const bool HasRune = Actor.ClassId == 0x51 && KyaReadRuneOffsets(
             MakeArrayView(Bank->BankBytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Rune);
-        FKyaBonusFountainOffsets Fountain;
-        const bool HasFountain = Actor.ClassId == 0x52 && KyaReadBonusFountainOffsets(
+        FKyaFountainOffsets Fountain;
+        const bool HasFountain = Actor.ClassId == 0x52 && KyaReadFountainOffsets(
             MakeArrayView(Bank->BankBytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Fountain);
         FKyaRopeOffsets Rope;
         const bool HasRope = Actor.ClassId == 0x0f && KyaReadRopeOffsets(
@@ -1831,10 +1435,9 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
         FKyaNativCmdOffsets Command;
         const bool HasNativCmd = Actor.ClassId == 0x3c && KyaReadNativCmdOffsets(
             MakeArrayView(Bank->BankBytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Command);
-        TArray<int64> CheckpointOffsets;
-        int64 CheckpointTail = 0;
-        const bool HasCheckpoints = Actor.ClassId == 0x1e && KyaReadCheckpointOffsets(
-            MakeArrayView(Bank->BankBytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, CheckpointOffsets, &CheckpointTail);
+        FKyaCheckpointsOffsets CheckpointData;
+        const bool HasCheckpoints = Actor.ClassId == 0x1e && KyaReadCheckpointsOffsets(
+            MakeArrayView(Bank->BankBytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, CheckpointData);
         FKyaCompanionOffsets Companion;
         const bool HasCompanion = Actor.ClassId == 0x19 && KyaReadCompanionOffsets(
             MakeArrayView(Bank->BankBytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Companion);
@@ -1852,106 +1455,110 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
             MakeArrayView(Bank->BankBytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Kim);
         FKyaWolfenFightParamOffsets FightParam;
         if (HasWolfen && !KyaReadWolfenFightParamOffsets(MakeArrayView(Bank->BankBytes.GetData(), int32(SceneEnd)), Wolfen.FightParam, Wolfen.Tail, FightParam)) return false;
-        const int64 RawOffset = HasAton ? Aton.Tail : (HasBridge ? Bridge.Tail : (HasCompanion ? Companion.Tail : (HasGravity ? Gravity.Tail : (HasNativCmd ? Command.Tail : (HasCheckpoints ? CheckpointTail : (HasRope ? Rope.Tail : (HasFountain ? Fountain.Tail : (HasRune ? Rune.Tail : (HasStiller ? Stiller.Tail : (HasAmbre ? Ambre.Tail : (HasShoot ? Shoot.Tail : (HasFog ? Fog.Tail : (HasMoney ? Money.Tail : (HasBoxClass ? BoxClass.Tail : (HasDca ? Dca.Tail : (HasTeleporter ? Teleporter.Tail : (HasAmortos ? Amortos.Tail : (HasNativ ? Nativ.Tail : (HasCommander ? Commander.Tail : (HasFruit ? Fruit.Tail : (HasWolfen ? Wolfen.WeaponIndex : (HasMicken ? Micken.Tail : (HasBonus ? Bonus.Tail : (HasSwitch ? SwitchData.Tail : (HasWeapon ? Weapon.Tail : (HasTrap ? Trap.Tail : (HasWind ? Wind.Tail : (HasProjectile ? Projectile.Tail : (HasAraignos ? Araignos.Tail : (HasFx ? Fx.Tail : (HasBox ? Box.Tail : (HasDetails ? Details.Tail : (HasPlatform ? Platform.Suffix : Offsets.ClassData)))))))))))))))))))))))))))))))));
+        if (Actor.bHasWoodMonsterData != (Actor.ClassId == 0x27 && Offsets.ClassDataSize >= 16)) return false;
+        FKyaShockerCmdOffsets ShockerCmd;
+        const bool HasShockerCmd = Actor.ClassId == 0x50 && KyaReadShockerCmdOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, ShockerCmd);
+        if (HasShockerCmd != Actor.bHasShockerCmdData) return false;
+        if (HasShockerCmd)
+        {
+            if (Actor.ShockerCmdField168 < 0 || Actor.ShockerCmdField168 > MAX_uint32 ||
+                Actor.ShockerCmdSequences.Num() != ShockerCmd.Sequences.Num()) return false;
+            for (int32 Sequence = 0; Sequence < ShockerCmd.Counts.Num(); ++Sequence)
+                if (Actor.ShockerCmdSequences[Sequence].Values.Num() != ShockerCmd.Counts[Sequence]) return false;
+        }
+        if (Actor.bHasAcceleratosData != (Actor.ClassId == 0x3a && Offsets.ClassDataSize >= 20)) return false;
+        FKyaAddOnPurchaseOffsets AddOnPurchase;
+        const bool HasAddOnPurchase = Actor.ClassId == 0x49 && KyaReadAddOnPurchaseOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, AddOnPurchase);
+        if (HasAddOnPurchase != Actor.bHasAddOnPurchaseData) return false;
+        FKyaAmortosCmdOffsets AmortosCmd;
+        const bool HasAmortosCmd = Actor.ClassId == 0x31 && KyaReadAmortosCmdOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, AmortosCmd);
+        if (HasAmortosCmd != Actor.bHasAmortosCmdData ||
+            (HasAmortosCmd && Actor.AmortosCmdActorRefs.Num() != AmortosCmd.Count)) return false;
+        FKyaPatternCmdOffsets PatternCmd;
+        const bool HasPatternCmd = Actor.ClassId == 0x40 && KyaReadPatternCmdOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, PatternCmd);
+        if (HasPatternCmd != Actor.bHasPatternCmdData || (HasPatternCmd &&
+            (Actor.PatternCmdActorRefs.Num() != PatternCmd.Count || Actor.PatternCmdPattern.bHasField24 != PatternCmd.bHasField24 ||
+                Actor.PatternCmdField164 < 0 || Actor.PatternCmdField164 > MAX_uint32 ||
+                Actor.PatternCmdField160 < 0 || Actor.PatternCmdField160 > MAX_uint32))) return false;
+        FKyaEggOffsets Egg;
+        const bool HasEgg = Actor.ClassId == 0x2f && KyaReadEggOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Egg);
+        if (HasEgg != Actor.bHasEggData || (HasEgg &&
+            (Actor.EggPathIndices.Num() != Egg.Count || Actor.EggField1DC < 0 || Actor.EggField1DC > MAX_uint32 ||
+                Actor.EggField1E0 < 0 || Actor.EggField1E0 > MAX_uint32))) return false;
+        if (Actor.bHasCareBoyData != (Actor.ClassId == 0x37 && Offsets.ClassDataSize >= 12)) return false;
+        FKyaElectrollaOffsets Electrolla;
+        const bool HasElectrolla = Actor.ClassId == 0x0b && KyaReadElectrollaOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Electrolla);
+        if (HasElectrolla != Actor.bHasElectrollaData || (HasElectrolla &&
+            (Actor.ElectrollaSwitch.Targets.Num() != Electrolla.Switch.Count || Actor.ElectrollaSparkCount < 0))) return false;
+        FKyaBombLauncherOffsets BombLauncher;
+        const bool HasBombLauncher = Actor.ClassId == 0x53 && KyaReadBombLauncherOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, BombLauncher);
+        if (HasBombLauncher != Actor.bHasBombLauncherData ||
+            (HasBombLauncher && Actor.BombLauncherActorRefs.Num() != BombLauncher.Count)) return false;
+        FKyaBlazerOffsets Blazer;
+        const bool HasBlazer = Actor.ClassId == 0x4d && KyaReadBlazerOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Blazer);
+        if (HasBlazer != Actor.bHasBlazerData || (HasBlazer &&
+            (Actor.BlazerData.ActorRefs.Num() != Blazer.Count || Actor.BlazerData.bHasWaypointRefs != Blazer.bHasWaypointRefs))) return false;
+        FKyaWoofOffsets Woof;
+        const bool HasWoof = Actor.ClassId == 0x2a && KyaReadWoofOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Woof);
+        if (HasWoof != Actor.bHasWoofData || (HasWoof && Actor.WoofData.ActorRefs.Num() != Woof.Count)) return false;
+        FKyaMiniGamesSupportOffsets MiniGamesSupport;
+        const bool HasMiniGamesSupport = KyaReadMiniGamesSupportOffsets(Actor.ClassId,
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, MiniGamesSupport);
+        if (Actor.bHasMiniGamesManagerData != (HasMiniGamesSupport && Actor.ClassId == 0x42) ||
+            Actor.bHasMiniGamesOrganizerData != (HasMiniGamesSupport && Actor.ClassId == 0x43)) return false;
+        if (HasMiniGamesSupport && (Actor.ClassId == 0x42 ? Actor.MiniGamesManagerOrganizerRefs.Num() :
+            Actor.MiniGamesOrganizerData.MiniGameRefs.Num()) != MiniGamesSupport.Count) return false;
+        FKyaCreditsOffsets Credits;
+        const bool HasCredits = Actor.ClassId == 0x56 && KyaReadCreditsOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Credits);
+        if (HasCredits != Actor.bHasCreditsData || (HasCredits &&
+            (Actor.CreditsData.MessageKeys.Num() != Credits.Count || Actor.CreditsData.CompletionSwitch.Targets.Num() != Credits.Switch.Count ||
+                Actor.CreditsData.MusicIndex < 0 || Actor.CreditsData.MusicIndex > MAX_uint32))) return false;
+        FKyaWantedZooOffsets WantedZoo;
+        const bool HasWantedZoo = Actor.ClassId == 0x54 && KyaReadWantedZooOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, WantedZoo);
+        if (HasWantedZoo != Actor.bHasWantedZooData) return false;
+        if (HasWantedZoo)
+        {
+            const FKyaWantedZooData& Zoo = Actor.WantedZooData;
+            if (Zoo.TextPositions.Num() != WantedZoo.TextCount || Zoo.NumberPositions.Num() != WantedZoo.NumberCount ||
+                Zoo.Entries.Num() != WantedZoo.Entries.Num()) return false;
+            for (int32 Entry = 0; Entry < Zoo.Entries.Num(); ++Entry)
+                if (Zoo.Entries[Entry].Conditions.Num() != WantedZoo.Entries[Entry].ConditionCount ||
+                    Zoo.Entries[Entry].MessageKeys.Num() != WantedZoo.Entries[Entry].KeyCount ||
+                    Zoo.Entries[Entry].Numbers.Num() != WantedZoo.Entries[Entry].NumberCount) return false;
+        }
+        FKyaJamGutOffsets JamGut;
+        const bool HasJamGut = Actor.ClassId == 0x33 && KyaReadJamGutOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, JamGut);
+        if (HasJamGut != Actor.bHasJamGutData || (HasJamGut &&
+            (Actor.JamGutData.bHasField41C != JamGut.bHasField41C || Actor.JamGutData.Checkpoints.Num() != JamGut.CheckpointCount ||
+                Actor.JamGutData.Paths.Num() != JamGut.PathCount))) return false;
+        const int64 RawOffset = HasJamGut ? JamGut.Tail : HasWantedZoo ? WantedZoo.Tail : HasCredits ? Credits.Tail : HasMiniGamesSupport ? MiniGamesSupport.Tail : HasWoof ? Woof.Tail : HasBlazer ? Blazer.Tail : HasBombLauncher ? BombLauncher.Tail : HasElectrolla ? Electrolla.Tail : (Actor.ClassId == 0x37 && Actor.bHasCareBoyData) ? Offsets.ClassData + 12 : HasEgg ? Egg.Tail : HasPatternCmd ? PatternCmd.Tail : HasAmortosCmd ? AmortosCmd.Tail : HasAddOnPurchase ? AddOnPurchase.Tail : (Actor.ClassId == 0x3a && Actor.bHasAcceleratosData) ? Offsets.ClassData + 20 : HasShockerCmd ? ShockerCmd.Tail : (Actor.ClassId == 0x27 && Actor.bHasWoodMonsterData) ? Offsets.ClassData + 16 : (Actor.ClassId == 0x2b && Actor.bHasHelperSignData) ? Offsets.ClassData + 12 : (Actor.ClassId == 0x48 && Actor.bHasHunterData) ? Offsets.ClassData + 40 : HasAton ? Aton.Tail : (HasBridge ? Bridge.Tail : (HasCompanion ? Companion.Tail : (HasGravity ? Gravity.Tail : (HasNativCmd ? Command.Tail : (HasCheckpoints ? CheckpointData.Tail : (HasRope ? Rope.Tail : (HasFountain ? Fountain.Tail : (HasRune ? Rune.Tail : (HasStiller ? Stiller.Tail : (HasAmbre ? Ambre.Tail : (HasShoot ? Shoot.Tail : (HasFog ? Fog.Tail : (HasMoney ? Money.Tail : (HasBoxClass ? BoxClass.Tail : (HasDca ? Dca.Tail : (HasTeleporter ? Teleporter.Tail : (HasAmortos ? Amortos.Tail : (HasNativ ? Nativ.Tail : (HasCommander ? Commander.Tail : (HasFruit ? Fruit.Tail : (HasWolfen ? Wolfen.WeaponIndex : (HasMicken ? Micken.Tail : (HasBonus ? Bonus.Tail : (HasSwitch ? SwitchData.Tail : (HasWeapon ? Weapon.Tail : (HasTrap ? Trap.Tail : (HasWind ? Wind.Tail : (HasProjectile ? Projectile.Tail : (HasHedgehog ? Hedgehog.Tail : (HasAraignos ? Araignos.Tail : (HasFx ? Fx.Tail : (HasBox ? Box.Tail : (HasDetails ? Details.Tail : (HasPlatform ? Platform.Suffix : Offsets.ClassData))))))))))))))))))))))))))))))))));
         const int64 SecondPassRawOffset = HasKim ? Kim.Tail : (HasBoomy ? Boomy.Tail : RawOffset);
+        if (Actor.bHasHunterData != (Actor.ClassId == 0x48 && Offsets.ClassDataSize >= 40)) return false;
+        if (Actor.bHasHelperSignData != (Actor.ClassId == 0x2b && Offsets.ClassDataSize >= 12)) return false;
         if (!Actor.ClassData.IsEmpty()) FMemory::Memcpy(Bytes.GetData() + SecondPassRawOffset, Actor.ClassData.GetData(), Actor.ClassData.Num());
         if (HasPlatform)
         {
-            WriteFloat(Platform.Weight, Actor.PlatformWeight);
-            for (int32 Item = 0; Item < Actor.PlatformActors.Num(); ++Item)
-            {
-                WriteU32(Platform.Actors + Item * 8, uint32(Actor.PlatformActors[Item].ActorRef));
-                WriteU32(Platform.Actors + Item * 8 + 4, uint32(Actor.PlatformActors[Item].CarryMethod));
-            }
-            for (int32 Item = 0; Item < Actor.PlatformZones.Num(); ++Item)
-                WriteU32(Platform.Zones + Item * 4, uint32(Actor.PlatformZones[Item]));
-            for (int32 Zone = 0; Zone < Actor.PlatformNoFrictionZones.Num(); ++Zone)
-            {
-                const int64 Offset = Platform.NoFrictionZones[Zone];
-                WriteU32(Offset, uint32(Actor.PlatformNoFrictionZones[Zone].ZoneRef));
-                for (int32 Item = 0; Item < Actor.PlatformNoFrictionZones[Zone].Actors.Num(); ++Item)
-                    WriteU32(Offset + 8 + Item * 4, uint32(Actor.PlatformNoFrictionZones[Zone].Actors[Item]));
-            }
+            if (!KyaWriteMovingPlatformActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
         }
-        if (HasDetails)
+        if (HasHedgehog)
         {
-            for (int32 Camera = 0; Camera < Actor.PlatformCameras.Num(); ++Camera)
-            {
-                const FKyaPlatformCamera& C = Actor.PlatformCameras[Camera];
-                const int64 Offset = Details.Cameras + int64(Camera) * 72;
-                WriteU32(Offset, uint32(C.EventType)); WriteU32(Offset + 4, uint32(C.Flags));
-                WriteU32(Offset + 8, uint32(C.TargetRef)); WriteU32(Offset + 12, uint32(C.CutsceneId));
-                WriteU32(Offset + 16, uint32(C.TargetFlags)); WriteU32(Offset + 20, uint32(C.MessageId));
-                WriteU32(Offset + 24, uint32(C.MessageFlags)); WriteU32(Offset + 28, uint32(C.TargetField14));
-                WriteU32(Offset + 32, uint32(C.TargetField18)); WriteU32(Offset + 36, uint32(C.CameraIndex));
-                WriteU32(Offset + 40, uint32(C.CameraFlags));
-                WriteFloat(Offset + 44, C.Field8); WriteFloat(Offset + 48, C.FieldC); WriteFloat(Offset + 52, C.Field10);
-                WriteU32(Offset + 56, uint32(C.ActorRef)); WriteU32(Offset + 60, uint32(C.ZoneRef));
-                WriteFloat(Offset + 64, C.Field1C); WriteU32(Offset + 68, uint32(C.SoundRef));
-            }
-            const FKyaPlatformProperties& P = Actor.PlatformProperties;
-            const int64 Offset = Details.Properties;
-            WriteU32(Offset, uint32(P.SoundRefA)); WriteU32(Offset + 4, uint32(P.SampleRefA));
-            WriteU32(Offset + 8, uint32(P.SoundRefB)); WriteU32(Offset + 12, uint32(P.SampleRefB));
-            for (int32 Axis = 0; Axis < 3; ++Axis) WriteFloat(Offset + 16 + Axis * 4, float(P.Offset[Axis]));
-            WriteU32(Offset + 28, uint32(P.EffectRef1C)); WriteU32(Offset + 32, uint32(P.EffectRef20));
-            WriteU32(Offset + 36, uint32(P.PlatformFlags)); WriteU32(Offset + 40, uint32(P.CameraIndex));
-            WriteFloat(Offset + 44, P.TiltValue); WriteU32(Offset + 48, uint32(P.TiltMode));
-            for (int32 Axis = 0; Axis < 4; ++Axis) WriteFloat(Offset + 52 + Axis * 4, float(P.TiltAndPush[Axis]));
-            WriteFloat(Offset + 68, float(P.PushOscillation.X)); WriteFloat(Offset + 72, float(P.PushOscillation.Y));
-            const TArray<FKyaPlatformSound>* Lists[] = { &Actor.PlatformSoundsA, &Actor.PlatformSoundsB };
-            for (int32 List = 0; List < 2; ++List)
-                for (int32 Item = 0; Item < Lists[List]->Num(); ++Item)
-                {
-                    const FKyaPlatformSound& Sound = (*Lists[List])[Item];
-                    const int64 SoundOffset = Details.Sounds[List] + int64(Item) * 16;
-                    WriteU32(SoundOffset, uint32(Sound.SegmentStart)); WriteU32(SoundOffset + 4, uint32(Sound.SegmentEnd));
-                    WriteU32(SoundOffset + 8, uint32(Sound.SoundRef)); WriteU32(SoundOffset + 12, uint32(Sound.SampleRef));
-                }
+            if (!KyaWriteHedgehogActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
         }
         if (HasBox)
         {
-            WriteU32(Box.Field160, uint32(Actor.BasicBoxField160));
-            WriteU32(Box.LifeMax, uint32(Actor.BasicBoxLifeMax));
-            for (int32 Item = 0; Item < Actor.BasicBoxActorRefs.Num(); ++Item)
-                WriteU32(Box.Actors + Item * 4, uint32(Actor.BasicBoxActorRefs[Item]));
-            WriteFloat(Box.Vibration, Actor.BasicBoxVibration0);
-            WriteFloat(Box.Vibration + 4, Actor.BasicBoxVibration1);
-            WriteFloat(Box.Vibration + 8, Actor.BasicBoxVibration2);
-            WriteFloat(Box.Vibration + 12, Actor.BasicBoxVibration3);
-            WriteU32(Box.Field180, uint32(Actor.BasicBoxField180));
-            WriteU32(Box.Fields, uint32(Actor.BasicBoxField18C));
-            WriteU32(Box.Fields + 4, uint32(Actor.BasicBoxField190));
-            WriteU32(Box.Fields + 8, uint32(Actor.BasicBoxField198));
-            WriteU32(Box.Fields + 12, uint32(Actor.BasicBoxField194));
-            for (int32 Item = 0; Item < Actor.BasicBoxSwitch.Targets.Num(); ++Item)
-            {
-                const FKyaSwitchTarget& Target = Actor.BasicBoxSwitch.Targets[Item];
-                const int64 T = Box.SwitchTargets + int64(Item) * 28;
-                WriteU32(T, uint32(Target.TargetRef)); WriteU32(T + 4, uint32(Target.CutsceneId));
-                WriteU32(T + 8, uint32(Target.Flags)); WriteU32(T + 12, uint32(Target.MessageId));
-                WriteU32(T + 16, uint32(Target.MessageFlags)); WriteU32(T + 20, uint32(Target.Field14));
-                WriteU32(T + 24, uint32(Target.Field18));
-            }
-            const FKyaStreamEventCamera& EventCamera = Actor.BasicBoxSwitch.Camera;
-            const int64 C = Box.SwitchCamera;
-            WriteU32(C, uint32(EventCamera.CameraIndex)); WriteU32(C + 4, uint32(EventCamera.Flags));
-            WriteFloat(C + 8, EventCamera.Field8); WriteFloat(C + 12, EventCamera.FieldC); WriteFloat(C + 16, EventCamera.Field10);
-            WriteU32(C + 20, uint32(EventCamera.ActorRef)); WriteU32(C + 24, uint32(EventCamera.ZoneRef));
-            WriteFloat(C + 28, EventCamera.Field1C);
-            const FKyaAddOnGenerator& AddOn = Actor.BasicBoxAddOn;
-            const int64 A = Box.AddOn;
-            WriteU32(A, uint32(AddOn.Field0)); WriteU32(A + 4, uint32(AddOn.MoneyType));
-            WriteU32(A + 8, uint32(AddOn.MoneyCount)); WriteU32(A + 12, uint32(AddOn.BonusCount));
-            WriteU32(A + 16, uint32(AddOn.FieldC)); WriteU32(Box.SubObjMode, uint32(AddOn.SubObjMode));
-            if (Box.SubObjFloats)
-            {
-                WriteFloat(Box.SubObjFloats, AddOn.SubObjField0);
-                WriteFloat(Box.SubObjFloats + 4, AddOn.SubObjField4);
-                WriteFloat(Box.SubObjFloats + 8, AddOn.SubObjFieldC);
-                WriteFloat(Box.SubObjFloats + 12, AddOn.SubObjField10);
-                WriteFloat(Box.SubObjFloats + 16, AddOn.SubObjField14);
-            }
+            if (!KyaWriteBasicBoxActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
         }
         if (HasWolfen)
         {
@@ -1966,971 +1573,208 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
             Prefix.WeaponIndex = Wolfen.WeaponIndex;
             Prefix.Tail = Wolfen.WeaponIndex + 4;
             if (!WriteFighterPrefix(Actor, Prefix)) return false;
-            WriteU32(Wolfen.FieldB74, uint32(Actor.WolfenFieldB74));
-            WriteFloat(Wolfen.Vision, Actor.WolfenVisionRange);
-            WriteFloat(Wolfen.Vision + 4, Actor.WolfenVisionFov);
-            WriteFloat(Wolfen.Vision + 8, Actor.WolfenVisionField38);
-            WriteFloat(Wolfen.Vision + 12, Actor.WolfenVisionField3C);
-            WriteU32(Wolfen.Vision + 16, uint32(Actor.WolfenVisionFlags));
-            WriteU32(Wolfen.StartSector, uint32(Actor.WolfenStartSectorId));
-            WriteFloat(Wolfen.Hearing, Actor.WolfenHearingRangeSquared);
-            WriteFloat(Wolfen.Hearing + 4, Actor.WolfenHearingMaxHeight);
-            WriteFloat(Wolfen.VisionDetection, Actor.WolfenVisionDetectionRange);
-            WriteFloat(Wolfen.FieldCF4, Actor.WolfenFieldCF4);
-            WriteFloat(Wolfen.WalkValues, Actor.WolfenWalkSpeed);
-            WriteFloat(Wolfen.WalkValues + 4, Actor.WolfenWalkAcceleration);
-            WriteFloat(Wolfen.WalkValues + 8, Actor.WolfenWalkRotSpeed);
-            WriteFloat(Wolfen.WalkValues + 12, Actor.WolfenRunSpeedScale);
-            WriteFloat(Wolfen.WalkValues + 16, Actor.WolfenDefaultRunSpeed);
-            WriteFloat(Wolfen.WalkValues + 20, Actor.WolfenRunAcceleration);
-            WriteFloat(Wolfen.WalkValues + 24, Actor.WolfenRotRunSpeed);
-            WriteU32(Wolfen.MagicRequired, uint32(Actor.WolfenMagicRequired));
-            WriteU32(Wolfen.FieldD30, uint32(Actor.WolfenFieldD30));
-            WriteFloat(Wolfen.FieldB90, Actor.WolfenFieldB90);
-            WriteFloat(Wolfen.FieldB90 + 4, Actor.WolfenFieldB94);
-            WriteFloat(Wolfen.FieldB90 + 8, Actor.WolfenFieldB98);
-            const FKyaWolfenFightParam& Params = Actor.WolfenFightParamData;
-            for (int32 FieldIndex = 0; FieldIndex < Params.Capability0Fields.Num(); ++FieldIndex)
-                WriteU32(FightParam.Capability0Fields + FieldIndex * 4, uint32(Params.Capability0Fields[FieldIndex]));
-            for (int32 FieldIndex = 0; FieldIndex < Params.Capability2Fields.Num(); ++FieldIndex)
-                WriteU32(FightParam.Capability2Fields + FieldIndex * 4, uint32(Params.Capability2Fields[FieldIndex]));
-            for (int32 FieldIndex = 0; FieldIndex < Params.ConfigurationValues.Num(); ++FieldIndex)
-                WriteFloat(FightParam.Floats + FieldIndex * 4, Params.ConfigurationValues[FieldIndex]);
-            for (int32 Cap = 0; Cap < Params.Capabilities.Num(); ++Cap)
-            {
-                const FKyaWolfenCapability& Capability = Params.Capabilities[Cap];
-                const FKyaWolfenCapabilityOffsets& CapOffsets = FightParam.Capabilities[Cap];
-                for (int32 ItemIndex = 0; ItemIndex < Capability.Items.Num(); ++ItemIndex)
-                {
-                    const FKyaWolfenCapabilityItem& Item = Capability.Items[ItemIndex];
-                    const FKyaWolfenCapabilityItemOffsets& ItemOffsets = CapOffsets.Items[ItemIndex];
-                    if (Item.Chains.Num() != ItemOffsets.ChainCount) return false;
-                    for (int32 Chain = 0; Chain < Item.Chains.Num(); ++Chain)
-                        WriteU32(ItemOffsets.Chains + Chain * 4, uint32(Item.Chains[Chain]));
-                    WriteFloat(ItemOffsets.Floats, Item.Field0);
-                    WriteFloat(ItemOffsets.Floats + 4, Item.Field4);
-                }
-            }
-            for (int32 FieldIndex = 0; FieldIndex < Params.ComboList1.Num(); ++FieldIndex)
-                WriteU32(FightParam.ComboList1Data + FieldIndex * 4, uint32(Params.ComboList1[FieldIndex]));
-            for (int32 FieldIndex = 0; FieldIndex < Params.ComboList2.Num(); ++FieldIndex)
-                WriteU32(FightParam.ComboList2Data + FieldIndex * 4, uint32(Params.ComboList2[FieldIndex]));
-            WriteU32(FightParam.Trailing, uint32(Params.FieldAfterLists));
-            WriteU32(FightParam.Trailing + 4, uint32(Params.FieldB44));
-            for (int32 FieldIndex = 0; FieldIndex < Params.TuningValues.Num(); ++FieldIndex)
-                WriteFloat(FightParam.Trailing + 8 + FieldIndex * 4, Params.TuningValues[FieldIndex]);
-            for (int32 FieldIndex = 0; FieldIndex < Params.Knowledge.Num(); ++FieldIndex)
-                WriteU32(FightParam.Trailing + 32 + FieldIndex * 4, uint32(Params.Knowledge[FieldIndex]));
+            if (!KyaWriteWolfenActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
         }
         if (HasNativ)
         {
-            WriteFloat(Nativ.WeightB, Actor.NativWeightB);
-            WriteU32(Nativ.Autonomous, uint32(Actor.NativLifeMax));
-            WriteFloat(Nativ.Autonomous + 4, Actor.NativGravityScale);
-            WriteFloat(Nativ.Autonomous + 8, Actor.NativDynamicExtField4);
-            WriteFloat(Nativ.Autonomous + 12, Actor.NativDynamicExtField8);
-            WriteU32(Nativ.Field350, uint32(Actor.NativField350));
-            WriteU32(Nativ.Field354, uint32(Actor.NativField354));
-            WriteU32(Nativ.Field358, uint32(Actor.NativField358));
-            WriteFloat(Nativ.MoveSpeedNoHeld, Actor.NativMoveSpeedNoHeld);
-            WriteFloat(Nativ.MoveSpeedHeld, Actor.NativMoveSpeedHeld);
-            WriteU32(Nativ.Field370, uint32(Actor.NativField370));
-            WriteU32(Nativ.Field368, uint32(Actor.NativField368));
-            WriteU32(Nativ.Field364, uint32(Actor.NativField364));
-            WriteU32(Nativ.Field378, uint32(Actor.NativField378));
-            WriteU32(Nativ.Field37C, uint32(Actor.NativField37C));
-            WriteU32(Nativ.Field380, uint32(Actor.NativField380));
+            if (!KyaWriteNativActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
         }
         if (HasAmortos)
         {
-            for (int32 Stream = 0; Stream < 3; ++Stream)
-            {
-                const TArray<int32>& List = Stream == 0 ? Actor.AmortosCheckpointActors :
-                    (Stream == 1 ? Actor.AmortosActors188 : Actor.AmortosActors18C);
-                for (int32 Item = 0; Item < List.Num(); ++Item)
-                    WriteU32(Amortos.Streams[Stream].Entries + Item * 4, uint32(List[Item]));
-            }
-            WriteU32(Amortos.Field190, uint32(Actor.AmortosActorRef));
-            WriteFloat(Amortos.Floats160, Actor.AmortosField160);
-            WriteFloat(Amortos.Floats160 + 4, Actor.AmortosField164);
-            WriteFloat(Amortos.Floats160 + 8, Actor.AmortosField168);
-            WriteFloat(Amortos.Floats160 + 12, Actor.AmortosField16C);
-            WriteFloat(Amortos.Floats160 + 16, Actor.AmortosField170);
-            WriteFloat(Amortos.Floats160 + 20, Actor.AmortosField174);
-            WriteFloat(Amortos.Floats160 + 24, Actor.AmortosField178);
-            WriteFloat(Amortos.Floats160 + 28, Actor.AmortosField17C);
-            WriteFloat(Amortos.Floats160 + 32, Actor.AmortosField180);
-            const FKyaAddOnGenerator& AddOn = Actor.AmortosAddOn;
-            const int64 A = Amortos.AddOn;
-            WriteU32(A, uint32(AddOn.Field0)); WriteU32(A + 4, uint32(AddOn.MoneyType));
-            WriteU32(A + 8, uint32(AddOn.MoneyCount)); WriteU32(A + 12, uint32(AddOn.BonusCount));
-            WriteU32(A + 16, uint32(AddOn.FieldC)); WriteU32(Amortos.SubObjMode, uint32(AddOn.SubObjMode));
-            if (Amortos.SubObjFloats)
-            {
-                WriteFloat(Amortos.SubObjFloats, AddOn.SubObjField0);
-                WriteFloat(Amortos.SubObjFloats + 4, AddOn.SubObjField4);
-                WriteFloat(Amortos.SubObjFloats + 8, AddOn.SubObjFieldC);
-                WriteFloat(Amortos.SubObjFloats + 12, AddOn.SubObjField10);
-                WriteFloat(Amortos.SubObjFloats + 16, AddOn.SubObjField14);
-            }
-            WriteU32(Amortos.Field1C8, uint32(Actor.AmortosField1C8));
-            for (int32 SwitchIndex = 0; SwitchIndex < 2; ++SwitchIndex)
-            {
-                const FKyaSwitch& Switch = SwitchIndex == 0 ? Actor.AmortosSwitch1CC : Actor.AmortosSwitch1D4;
-                const FKyaWindSwitchOffsets& SwitchOffsets = Amortos.Switches[SwitchIndex];
-                for (int32 Item = 0; Item < Switch.Targets.Num(); ++Item)
-                {
-                    const FKyaSwitchTarget& Target = Switch.Targets[Item];
-                    const int64 T = SwitchOffsets.Targets + int64(Item) * 28;
-                    WriteU32(T, uint32(Target.TargetRef)); WriteU32(T + 4, uint32(Target.CutsceneId));
-                    WriteU32(T + 8, uint32(Target.Flags)); WriteU32(T + 12, uint32(Target.MessageId));
-                    WriteU32(T + 16, uint32(Target.MessageFlags)); WriteU32(T + 20, uint32(Target.Field14));
-                    WriteU32(T + 24, uint32(Target.Field18));
-                }
-                const FKyaStreamEventCamera& Camera = Switch.Camera;
-                const int64 C = SwitchOffsets.Camera;
-                WriteU32(C, uint32(Camera.CameraIndex)); WriteU32(C + 4, uint32(Camera.Flags));
-                WriteFloat(C + 8, Camera.Field8); WriteFloat(C + 12, Camera.FieldC); WriteFloat(C + 16, Camera.Field10);
-                WriteU32(C + 20, uint32(Camera.ActorRef)); WriteU32(C + 24, uint32(Camera.ZoneRef));
-                WriteFloat(C + 28, Camera.Field1C);
-            }
+            if (!KyaWriteAmortosActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
         }
         if (HasTeleporter)
         {
-            WriteU32(Teleporter.SubsectorMaterialId, uint32(Actor.TeleporterSubsectorMaterialId));
-            WriteU32(Teleporter.Hash, uint32(uint64(Actor.TeleporterHash)));
-            WriteU32(Teleporter.Hash + 4, uint32(uint64(Actor.TeleporterHash) >> 32));
-            WriteU32(Teleporter.Field16C, uint32(Actor.TeleporterField16C));
-            for (int32 Item = 0; Item < Actor.TeleporterDestinations.Num(); ++Item)
-            {
-                const FKyaTeleporterDestination& Destination = Actor.TeleporterDestinations[Item];
-                const int64 D = Teleporter.DestEntries + int64(Item) * 12;
-                WriteU32(D, uint32(Destination.LevelId));
-                WriteU32(D + 4, uint32(Destination.ElevatorId));
-                WriteU32(D + 8, uint32(Destination.Field8));
-            }
-            const FKyaSwitch* Switches[] = { &Actor.TeleporterSwitch170, &Actor.TeleporterSwitch178, &Actor.TeleporterSwitch180 };
-            for (int32 SwitchIndex = 0; SwitchIndex < 3; ++SwitchIndex)
-            {
-                const FKyaSwitch& Switch = *Switches[SwitchIndex];
-                const FKyaWindSwitchOffsets& SwitchOffsets = Teleporter.Switches[SwitchIndex];
-                for (int32 Item = 0; Item < Switch.Targets.Num(); ++Item)
-                {
-                    const FKyaSwitchTarget& Target = Switch.Targets[Item];
-                    const int64 T = SwitchOffsets.Targets + int64(Item) * 28;
-                    WriteU32(T, uint32(Target.TargetRef)); WriteU32(T + 4, uint32(Target.CutsceneId));
-                    WriteU32(T + 8, uint32(Target.Flags)); WriteU32(T + 12, uint32(Target.MessageId));
-                    WriteU32(T + 16, uint32(Target.MessageFlags)); WriteU32(T + 20, uint32(Target.Field14));
-                    WriteU32(T + 24, uint32(Target.Field18));
-                }
-                const FKyaStreamEventCamera& Camera = Switch.Camera;
-                const int64 C = SwitchOffsets.Camera;
-                WriteU32(C, uint32(Camera.CameraIndex)); WriteU32(C + 4, uint32(Camera.Flags));
-                WriteFloat(C + 8, Camera.Field8); WriteFloat(C + 12, Camera.FieldC); WriteFloat(C + 16, Camera.Field10);
-                WriteU32(C + 20, uint32(Camera.ActorRef)); WriteU32(C + 24, uint32(Camera.ZoneRef));
-                WriteFloat(C + 28, Camera.Field1C);
-            }
-            WriteU32(Teleporter.Zone188, uint32(Actor.TeleporterZone188));
-            WriteU32(Teleporter.Zone18C, uint32(Actor.TeleporterZone18C));
-            WriteU32(Teleporter.Material1, uint32(Actor.TeleporterMaterialId1));
-            WriteU32(Teleporter.CinematicId, uint32(Actor.TeleporterCinematicId));
-            WriteU32(Teleporter.Material2, uint32(Actor.TeleporterMaterialId2));
-            WriteU32(Teleporter.Field1D4, uint32(Actor.TeleporterField1D4));
-            WriteU32(Teleporter.Field1D8, uint32(Actor.TeleporterField1D8));
-            WriteU32(Teleporter.Material3, uint32(Actor.TeleporterMaterialId3));
-            WriteU32(Teleporter.Field1E0, uint32(Actor.TeleporterField1E0));
-            for (int32 Item = 0; Item < Actor.TeleporterWaypoints.Num(); ++Item)
-            {
-                WriteU32(Teleporter.WaypointEntries + Item * 8, uint32(Actor.TeleporterWaypoints[Item].ActorRef));
-                WriteU32(Teleporter.WaypointEntries + Item * 8 + 4, uint32(Actor.TeleporterWaypoints[Item].WaypointRef));
-            }
-            for (int32 BlockIndex = 0; BlockIndex < Actor.TeleporterConditionedOperations.Num(); ++BlockIndex)
-            {
-                const FKyaTeleporterBlock& Block = Actor.TeleporterConditionedOperations[BlockIndex];
-                for (int32 Op = 0; Op < Block.Operations.Num(); ++Op)
-                {
-                    const FKyaTeleporterOperation& Operation = Block.Operations[Op];
-                    const int64 O = Teleporter.BlockOps[BlockIndex] + int64(Op) * 12;
-                    WriteU32(O, uint32(Operation.ScenaricVariable));
-                    WriteU32(O + 4, uint32(Operation.Operation));
-                    WriteU32(O + 8, uint32(Operation.Value));
-                }
-                for (int32 Cond = 0; Cond < Block.Conditions.Num(); ++Cond)
-                {
-                    const FKyaTeleporterCondition& Condition = Block.Conditions[Cond];
-                    const int64 C = Teleporter.BlockConds[BlockIndex] + int64(Cond) * 16;
-                    WriteU32(C, uint32(Condition.Combine));
-                    WriteU32(C + 4, uint32(Condition.Variable));
-                    WriteU32(C + 8, uint32(Condition.Comparison));
-                    WriteU32(C + 12, uint32(Condition.Value));
-                }
-            }
+            if (!KyaWriteTeleporterActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
         }
         if (HasDca)
         {
-            WriteU32(Dca.Field504, uint32(Actor.DcaField504));
-            WriteU32(Dca.Field500, uint32(Actor.DcaField500));
-            WriteFloat(Dca.Field464, Actor.DcaField464);
-            WriteU32(Dca.Field508, uint32(Actor.DcaField508));
-            WriteU32(Dca.Field50C, uint32(Actor.DcaField50C));
-            WriteFloat(Dca.AimAdjust, Actor.DcaAimAdjustDegrees);
-            for (int32 Item = 0; Item < Actor.DcaShotActorRefs.Num(); ++Item)
-                WriteU32(Dca.ShotEntries + Item * 4, uint32(Actor.DcaShotActorRefs[Item]));
-            WriteU32(Dca.Field450, uint32(Actor.DcaField450));
-            WriteU32(Dca.Field454, uint32(Actor.DcaField454));
+            if (!KyaWriteDcaActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
         }
         if (HasBoxClass)
         {
-            WriteFloat(BoxClass.WeightB, Actor.BoxWeightB);
-            WriteU32(BoxClass.Autonomous, uint32(Actor.BoxLifeMax));
-            WriteFloat(BoxClass.Autonomous + 4, Actor.BoxGravityScale);
-            WriteFloat(BoxClass.Autonomous + 8, Actor.BoxDynamicExtField4);
-            WriteFloat(BoxClass.Autonomous + 12, Actor.BoxDynamicExtField8);
-            WriteU32(BoxClass.Field350, uint32(Actor.BoxField350));
-            for (int32 Item = 0; Item < Actor.BoxActorRefs.Num(); ++Item)
-                WriteU32(BoxClass.ActorEntries + Item * 4, uint32(Actor.BoxActorRefs[Item]));
-            WriteFloat(BoxClass.Floats354, Actor.BoxField354);
-            WriteFloat(BoxClass.Floats354 + 4, Actor.BoxField358);
-            WriteFloat(BoxClass.Floats354 + 8, Actor.BoxField35C);
-            WriteFloat(BoxClass.Floats354 + 12, Actor.BoxField360);
-            WriteU32(BoxClass.Field364, uint32(Actor.BoxField364));
-            WriteU32(BoxClass.Field370, uint32(Actor.BoxField370));
-            WriteU32(BoxClass.Field370 + 4, uint32(Actor.BoxField374));
-            WriteU32(BoxClass.Field370 + 8, uint32(Actor.BoxField378));
-            WriteU32(BoxClass.Field370 + 12, uint32(Actor.BoxField37C));
-            for (int32 Item = 0; Item < Actor.BoxSwitch.Targets.Num(); ++Item)
-            {
-                const FKyaSwitchTarget& Target = Actor.BoxSwitch.Targets[Item];
-                const int64 T = BoxClass.Switch.Targets + int64(Item) * 28;
-                WriteU32(T, uint32(Target.TargetRef)); WriteU32(T + 4, uint32(Target.CutsceneId));
-                WriteU32(T + 8, uint32(Target.Flags)); WriteU32(T + 12, uint32(Target.MessageId));
-                WriteU32(T + 16, uint32(Target.MessageFlags)); WriteU32(T + 20, uint32(Target.Field14));
-                WriteU32(T + 24, uint32(Target.Field18));
-            }
-            {
-                const FKyaStreamEventCamera& Camera = Actor.BoxSwitch.Camera;
-                const int64 C = BoxClass.Switch.Camera;
-                WriteU32(C, uint32(Camera.CameraIndex)); WriteU32(C + 4, uint32(Camera.Flags));
-                WriteFloat(C + 8, Camera.Field8); WriteFloat(C + 12, Camera.FieldC); WriteFloat(C + 16, Camera.Field10);
-                WriteU32(C + 20, uint32(Camera.ActorRef)); WriteU32(C + 24, uint32(Camera.ZoneRef));
-                WriteFloat(C + 28, Camera.Field1C);
-            }
-            const FKyaAddOnGenerator& AddOn = Actor.BoxAddOn;
-            const int64 A = BoxClass.AddOn;
-            WriteU32(A, uint32(AddOn.Field0)); WriteU32(A + 4, uint32(AddOn.MoneyType));
-            WriteU32(A + 8, uint32(AddOn.MoneyCount)); WriteU32(A + 12, uint32(AddOn.BonusCount));
-            WriteU32(A + 16, uint32(AddOn.FieldC)); WriteU32(BoxClass.SubObjMode, uint32(AddOn.SubObjMode));
-            if (BoxClass.SubObjFloats)
-            {
-                WriteFloat(BoxClass.SubObjFloats, AddOn.SubObjField0);
-                WriteFloat(BoxClass.SubObjFloats + 4, AddOn.SubObjField4);
-                WriteFloat(BoxClass.SubObjFloats + 8, AddOn.SubObjFieldC);
-                WriteFloat(BoxClass.SubObjFloats + 12, AddOn.SubObjField10);
-                WriteFloat(BoxClass.SubObjFloats + 16, AddOn.SubObjField14);
-            }
+            if (!KyaWriteBoxActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
         }
         if (HasMoney)
         {
-            WriteFloat(Money.WeightB, Actor.MoneyWeightB);
-            WriteU32(Money.MoneyValue, uint32(Actor.MoneyValue));
-            WriteU32(Money.Sound, uint32(Actor.MoneySoundRef));
-            WriteU32(Money.Material, uint32(Actor.MoneyMaterialId));
+            if (!KyaWriteMoneyActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
         }
         if (HasFog)
         {
-            for (int32 Item = 0; Item < Actor.FogHierarchies.Num(); ++Item)
-            {
-                const FKyaFogHierarchy& Hierarchy = Actor.FogHierarchies[Item];
-                const int64 H = Fog.Entries + int64(Item) * 16;
-                WriteU32(H, uint32(uint64(Hierarchy.Hash)));
-                WriteU32(H + 4, uint32(uint64(Hierarchy.Hash) >> 32));
-                WriteFloat(H + 8, Hierarchy.Field20);
-                WriteFloat(H + 12, Hierarchy.Field24);
-            }
+            if (!KyaWriteFogActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
         }
         if (HasShoot)
         {
-            WriteFloat(Shoot.WeightB, Actor.ShootWeightB);
-            WriteU32(Shoot.Autonomous, uint32(Actor.ShootLifeMax));
-            WriteFloat(Shoot.Autonomous + 4, Actor.ShootGravityScale);
-            WriteFloat(Shoot.Autonomous + 8, Actor.ShootDynamicExtField4);
-            WriteFloat(Shoot.Autonomous + 12, Actor.ShootDynamicExtField8);
-            WriteU32(Shoot.Field350, uint32(Actor.ShootField350));
-            WriteU32(Shoot.Field354, uint32(Actor.ShootField354));
-            WriteU32(Shoot.Texture, uint32(Actor.ShootTextureIndex));
-            WriteU32(Shoot.Mesh, uint32(Actor.ShootMeshIndex));
-            WriteFloat(Shoot.Floats3C0, Actor.ShootField3C0);
-            WriteFloat(Shoot.Floats3C0 + 4, Actor.ShootField3C4);
-            WriteFloat(Shoot.Floats3C0 + 8, Actor.ShootField3C8);
-            WriteFloat(Shoot.Floats3C0 + 12, Actor.ShootField3CC);
-            WriteU32(Shoot.Field3D0, uint32(Actor.ShootField3D0));
-            WriteFloat(Shoot.Floats3D4, Actor.ShootField3D4);
-            WriteFloat(Shoot.Floats3D4 + 4, Actor.ShootField3D8);
-            WriteFloat(Shoot.Floats3D4 + 8, Actor.ShootField3DC);
-            WriteFloat(Shoot.Floats3D4 + 12, Actor.ShootField3E0);
-            WriteU32(Shoot.Fields3E8, uint32(Actor.ShootField3E8));
-            WriteU32(Shoot.Fields3E8 + 4, uint32(Actor.ShootField3E4));
-            WriteU32(Shoot.Fields3E8 + 8, uint32(Actor.ShootField3EC));
-            WriteU32(Shoot.Fields3E8 + 12, uint32(Actor.ShootField3F0));
-            const FKyaAddOnGenerator& AddOn = Actor.ShootAddOn;
-            const int64 A = Shoot.AddOn;
-            WriteU32(A, uint32(AddOn.Field0)); WriteU32(A + 4, uint32(AddOn.MoneyType));
-            WriteU32(A + 8, uint32(AddOn.MoneyCount)); WriteU32(A + 12, uint32(AddOn.BonusCount));
-            WriteU32(A + 16, uint32(AddOn.FieldC)); WriteU32(Shoot.SubObjMode, uint32(AddOn.SubObjMode));
-            if (Shoot.SubObjFloats)
-            {
-                WriteFloat(Shoot.SubObjFloats, AddOn.SubObjField0);
-                WriteFloat(Shoot.SubObjFloats + 4, AddOn.SubObjField4);
-                WriteFloat(Shoot.SubObjFloats + 8, AddOn.SubObjFieldC);
-                WriteFloat(Shoot.SubObjFloats + 12, AddOn.SubObjField10);
-                WriteFloat(Shoot.SubObjFloats + 16, AddOn.SubObjField14);
-            }
+            if (!KyaWriteShootActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
         }
         if (HasAmbre)
         {
-            WriteU32(Ambre.Material, uint32(Actor.AmbreMaterialId));
-            WriteU32(Ambre.EffectType, uint32(Actor.AmbreEffectType));
-            WriteU32(Ambre.Texture, uint32(Actor.AmbreTextureIndex));
-            WriteU32(Ambre.Mesh, uint32(Actor.AmbreMeshIndex));
-            WriteU32(Ambre.Field1D0, uint32(Actor.AmbreField1D0));
-            for (int32 Item = 0; Item < Actor.AmbreSwitch.Targets.Num(); ++Item)
-            {
-                const FKyaSwitchTarget& Target = Actor.AmbreSwitch.Targets[Item];
-                const int64 T = Ambre.Switch.Targets + int64(Item) * 28;
-                WriteU32(T, uint32(Target.TargetRef)); WriteU32(T + 4, uint32(Target.CutsceneId));
-                WriteU32(T + 8, uint32(Target.Flags)); WriteU32(T + 12, uint32(Target.MessageId));
-                WriteU32(T + 16, uint32(Target.MessageFlags)); WriteU32(T + 20, uint32(Target.Field14));
-                WriteU32(T + 24, uint32(Target.Field18));
-            }
-            {
-                const FKyaStreamEventCamera& Camera = Actor.AmbreSwitch.Camera;
-                const int64 C = Ambre.Switch.Camera;
-                WriteU32(C, uint32(Camera.CameraIndex)); WriteU32(C + 4, uint32(Camera.Flags));
-                WriteFloat(C + 8, Camera.Field8); WriteFloat(C + 12, Camera.FieldC); WriteFloat(C + 16, Camera.Field10);
-                WriteU32(C + 20, uint32(Camera.ActorRef)); WriteU32(C + 24, uint32(Camera.ZoneRef));
-                WriteFloat(C + 28, Camera.Field1C);
-            }
+            if (!KyaWriteAmbreActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
         }
         if (HasStiller)
         {
-            WriteFloat(Stiller.Vision, Actor.StillerVisionRange);
-            WriteFloat(Stiller.Vision + 4, Actor.StillerVisionHalfAngle);
-            WriteFloat(Stiller.Vision + 8, Actor.StillerVisionField38);
-            WriteFloat(Stiller.Vision + 12, Actor.StillerVisionField3C);
-            WriteU32(Stiller.Vision + 16, uint32(Actor.StillerVisionFlags));
-            WriteU32(Stiller.Field1D0, uint32(Actor.StillerField1D0));
-            WriteU32(Stiller.Field1D0 + 4, uint32(Actor.StillerField1D4));
-            WriteU32(Stiller.Field1D0 + 8, uint32(Actor.StillerField1D8));
-            WriteU32(Stiller.Field1D0 + 12, uint32(Actor.StillerField1DC));
-            WriteU32(Stiller.Path, uint32(Actor.StillerPathIndex));
-            WriteFloat(Stiller.Field1E0, Actor.StillerField1E0);
-            WriteFloat(Stiller.LifeMax, Actor.StillerLifeMax);
-            WriteFloat(Stiller.Floats1EC, Actor.StillerField1EC);
-            WriteFloat(Stiller.Floats1EC + 4, Actor.StillerField1F0);
-            WriteFloat(Stiller.Floats1EC + 8, Actor.StillerField1F4);
-            WriteU32(Stiller.Field1F8, uint32(Actor.StillerField1F8));
-            for (int32 Item = 0; Item < Actor.StillerActorRefs.Num(); ++Item)
-                WriteU32(Stiller.ActorEntries + Item * 4, uint32(Actor.StillerActorRefs[Item]));
-            WriteU32(Stiller.Field200, uint32(Actor.StillerField200));
-            const FKyaSwitch* Switches[] = { &Actor.StillerSwitch208, &Actor.StillerSwitch210 };
-            for (int32 SwitchIndex = 0; SwitchIndex < 2; ++SwitchIndex)
-            {
-                const FKyaSwitch& Switch = *Switches[SwitchIndex];
-                const FKyaWindSwitchOffsets& SwitchOffsets = Stiller.Switches[SwitchIndex];
-                for (int32 Item = 0; Item < Switch.Targets.Num(); ++Item)
-                {
-                    const FKyaSwitchTarget& Target = Switch.Targets[Item];
-                    const int64 T = SwitchOffsets.Targets + int64(Item) * 28;
-                    WriteU32(T, uint32(Target.TargetRef)); WriteU32(T + 4, uint32(Target.CutsceneId));
-                    WriteU32(T + 8, uint32(Target.Flags)); WriteU32(T + 12, uint32(Target.MessageId));
-                    WriteU32(T + 16, uint32(Target.MessageFlags)); WriteU32(T + 20, uint32(Target.Field14));
-                    WriteU32(T + 24, uint32(Target.Field18));
-                }
-                const FKyaStreamEventCamera& Camera = Switch.Camera;
-                const int64 C = SwitchOffsets.Camera;
-                WriteU32(C, uint32(Camera.CameraIndex)); WriteU32(C + 4, uint32(Camera.Flags));
-                WriteFloat(C + 8, Camera.Field8); WriteFloat(C + 12, Camera.FieldC); WriteFloat(C + 16, Camera.Field10);
-                WriteU32(C + 20, uint32(Camera.ActorRef)); WriteU32(C + 24, uint32(Camera.ZoneRef));
-                WriteFloat(C + 28, Camera.Field1C);
-            }
-            WriteU32(Stiller.Field214, uint32(Actor.StillerField214));
-            const FKyaAddOnGenerator& AddOn = Actor.StillerAddOn;
-            const int64 A = Stiller.AddOn;
-            WriteU32(A, uint32(AddOn.Field0)); WriteU32(A + 4, uint32(AddOn.MoneyType));
-            WriteU32(A + 8, uint32(AddOn.MoneyCount)); WriteU32(A + 12, uint32(AddOn.BonusCount));
-            WriteU32(A + 16, uint32(AddOn.FieldC)); WriteU32(Stiller.SubObjMode, uint32(AddOn.SubObjMode));
-            if (Stiller.SubObjFloats)
-            {
-                WriteFloat(Stiller.SubObjFloats, AddOn.SubObjField0);
-                WriteFloat(Stiller.SubObjFloats + 4, AddOn.SubObjField4);
-                WriteFloat(Stiller.SubObjFloats + 8, AddOn.SubObjFieldC);
-                WriteFloat(Stiller.SubObjFloats + 12, AddOn.SubObjField10);
-                WriteFloat(Stiller.SubObjFloats + 16, AddOn.SubObjField14);
-            }
+            if (!KyaWriteStillerActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
         }
-        if (HasRune)
+        if (Actor.ClassId == 0x48 && Actor.bHasHunterData)
         {
-            WriteU32(Rune.Cinematic, uint32(Actor.RuneCinematicId));
-            WriteFloat(Rune.TriggerDistance, Actor.RuneTriggerDistance);
-            WriteU32(Rune.ScenVar, uint32(Actor.RuneScenVarId));
-            WriteU32(Rune.Fx, uint32(Actor.RuneFxId));
-            WriteU32(Rune.MaterialA, uint32(Actor.RuneMaterialIdA));
-            WriteU32(Rune.MaterialB, uint32(Actor.RuneMaterialIdB));
+            if (!KyaWriteHunterActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
         }
-        if (HasFountain)
+        if (Actor.ClassId == 0x2b && Actor.bHasHelperSignData)
         {
-            const FKyaAddOnGenerator& AddOn = Actor.BonusFountainAddOn;
-            const int64 A = Fountain.AddOn;
-            WriteU32(A, uint32(AddOn.Field0)); WriteU32(A + 4, uint32(AddOn.MoneyType));
-            WriteU32(A + 8, uint32(AddOn.MoneyCount)); WriteU32(A + 12, uint32(AddOn.BonusCount));
-            WriteU32(A + 16, uint32(AddOn.FieldC)); WriteU32(Fountain.SubObjMode, uint32(AddOn.SubObjMode));
-            if (Fountain.SubObjFloats)
-            {
-                WriteFloat(Fountain.SubObjFloats, AddOn.SubObjField0);
-                WriteFloat(Fountain.SubObjFloats + 4, AddOn.SubObjField4);
-                WriteFloat(Fountain.SubObjFloats + 8, AddOn.SubObjFieldC);
-                WriteFloat(Fountain.SubObjFloats + 12, AddOn.SubObjField10);
-                WriteFloat(Fountain.SubObjFloats + 16, AddOn.SubObjField14);
-            }
+            if (!KyaWriteHelperSignActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
+        }
+        if (Actor.ClassId == 0x27 && Actor.bHasWoodMonsterData)
+        {
+            if (!KyaWriteWoodMonsterActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
+        }
+        if (Actor.ClassId == 0x50 && Actor.bHasShockerCmdData)
+        {
+            if (!KyaWriteShockerCmdActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
+        }
+        if (Actor.ClassId == 0x3a && Actor.bHasAcceleratosData)
+        {
+            if (!KyaWriteAcceleratosActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
+        }
+        if (Actor.ClassId == 0x49 && Actor.bHasAddOnPurchaseData)
+        {
+            if (!KyaWriteAddOnPurchaseActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
+        }
+        if (Actor.ClassId == 0x31 && Actor.bHasAmortosCmdData)
+        {
+            if (!KyaWriteAmortosCmdActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
+        }
+        if (Actor.ClassId == 0x40 && Actor.bHasPatternCmdData)
+        {
+            if (!KyaWritePatternCmdActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
+        }
+        if (Actor.ClassId == 0x2f && Actor.bHasEggData)
+        {
+            if (!KyaWriteEggActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
+        }
+        if (Actor.ClassId == 0x37 && Actor.bHasCareBoyData)
+        {
+            if (!KyaWriteCareBoyActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
+        }
+        if (Actor.ClassId == 0x0b && Actor.bHasElectrollaData)
+        {
+            if (!KyaWriteElectrollaActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
+        }
+        if (Actor.ClassId == 0x53 && Actor.bHasBombLauncherData)
+        {
+            if (!KyaWriteBombLauncherActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
+        }
+        if (Actor.ClassId == 0x4d && Actor.bHasBlazerData)
+        {
+            if (!KyaWriteBlazerActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
+        }
+        if (Actor.ClassId == 0x2a && Actor.bHasWoofData)
+        {
+            if (!KyaWriteWoofActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
+        }
+        if (Actor.bHasMiniGamesManagerData || Actor.bHasMiniGamesOrganizerData)
+        {
+            if (!KyaWriteMiniGamesSupportActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
+        }
+        if (Actor.bHasCreditsData)
+        {
+            if (!KyaWriteCreditsActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
+        }
+        if (Actor.bHasWantedZooData)
+        {
+            if (!KyaWriteWantedZooActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
+        }
+        if (Actor.bHasJamGutData)
+        {
+            if (!KyaWriteJamGutActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
         }
         if (HasRope)
         {
-            WriteU32(Rope.Path, uint32(Actor.RopePathIndex));
-            WriteFloat(Rope.Scale, Actor.RopeScale);
-            WriteFloat(Rope.Field17C, Actor.RopeField17C);
-            WriteU32(Rope.Material, uint32(Actor.RopeMaterialId));
-            WriteU32(Rope.Color, uint32(Actor.RopeColor));
-            WriteU32(Rope.Sound, uint32(Actor.RopeSoundRef));
-            WriteU32(Rope.Field194, uint32(Actor.RopeField194));
-            WriteU32(Rope.ActorA, uint32(Actor.RopeActorRefA));
-            WriteU32(Rope.ActorB, uint32(Actor.RopeActorRefB));
-            for (int32 Item = 0; Item < Actor.RopeSwitch.Targets.Num(); ++Item)
-            {
-                const FKyaSwitchTarget& Target = Actor.RopeSwitch.Targets[Item];
-                const int64 T = Rope.Switch.Targets + int64(Item) * 28;
-                WriteU32(T, uint32(Target.TargetRef)); WriteU32(T + 4, uint32(Target.CutsceneId));
-                WriteU32(T + 8, uint32(Target.Flags)); WriteU32(T + 12, uint32(Target.MessageId));
-                WriteU32(T + 16, uint32(Target.MessageFlags)); WriteU32(T + 20, uint32(Target.Field14));
-                WriteU32(T + 24, uint32(Target.Field18));
-            }
-            {
-                const FKyaStreamEventCamera& Camera = Actor.RopeSwitch.Camera;
-                const int64 C = Rope.Switch.Camera;
-                WriteU32(C, uint32(Camera.CameraIndex)); WriteU32(C + 4, uint32(Camera.Flags));
-                WriteFloat(C + 8, Camera.Field8); WriteFloat(C + 12, Camera.FieldC); WriteFloat(C + 16, Camera.Field10);
-                WriteU32(C + 20, uint32(Camera.ActorRef)); WriteU32(C + 24, uint32(Camera.ZoneRef));
-                WriteFloat(C + 28, Camera.Field1C);
-            }
-            WriteU32(Rope.Flags, uint32(Actor.RopeFlags));
+            if (!KyaWriteRopeActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
+        }
+        if (HasFountain)
+        {
+            if (!KyaWriteFountainActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
+        }
+        if (HasRune)
+        {
+            if (!KyaWriteRuneActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
         }
         if (HasGravity)
         {
-            WriteFloat(Gravity.WeightB, Actor.GravityWeightB);
-            WriteU32(Gravity.Autonomous, uint32(Actor.GravityLifeMax));
-            WriteFloat(Gravity.Autonomous + 4, Actor.GravityScale);
-            WriteFloat(Gravity.Autonomous + 8, Actor.GravityDynamicExtField4);
-            WriteFloat(Gravity.Autonomous + 12, Actor.GravityDynamicExtField8);
+            if (!KyaWriteGravityActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
         }
         if (HasNativCmd)
         {
-            for (int32 Item = 0; Item < Actor.NativCmdActorRefs.Num(); ++Item)
-                WriteU32(Command.ActorEntries + Item * 4, uint32(Actor.NativCmdActorRefs[Item]));
-            WriteU32(Command.Field164, uint32(Actor.NativCmdField164));
-            int32 SubObjIndex = 0;
-            for (int32 AddOnIndex = 0; AddOnIndex < Actor.NativCmdAddOns.Num(); ++AddOnIndex)
-            {
-                const FKyaNativCmdAddOn& AddOn = Actor.NativCmdAddOns[AddOnIndex];
-                for (int32 Sub = 0; Sub < AddOn.SubObjs.Num(); ++Sub)
-                {
-                    const FKyaAddOnSubObj& Item = AddOn.SubObjs[Sub];
-                    const int64 SubOffset = Command.SubObjOffsets[SubObjIndex++];
-                    WriteU32(SubOffset, uint32(Item.Field0));
-                    for (int32 Cine = 0; Cine < Item.CinematicIds.Num(); ++Cine)
-                        WriteU32(SubOffset + 8 + Cine * 4, uint32(Item.CinematicIds[Cine]));
-                }
-            }
+            if (!KyaWriteNativCmdActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
         }
         if (HasBridge)
         {
-            for (int32 Item = 0; Item < Actor.BridgeActorRefs.Num(); ++Item)
-                WriteU32(Bridge.ActorEntries + Item * 4, uint32(Actor.BridgeActorRefs[Item]));
-            WriteU32(Bridge.WaypointA, uint32(Actor.BridgeWaypointA));
-            WriteU32(Bridge.WaypointB, uint32(Actor.BridgeWaypointB));
-            WriteFloat(Bridge.Floats330, Actor.BridgeField330);
-            WriteFloat(Bridge.Floats330 + 4, Actor.BridgeField334);
-            WriteFloat(Bridge.Floats330 + 8, Actor.BridgeField33C);
-            WriteFloat(Bridge.Floats330 + 12, Actor.BridgeField340);
-            WriteFloat(Bridge.Floats330 + 16, Actor.BridgeField338);
-            WriteU32(Bridge.Field344, uint32(Actor.BridgeField344));
-            WriteU32(Bridge.ConfigFlags, uint32(Actor.BridgeConfigFlags));
-            WriteU32(Bridge.Field348, uint32(Actor.BridgeField348));
-            WriteFloat(Bridge.StepCollisionScale, Actor.BridgeStepCollisionScale);
+            if (!KyaWriteBridgeActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
         }
         if (HasCompanion)
         {
-            WriteFloat(Companion.WeightB, Actor.CompanionWeightB);
-            WriteU32(Companion.Autonomous, uint32(Actor.CompanionLifeMax));
-            WriteFloat(Companion.Autonomous + 4, Actor.CompanionGravityScale);
-            WriteFloat(Companion.Autonomous + 8, Actor.CompanionDynamicExtField4);
-            WriteFloat(Companion.Autonomous + 12, Actor.CompanionDynamicExtField8);
-            WriteU32(Companion.Field358, uint32(Actor.CompanionField358));
-            WriteU32(Companion.Field358 + 4, uint32(Actor.CompanionMaterial35C));
-            WriteU32(Companion.Field358 + 8, uint32(Actor.CompanionField360));
+            if (!KyaWriteCompanionActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
         }
         if (HasAton)
         {
-            WriteFloat(Aton.WeightB, Actor.AtonWeightB);
-            WriteU32(Aton.Autonomous, uint32(Actor.AtonLifeMax));
-            WriteFloat(Aton.Autonomous + 4, Actor.AtonGravityScale);
-            WriteFloat(Aton.Autonomous + 8, Actor.AtonDynamicExtField4);
-            WriteFloat(Aton.Autonomous + 12, Actor.AtonDynamicExtField8);
-            WriteU32(Aton.Fields354, uint32(Actor.AtonField354));
-            WriteU32(Aton.Fields354 + 4, uint32(Actor.AtonField358));
-            WriteU32(Aton.Fields354 + 8, uint32(Actor.AtonField35C));
-            WriteU32(Aton.Fields354 + 12, uint32(Actor.AtonField360));
-            WriteU32(Aton.EffectType, uint32(Actor.AtonEffectType));
-            WriteU32(Aton.Texture, uint32(Actor.AtonTextureIndex));
-            WriteU32(Aton.Mesh, uint32(Actor.AtonMeshIndex));
-            WriteU32(Aton.Trail, uint32(Actor.AtonTrailMaterialId));
-            WriteFloat(Aton.PathDelay, Actor.AtonPathDefaultDelay);
-            for (int32 Item = 0; Item < Actor.AtonPathIndices.Num(); ++Item)
-                WriteU32(Aton.PathEntries + Item * 4, uint32(Actor.AtonPathIndices[Item]));
-            WriteU32(Aton.AddOnField18, uint32(Actor.AtonAddOnField18));
-            for (int32 SubIndex = 0; SubIndex < Actor.AtonOtherSubObjs.Num(); ++SubIndex)
-            {
-                const FKyaAddOnSubObj& Item = Actor.AtonOtherSubObjs[SubIndex];
-                const int64 Offset = Aton.OtherOffsets[SubIndex];
-                WriteU32(Offset, uint32(Item.Field0));
-                for (int32 Cine = 0; Cine < Item.CinematicIds.Num(); ++Cine)
-                    WriteU32(Offset + 8 + Cine * 4, uint32(Item.CinematicIds[Cine]));
-            }
-            for (int32 SubIndex = 0; SubIndex < Actor.AtonSubObjs.Num(); ++SubIndex)
-            {
-                const FKyaAtonSubObj& Item = Actor.AtonSubObjs[SubIndex];
-                const int64 Offset = Aton.AtonOffsets[Index];
-                WriteU32(Offset, uint32(Item.Field18));
-                WriteU32(Offset + 4, uint32(Item.Field0));
-                for (int32 Cine = 0; Cine < Item.CinematicIds.Num(); ++Cine)
-                    WriteU32(Offset + 12 + Cine * 4, uint32(Item.CinematicIds[Cine]));
-            }
-            WriteFloat(Aton.AddOnField24, Actor.AtonAddOnField24);
+            if (!KyaWriteAtonActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
         }
         if (HasBoomy)
         {
-            WriteFloat(Boomy.Weight, Actor.BoomyWeight);
-            WriteFloat(Boomy.Vision, Actor.BoomyVisionRange);
-            WriteFloat(Boomy.Vision + 4, Actor.BoomyVisionAngle);
-            WriteFloat(Boomy.Vision + 8, Actor.BoomyVisionField38);
-            WriteFloat(Boomy.Vision + 12, Actor.BoomyVisionField3C);
-            WriteU32(Boomy.Vision + 16, uint32(Actor.BoomyVisionFlags));
-            WriteU32(Boomy.Sound2B8, uint32(Actor.BoomySound2B8));
-            WriteU32(Boomy.Sound2BC, uint32(Actor.BoomySound2BC));
-            WriteFloat(Boomy.Field744, Actor.BoomyField744);
-            WriteU32(Boomy.TailWidthAxis, uint32(Actor.BoomyTailWidthAxis));
-            WriteFloat(Boomy.Field740, Actor.BoomyField740);
-            WriteU32(Boomy.TailSegments, uint32(Actor.BoomyTailSegments));
-            WriteU32(Boomy.Particle3D0, uint32(Actor.BoomyParticle3D0));
-            WriteU32(Boomy.Particle3D4, uint32(Actor.BoomyParticle3D4));
-            WriteU32(Boomy.Particle3DC, uint32(Actor.BoomyParticle3DC));
-            WriteU32(Boomy.Field3CC, uint32(Actor.BoomyField3CC));
-            WriteU32(Boomy.Texture, uint32(Actor.BoomyTextureIndex));
-            WriteU32(Boomy.Mesh, uint32(Actor.BoomyMeshIndex));
-            const FKyaActorCamera& Camera = Actor.BoomyCamera;
-            WriteFloat(Boomy.CameraFov, Camera.Fov);
-            for (int32 Axis = 0; Axis < 3; ++Axis) WriteFloat(Boomy.CameraPosition + Axis * 4, float(Camera.Position[Axis]));
-            for (int32 Axis = 0; Axis < 3; ++Axis) WriteFloat(Boomy.CameraLookAt + Axis * 4, float(Camera.LookAt[Axis]));
-            for (int32 Axis = 0; Axis < 3; ++Axis) WriteFloat(Boomy.CameraUp + Axis * 4, float(Camera.Up[Axis]));
-            WriteU32(Boomy.CameraSector, uint32(Camera.SectorId));
-            WriteU32(Boomy.CameraField08, uint32(Camera.Field08));
-            WriteU32(Boomy.CameraFlags, uint32(Camera.Flags));
-            for (int32 Axis = 0; Axis < 3; ++Axis) WriteFloat(Boomy.CameraTargetOffset + Axis * 4, float(Camera.TargetOffset[Axis]));
-            if (Boomy.bHasSwitch)
-            {
-                WriteU32(Boomy.SwitchActor, uint32(Camera.SwitchActor));
-                for (int32 SubIndex = 0; SubIndex < Camera.SwitchActorsA.Num(); ++SubIndex)
-                    WriteU32(Boomy.SwitchListA + SubIndex * 4, uint32(Camera.SwitchActorsA[SubIndex]));
-                for (int32 SubIndex = 0; SubIndex < Camera.SwitchActorsB.Num(); ++SubIndex)
-                    WriteU32(Boomy.SwitchListB + SubIndex * 4, uint32(Camera.SwitchActorsB[SubIndex]));
-                WriteFloat(Boomy.SwitchValues, Camera.SwitchValueA);
-                WriteU32(Boomy.SwitchValues + 4, uint32(Camera.SwitchModeA));
-                WriteFloat(Boomy.SwitchValues + 8, Camera.SwitchValueB);
-                WriteU32(Boomy.SwitchValues + 12, uint32(Camera.SwitchModeB));
-                WriteFloat(Boomy.SwitchValues + 16, Camera.SwitchValueC);
-            }
-            for (int32 ConditionIndex = 0; ConditionIndex < Camera.Conditions.Num(); ++ConditionIndex)
-            {
-                const FKyaCameraCondition& Condition = Camera.Conditions[ConditionIndex];
-                const int64 C = Boomy.Conditions + 4 + int64(ConditionIndex) * 16;
-                WriteU32(C, uint32(Condition.Combiner));
-                WriteU32(C + 4, uint32(Condition.ActorRef));
-                WriteU32(C + 8, uint32(Condition.Type));
-                WriteFloat(C + 12, Condition.Value);
-            }
-            WriteU32(Boomy.Config, uint32(Camera.ConfigFlags));
-            WriteU32(Boomy.Config + 4, uint32(Camera.ConfigActorRefA));
-            WriteU32(Boomy.Config + 8, uint32(Camera.ConfigActorRefB));
-            WriteFloat(Boomy.Config + 12, Camera.ConfigAngle);
-            for (int32 ValueIndex = 0; ValueIndex < Camera.ConfigOptionalValues.Num(); ++ValueIndex)
-                WriteFloat(Boomy.ConfigOptional + ValueIndex * 4, Camera.ConfigOptionalValues[ValueIndex]);
-            for (int32 Axis = 0; Axis < 3; ++Axis) WriteFloat(Boomy.ConfigAngles + Axis * 4, float(Camera.PitchAngles[Axis]));
-            for (int32 Axis = 0; Axis < 3; ++Axis) WriteFloat(Boomy.ConfigAngles + 12 + Axis * 4, float(Camera.OtherAngles[Axis]));
-            for (int32 Axis = 0; Axis < 3; ++Axis) WriteFloat(Boomy.ConfigAngles + 24 + Axis * 4, float(Camera.Distances[Axis]));
-            for (int32 ExtraIndex = 0; ExtraIndex < Camera.ExtraValues.Num(); ++ExtraIndex)
-                WriteFloat(Boomy.Extra + 4 + ExtraIndex * 4, Camera.ExtraValues[ExtraIndex]);
-            for (int32 TypeIndex = 0; TypeIndex < Actor.BoomyTypes.Num(); ++TypeIndex)
-            {
-                const FKyaBoomyType& Type = Actor.BoomyTypes[TypeIndex];
-                const int64 T = Boomy.TypeEntries + int64(TypeIndex) * 16;
-                WriteFloat(T, Type.Field4);
-                WriteFloat(T + 4, Type.VisionRange);
-                WriteU32(T + 8, uint32(Type.HitDamage));
-                WriteU32(T + 12, uint32(Type.FxColorA));
-            }
+            if (!KyaWriteBoomyActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
         }
         if (HasKim)
         {
             if (!WriteFighterPrefix(Actor, Kim.Fighter)) return false;
-            for (int32 KimIndex = 0; KimIndex < Actor.KimBoneKeys.Num(); ++KimIndex)
-                WriteU32(Kim.Bones + KimIndex * 4, uint32(Actor.KimBoneKeys[KimIndex]));
-            for (int32 KimIndex = 0; KimIndex < Actor.KimClimbZones.Num(); ++KimIndex)
-                WriteU32(Kim.ClimbEntries + KimIndex * 4, uint32(Actor.KimClimbZones[KimIndex]));
-            for (int32 KimIndex = 0; KimIndex < Actor.KimTutorialZones.Num(); ++KimIndex)
-            {
-                const FKyaHeroTutorialZone& Zone = Actor.KimTutorialZones[KimIndex];
-                const int64 H = Kim.Tutorials[KimIndex].Header;
-                WriteU32(H, uint32(Zone.ZoneRef));
-                WriteU32(H + 4, uint32(uint64(Zone.MessageKey)));
-                WriteU32(H + 8, uint32(uint64(Zone.MessageKey) >> 32));
-                WriteU32(H + 12, uint32(Zone.Flags));
-                WriteU32(H + 16, uint32(Zone.Action));
-                WriteFloat(H + 20, Zone.Duration);
-                for (int32 Target = 0; Target < Zone.Targets.Num(); ++Target)
-                {
-                    const FKyaSwitchTarget& Item = Zone.Targets[Target];
-                    const int64 S = Kim.Tutorials[KimIndex].Targets + int64(Target) * 28;
-                    WriteU32(S, uint32(Item.TargetRef)); WriteU32(S + 4, uint32(Item.CutsceneId));
-                    WriteU32(S + 8, uint32(Item.Flags)); WriteU32(S + 12, uint32(Item.MessageId));
-                    WriteU32(S + 16, uint32(Item.MessageFlags)); WriteU32(S + 20, uint32(Item.Field14));
-                    WriteU32(S + 24, uint32(Item.Field18));
-                }
-                const int64 C = Kim.Tutorials[KimIndex].Camera;
-                WriteU32(C, uint32(Zone.Camera.CameraIndex)); WriteU32(C + 4, uint32(Zone.Camera.Flags));
-                WriteFloat(C + 8, Zone.Camera.Field8); WriteFloat(C + 12, Zone.Camera.FieldC);
-                WriteFloat(C + 16, Zone.Camera.Field10); WriteU32(C + 20, uint32(Zone.Camera.ActorRef));
-                WriteU32(C + 24, uint32(Zone.Camera.ZoneRef)); WriteFloat(C + 28, Zone.Camera.Field1C);
-            }
-            for (int32 KimIndex = 0; KimIndex < Actor.KimProjectileZones.Num(); ++KimIndex)
-            {
-                const FKyaHeroProjectileZone& Zone = Actor.KimProjectileZones[KimIndex];
-                const int64 P = Kim.ProjectileEntries + int64(KimIndex) * 28;
-                WriteU32(P, uint32(Zone.ZoneRef));
-                WriteU32(P + 4, uint32(Zone.ProjectileType));
-                WriteFloat(P + 8, Zone.Damage);
-                WriteU32(P + 12, uint32(Zone.WaypointIndex));
-                WriteFloat(P + 16, Zone.Force);
-                WriteU32(P + 20, uint32(Zone.SampleCount));
-                WriteU32(P + 24, uint32(Zone.SectorId));
-            }
-            for (int32 KimIndex = 0; KimIndex < Actor.KimBoomyZonePairs.Num(); ++KimIndex)
-            {
-                WriteU32(Kim.PairEntries + KimIndex * 8, uint32(Actor.KimBoomyZonePairs[KimIndex].ZoneRef));
-                WriteU32(Kim.PairEntries + KimIndex * 8 + 4, uint32(Actor.KimBoomyZonePairs[KimIndex].Field4));
-            }
-            for (int32 KimIndex = 0; KimIndex < Actor.KimZoneStream.Num(); ++KimIndex)
-                WriteU32(Kim.ZoneStreamEntries + KimIndex * 4, uint32(Actor.KimZoneStream[KimIndex]));
-            WriteU32(Kim.Material, uint32(Actor.KimMaterialId));
-            WriteU32(Kim.FxType, uint32(Actor.KimFxType));
-            WriteFloat(Kim.JokeRadius, Actor.KimJokeWarnRadius);
-            for (int32 KimIndex = 0; KimIndex < Actor.KimCameras.Num(); ++KimIndex)
-            {
-                const FKyaActorCamera& Camera = Actor.KimCameras[KimIndex];
-                const FKyaActorCameraOffsets& O = Kim.Cameras[KimIndex];
-                WriteFloat(O.Fov, Camera.Fov);
-                for (int32 Axis = 0; Axis < 3; ++Axis) WriteFloat(O.Position + Axis * 4, float(Camera.Position[Axis]));
-                for (int32 Axis = 0; Axis < 3; ++Axis) WriteFloat(O.LookAt + Axis * 4, float(Camera.LookAt[Axis]));
-                for (int32 Axis = 0; Axis < 3; ++Axis) WriteFloat(O.Up + Axis * 4, float(Camera.Up[Axis]));
-                WriteU32(O.Sector, uint32(Camera.SectorId));
-                WriteU32(O.Field08, uint32(Camera.Field08));
-                WriteU32(O.Flags, uint32(Camera.Flags));
-                for (int32 Axis = 0; Axis < 3; ++Axis) WriteFloat(O.TargetOffset + Axis * 4, float(Camera.TargetOffset[Axis]));
-                if (O.bHasSwitch)
-                {
-                    WriteU32(O.SwitchActor, uint32(Camera.SwitchActor));
-                    for (int32 Item = 0; Item < Camera.SwitchActorsA.Num(); ++Item)
-                        WriteU32(O.SwitchListA + Item * 4, uint32(Camera.SwitchActorsA[Item]));
-                    for (int32 Item = 0; Item < Camera.SwitchActorsB.Num(); ++Item)
-                        WriteU32(O.SwitchListB + Item * 4, uint32(Camera.SwitchActorsB[Item]));
-                    WriteFloat(O.SwitchValues, Camera.SwitchValueA);
-                    WriteU32(O.SwitchValues + 4, uint32(Camera.SwitchModeA));
-                    WriteFloat(O.SwitchValues + 8, Camera.SwitchValueB);
-                    WriteU32(O.SwitchValues + 12, uint32(Camera.SwitchModeB));
-                    WriteFloat(O.SwitchValues + 16, Camera.SwitchValueC);
-                }
-                for (int32 Item = 0; Item < Camera.Conditions.Num(); ++Item)
-                {
-                    const FKyaCameraCondition& Condition = Camera.Conditions[Item];
-                    const int64 C = O.Conditions + 4 + int64(Item) * 16;
-                    WriteU32(C, uint32(Condition.Combiner));
-                    WriteU32(C + 4, uint32(Condition.ActorRef));
-                    WriteU32(C + 8, uint32(Condition.Type));
-                    WriteFloat(C + 12, Condition.Value);
-                }
-                WriteU32(O.Config, uint32(Camera.ConfigFlags));
-                WriteU32(O.Config + 4, uint32(Camera.ConfigActorRefA));
-                WriteU32(O.Config + 8, uint32(Camera.ConfigActorRefB));
-                WriteFloat(O.Config + 12, Camera.ConfigAngle);
-                for (int32 Item = 0; Item < Camera.ConfigOptionalValues.Num(); ++Item)
-                    WriteFloat(O.ConfigOptional + Item * 4, Camera.ConfigOptionalValues[Item]);
-                for (int32 Axis = 0; Axis < 3; ++Axis) WriteFloat(O.ConfigAngles + Axis * 4, float(Camera.PitchAngles[Axis]));
-                for (int32 Axis = 0; Axis < 3; ++Axis) WriteFloat(O.ConfigAngles + 12 + Axis * 4, float(Camera.OtherAngles[Axis]));
-                for (int32 Axis = 0; Axis < 3; ++Axis) WriteFloat(O.ConfigAngles + 24 + Axis * 4, float(Camera.Distances[Axis]));
-                for (int32 Item = 0; Item < Camera.ExtraValues.Num(); ++Item)
-                    WriteFloat(O.Extra + 4 + Item * 4, Camera.ExtraValues[Item]);
-            }
-            WriteU32(Kim.Field15D4, uint32(Actor.KimField15D4));
-            WriteU32(Kim.FxInit, uint32(Actor.KimFxInitType));
-            for (int32 KimIndex = 0; KimIndex < Actor.KimFxHandleTypes.Num(); ++KimIndex)
-                WriteU32(Kim.FxHandles + KimIndex * 4, uint32(Actor.KimFxHandleTypes[KimIndex]));
+            if (!KyaWriteKimActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
         }
         if (HasCommander)
         {
-            WriteU32(Commander.Headers, uint32(Actor.CommanderDetectAreaZoneId));
-            WriteU32(Commander.Headers + 4, uint32(Actor.CommanderGuardAreaZoneId));
-            WriteU32(Commander.Headers + 8, uint32(Actor.CommanderField180));
-            WriteU32(Commander.Headers + 12, uint32(Actor.CommanderNewPathFindingId));
-            WriteU32(Commander.Headers + 16, uint32(Actor.CommanderActorRef));
-            WriteFloat(Commander.Squad, Actor.CommanderSquadValue);
-            WriteU32(Commander.Squad + 4, uint32(Actor.CommanderSquadField4));
-            WriteU32(Commander.Squad + 8, uint32(Actor.CommanderSquadField8));
-            for (int32 Item = 0; Item < Actor.CommanderTeamEnemies.Num(); ++Item)
-                WriteU32(Commander.Teams + Item * 4, uint32(Actor.CommanderTeamEnemies[Item]));
-            for (int32 Item = 0; Item < Actor.CommanderSequence.Num(); ++Item)
-            {
-                WriteU32(Commander.Components + Item * 8, uint32(Actor.CommanderSequence[Item].Field0));
-                WriteU32(Commander.Components + Item * 8 + 4, uint32(Actor.CommanderSequence[Item].Field8));
-            }
-            for (int32 Item = 0; Item < Actor.CommanderCameraValues.Num(); ++Item)
-                WriteFloat(Commander.Camera + Item * 4, Actor.CommanderCameraValues[Item]);
+            if (!KyaWriteCommanderActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
         }
         if (HasFruit)
         {
-            WriteFloat(Fruit.WeightB, Actor.FruitWeightB);
-            WriteU32(Fruit.Autonomous, uint32(Actor.FruitLifeMax));
-            WriteFloat(Fruit.Autonomous + 4, Actor.FruitGravityScale);
-            WriteFloat(Fruit.Autonomous + 8, Actor.FruitDynamicExtField4);
-            WriteFloat(Fruit.Autonomous + 12, Actor.FruitDynamicExtField8);
-            WriteU32(Fruit.Field360, uint32(Actor.FruitField360));
-            FKyaSwitchOffsets Switch;
-            if (KyaReadSwitchOffsets(MakeArrayView(Bank->BankBytes.GetData(), int32(SceneEnd)), Fruit.Switch, Offsets.ClassDataSize - 24, Switch))
-            {
-                for (int32 Item = 0; Item < Actor.FruitSwitch.Targets.Num(); ++Item)
-                {
-                    const FKyaSwitchTarget& Target = Actor.FruitSwitch.Targets[Item];
-                    const int64 T = Switch.Targets + int64(Item) * 28;
-                    WriteU32(T, uint32(Target.TargetRef)); WriteU32(T + 4, uint32(Target.CutsceneId));
-                    WriteU32(T + 8, uint32(Target.Flags)); WriteU32(T + 12, uint32(Target.MessageId));
-                    WriteU32(T + 16, uint32(Target.MessageFlags)); WriteU32(T + 20, uint32(Target.Field14));
-                    WriteU32(T + 24, uint32(Target.Field18));
-                }
-                const FKyaStreamEventCamera& Camera = Actor.FruitSwitch.Camera;
-                const int64 C = Switch.Camera;
-                WriteU32(C, uint32(Camera.CameraIndex)); WriteU32(C + 4, uint32(Camera.Flags));
-                WriteFloat(C + 8, Camera.Field8); WriteFloat(C + 12, Camera.FieldC); WriteFloat(C + 16, Camera.Field10);
-                WriteU32(C + 20, uint32(Camera.ActorRef)); WriteU32(C + 24, uint32(Camera.ZoneRef));
-                WriteFloat(C + 28, Camera.Field1C);
-            }
+            if (!KyaWriteFruitActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
         }
         if (HasMicken)
         {
-            WriteFloat(Micken.WeightB, Actor.MickenWeightB);
-            WriteU32(Micken.Autonomous, uint32(Actor.MickenLifeMax));
-            WriteFloat(Micken.Autonomous + 4, Actor.MickenGravityScale);
-            WriteFloat(Micken.Autonomous + 8, Actor.MickenDynamicExtField4);
-            WriteFloat(Micken.Autonomous + 12, Actor.MickenDynamicExtField8);
-            WriteU32(Micken.Waypoint, uint32(Actor.MickenWaypointIndex));
-            WriteU32(Micken.Actor, uint32(Actor.MickenActorIndex));
-            WriteU32(Micken.Field358, uint32(Actor.MickenField358));
-            WriteFloat(Micken.Field35C, Actor.MickenField35C);
-            WriteU32(Micken.Field360, uint32(Actor.MickenField360));
+            if (!KyaWriteMickenActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
         }
         if (HasBonus)
         {
-            WriteFloat(Bonus.WeightB, Actor.BonusWeightB);
-            WriteU32(Bonus.Sound, uint32(Actor.BonusSoundRef));
-            WriteU32(Bonus.FlareMaterial, uint32(Actor.BonusFlareMaterialId));
-            WriteU32(Bonus.AnimMaterial, uint32(Actor.BonusAnimMaterialId));
+            if (!KyaWriteBonusActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
         }
         if (HasSwitch)
         {
-            for (int32 Item = 0; Item < Actor.SwitchTarget.Targets.Num(); ++Item)
-            {
-                const FKyaSwitchTarget& Target = Actor.SwitchTarget.Targets[Item];
-                const int64 T = SwitchData.Targets + int64(Item) * 28;
-                WriteU32(T, uint32(Target.TargetRef)); WriteU32(T + 4, uint32(Target.CutsceneId));
-                WriteU32(T + 8, uint32(Target.Flags)); WriteU32(T + 12, uint32(Target.MessageId));
-                WriteU32(T + 16, uint32(Target.MessageFlags)); WriteU32(T + 20, uint32(Target.Field14));
-                WriteU32(T + 24, uint32(Target.Field18));
-            }
-            const FKyaStreamEventCamera& Camera = Actor.SwitchTarget.Camera;
-            const int64 C = SwitchData.Camera;
-            WriteU32(C, uint32(Camera.CameraIndex)); WriteU32(C + 4, uint32(Camera.Flags));
-            WriteFloat(C + 8, Camera.Field8); WriteFloat(C + 12, Camera.FieldC); WriteFloat(C + 16, Camera.Field10);
-            WriteU32(C + 20, uint32(Camera.ActorRef)); WriteU32(C + 24, uint32(Camera.ZoneRef));
-            WriteFloat(C + 28, Camera.Field1C);
+            if (!KyaWriteSwitchActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
         }
         if (HasWeapon)
         {
-            WriteFloat(Weapon.WeightB, Actor.WeaponWeightB);
-            WriteFloat(Weapon.Field1D8, Actor.WeaponField1D8);
-            WriteFloat(Weapon.Field1DC, Actor.WeaponField1DC);
+            if (!KyaWriteWeaponActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
         }
         if (HasTrap)
         {
-            WriteFloat(Trap.WeightB, Actor.TrapWeightB);
-            for (int32 Item = 0; Item < Actor.TrapActorRefs.Num(); ++Item)
-                WriteU32(Trap.Actors + Item * 4, uint32(Actor.TrapActorRefs[Item]));
-            WriteU32(Trap.Field14, uint32(Actor.TrapField14)); WriteU32(Trap.Field18, uint32(Actor.TrapField18));
-            WriteU32(Trap.Field1C, uint32(Actor.TrapField1C)); WriteU32(Trap.Field20, uint32(Actor.TrapField20));
-            if (Trap.bHasField24) WriteU32(Trap.Field24, uint32(Actor.TrapField24));
-            WriteU32(Trap.ActorRef, uint32(Actor.TrapActorRef));
-            WriteFloat(Trap.Speed, Actor.TrapSpeed); WriteFloat(Trap.Acceleration, Actor.TrapAcceleration);
-            WriteU32(Trap.PathFollow, uint32(Actor.TrapPathFollowIndex));
-            WriteFloat(Trap.Field4C, Actor.TrapField4C);
-            WriteU32(Trap.RequiredEscapes, uint32(Actor.TrapRequiredEscapeAttempts));
-            for (int32 Item = 0; Item < Actor.TrapStreamEntries.Num(); ++Item)
-            {
-                const FKyaTrapStreamEntry& TrapEntry = Actor.TrapStreamEntries[Item];
-                const int64 Offset = Trap.TrapEntries + int64(Item) * 60;
-                WriteU32(Offset, uint32(TrapEntry.Target.TargetRef)); WriteU32(Offset + 4, uint32(TrapEntry.Target.CutsceneId));
-                WriteU32(Offset + 8, uint32(TrapEntry.Target.Flags)); WriteU32(Offset + 12, uint32(TrapEntry.Target.MessageId));
-                WriteU32(Offset + 16, uint32(TrapEntry.Target.MessageFlags)); WriteU32(Offset + 20, uint32(TrapEntry.Target.Field14));
-                WriteU32(Offset + 24, uint32(TrapEntry.Target.Field18));
-                WriteU32(Offset + 28, uint32(TrapEntry.Camera.CameraIndex)); WriteU32(Offset + 32, uint32(TrapEntry.Camera.Flags));
-                WriteFloat(Offset + 36, TrapEntry.Camera.Field8); WriteFloat(Offset + 40, TrapEntry.Camera.FieldC);
-                WriteFloat(Offset + 44, TrapEntry.Camera.Field10); WriteU32(Offset + 48, uint32(TrapEntry.Camera.ActorRef));
-                WriteU32(Offset + 52, uint32(TrapEntry.Camera.ZoneRef)); WriteFloat(Offset + 56, TrapEntry.Camera.Field1C);
-            }
+            if (!KyaWriteTrapActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
         }
         if (HasWind)
         {
-            WriteU32(Wind.Field160, uint32(Actor.WindField160));
-            WriteFloat(Wind.MaxWind, Actor.WindMaxWind); WriteFloat(Wind.Field168, Actor.WindField168);
-            WriteFloat(Wind.Field16C, Actor.WindField16C); WriteFloat(Wind.Field174, Actor.WindField174);
-            WriteFloat(Wind.Field180, Actor.WindField180); WriteFloat(Wind.Field184, Actor.WindField184);
-            WriteFloat(Wind.Field188, Actor.WindField188); WriteFloat(Wind.Field18C, Actor.WindField18C);
-            WriteFloat(Wind.Field178, Actor.WindField178); WriteFloat(Wind.Field17C, Actor.WindField17C);
-            WriteU32(Wind.Field190, uint32(Actor.WindField190));
-            WriteU32(Wind.Sound, uint32(Actor.WindSoundRef)); WriteU32(Wind.ActivationZone, uint32(Actor.WindActivationZoneIndex));
-            for (int32 Item = 0; Item < Actor.WindActorRefs.Num(); ++Item)
-                WriteU32(Wind.Actors + Item * 4, uint32(Actor.WindActorRefs[Item]));
-            WriteU32(Wind.Material, uint32(Actor.WindMaterialId)); WriteU32(Wind.Zone1C4, uint32(Actor.WindZoneRef1C4));
-            WriteU32(Wind.Color1C8, uint32(Actor.WindColor1C8)); WriteU32(Wind.Waypoint1CC, uint32(Actor.WindWaypointRef1CC));
-            WriteU32(Wind.SectorHash, uint32(uint64(Actor.WindSectorHierarchyHash)));
-            WriteU32(Wind.SectorHash + 4, uint32(uint64(Actor.WindSectorHierarchyHash) >> 32));
-            if (Wind.bHasSwitches)
-            {
-                const FKyaSwitch* Switches[] = { &Actor.WindSwitch1D0, &Actor.WindSwitch1D8, &Actor.WindSwitch1E0 };
-                for (int32 SwitchIndex = 0; SwitchIndex < 3; ++SwitchIndex)
-                {
-                    const FKyaSwitch& Switch = *Switches[SwitchIndex];
-                    const FKyaWindSwitchOffsets& SwitchOffsets = Wind.Switches[SwitchIndex];
-                    for (int32 Item = 0; Item < Switch.Targets.Num(); ++Item)
-                    {
-                        const FKyaSwitchTarget& Target = Switch.Targets[Item];
-                        const int64 T = SwitchOffsets.Targets + int64(Item) * 28;
-                        WriteU32(T, uint32(Target.TargetRef)); WriteU32(T + 4, uint32(Target.CutsceneId));
-                        WriteU32(T + 8, uint32(Target.Flags)); WriteU32(T + 12, uint32(Target.MessageId));
-                        WriteU32(T + 16, uint32(Target.MessageFlags)); WriteU32(T + 20, uint32(Target.Field14));
-                        WriteU32(T + 24, uint32(Target.Field18));
-                    }
-                    const FKyaStreamEventCamera& Camera = Switch.Camera;
-                    const int64 C = SwitchOffsets.Camera;
-                    WriteU32(C, uint32(Camera.CameraIndex)); WriteU32(C + 4, uint32(Camera.Flags));
-                    WriteFloat(C + 8, Camera.Field8); WriteFloat(C + 12, Camera.FieldC); WriteFloat(C + 16, Camera.Field10);
-                    WriteU32(C + 20, uint32(Camera.ActorRef)); WriteU32(C + 24, uint32(Camera.ZoneRef));
-                    WriteFloat(C + 28, Camera.Field1C);
-                }
-            }
-            WriteFloat(Wind.Floats194, Actor.WindField194); WriteFloat(Wind.Floats194 + 4, Actor.WindField198);
-            WriteFloat(Wind.Floats194 + 8, Actor.WindField19C); WriteFloat(Wind.Floats194 + 12, Actor.WindField1A0);
-            WriteFloat(Wind.Floats194 + 16, Actor.WindField1A4);
-            WriteU32(Wind.Waypoint, uint32(Actor.WindWaypointRef));
-            WriteFloat(Wind.Waypoint + 4, Actor.WindField1AC); WriteFloat(Wind.Waypoint + 8, Actor.WindField1B0);
+            if (!KyaWriteWindActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
         }
         if (HasProjectile)
         {
-            WriteFloat(Projectile.WeightB, Actor.ProjectileWeightB);
-            WriteU32(Projectile.Autonomous, uint32(Actor.ProjectileLifeMax));
-            WriteFloat(Projectile.Autonomous + 4, Actor.ProjectileGravityScale);
-            WriteFloat(Projectile.Autonomous + 8, Actor.ProjectileDynamicExtField4);
-            WriteFloat(Projectile.Autonomous + 12, Actor.ProjectileDynamicExtField8);
-            const FKyaProjectileSubObj& Sub = Actor.ProjectileSubObj;
-            const int64 S = Projectile.SubObj;
-            WriteFloat(S, Sub.TimeToExplode); WriteFloat(S + 4, Sub.ExplosionRange); WriteFloat(S + 8, Sub.AnimDuration);
-            WriteU32(S + 12, uint32(Sub.Flags));
-            WriteFloat(S + 16, Sub.Damage); WriteFloat(S + 20, Sub.HitRadius); WriteFloat(S + 24, Sub.WarnRadius);
-            WriteFloat(S + 28, Sub.Field1C); WriteFloat(S + 32, Sub.Field20); WriteFloat(S + 36, Sub.Field24);
-            WriteU32(S + 40, uint32(Sub.Field28)); WriteU32(S + 44, uint32(Sub.MaterialId));
-            WriteU32(S + 48, uint32(Sub.Field30)); WriteU32(S + 52, uint32(Sub.Field34));
-            WriteU32(S + 56, uint32(Sub.Field38)); WriteU32(S + 60, uint32(Sub.Field3C));
-            WriteFloat(S + 64, Sub.Field40); WriteFloat(S + 68, Sub.Field44);
-            const FKyaPatternPart& Pattern = Actor.ProjectilePattern;
-            const int64 P = Projectile.Pattern;
-            WriteFloat(P, Pattern.Field4); WriteFloat(P + 4, Pattern.Field0); WriteFloat(P + 8, Pattern.FieldC);
-            WriteFloat(P + 12, Pattern.Field8); WriteFloat(P + 16, Pattern.Field10); WriteFloat(P + 20, Pattern.Field14);
-            WriteU32(P + 24, uint32(Pattern.MaterialId));
-            WriteFloat(P + 28, Pattern.PointCount); WriteFloat(P + 32, Pattern.Field20);
-            if (Projectile.bHasPatternField24) WriteFloat(P + 36, Pattern.Field24);
-            WriteU32(P + (Projectile.bHasPatternField24 ? 40 : 36), uint32(Pattern.Field28));
+            if (!KyaWriteProjectileActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
         }
         if (HasAraignos)
         {
-            WriteFloat(Araignos.WeightB, Actor.AraignosWeightB);
-            WriteU32(Araignos.PathFollow, uint32(Actor.AraignosPathFollowIndex));
-            WriteFloat(Araignos.Floats, Actor.AraignosField1F8);
-            WriteFloat(Araignos.Floats + 4, Actor.AraignosField1FC);
-            WriteFloat(Araignos.Floats + 8, Actor.AraignosDamage);
-            WriteU32(Araignos.Sounds, uint32(Actor.AraignosSoundRef240));
-            WriteU32(Araignos.Sounds + 4, uint32(Actor.AraignosSoundRef238));
-            WriteU32(Araignos.Sounds + 8, uint32(Actor.AraignosSoundRef23C));
-            const FKyaAddOnGenerator& AddOn = Actor.AraignosAddOn;
-            const int64 A = Araignos.AddOn;
-            WriteU32(A, uint32(AddOn.Field0)); WriteU32(A + 4, uint32(AddOn.MoneyType));
-            WriteU32(A + 8, uint32(AddOn.MoneyCount)); WriteU32(A + 12, uint32(AddOn.BonusCount));
-            WriteU32(A + 16, uint32(AddOn.FieldC)); WriteU32(Araignos.SubObjMode, uint32(AddOn.SubObjMode));
-            if (Araignos.SubObjFloats)
-            {
-                WriteFloat(Araignos.SubObjFloats, AddOn.SubObjField0);
-                WriteFloat(Araignos.SubObjFloats + 4, AddOn.SubObjField4);
-                WriteFloat(Araignos.SubObjFloats + 8, AddOn.SubObjFieldC);
-                WriteFloat(Araignos.SubObjFloats + 12, AddOn.SubObjField10);
-                WriteFloat(Araignos.SubObjFloats + 16, AddOn.SubObjField14);
-            }
+            if (!KyaWriteAraignosActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
         }
         if (HasFx)
         {
-            WriteFloat(Fx.Field19C, Actor.FxField19C);
-            WriteFloat(Fx.Field1A0, Actor.FxField1A0);
+            if (!KyaWriteFxActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
         }
         if (Actor.bHasTypedCheckpoints)
         {
-            TArray<int64> Checkpoints;
-            if (!KyaReadCheckpointOffsets(MakeArrayView(Bank->BankBytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Checkpoints)) return false;
-            for (int32 CheckpointIndex = 0; CheckpointIndex < Checkpoints.Num(); ++CheckpointIndex)
-            {
-                const FKyaCheckpoint& Checkpoint = Actor.Checkpoints[CheckpointIndex];
-                const int64 Offset = Checkpoints[CheckpointIndex];
-                WriteU32(Offset, uint32(Checkpoint.ZoneRef));
-                WriteU32(Offset + 4, uint32(Checkpoint.WaypointA));
-                WriteU32(Offset + 8, uint32(Checkpoint.SectorId));
-                WriteU32(Offset + 12, uint32(Checkpoint.WaypointB));
-                WriteU32(Offset + 16, uint32(Checkpoint.Flags));
-                for (int32 Pair = 0; Pair < Checkpoint.ActorWaypoints.Num(); ++Pair)
-                {
-                    WriteU32(Offset + 24 + Pair * 8, uint32(Checkpoint.ActorWaypoints[Pair].ActorRef));
-                    WriteU32(Offset + 28 + Pair * 8, uint32(Checkpoint.ActorWaypoints[Pair].WaypointRef));
-                }
-            }
+            if (!KyaWriteCheckpointsActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
         }
         for (int32 Animation = 0; Animation < Actor.MacroAnimations.Num(); ++Animation)
         {
@@ -3107,7 +1951,7 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
             if (KyaActorDiffersFromImported(*Bank, ActorIndex)) ++ChangedActors;
     Diagnostics.SupportedEdits.Add(FString::Printf(
         TEXT("%d actor, %d waypoint, %d path and %d light record(s) patched in place; %s. Structural changes "
-            "(counts, names, arrays, classes) are rejected before writing."),
+            "other than actor condition counts (counts, names, arrays, classes) are rejected before writing."),
         Bank->SceneEnvironment.Actors.Num(), Bank->SceneEnvironment.Waypoints.Num(),
         Bank->SceneEnvironment.Paths.Num(), Bank->Lights.Num(),
         bHasBaseline ? *FString::Printf(TEXT("%d actor record(s) differ from the imported baseline"), ChangedActors)

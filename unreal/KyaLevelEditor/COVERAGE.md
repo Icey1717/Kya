@@ -1,5 +1,9 @@
 # Level editor coverage and checkpoint
 
+For the project-wide source inheritance checklist, including actors and behaviours
+absent from LEVEL_1, see [Actor and behaviour coverage audit](ACTOR_BEHAVIOUR_AUDIT.md).
+The milestone completion statements below apply to their stated supported scope.
+
 All checklist items are complete for LEVEL_1 and the editor's supported scope.
 Update it when evidence or implementation changes. Residual risk is breadth:
 classes, behaviours and optional layouts that LEVEL_1 never instantiates are

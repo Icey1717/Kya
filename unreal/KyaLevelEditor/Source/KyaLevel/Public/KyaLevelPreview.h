@@ -61,6 +61,7 @@ public:
     virtual bool ShouldTickIfViewportsOnly() const override { return true; }
     /** Rebuild the preview mesh when an editable property changes. */
     virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+    virtual void PostEditUndo() override;
 #endif
     /** Update camera-relative background geometry using an editor camera position in world centimetres. */
     UFUNCTION(BlueprintCallable, Category="Kya|Preview")
@@ -123,6 +124,13 @@ public:
     /** Optional imported SECT*.BNK assets; their background meshes are previewed. */
     UPROPERTY(EditAnywhere, Category="Kya|Authoring")
     TArray<TObjectPtr<UKyaLevelBank>> SectorBanks;
+
+    /** Preview display only; associations and exported bank data are unchanged. */
+    UPROPERTY()
+    TSet<int32> HiddenSectorIds;
+
+    bool IsSectorVisible(int32 SectorId) const;
+    void SetSectorVisible(int32 SectorId, bool bVisible);
 
     /** Native active sector for distance clipping; -1 uses the first sector bank. */
     UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Visibility")
@@ -496,6 +504,17 @@ private:
     };
     TArray<FClusterVisibilityRange> ClusterVisibilityRanges;
     TMap<int32, TArray<uint32>> ClusterBaseIndices;
+    struct FSectorGeometryRange
+    {
+        int32 SectorId = -1;
+        int32 Section = 0;
+        int32 Start = 0;
+        int32 Count = 0;
+    };
+    TArray<FSectorGeometryRange> SectorGeometryRanges;
+    TSet<int32> AppliedHiddenSectorIds;
+    void RefreshSectorVisibility();
+    void ApplyMeshVisibility(const TSet<int32>& Sections);
     float ActiveClipDistance = 500;
     struct FBackgroundFlare
     {

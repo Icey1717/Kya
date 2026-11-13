@@ -5,6 +5,7 @@
 #include "Misc/Paths.h"
 #include "Misc/App.h"
 #include "Misc/ScopedSlowTask.h"
+#include "Misc/ScopeExit.h"
 #include "KyaLevelBank.h"
 #include "KyaLevelSet.h"
 #include "KyaLevelSettings.h"
@@ -226,6 +227,19 @@ AKyaLevelPreview::AKyaLevelPreview()
 }
 
 #if WITH_EDITOR
+void AKyaLevelPreview::PostEditUndo()
+{
+    Super::PostEditUndo();
+    bool bSectorVisibilityChanged = HiddenSectorIds.Num() != AppliedHiddenSectorIds.Num();
+    for (int32 Id : HiddenSectorIds) bSectorVisibilityChanged |= !AppliedHiddenSectorIds.Contains(Id);
+    if (bSectorVisibilityChanged)
+    {
+        RefreshSectorVisibility();
+        return;
+    }
+    RebuildFromBank();
+}
+
 void AKyaLevelPreview::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
     Super::PostEditChangeProperty(PropertyChangedEvent);
@@ -364,6 +378,7 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
     const auto FinishBuildWithoutGeometry = [this]()
     {
         Mesh->ClearAllMeshSections();
+        SectorGeometryRanges.Reset();
         PreviewTextures.Reset();
         // A completed build without geometry must not keep reporting candidates from a
         // previously displayed level. Cancelled builds retain their published state.
@@ -380,6 +395,7 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
         ApplyGeneratedActorPresentation();
         RefreshSceneVisualizers();
 #endif
+        RefreshSectorVisibility();
     };
 #if WITH_EDITOR
     const int32 DesiredMarkers = Bank && bShowWaypoints && !bSpawnWaypointHandles
@@ -789,6 +805,22 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
     TMap<int32, TObjectPtr<UMaterialInterface>> BuiltSectionMaterials;
     TArray<TObjectPtr<UTexture2D>> BuiltPreviewTextures;
     TMap<int32, FBox> BuiltSectorBounds;
+    TArray<FSectorGeometryRange> BuiltSectorRanges;
+    const auto CaptureSectionStarts = [&]() {
+        TMap<int32, int32> Starts;
+        Starts.Add(0, Triangles.Num());
+        for (const auto& Pair : TexturedSections) Starts.Add(Pair.Key, Pair.Value.Triangles.Num());
+        return Starts;
+    };
+    const auto CaptureSectorRanges = [&](int32 Id, const TMap<int32, int32>& Starts) {
+        if (Id < 0) return;
+        const auto AddRange = [&](int32 Section, int32 End) {
+            const int32 Start = Starts.FindRef(Section);
+            if (End > Start) BuiltSectorRanges.Add({Id, Section, Start, End - Start});
+        };
+        AddRange(0, Triangles.Num());
+        for (const auto& Pair : TexturedSections) AddRange(Pair.Key, Pair.Value.Triangles.Num());
+    };
     auto GetTexturedSection = [&](uint64 Hash, TConstArrayView<uint8> Source,
         const TMap<uint64, int32>& Offsets, FMaterialSections& Sections,
         const TCHAR* SourceLabel, uint32 Primitive) -> FSectionData*
@@ -1148,6 +1180,8 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
         }
         if (!bShowAllActorMeshes && !bActorHandlesOwnGeometry && ActorIndex != PreviewActorIndex) continue;
         const FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+        const TMap<int32, int32> SectorStarts = CaptureSectionStarts();
+        ON_SCOPE_EXIT { CaptureSectorRanges(Actor.SectorId, SectorStarts); };
         if (bActorHandlesOwnGeometry)
         {
             const uint64 Revision = HashActorSectionRevision(Actor, Bank, Bank->EditGeneration,
@@ -1377,6 +1411,8 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
             return;
         }
         if (!Sector) continue;
+        const TMap<int32, int32> SectorStarts = CaptureSectionStarts();
+        ON_SCOPE_EXIT { CaptureSectorRanges(Sector == Bank ? -1 : ResolveSectorId(*Sector), SectorStarts); };
         const FString DiagnosticName = Sector == Bank ? TEXT("<common>") : Sector->GetName();
         if (bLogSectorDiagnostics)
         {
@@ -1833,6 +1869,11 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
         if (!ClusterBaseIndices.Contains(Range.Section))
             if (const FProcMeshSection* Section = Mesh->GetProcMeshSection(Range.Section))
                 ClusterBaseIndices.Add(Range.Section, Section->ProcIndexBuffer);
+    SectorGeometryRanges = MoveTemp(BuiltSectorRanges);
+    for (const FSectorGeometryRange& Range : SectorGeometryRanges)
+        if (!ClusterBaseIndices.Contains(Range.Section))
+            if (const FProcMeshSection* Section = Mesh->GetProcMeshSection(Range.Section))
+                ClusterBaseIndices.Add(Range.Section, Section->ProcIndexBuffer);
     if (bLogSectorDiagnostics)
         UE_LOG(LogTemp, Display, TEXT("KYA_BACKGROUND_FOLLOW flags=%lld ranges=%d sections=%d"),
             Bank->SceneEnvironment.BackgroundFlags, BackgroundRanges.Num(), BackgroundBasePositions.Num());
@@ -1845,6 +1886,7 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
     ApplyGeneratedActorPresentation();
     RefreshSceneVisualizers();
 #endif
+    RefreshSectorVisibility();
 }
 
 void AKyaLevelPreview::Destroyed()
@@ -2352,6 +2394,20 @@ void AKyaLevelPreview::OnMonitoredObjectTransacted(UObject* Object, const FTrans
 #endif
 }
 
+bool AKyaLevelPreview::IsSectorVisible(int32 SectorId) const
+{
+    return SectorId < 0 || !HiddenSectorIds.Contains(SectorId);
+}
+
+void AKyaLevelPreview::SetSectorVisible(int32 SectorId, bool bVisible)
+{
+    if (SectorId < 0 || IsSectorVisible(SectorId) == bVisible) return;
+    Modify();
+    if (bVisible) HiddenSectorIds.Remove(SectorId);
+    else HiddenSectorIds.Add(SectorId);
+    RefreshSectorVisibility();
+}
+
 void AKyaLevelPreview::RebuildFromBank()
 {
 #if WITH_EDITOR
@@ -2664,9 +2720,20 @@ void AKyaLevelPreview::ApplyGeneratedActorPresentation()
     const auto Apply = [this, &ContainsOrAncestor](AActor* Actor)
     {
         if (!IsValid(Actor)) return;
-        const bool bShouldHide = bIsolationActive
+        int32 SectorId = -1;
+        if (const AKyaActorHandle* Handle = Cast<AKyaActorHandle>(Actor)) SectorId = Handle->ActorSectorId;
+        else if (const AKyaHierarchyHandle* Hierarchy = Cast<AKyaHierarchyHandle>(Actor)) SectorId = Hierarchy->SectorId;
+        else if (const AKyaSceneVisualizer* Visualizer = Cast<AKyaSceneVisualizer>(Actor))
+        {
+            if (Visualizer->Bank && Visualizer->Bank != Bank) SectorId = ResolveSectorId(*Visualizer->Bank);
+            else if (Visualizer->Bank && (Visualizer->Kind == EKyaVisualizerKind::ActorLink ||
+                Visualizer->Kind == EKyaVisualizerKind::TriggerBound) &&
+                Visualizer->Bank->SceneEnvironment.Actors.IsValidIndex(Visualizer->RecordIndex))
+                SectorId = Visualizer->Bank->SceneEnvironment.Actors[Visualizer->RecordIndex].SectorId;
+        }
+        const bool bShouldHide = !IsSectorVisible(SectorId) || (bIsolationActive
             ? !ContainsOrAncestor(IsolatedGeneratedActors, Actor)
-            : ContainsOrAncestor(TemporarilyHiddenGeneratedActors, Actor);
+            : ContainsOrAncestor(TemporarilyHiddenGeneratedActors, Actor));
         if (Actor->IsTemporarilyHiddenInEditor() != bShouldHide) Actor->SetIsTemporarilyHiddenInEditor(bShouldHide);
     };
     for (const TPair<int32, TObjectPtr<AKyaActorHandle>>& Pair : ActorHandles) Apply(Pair.Value);
@@ -3212,11 +3279,47 @@ void AKyaLevelPreview::UpdateClusterVisibility(const FVector& Position, const FV
         if (!Visible) ++Hidden;
         if (Range.bVisible != Visible) { Range.bVisible = Visible; Changed.Add(Range.Section); }
     }
-    for (int32 SectionIndex : Changed)
+    ApplyMeshVisibility(Changed);
+    if (bLogSectorDiagnostics && !Changed.IsEmpty())
+        UE_LOG(LogTemp, Display, TEXT("KYA_CLUSTER_VISIBILITY ranges=%d hidden=%d changed_sections=%d clip=%.3f"),
+            ClusterVisibilityRanges.Num(), Hidden, Changed.Num(), ActiveClipDistance);
+}
+
+void AKyaLevelPreview::RefreshSectorVisibility()
+{
+    TSet<int32> Changed;
+    for (const FSectorGeometryRange& Range : SectorGeometryRanges)
+        if (AppliedHiddenSectorIds.Contains(Range.SectorId) != HiddenSectorIds.Contains(Range.SectorId) ||
+            HiddenSectorIds.Contains(Range.SectorId))
+            Changed.Add(Range.Section);
+    ApplyMeshVisibility(Changed);
+    AppliedHiddenSectorIds = HiddenSectorIds;
+#if WITH_EDITOR
+    ApplyGeneratedActorPresentation();
+    if (ActorMarker && Bank && Bank->SceneEnvironment.Actors.IsValidIndex(PreviewActorIndex))
+        ActorMarker->SetVisibility(IsSectorVisible(Bank->SceneEnvironment.Actors[PreviewActorIndex].SectorId));
+    if (GEditor) GEditor->RedrawLevelEditingViewports();
+#endif
+}
+
+void AKyaLevelPreview::ApplyMeshVisibility(const TSet<int32>& Sections)
+{
+    for (int32 SectionIndex : Sections)
     {
         const TArray<uint32>* Base = ClusterBaseIndices.Find(SectionIndex);
         const FProcMeshSection* Original = Mesh->GetProcMeshSection(SectionIndex);
         if (!Base || !Original) continue;
+        int32 HiddenIndices = 0;
+        for (const FSectorGeometryRange& Range : SectorGeometryRanges)
+            if (Range.Section == SectionIndex && !IsSectorVisible(Range.SectorId)) HiddenIndices += Range.Count;
+        // Most scenery sections belong entirely to one sector. Hide their draw
+        // directly, leaving both vertex and index buffers resident and unchanged.
+        if (HiddenIndices > 0 && HiddenIndices == Base->Num())
+        {
+            Mesh->SetMeshSectionVisible(SectionIndex, false);
+            continue;
+        }
+        Mesh->SetMeshSectionVisible(SectionIndex, true);
         FProcMeshSection Updated = *Original;
         Updated.ProcIndexBuffer = *Base;
         for (const FClusterVisibilityRange& Range : ClusterVisibilityRanges)
@@ -3226,11 +3329,15 @@ void AKyaLevelPreview::UpdateClusterVisibility(const FVector& Position, const FV
                 const uint32 Anchor = (*Base)[Range.Start];
                 for (int32 I = Range.Start; I < Range.Start + Range.Count; ++I) Updated.ProcIndexBuffer[I] = Anchor;
             }
+        for (const FSectorGeometryRange& Range : SectorGeometryRanges)
+            if (Range.Section == SectionIndex && !IsSectorVisible(Range.SectorId) && Range.Count > 0 &&
+                Range.Start >= 0 && Range.Start + Range.Count <= Updated.ProcIndexBuffer.Num())
+            {
+                const uint32 Anchor = (*Base)[Range.Start];
+                for (int32 I = Range.Start; I < Range.Start + Range.Count; ++I) Updated.ProcIndexBuffer[I] = Anchor;
+            }
         Mesh->SetProcMeshSection(SectionIndex, Updated);
     }
-    if (bLogSectorDiagnostics && !Changed.IsEmpty())
-        UE_LOG(LogTemp, Display, TEXT("KYA_CLUSTER_VISIBILITY ranges=%d hidden=%d changed_sections=%d clip=%.3f"),
-            ClusterVisibilityRanges.Num(), Hidden, Changed.Num(), ActiveClipDistance);
 }
 
 #if WITH_EDITOR

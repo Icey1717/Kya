@@ -20,6 +20,9 @@ struct KYALEVELEDITOR_API FKyaStructuralWriteResult
  */
 KYALEVELEDITOR_API bool KyaBankSupportsStructuralEdit(const UKyaLevelBank& Bank, FString& OutReason);
 
+/** Rebuild actor chunks when their scenario condition counts have changed. */
+KYALEVELEDITOR_API bool KyaResizeActorConditions(UKyaLevelBank& Bank, bool& bChanged, FString& OutError);
+
 /** Append a copy of SourceActorIndex and rebuild the bank's actor stream. */
 KYALEVELEDITOR_API FKyaStructuralWriteResult KyaDuplicateActorRecord(UKyaLevelBank& Bank, int32 SourceActorIndex);
 

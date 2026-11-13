@@ -18,12 +18,15 @@
 #include "KyaLevelBankReimportHandler.h"
 #include "KyaLevelBank.h"
 #include "KyaLevelPreview.h"
+#include "KyaLevelPreviewDetailsCustomization.h"
 #include "KyaLevelSet.h"
 #include "KyaLevelSettings.h"
 #include "Misc/App.h"
 #include "Misc/MessageDialog.h"
 #include "Misc/Paths.h"
 #include "PropertyEditorModule.h"
+#include "KyaScenarioConditionCustomization.h"
+#include "KyaActorBehaviourCustomization.h"
 #include "IDetailsView.h"
 #include "LevelEditor.h"
 #include "Framework/Docking/TabManager.h"
@@ -380,8 +383,14 @@ public:
 
         FPropertyEditorModule& PropertyModule =
             FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
+        PropertyModule.RegisterCustomPropertyTypeLayout("KyaScenarioCondition",
+            FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FKyaScenarioConditionCustomization::MakeInstance));
+        PropertyModule.RegisterCustomPropertyTypeLayout("KyaActorBehaviour",
+            FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FKyaActorBehaviourCustomization::MakeInstance));
         PropertyModule.RegisterCustomClassLayout(AKyaActorHandle::StaticClass()->GetFName(),
             FOnGetDetailCustomizationInstance::CreateStatic(&FKyaActorDetailsCustomization::MakeInstance));
+        PropertyModule.RegisterCustomClassLayout(AKyaLevelPreview::StaticClass()->GetFName(),
+            FOnGetDetailCustomizationInstance::CreateStatic(&FKyaLevelPreviewDetailsCustomization::MakeInstance));
         PropertyModule.RegisterCustomClassLayout(AKyaSpatialRecordHandle::StaticClass()->GetFName(),
             FOnGetDetailCustomizationInstance::CreateStatic(&FKyaSpatialRecordDetailsCustomization::MakeInstance));
         PropertyModule.RegisterCustomClassLayout(AKyaHierarchyHandle::StaticClass()->GetFName(),
@@ -450,7 +459,10 @@ public:
         if (FPropertyEditorModule* PropertyModule =
             FModuleManager::GetModulePtr<FPropertyEditorModule>("PropertyEditor"))
         {
+            PropertyModule->UnregisterCustomPropertyTypeLayout("KyaScenarioCondition");
+            PropertyModule->UnregisterCustomPropertyTypeLayout("KyaActorBehaviour");
             PropertyModule->UnregisterCustomClassLayout(AKyaActorHandle::StaticClass()->GetFName());
+            PropertyModule->UnregisterCustomClassLayout(AKyaLevelPreview::StaticClass()->GetFName());
             PropertyModule->UnregisterCustomClassLayout(AKyaSpatialRecordHandle::StaticClass()->GetFName());
             PropertyModule->UnregisterCustomClassLayout(AKyaHierarchyHandle::StaticClass()->GetFName());
             PropertyModule->UnregisterCustomClassLayout(AKyaSceneVisualizer::StaticClass()->GetFName());

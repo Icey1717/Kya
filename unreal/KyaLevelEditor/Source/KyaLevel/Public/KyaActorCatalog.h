@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "KyaActorFamily.h"
 
 class UKyaLevelBank;
 struct FKyaActorPlacement;
@@ -66,19 +67,6 @@ struct KYALEVEL_API FKyaActorReferenceIssue
 
 KYALEVEL_API TArray<FKyaActorReferenceIssue> ValidateKyaActorReferences(const UKyaLevelBank& Bank,
     const FKyaActorPlacement& Placement);
-
-/** Namespace of a serialized reference field. */
-enum class EKyaReferenceKind : uint8
-{
-    Actor,
-    Waypoint,
-    Path,
-    Zone,
-    Sector,
-    Mesh,
-    Texture,
-    Behaviour
-};
 
 /** True when the top-level placement field is a known reference. */
 KYALEVEL_API bool FindKyaReferenceField(FName PropertyName, EKyaReferenceKind& OutKind);

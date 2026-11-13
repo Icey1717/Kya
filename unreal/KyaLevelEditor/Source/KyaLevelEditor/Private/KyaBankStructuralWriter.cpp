@@ -307,7 +307,8 @@ bool UpdateClassAllocations(UKyaLevelBank& Bank, FString& OutError)
     return true;
 }
 
-bool RebuildActorStream(UKyaLevelBank& Bank, const TArray<int32>& Sources, FString& OutError)
+bool RebuildActorStream(UKyaLevelBank& Bank, const TArray<int32>& Sources, FString& OutError,
+    bool bUpdateAllocations = true)
 {
     FActorStream Stream;
     if (!LocateActorStream(Bank, Stream, OutError)) return false;
@@ -346,6 +347,18 @@ bool RebuildActorStream(UKyaLevelBank& Bank, const TArray<int32>& Sources, FStri
         }
         const int32 ChunkStart = NewScene.Num();
         NewScene.Append(Old.GetData() + SceneStart + SourceOffsets.Chunk, int32(SourceSize));
+        const TArray<FKyaScenarioCondition>& Conditions = Bank.SceneEnvironment.Actors[Index].Conditions;
+        if (Conditions.Num() != SourceOffsets.ConditionCount)
+        {
+            const int32 ConditionStart = ChunkStart + int32(SourceOffsets.Conditions - SourceOffsets.Chunk);
+            const int32 OldBytes = SourceOffsets.ConditionCount * 16;
+            const int32 NewBytes = Conditions.Num() * 16;
+            NewScene.RemoveAt(ConditionStart, OldBytes);
+            NewScene.InsertZeroed(ConditionStart, NewBytes);
+            WriteU32(NewScene, ConditionStart - 4, uint32(Conditions.Num()));
+            WriteU32(NewScene, ChunkStart + 4, uint32(int64(SourceSize) + NewBytes - OldBytes));
+            // The normal export pass writes the typed condition values.
+        }
         WriteU32(NewScene, ChunkStart + 8, uint32(Index));
 
         const FString& Name = Bank.SceneEnvironment.Actors[Index].Name;
@@ -399,7 +412,7 @@ bool RebuildActorStream(UKyaLevelBank& Bank, const TArray<int32>& Sources, FStri
         NewEntries[Index] = Entry;
     }
 
-    if (!UpdateClassAllocations(Bank, OutError)) return false;
+    if (bUpdateAllocations && !UpdateClassAllocations(Bank, OutError)) return false;
     const uint32 CommonType = ReadU32(Old, 0x14);
     if (CommonType == 0 && Out.Num() >= 0x38)
     {
@@ -529,6 +542,25 @@ bool CanApply(const UKyaLevelBank& Bank, FString& OutError)
 bool KyaBankSupportsStructuralEdit(const UKyaLevelBank& Bank, FString& OutReason)
 {
     return CanApply(Bank, OutReason);
+}
+
+bool KyaResizeActorConditions(UKyaLevelBank& Bank, bool& bChanged, FString& OutError)
+{
+    bChanged = false;
+    FActorStream Stream;
+    if (!LocateActorStream(Bank, Stream, OutError)) return false;
+    if (Stream.Actors.Num() != Bank.SceneEnvironment.Actors.Num())
+    {
+        OutError = TEXT("The actor array does not match the serialized stream.");
+        return false;
+    }
+    TArray<int32> Sources;
+    for (int32 Index = 0; Index < Stream.Actors.Num(); ++Index)
+    {
+        Sources.Add(Index);
+        bChanged |= Stream.Actors[Index].ConditionCount != Bank.SceneEnvironment.Actors[Index].Conditions.Num();
+    }
+    return !bChanged || RebuildActorStream(Bank, Sources, OutError, false);
 }
 
 FKyaStructuralWriteResult KyaDuplicateActorRecord(UKyaLevelBank& Bank, int32 SourceActorIndex)

@@ -54,6 +54,18 @@ FString FKyaSectorDiscoveryResult::Summary() const
 
 namespace
 {
+FString LevelAssetDirectory(const UKyaLevelBank& MainBank)
+{
+    // The full package identifies the root level even when every bank is named
+    // LEVEL. Using it as a folder also keeps sectors beside their owning asset.
+    const FString PackageName = MainBank.GetOutermost()->GetName();
+    if (MainBank.GetOutermost() != GetTransientPackage() &&
+        !MainBank.GetOutermost()->HasAnyFlags(RF_Transient) &&
+        FPackageName::IsValidLongPackageName(PackageName))
+        return PackageName;
+    return FString::Printf(TEXT("/Game/KyaLevels/%s"), *MainBank.GetName());
+}
+
 bool IsSectorBankFilename(const FString& Filename, int32& OutSectorId, FString& OutDigits)
 {
     FString Base = FPaths::GetBaseFilename(Filename);
@@ -289,7 +301,7 @@ UKyaLevelSet* KyaCreateLevelSetFromPreview(AKyaLevelPreview* Preview, FString& O
         return nullptr;
     }
     UKyaLevelBank* MainBank = Preview->Bank;
-    const FString PackagePath = FString::Printf(TEXT("/Game/KyaLevels/%s"), *MainBank->GetName());
+    const FString PackagePath = LevelAssetDirectory(*MainBank);
     const FString BaseAssetName = FString::Printf(TEXT("%sLevelSet"), *MainBank->GetName());
     UKyaLevelSet* LevelSet = nullptr;
     for (int32 Suffix = 1; Suffix <= 32 && !LevelSet; ++Suffix)
@@ -533,7 +545,7 @@ FKyaSectorDiscoveryResult KyaDiscoverSectors(AKyaLevelPreview* Preview, bool bIm
     TMap<int32, TArray<FString>> FilesBySector;
     for (const FCandidate& Candidate : Candidates) FilesBySector.FindOrAdd(Candidate.SectorId).Add(Candidate.Filename);
 
-    const FString DestinationPath = FString::Printf(TEXT("/Game/KyaLevels/%s"), *MainBank->GetName());
+    const FString DestinationPath = LevelAssetDirectory(*MainBank);
     TArray<int32> SectorIds;
     FilesBySector.GetKeys(SectorIds);
     SectorIds.Sort();

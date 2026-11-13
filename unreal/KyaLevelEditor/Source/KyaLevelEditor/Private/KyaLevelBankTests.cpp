@@ -7,6 +7,45 @@
 #include "KyaG3DChunks.h"
 #include "KyaG2D.h"
 #include "KyaCameraStream.h"
+#include "Actors/KyaHedgehog.h"
+#include "Actors/KyaProjectile.h"
+#include "Actors/KyaMovingPlatform.h"
+#include "Actors/KyaSwitch.h"
+#include "Actors/KyaWind.h"
+#include "Actors/KyaTrap.h"
+#include "Actors/KyaWeapon.h"
+#include "Actors/KyaAraignos.h"
+#include "Actors/KyaBonus.h"
+#include "Actors/KyaTeleporter.h"
+#include "Actors/KyaAmortos.h"
+#include "Actors/KyaDca.h"
+#include "Actors/KyaFruit.h"
+#include "Actors/KyaNativ.h"
+#include "Actors/KyaWolfen.h"
+#include "Actors/KyaCommander.h"
+#include "Actors/KyaKim.h"
+#include "Actors/KyaBoomy.h"
+#include "Actors/KyaAton.h"
+#include "Actors/KyaRope.h"
+#include "Actors/KyaStiller.h"
+#include "Actors/KyaAmbre.h"
+#include "Actors/KyaFountain.h"
+#include "Actors/KyaCheckpoints.h"
+#include "Actors/KyaBridge.h"
+#include "Actors/KyaFog.h"
+#include "Actors/KyaShoot.h"
+#include "Actors/KyaMoney.h"
+#include "Actors/KyaBox.h"
+#include "Actors/KyaFx.h"
+#include "Actors/KyaClusteriser.h"
+#include "Actors/KyaCompanion.h"
+#include "Actors/KyaGravity.h"
+#include "Actors/KyaRune.h"
+#include "Actors/KyaMicken.h"
+#include "Actors/KyaBasicBox.h"
+#include "Actors/KyaNativCmd.h"
+#include "Actors/KyaCatchByTrap.h"
+#include "Actors/KyaHeroUnknown.h"
 #include "KyaActorEditService.h"
 #include "KyaLevelPreview.h"
 #include "KyaWaypointComponent.h"
@@ -52,8 +91,48 @@ namespace
             for (int32 Index = 0; Text[Index]; ++Index) Out.Add(uint8(Text[Index]));
         }
 
-        TArray<uint8> Build()
+        TArray<uint8> Build(int64 ClassId = 0x0d, bool bTeleportBehaviour = false,
+            bool bSwitchBehaviours = false, bool bWindSwitches = false, bool bTrapBehaviours = false,
+            bool bWeaponBehaviours = false, bool bAraignosBehaviour = false,
+            bool bBonusBehaviours = false)
         {
+            const bool bHedgehog = ClassId == 0x22;
+            const bool bProjectile = ClassId == 0x1c;
+            const bool bPlatform = ClassId == 0x0d;
+            const bool bSwitch = ClassId == 0x11;
+            const bool bWind = ClassId == 0x12;
+            const bool bTrap = ClassId == 0x2c;
+            const bool bWeapon = ClassId == 0x20;
+            const bool bAraignos = ClassId == 0x21;
+            const bool bBonus = ClassId == 0x0e;
+            const bool bTeleporter = ClassId == 0x24;
+            const bool bAmortos = ClassId == 0x29;
+            const bool bDca = ClassId == 0x1b;
+            const bool bFruit = ClassId == 0x16;
+            const bool bNativ = ClassId == 0x0a;
+            const bool bWolfen = ClassId == 0x09;
+            const bool bCommander = ClassId == 0x13;
+            const bool bKim = ClassId == 0x06;
+            const bool bBoomy = ClassId == 0x05;
+            const bool bAton = ClassId == 0x38;
+            const bool bRope = ClassId == 0x0f;
+            const bool bStiller = ClassId == 0x4c;
+            const bool bAmbre = ClassId == 0x14;
+            const bool bFountain = ClassId == 0x52;
+            const bool bCheckpoints = ClassId == 0x1e;
+            const bool bBridge = ClassId == 0x17;
+            const bool bFog = ClassId == 0x3d;
+            const bool bShoot = ClassId == 0x3e;
+            const bool bMoney = ClassId == 0x32;
+            const bool bBoxClass = ClassId == 0x35;
+            const bool bFx = ClassId == 0x2e;
+            const bool bCluster = ClassId == 0x18;
+            const bool bCompanion = ClassId == 0x19;
+            const bool bGravity = ClassId == 0x10;
+            const bool bRune = ClassId == 0x51;
+            const bool bMicken = ClassId == 0x07;
+            const bool bBasicBox = ClassId == 0x39;
+            const bool bNativCmd = ClassId == 0x3c;
             Scene.Reset();
             Scene.AddZeroed(16);
             U32(Scene, 1);        // has cluster
@@ -114,8 +193,8 @@ namespace
             Tag(Actor, "TSNI");
             U32(Actor, 0);        // size placeholder
             U32(Actor, 0);        // actor index
-            U32(Actor, 0x0d);     // class id
-            Tag(Actor, "PLATFORM");
+            U32(Actor, uint32(ClassId));     // class id
+            Tag(Actor, bHedgehog ? "HEDGEHOG" : (bProjectile ? "PROJECTILE" : (bSwitch ? "SWITCH" : (bWind ? "WIND" : (bTrap ? "TRAP" : (bWeapon ? "WEAPON" : (bAraignos ? "ARAIGNOS" : (bBonus ? "BONUS" : (bTeleporter ? "TELEPORTER" : (bAmortos ? "AMORTOS" : (bDca ? "DCA" : (bFruit ? "FRUIT" : (bNativ ? "NATIV" : (bWolfen ? "WOLFEN" : (bCommander ? "COMMANDER" : (bKim ? "KIM" : (bBoomy ? "BOOMY" : (bAton ? "ATON" : (bRope ? "ROPE" : (bStiller ? "STILLER" : (bAmbre ? "AMBRE" : (bFountain ? "FOUNTAIN" : (bCheckpoints ? "CHECKPOINTS" : (bBridge ? "BRIDGE" : (bFog ? "FOGMANAGER" : (bShoot ? "SHOOT" : (bMoney ? "MONEY" : (bBoxClass ? "BOX" : (bFx ? "ACTORFX" : (bCluster ? "CLUSTERISER" : (bCompanion ? "COMPANION" : (bGravity ? "BELL" : (bRune ? "RUNE" : (bMicken ? "MICKEN" : (bBasicBox ? "BASICBOX" : (bNativCmd ? "NATIVCMD" : "PLATFORM"))))))))))))))))))))))))))))))))))));
             Actor.Add(0);
             const int32 AbsoluteNameEnd = Scene.Num() + Actor.Num();
             if (AbsoluteNameEnd % 4) Actor.AddZeroed(4 - AbsoluteNameEnd % 4);
@@ -125,7 +204,407 @@ namespace
             for (const float Value : { 1.0f, 2.0f, 3.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f })
                 F32(Actor, Value);
             U32(Actor, 0);        // macro animations
-            U32(Actor, 0);        // behaviours
+            if (bHedgehog)
+            {
+                // Behaviour 3 carries a path-follow index; behaviour 4 is empty.
+                U32(Actor, 2);
+                U32(Actor, 3); U32(Actor, 4);
+                U32(Actor, 4); U32(Actor, 0);
+                I32(Actor, 12);
+            }
+            else if (bProjectile)
+            {
+                // Every projectile-owned payload shape: stand (12), straight (20),
+                // portable (12), inventory (44), lava ball with field 18 (44),
+                // excuse (12), inactive (12), new (4).
+                U32(Actor, 8);
+                U32(Actor, 3); U32(Actor, 12);
+                U32(Actor, 4); U32(Actor, 20);
+                U32(Actor, 5); U32(Actor, 12);
+                U32(Actor, 9); U32(Actor, 44);
+                U32(Actor, 10); U32(Actor, 44);
+                U32(Actor, 11); U32(Actor, 12);
+                U32(Actor, 12); U32(Actor, 12);
+                U32(Actor, 13); U32(Actor, 4);
+                // Stand: behaviourId, field C, material.
+                I32(Actor, 3); I32(Actor, 1); I32(Actor, 7);
+                // Straight: behaviourId, field C, speed, acceleration, field 18.
+                I32(Actor, 4); I32(Actor, 2); F32(Actor, 3.5f); F32(Actor, 4.5f); F32(Actor, 5.5f);
+                // Portable: behaviourId, field C, field 10.
+                I32(Actor, 5); I32(Actor, 3); F32(Actor, 6.5f);
+                // Inventory: present, two u64, purchase/fields, no object, initial.
+                U32(Actor, 1); U32(Actor, 11); U32(Actor, 0); U32(Actor, 12); U32(Actor, 0);
+                I32(Actor, 21); I32(Actor, 22); I32(Actor, 23); I32(Actor, 24);
+                U32(Actor, 0); I32(Actor, 3);
+                // Lava ball: id, field C, field 10/14, field 30, field 18, path,
+                // field 2c/34/38/3c.
+                I32(Actor, 10); I32(Actor, 4); F32(Actor, 1.0f); F32(Actor, 2.0f);
+                I32(Actor, 3); F32(Actor, 4.0f); I32(Actor, 5); I32(Actor, 6);
+                I32(Actor, 7); I32(Actor, 8); I32(Actor, 9);
+                // Excuse: behaviourId, field C, actor reference.
+                I32(Actor, 11); I32(Actor, 5); I32(Actor, 0);
+                // Inactive: activate message, flags, active behaviour.
+                I32(Actor, 6); U32(Actor, 7); I32(Actor, 3);
+                // New: CBehaviourProjectile::Create only.
+                I32(Actor, 13);
+            }
+            else if (bPlatform && bTeleportBehaviour)
+            {
+                // CBehaviourTeleportRandom payload: one path-follow index.
+                U32(Actor, 1);
+                U32(Actor, 10); U32(Actor, 4);
+                I32(Actor, 33);
+            }
+            else if (bSwitch && bSwitchBehaviours)
+            {
+                // WolfenCounter (20), Sequence (24) and Timed (124).
+                U32(Actor, 3);
+                U32(Actor, 4); U32(Actor, 20);
+                U32(Actor, 7); U32(Actor, 24);
+                U32(Actor, 8); U32(Actor, 124);
+                // WolfenCounter.
+                I32(Actor, 2); F32(Actor, 3.5f); I32(Actor, 4); I32(Actor, 5); I32(Actor, 6);
+                // Sequence: field 08, field 0C, count 3, three values.
+                I32(Actor, 7); I32(Actor, 8); U32(Actor, 3); I32(Actor, 11); I32(Actor, 12); I32(Actor, 13);
+                // Timed: base delay, two entries.
+                F32(Actor, 0.5f); U32(Actor, 2);
+                // Entry 0: zero targets + camera + delay.
+                U32(Actor, 0);
+                for (int32 Item = 0; Item < 8; ++Item) U32(Actor, uint32(21 + Item));
+                F32(Actor, 1.5f);
+                // Entry 1: one target + camera + delay.
+                U32(Actor, 1);
+                for (int32 Item = 0; Item < 7; ++Item) U32(Actor, uint32(41 + Item));
+                for (int32 Item = 0; Item < 8; ++Item) U32(Actor, uint32(51 + Item));
+                F32(Actor, 2.5f);
+                // Playback mode and flags.
+                U32(Actor, 3); U32(Actor, 4);
+            }
+            else if (bWind)
+            {
+                // CBehaviourWind::Create is empty; the record still exists.
+                U32(Actor, 1);
+                U32(Actor, 2); U32(Actor, 0);
+            }
+            else if (bTrap && bTrapBehaviours)
+            {
+                U32(Actor, 2);
+                U32(Actor, 2); U32(Actor, 12);
+                U32(Actor, 3); U32(Actor, 12);
+                U32(Actor, 1); U32(Actor, 2); U32(Actor, 3);
+                U32(Actor, 4); U32(Actor, 5); U32(Actor, 6);
+            }
+            else if (bWeapon && bWeaponBehaviours)
+            {
+                U32(Actor, 3);
+                U32(Actor, 3); U32(Actor, 52);
+                U32(Actor, 4); U32(Actor, 56);
+                U32(Actor, 6); U32(Actor, 52);                // Shared burst block: two 16-byte entries.
+                for (int32 Entry = 0; Entry < 2; ++Entry)
+                {
+                    F32(Actor, float(1 + Entry * 4));
+                    I32(Actor, 2 + Entry * 4);
+                    F32(Actor, 3 + Entry * 4);
+                    F32(Actor, 4 + Entry * 4);
+                }
+                // Pistol fields.
+                U32(Actor, 21); U32(Actor, 22); I32(Actor, 23); I32(Actor, 24); I32(Actor, 25);
+                // Sniper: burst + field40/44/sound + texture/mesh/material.
+                for (int32 Entry = 0; Entry < 2; ++Entry)
+                {
+                    F32(Actor, float(31 + Entry * 4));
+                    I32(Actor, 32 + Entry * 4);
+                    F32(Actor, 33 + Entry * 4);
+                    F32(Actor, 34 + Entry * 4);
+                }
+                U32(Actor, 41); U32(Actor, 42); I32(Actor, 43); I32(Actor, 44); I32(Actor, 45); I32(Actor, 46);
+                // RPG: burst + actor stream (two refs).
+                for (int32 Entry = 0; Entry < 2; ++Entry)
+                {
+                    F32(Actor, float(51 + Entry * 4));
+                    I32(Actor, 52 + Entry * 4);
+                    F32(Actor, 53 + Entry * 4);
+                    F32(Actor, 54 + Entry * 4);
+                }
+                U32(Actor, 4); I32(Actor, 61); I32(Actor, 62); I32(Actor, 63); I32(Actor, 64);
+            }
+            else if (bAraignos && bAraignosBehaviour)
+            {
+                // CBhvDefault::Create is empty; the record still exists.
+                U32(Actor, 1);
+                U32(Actor, 2); U32(Actor, 0);
+            }
+            else if (bBonus && bBonusBehaviours)
+            {
+                U32(Actor, 4);
+                U32(Actor, 3); U32(Actor, 32);
+                U32(Actor, 4); U32(Actor, 52);
+                U32(Actor, 5); U32(Actor, 4);
+                U32(Actor, 6); U32(Actor, 4);
+                // Turn: alone prefix + turn value.
+                F32(Actor, 1.0f); F32(Actor, 2.0f); F32(Actor, 3.0f); U32(Actor, 4);
+                F32(Actor, 5.0f); U32(Actor, 6); I32(Actor, 7); F32(Actor, 8.0f);
+                // Path: alone prefix + path index/floats/word.
+                F32(Actor, 11.0f); F32(Actor, 12.0f); F32(Actor, 13.0f); U32(Actor, 14);
+                F32(Actor, 15.0f); U32(Actor, 16); I32(Actor, 17); I32(Actor, 18);
+                F32(Actor, 19.0f); F32(Actor, 20.0f); F32(Actor, 21.0f); F32(Actor, 22.0f);
+                U32(Actor, 23);
+                // Flock path + add-on field.
+                I32(Actor, 31);
+                F32(Actor, 32.0f);
+            }
+            else if (bTeleporter)
+            {
+                // CBehaviourTeleporterDefault::Create is empty; the record still exists.
+                U32(Actor, 1);
+                U32(Actor, 2); U32(Actor, 0);
+            }
+            else if (bAmortos)
+            {
+                // CBehaviourAmortosStand::Create is empty; the record still exists.
+                U32(Actor, 1);
+                U32(Actor, 2); U32(Actor, 0);
+            }
+            else if (bDca)
+            {
+                // Default (0), controlled (40) and trajectory (12).
+                U32(Actor, 3);
+                U32(Actor, 2); U32(Actor, 0);
+                U32(Actor, 3); U32(Actor, 40);
+                U32(Actor, 5); U32(Actor, 12);
+                // Controlled (40 bytes).
+                F32(Actor, 1.0f); F32(Actor, 2.0f); F32(Actor, 3.0f); F32(Actor, 4.0f);
+                F32(Actor, 5.0f); F32(Actor, 6.0f); F32(Actor, 7.0f);
+                F32(Actor, 8.0f); F32(Actor, 9.0f); F32(Actor, 10.0f);
+                // Trajectory (12 bytes).
+                I32(Actor, 11); F32(Actor, 12.5f); U32(Actor, 13);
+            }
+            else if (bFruit)
+            {
+                // Suspended (0), squashed (4), inventory (44), bonus (8) and
+                // projectile-new (4, left raw).
+                U32(Actor, 5);
+                U32(Actor, 3); U32(Actor, 0);
+                U32(Actor, 4); U32(Actor, 4);
+                U32(Actor, 5); U32(Actor, 44);
+                U32(Actor, 6); U32(Actor, 8);
+                U32(Actor, 7); U32(Actor, 4);
+                F32(Actor, 1.5f);   // squashed value
+                // Inventory: present, two u64, purchase/fields, no object, initial.
+                U32(Actor, 1);
+                U32(Actor, 11); U32(Actor, 0); U32(Actor, 12); U32(Actor, 0);
+                I32(Actor, 13); I32(Actor, 14); I32(Actor, 15); I32(Actor, 16);
+                U32(Actor, 0); I32(Actor, 3);
+                I32(Actor, 21); I32(Actor, 22);   // bonus
+                I32(Actor, 7);                     // projectile-new raw
+            }
+            else if (bNativ)
+            {
+                // Exorcism (empty) and take-and-put (one 16-byte trajectory).
+                U32(Actor, 2);
+                U32(Actor, 4); U32(Actor, 0);
+                U32(Actor, 6); U32(Actor, 20);
+                U32(Actor, 1);   // one trajectory
+                F32(Actor, 3.5f); I32(Actor, 21); I32(Actor, 22); F32(Actor, 23.5f);
+            }
+            else if (bWolfen)
+            {
+                // Track (8), DCA (12) and Avoid (12).
+                U32(Actor, 3);
+                U32(Actor, 15); U32(Actor, 8);
+                U32(Actor, 23); U32(Actor, 12);
+                U32(Actor, 24); U32(Actor, 12);
+                U32(Actor, 1); F32(Actor, 2.5f);
+                U32(Actor, 2); I32(Actor, 21); F32(Actor, 3.5f);
+                U32(Actor, 3); F32(Actor, 4.5f); F32(Actor, 5.5f);
+            }
+            else if (bCommander)
+            {
+                // Commander (72 bytes: squad config + one switch target).
+                U32(Actor, 1);
+                U32(Actor, 2); U32(Actor, 72);
+                U32(Actor, 7); U32(Actor, 8);
+                U32(Actor, 1);
+                for (int32 Item = 0; Item < 7; ++Item) U32(Actor, uint32(31 + Item));
+                for (int32 Item = 0; Item < 8; ++Item) U32(Actor, uint32(41 + Item));
+            }
+            else if (bKim)
+            {
+                // Empty hero-default behaviour.
+                U32(Actor, 1);
+                U32(Actor, 3); U32(Actor, 0);
+            }
+            else if (bBoomy)
+            {
+                // CBehaviourBoomyLaunch::Create is empty; the record exists.
+                U32(Actor, 1);
+                U32(Actor, 2); U32(Actor, 0);
+            }
+            else if (bAton)
+            {
+                // CBehaviourAtonEscape has no Create override; empty record.
+                U32(Actor, 1);
+                U32(Actor, 3); U32(Actor, 0);
+            }
+            else if (bRope)
+            {
+                // CBehaviourRopeStand::Create is empty; the record exists.
+                U32(Actor, 1);
+                U32(Actor, 2); U32(Actor, 0);
+            }
+            else if (bStiller)
+            {
+                // CBehaviourStillerStand::Create is empty; the record exists.
+                U32(Actor, 1);
+                U32(Actor, 2); U32(Actor, 0);
+            }
+            else if (bAmbre)
+            {
+                // CBehaviourAmbre has no Create override; empty record.
+                U32(Actor, 1);
+                U32(Actor, 2); U32(Actor, 0);
+            }
+            else if (bFountain)
+            {
+                // CBehaviourBonusFountainStand has no Create override.
+                U32(Actor, 1);
+                U32(Actor, 2); U32(Actor, 0);
+            }
+            else if (bCheckpoints)
+            {
+                // CBehaviourCheckpoint::Create is empty; the record exists.
+                U32(Actor, 1);
+                U32(Actor, 2); U32(Actor, 0);
+            }
+            else if (bBridge)
+            {
+                // Basic (32 bytes) and wind-aware (20 bytes).
+                U32(Actor, 2);
+                U32(Actor, 2); U32(Actor, 32);
+                U32(Actor, 3); U32(Actor, 20);
+                F32(Actor, 1.0f); F32(Actor, 2.0f); F32(Actor, 3.0f);
+                F32(Actor, 4.0f); F32(Actor, 5.0f); F32(Actor, 6.0f);
+                F32(Actor, 7.0f); F32(Actor, 8.0f);
+                for (int32 Item = 9; Item <= 13; ++Item) F32(Actor, float(Item));
+            }
+            else if (bFog)
+            {
+                // Fog zones: count + count x 28 bytes (total 32 for one zone).
+                U32(Actor, 1);
+                U32(Actor, 2); U32(Actor, 32);
+                U32(Actor, 1); U32(Actor, 1); I32(Actor, 2);
+                F32(Actor, 3.5f); F32(Actor, 4.5f);
+                U32(Actor, 0x11223344); U32(Actor, 5); F32(Actor, 6.5f);
+            }
+            else if (bShoot)
+            {
+                // Fire (28 bytes: 3 words + 3 refs) and wave (28 bytes: 7 floats).
+                U32(Actor, 2);
+                U32(Actor, 3); U32(Actor, 28);
+                U32(Actor, 4); U32(Actor, 28);
+                U32(Actor, 7); F32(Actor, 1.5f); F32(Actor, 2.5f);
+                U32(Actor, 3); I32(Actor, 21); I32(Actor, 22); I32(Actor, 23);
+                for (int32 Item = 1; Item <= 7; ++Item) F32(Actor, float(Item));
+            }
+            else if (bMoney)
+            {
+                // Flock (4-byte path index) and add-on (empty Create).
+                U32(Actor, 2);
+                U32(Actor, 2); U32(Actor, 4);
+                U32(Actor, 3); U32(Actor, 0);
+                I32(Actor, 21);
+            }
+            else if (bBoxClass)
+            {
+                // CBehaviourBoxStand::Create is empty; the record exists.
+                U32(Actor, 1);
+                U32(Actor, 3); U32(Actor, 0);
+            }
+            else if (bFx)
+            {
+                // Single (4), path (8) and unknown (count + ids).
+                U32(Actor, 3);
+                U32(Actor, 2); U32(Actor, 4);
+                U32(Actor, 3); U32(Actor, 8);
+                U32(Actor, 4); U32(Actor, 12);
+                I32(Actor, 7);
+                I32(Actor, 8); I32(Actor, 9);
+                U32(Actor, 2); I32(Actor, 10); I32(Actor, 11);
+            }
+            else if (bCluster)
+            {
+                // One cluster zone: header, 4 id lists, 1 hash list and tail.
+                U32(Actor, 1);
+                U32(Actor, 2); U32(Actor, 52);
+                U32(Actor, 1);                         // zone count
+                U32(Actor, 1); U32(Actor, 2);          // flags, zone ref
+                U32(Actor, 1); I32(Actor, 3);          // actors
+                U32(Actor, 0);                         // other actors
+                U32(Actor, 1); I32(Actor, 4);          // cameras
+                U32(Actor, 0);                         // lights
+                U32(Actor, 1); U32(Actor, 0x11223344); U32(Actor, 0x55667788);
+                I32(Actor, 5);                         // other zone ref
+            }
+            else if (bCompanion)
+            {
+                // One alert: empty conditions, empty switch, empty conditioned list.
+                U32(Actor, 1);
+                U32(Actor, 3); U32(Actor, 112);
+                U32(Actor, 1);                         // one alert
+                U32(Actor, 0);                         // conditions
+                U32(Actor, 1); U32(Actor, 2); U32(Actor, 3); U32(Actor, 4);
+                F32(Actor, 5.5f);
+                I32(Actor, 6);
+                F32(Actor, 7.0f); F32(Actor, 8.0f); F32(Actor, 9.0f);
+                I32(Actor, 10);
+                U32(Actor, 0);                         // field 34 list
+                U32(Actor, 0x11223344); U32(Actor, 0x55667788);
+                F32(Actor, 11.5f); I32(Actor, 12); F32(Actor, 13.5f);
+                U32(Actor, 0);                         // switch targets
+                for (int32 Item = 0; Item < 8; ++Item) U32(Actor, uint32(21 + Item));
+                U32(Actor, 0);                         // conditioned blocks
+            }
+            else if (bGravity)
+            {
+                // Fall (4-byte sound) and bell (sound, field C, one-target switch).
+                U32(Actor, 2);
+                U32(Actor, 3); U32(Actor, 4);
+                U32(Actor, 4); U32(Actor, 72);
+                I32(Actor, 31);                    // fall sound
+                I32(Actor, 32);                    // bell sound
+                F32(Actor, 1.5f);                  // bell field C
+                U32(Actor, 1);                     // one switch target
+                for (int32 Item = 0; Item < 7; ++Item) U32(Actor, uint32(41 + Item));
+                for (int32 Item = 0; Item < 8; ++Item) U32(Actor, uint32(51 + Item));
+            }
+            else if (bRune)
+            {
+                // CBehaviourRune::Create is empty; the record exists.
+                U32(Actor, 1);
+                U32(Actor, 2); U32(Actor, 0);
+            }
+            else if (bMicken)
+            {
+                // Eat (16 bytes) and the empty squashed record.
+                U32(Actor, 2);
+                U32(Actor, 4); U32(Actor, 16);
+                U32(Actor, 5); U32(Actor, 0);
+                F32(Actor, 1.5f); F32(Actor, 2.5f);
+                I32(Actor, 3); I32(Actor, 21);
+            }
+            else if (bBasicBox)
+            {
+                // CBehaviourBasicBoxStand::Create is empty; the record exists.
+                U32(Actor, 1);
+                U32(Actor, 2); U32(Actor, 0);
+            }
+            else if (bNativCmd)
+            {
+                // CBehaviourNativCmdStand::Create is empty; the record exists.
+                U32(Actor, 1);
+                U32(Actor, 2); U32(Actor, 0);
+            }
+            else U32(Actor, 0);   // behaviours
             U32(Actor, 0);        // models
             const int32 Common = Actor.Num();
             U32(Actor, 0);        // default behaviour
@@ -147,6 +626,531 @@ namespace
             F32(Actor, 1.0f);     // lighting value
             U32(Actor, 0);        // scenario conditions
             check(Actor.Num() - Common == 84);
+            if (bHedgehog)
+            {
+                F32(Actor, 1.5f);     // weightB
+                U32(Actor, 100);      // life maximum
+                F32(Actor, 1.0f);     // gravity scale
+                F32(Actor, 0.0f);     // dynamic ext 4
+                F32(Actor, 0.0f);     // dynamic ext 8
+                F32(Actor, 3.0f);     // walk speed
+                F32(Actor, 4.0f);     // walk acceleration
+                F32(Actor, 5.0f);     // walk rotation speed
+                F32(Actor, 6.0f);     // run speed
+                U32(Actor, 7);        // field 374
+                U32(Actor, 8);        // field 378
+                F32(Actor, 9.0f);     // field 368
+                F32(Actor, 10.0f);    // field 36C
+                F32(Actor, 11.0f);    // field 370
+                U32(Actor, 1);        // add-on flags
+                U32(Actor, 2);        // add-on money type
+                I32(Actor, 3);        // add-on money count
+                I32(Actor, 4);        // add-on bonus count
+                I32(Actor, 5);        // add-on field C
+                U32(Actor, 1);        // add-on sub-object mode
+                F32(Actor, 0.25f); F32(Actor, 0.5f); F32(Actor, 0.75f);
+                F32(Actor, 1.25f); F32(Actor, 1.5f);
+                U32(Actor, 13);       // field 380
+            }
+            else if (bProjectile)
+            {
+                F32(Actor, 1.25f);    // weightB
+                U32(Actor, 16777217); // life maximum (above float integer precision)
+                F32(Actor, 0.5f);     // gravity scale
+                F32(Actor, 0.25f);    // dynamic ext 4
+                F32(Actor, 0.75f);    // dynamic ext 8
+                F32(Actor, 1.0f); F32(Actor, 2.0f); F32(Actor, 3.0f);
+                U32(Actor, 4);        // sub-object flags
+                F32(Actor, 5.0f); F32(Actor, 6.0f); F32(Actor, 7.0f);
+                F32(Actor, 8.0f); F32(Actor, 9.0f); F32(Actor, 10.0f);
+                U32(Actor, 11);       // field 28
+                U32(Actor, 12);       // material id
+                U32(Actor, 13);       // field 30
+                U32(Actor, 14);       // field 34
+                U32(Actor, 15);       // field 38
+                U32(Actor, 16);       // field 3c
+                F32(Actor, 17.0f); F32(Actor, 18.0f);
+                // Pattern part without the optional field 0x24 (132-byte payload).
+                F32(Actor, 1.0f); F32(Actor, 2.0f); F32(Actor, 3.0f);
+                F32(Actor, 4.0f); F32(Actor, 5.0f); F32(Actor, 6.0f);
+                U32(Actor, 7);        // pattern material id
+                F32(Actor, 8.0f);     // point count
+                F32(Actor, 9.0f);     // field 20
+                U32(Actor, 10);       // field 28
+            }
+            else if (bSwitch)
+            {
+                // S_NTF_TARGET_STREAM_REF: one target plus camera.
+                U32(Actor, 1);
+                for (int32 Item = 0; Item < 7; ++Item) U32(Actor, uint32(31 + Item));
+                for (int32 Item = 0; Item < 8; ++Item) U32(Actor, uint32(41 + Item));
+            }
+            else if (bWind)
+            {
+                U32(Actor, 0x1234);   // field 160
+                for (int32 Item = 0; Item < 10; ++Item) F32(Actor, float(1 + Item));
+                U32(Actor, 0x5678);   // field 190
+                U32(Actor, 9);        // sound id
+                I32(Actor, 3);        // activation zone
+                U32(Actor, 0);        // actor stream
+                U32(Actor, 5);        // material
+                U32(Actor, 8);        // zone 1c4
+                U32(Actor, 0x80a0b0c0); // colour 1c8
+                U32(Actor, 7);        // waypoint 1cc
+                U32(Actor, 0x11223344); U32(Actor, 0x55667788); // sector hierarchy hash
+                if (bWindSwitches)
+                {
+                    // Switch 0: one target + camera. Switches 1/2: empty.
+                    U32(Actor, 1);
+                    for (int32 Item = 0; Item < 7; ++Item) U32(Actor, uint32(61 + Item));
+                    for (int32 Item = 0; Item < 8; ++Item) U32(Actor, uint32(71 + Item));
+                    U32(Actor, 0);
+                    for (int32 Item = 0; Item < 8; ++Item) U32(Actor, uint32(81 + Item));
+                    U32(Actor, 0);
+                    for (int32 Item = 0; Item < 8; ++Item) U32(Actor, uint32(91 + Item));
+                }
+                for (int32 Item = 0; Item < 5; ++Item) F32(Actor, float(11 + Item));
+                I32(Actor, 17);       // waypoint ref
+                F32(Actor, 18.0f); F32(Actor, 19.0f);
+            }
+            else if (bTrap)
+            {
+                F32(Actor, 1.5f);     // weightB
+                U32(Actor, 0);        // actor stream
+                U32(Actor, 11); U32(Actor, 12); U32(Actor, 13); U32(Actor, 14);
+                I32(Actor, 15);       // field 24
+                I32(Actor, 16);       // actor ref
+                F32(Actor, 2.5f);     // speed
+                F32(Actor, 3.5f);     // acceleration
+                I32(Actor, 17);       // path follow
+                F32(Actor, 4.5f);     // field 4c
+                U32(Actor, 5);        // required escapes
+                U32(Actor, 1);        // trap stream count
+                for (int32 Item = 0; Item < 7; ++Item) U32(Actor, uint32(21 + Item));
+                for (int32 Item = 0; Item < 8; ++Item) U32(Actor, uint32(31 + Item));
+            }
+            else if (bWeapon)
+            {
+                F32(Actor, 1.5f);   // weightB
+                F32(Actor, 2.5f);   // field 1d8
+                F32(Actor, 3.5f);   // field 1dc
+            }
+            else if (bAraignos)
+            {
+                F32(Actor, 1.25f);   // weightB
+                I32(Actor, 3);       // path follow
+                F32(Actor, 2.0f); F32(Actor, 3.0f); F32(Actor, 4.0f);
+                U32(Actor, 5); U32(Actor, 6); U32(Actor, 7);
+                U32(Actor, 1); U32(Actor, 2); I32(Actor, 3); I32(Actor, 4); I32(Actor, 5);
+                U32(Actor, 1);       // add-on sub-object mode
+                F32(Actor, 0.25f); F32(Actor, 0.5f); F32(Actor, 0.75f);
+                F32(Actor, 1.25f); F32(Actor, 1.5f);
+            }
+            else if (bBonus)
+            {
+                F32(Actor, 1.5f);   // weightB
+                I32(Actor, 9);      // sound ref
+                I32(Actor, 10);     // flare material
+                I32(Actor, 11);     // animation material
+            }
+            else if (bTeleporter)
+            {
+                I32(Actor, 3);       // subsector material
+                U32(Actor, 0x11223344); U32(Actor, 0x55667788); // hash
+                I32(Actor, 4);       // field 16c
+                U32(Actor, 1);       // destination count
+                I32(Actor, 5); I32(Actor, 6); I32(Actor, 7); // level, elevator, field 8
+                // Switch 0: one target + camera. Switches 1/2: empty.
+                U32(Actor, 1);
+                for (int32 Item = 0; Item < 7; ++Item) U32(Actor, uint32(21 + Item));
+                for (int32 Item = 0; Item < 8; ++Item) U32(Actor, uint32(31 + Item));
+                U32(Actor, 0);
+                for (int32 Item = 0; Item < 8; ++Item) U32(Actor, uint32(41 + Item));
+                U32(Actor, 0);
+                for (int32 Item = 0; Item < 8; ++Item) U32(Actor, uint32(51 + Item));
+                for (int32 Item = 0; Item < 9; ++Item) I32(Actor, 11 + Item);
+                U32(Actor, 2);       // waypoint count
+                I32(Actor, 61); I32(Actor, 62);
+                I32(Actor, 63); I32(Actor, 64);
+                U32(Actor, 1);       // conditioned block count
+                U32(Actor, 2);       // operations
+                I32(Actor, 71); I32(Actor, 72); I32(Actor, 73);
+                I32(Actor, 74); I32(Actor, 75); I32(Actor, 76);
+                U32(Actor, 2);       // conditions
+                I32(Actor, 81); I32(Actor, 82); I32(Actor, 83); I32(Actor, 84);
+                I32(Actor, 85); I32(Actor, 86); I32(Actor, 87); I32(Actor, 88);
+            }
+            else if (bAmortos)
+            {
+                U32(Actor, 1); I32(Actor, 11);   // checkpoint stream
+                U32(Actor, 1); I32(Actor, 12);   // stream 188
+                U32(Actor, 0);                    // stream 18C
+                I32(Actor, 13);                   // actor ref 190
+                // Serialized order 164,168,160,16C,170,174,178,17C,180.
+                for (int32 Item = 1; Item <= 9; ++Item) F32(Actor, float(Item));
+                U32(Actor, 1); I32(Actor, 2); I32(Actor, 3); I32(Actor, 4); I32(Actor, 5);
+                U32(Actor, 1);                    // add-on sub-object mode
+                F32(Actor, 0.25f); F32(Actor, 0.5f); F32(Actor, 0.75f);
+                F32(Actor, 1.25f); F32(Actor, 1.5f);
+                I32(Actor, 14);                   // field 1c8
+                U32(Actor, 1);                    // switch 0: one target
+                for (int32 Item = 0; Item < 7; ++Item) U32(Actor, uint32(21 + Item));
+                for (int32 Item = 0; Item < 8; ++Item) U32(Actor, uint32(31 + Item));
+                U32(Actor, 0);                    // switch 1: empty target list
+                for (int32 Item = 0; Item < 8; ++Item) U32(Actor, uint32(41 + Item));
+            }
+            else if (bDca)
+            {
+                I32(Actor, 1);        // field 504
+                I32(Actor, 2);        // field 500
+                F32(Actor, 3.5f);     // field 464
+                I32(Actor, 4);        // field 508
+                I32(Actor, 5);        // field 50c
+                F32(Actor, 6.5f);     // aim adjust
+                U32(Actor, 1); I32(Actor, 7);   // fire-shot actor stream
+                U32(Actor, 8);        // field 450
+                U32(Actor, 9);        // field 454
+            }
+            else if (bFruit)
+            {
+                F32(Actor, 1.25f);    // weightB
+                U32(Actor, 16777217); // life maximum (above float integer precision)
+                F32(Actor, 2.5f);     // gravity scale
+                F32(Actor, 0.5f);     // dynamic ext 4
+                F32(Actor, 0.75f);    // dynamic ext 8
+                U32(Actor, 55);       // field 360
+                U32(Actor, 1);        // switch: one target
+                for (int32 Item = 0; Item < 7; ++Item) U32(Actor, uint32(31 + Item));
+                for (int32 Item = 0; Item < 8; ++Item) U32(Actor, uint32(41 + Item));
+            }
+            else if (bNativ)
+            {
+                F32(Actor, 1.25f);    // weightB
+                U32(Actor, 16777217); // life maximum (above float integer precision)
+                F32(Actor, 2.0f);     // gravity scale
+                F32(Actor, 0.5f);     // dynamic ext 4
+                F32(Actor, 0.75f);    // dynamic ext 8
+                U32(Actor, 11); U32(Actor, 12); U32(Actor, 13);
+                F32(Actor, 1.5f); F32(Actor, 2.5f);
+                U32(Actor, 14); I32(Actor, 15); I32(Actor, 16);
+                U32(Actor, 17); U32(Actor, 18); U32(Actor, 19);
+            }
+            else if (bWolfen)
+            {
+                // CActorFighter prefix: autonomous + 156-byte fixed block and
+                // empty blow/grab/react/combo databases.
+                F32(Actor, 1.25f);    // weightB
+                U32(Actor, 16777217); // life maximum (above float integer precision)
+                F32(Actor, 2.0f);     // gravity scale
+                F32(Actor, 0.5f);     // dynamic ext 4
+                F32(Actor, 0.75f);    // dynamic ext 8
+                for (int32 Index = 0; Index < 39; ++Index) U32(Actor, 0);
+                U32(Actor, 0); U32(Actor, 0); U32(Actor, 0); U32(Actor, 0);
+                U32(Actor, 0);        // weapon actor index
+                // Wolfen fields.
+                U32(Actor, 0);        // field b74
+                F32(Actor, 30.0f); F32(Actor, 90.0f); F32(Actor, 10.0f); F32(Actor, 5.0f);
+                U32(Actor, 0x1234);   // vision flags
+                I32(Actor, 1);        // start sector
+                F32(Actor, 100.0f); F32(Actor, 50.0f);   // hearing
+                F32(Actor, 10.0f);    // vision detection
+                F32(Actor, 3.0f);     // field cf4
+                F32(Actor, 4.0f); F32(Actor, 5.0f); F32(Actor, 6.0f); F32(Actor, 1.5f);
+                F32(Actor, 7.0f); F32(Actor, 8.0f); F32(Actor, 9.0f);
+                U32(Actor, 0);        // reserved word matched by the reader
+                U32(Actor, 3);        // magic required
+                U32(Actor, 4);        // field d30
+                F32(Actor, 1.1f); F32(Actor, 2.2f); F32(Actor, 3.3f);
+                // Fight parameters.
+                for (int32 Index = 1; Index <= 5; ++Index) U32(Actor, uint32(Index));
+                for (int32 Index = 6; Index <= 10; ++Index) U32(Actor, uint32(Index));
+                F32(Actor, 0.1f); F32(Actor, 0.2f); F32(Actor, 0.3f); F32(Actor, 0.4f);
+                U32(Actor, 0); U32(Actor, 0); U32(Actor, 0);   // capabilities
+                U32(Actor, 1); U32(Actor, 11);                 // combo list 1
+                U32(Actor, 1); U32(Actor, 12);                 // combo list 2
+                U32(Actor, 13); U32(Actor, 14);
+                for (int32 Index = 1; Index <= 6; ++Index) F32(Actor, float(Index));
+                for (int32 Index = 15; Index <= 18; ++Index) U32(Actor, uint32(Index));
+            }
+            else if (bCommander)
+            {
+                U32(Actor, 1); U32(Actor, 2); U32(Actor, 3);
+                I32(Actor, 4); I32(Actor, 5);      // new path id, actor ref
+                F32(Actor, 1.5f); U32(Actor, 6); U32(Actor, 7);   // squad
+                U32(Actor, 1); I32(Actor, 8);      // one team enemy
+                U32(Actor, 1); I32(Actor, 9); I32(Actor, 10);     // one component
+                for (int32 Index = 1; Index <= 14; ++Index) F32(Actor, float(Index));
+            }
+            else if (bKim)
+            {
+                // CActorFighter prefix.
+                F32(Actor, 1.25f); U32(Actor, 100); F32(Actor, 2.0f);
+                F32(Actor, 0.5f); F32(Actor, 0.75f);
+                for (int32 Index = 0; Index < 39; ++Index) U32(Actor, 0);
+                U32(Actor, 0); U32(Actor, 0); U32(Actor, 0); U32(Actor, 0);
+                U32(Actor, 0);
+                // Ten bone keys.
+                for (int32 Index = 1; Index <= 10; ++Index) U32(Actor, uint32(Index));
+                U32(Actor, 0);        // climb zones
+                U32(Actor, 0);        // tutorials
+                U32(Actor, 0);        // projectile zones
+                U32(Actor, 0);        // boomy pairs
+                U32(Actor, 1); I32(Actor, 11);   // one zone stream entry
+                U32(Actor, 12); U32(Actor, 13); F32(Actor, 1.5f);  // material/fx/joke
+                U32(Actor, 0);        // actor cameras
+                U32(Actor, 14); U32(Actor, 15);   // field 15d4, fx init
+                U32(Actor, 16); U32(Actor, 17); U32(Actor, 18);   // fx handles
+            }
+            else if (bBoomy)
+            {
+                F32(Actor, 1.25f);               // weight
+                F32(Actor, 30.0f); F32(Actor, 90.0f); F32(Actor, 10.0f); F32(Actor, 5.0f);
+                U32(Actor, 1);                   // vision flags
+                U32(Actor, 11); U32(Actor, 12);  // sounds
+                F32(Actor, 2.5f);                // field 744
+                U32(Actor, 1);                   // tail width axis
+                F32(Actor, 3.5f);                // field 740
+                U32(Actor, 4);                   // tail segments
+                U32(Actor, 13); U32(Actor, 14); U32(Actor, 15); U32(Actor, 16);
+                U32(Actor, 17); U32(Actor, 18);  // texture, mesh
+                // Camera: switch present (flags & 2), mode 1, extra values.
+                F32(Actor, 60.0f);
+                F32(Actor, 1.0f); F32(Actor, 2.0f); F32(Actor, 3.0f);
+                F32(Actor, 4.0f); F32(Actor, 5.0f); F32(Actor, 6.0f);
+                F32(Actor, 0.0f); F32(Actor, 1.0f); F32(Actor, 0.0f);
+                U32(Actor, 1); U32(Actor, 2); U32(Actor, 3);
+                F32(Actor, 0.0f); F32(Actor, 0.5f); F32(Actor, 0.0f);
+                U32(Actor, 21);                  // switch actor
+                U32(Actor, 1); I32(Actor, 22);   // list A
+                U32(Actor, 0);                   // list B
+                F32(Actor, 1.5f); U32(Actor, 2); F32(Actor, 3.5f); U32(Actor, 4);
+                F32(Actor, 5.5f);                // switch values
+                U32(Actor, 1);                   // camera condition count
+                I32(Actor, 1); I32(Actor, 2); I32(Actor, 3); F32(Actor, 4.5f);
+                U32(Actor, 5); I32(Actor, 6); I32(Actor, 7); F32(Actor, 8.5f);
+                U32(Actor, 1);                   // config mode
+                F32(Actor, 0.25f); F32(Actor, 0.5f); F32(Actor, 0.75f);
+                F32(Actor, 1.25f); F32(Actor, 1.5f);
+                for (int32 Item = 1; Item <= 9; ++Item) F32(Actor, float(Item));
+                U32(Actor, 1);                   // extra count
+                for (int32 Item = 1; Item <= 12; ++Item) F32(Actor, float(Item));
+                U32(Actor, 1);                   // one type
+                F32(Actor, 2.5f); F32(Actor, 3.5f); I32(Actor, 19); U32(Actor, 20);
+            }
+            else if (bAton)
+            {
+                F32(Actor, 1.25f);               // weightB
+                U32(Actor, 16777217);            // life maximum (above float precision)
+                F32(Actor, 2.0f);                // gravity scale
+                F32(Actor, 0.5f); F32(Actor, 0.75f);
+                U32(Actor, 11); U32(Actor, 12); U32(Actor, 13); U32(Actor, 14);
+                U32(Actor, 15);                  // effect type
+                U32(Actor, 16); U32(Actor, 17);  // texture, mesh
+                U32(Actor, 18);                  // trail material
+                F32(Actor, 1.5f);                // path default delay
+                U32(Actor, 1); I32(Actor, 21);   // one path plane
+                U32(Actor, 7);                   // add-on field 18
+                U32(Actor, 1);                   // one "other" sub-object
+                U32(Actor, 22); U32(Actor, 1); I32(Actor, 23);
+                U32(Actor, 1);                   // one Aton sub-object
+                U32(Actor, 24); U32(Actor, 25); U32(Actor, 1); I32(Actor, 26);
+                F32(Actor, 3.5f);                // add-on field 24
+            }
+            else if (bRope)
+            {
+                I32(Actor, 1);                   // path index
+                F32(Actor, 1.5f); F32(Actor, 2.5f);   // scale, field 17c
+                I32(Actor, 4);                   // material
+                U32(Actor, 0x11223344);          // colour
+                I32(Actor, 5); I32(Actor, 6);    // sound, field 194
+                I32(Actor, 7); I32(Actor, 8);    // actor refs A/B
+                U32(Actor, 1);                   // one switch target
+                for (int32 Item = 0; Item < 7; ++Item) U32(Actor, uint32(21 + Item));
+                for (int32 Item = 0; Item < 8; ++Item) U32(Actor, uint32(31 + Item));
+                U32(Actor, 2);                   // rope flags
+            }
+            else if (bStiller)
+            {
+                F32(Actor, 30.0f); F32(Actor, 45.0f); F32(Actor, 10.0f); F32(Actor, 5.0f);
+                U32(Actor, 1);                   // vision flags
+                U32(Actor, 11); U32(Actor, 12); U32(Actor, 13); U32(Actor, 14);
+                I32(Actor, 1);                   // path index
+                F32(Actor, 2.5f);                // field 1e0
+                F32(Actor, 3.5f);                // life base
+                F32(Actor, 4.5f); F32(Actor, 5.5f); F32(Actor, 6.5f);
+                U32(Actor, 15);                  // field 1f8
+                U32(Actor, 1); I32(Actor, 16);   // one actor ref
+                I32(Actor, 17);                  // field 200
+                U32(Actor, 1);                   // switch 208: one target
+                for (int32 Item = 0; Item < 7; ++Item) U32(Actor, uint32(21 + Item));
+                for (int32 Item = 0; Item < 8; ++Item) U32(Actor, uint32(31 + Item));
+                U32(Actor, 0);                   // switch 210: empty target list
+                for (int32 Item = 0; Item < 8; ++Item) U32(Actor, uint32(41 + Item));
+                I32(Actor, 18);                  // field 214
+                U32(Actor, 1); I32(Actor, 2); I32(Actor, 3); I32(Actor, 4); I32(Actor, 5);
+                U32(Actor, 1);                   // add-on sub-object mode
+                F32(Actor, 0.25f); F32(Actor, 0.5f); F32(Actor, 0.75f);
+                F32(Actor, 1.25f); F32(Actor, 1.5f);
+            }
+            else if (bAmbre)
+            {
+                I32(Actor, 1);                   // material
+                I32(Actor, 2);                   // effect type
+                I32(Actor, 3); I32(Actor, 4);    // texture, mesh
+                I32(Actor, 5);                   // field 1d0
+                U32(Actor, 1);                   // one switch target
+                for (int32 Item = 0; Item < 7; ++Item) U32(Actor, uint32(21 + Item));
+                for (int32 Item = 0; Item < 8; ++Item) U32(Actor, uint32(31 + Item));
+            }
+            else if (bFountain)
+            {
+                U32(Actor, 1);                   // add-on field 0
+                I32(Actor, 2);                   // money type
+                I32(Actor, 3);                   // money count
+                I32(Actor, 4);                   // bonus count
+                I32(Actor, 5);                   // field c
+                U32(Actor, 1);                   // sub-object mode
+                F32(Actor, 0.25f); F32(Actor, 0.5f); F32(Actor, 0.75f);
+                F32(Actor, 1.25f); F32(Actor, 1.5f);
+            }
+            else if (bCheckpoints)
+            {
+                U32(Actor, 1);                   // one checkpoint
+                I32(Actor, 1);                   // zone ref
+                I32(Actor, 2);                   // waypoint A
+                I32(Actor, 3);                   // sector id
+                I32(Actor, 4);                   // waypoint B
+                U32(Actor, 5);                   // flags
+                U32(Actor, 1); I32(Actor, 6); I32(Actor, 7);   // one actor/waypoint pair
+            }
+            else if (bBridge)
+            {
+                U32(Actor, 1); I32(Actor, 1);    // one actor ref
+                I32(Actor, 2); I32(Actor, 3);    // waypoints A/B
+                F32(Actor, 1.5f); F32(Actor, 2.5f); F32(Actor, 3.5f);
+                F32(Actor, 4.5f); F32(Actor, 5.5f);
+                U32(Actor, 6);                   // field 344
+                U32(Actor, 7);                   // config flags
+                I32(Actor, 8);                   // field 348
+                F32(Actor, 9.5f);                // step collision scale
+            }
+            else if (bFog)
+            {
+                U32(Actor, 1);                   // one fog hierarchy
+                U32(Actor, 0x11223344); U32(Actor, 0x55667788);   // hash
+                F32(Actor, 1.5f); F32(Actor, 2.5f);
+            }
+            else if (bShoot)
+            {
+                F32(Actor, 1.25f);               // weightB
+                U32(Actor, 16777217);            // life maximum (above float precision)
+                F32(Actor, 2.0f);                // gravity scale
+                F32(Actor, 0.5f); F32(Actor, 0.75f);
+                U32(Actor, 11); U32(Actor, 12);  // fields 350/354
+                I32(Actor, 13); I32(Actor, 14);  // texture, mesh
+                F32(Actor, 1.0f); F32(Actor, 2.0f); F32(Actor, 3.0f); F32(Actor, 4.0f);
+                U32(Actor, 15);                  // field 3d0
+                F32(Actor, 5.0f); F32(Actor, 6.0f); F32(Actor, 7.0f); F32(Actor, 8.0f);
+                U32(Actor, 16); U32(Actor, 17); U32(Actor, 18); U32(Actor, 19);
+                U32(Actor, 1); I32(Actor, 2); I32(Actor, 3); I32(Actor, 4); I32(Actor, 5);
+                U32(Actor, 1);                   // add-on sub-object mode
+                F32(Actor, 0.25f); F32(Actor, 0.5f); F32(Actor, 0.75f);
+                F32(Actor, 1.25f); F32(Actor, 1.5f);
+            }
+            else if (bMoney)
+            {
+                F32(Actor, 1.25f);               // weightB
+                U32(Actor, 100);                 // money value
+                I32(Actor, 5);                   // sound ref
+                I32(Actor, 6);                   // material
+            }
+            else if (bBoxClass)
+            {
+                F32(Actor, 1.25f);               // weightB
+                U32(Actor, 16777217);            // life maximum
+                F32(Actor, 2.0f); F32(Actor, 0.5f); F32(Actor, 0.75f);
+                I32(Actor, 11);                  // field 350
+                U32(Actor, 1); I32(Actor, 21);   // one actor ref
+                F32(Actor, 1.0f); F32(Actor, 2.0f); F32(Actor, 3.0f); F32(Actor, 4.0f);
+                U32(Actor, 12);                  // field 364
+                I32(Actor, 13); I32(Actor, 14); I32(Actor, 15); I32(Actor, 16);
+                U32(Actor, 1);                   // switch: one target
+                for (int32 Item = 0; Item < 7; ++Item) U32(Actor, uint32(31 + Item));
+                for (int32 Item = 0; Item < 8; ++Item) U32(Actor, uint32(41 + Item));
+                U32(Actor, 1); I32(Actor, 2); I32(Actor, 3); I32(Actor, 4); I32(Actor, 5);
+                U32(Actor, 1);                   // add-on sub-object mode
+                F32(Actor, 0.25f); F32(Actor, 0.5f); F32(Actor, 0.75f);
+                F32(Actor, 1.25f); F32(Actor, 1.5f);
+            }
+            else if (bFx)
+            {
+                F32(Actor, 0.5f);                // field 19c
+                F32(Actor, 1.5f);                // field 1a0
+            }
+            else if (bCluster)
+            {
+                // CActorClusteriser has no class-specific payload.
+            }
+            else if (bCompanion)
+            {
+                F32(Actor, 1.25f);               // weightB
+                U32(Actor, 16777217);            // life maximum
+                F32(Actor, 2.0f); F32(Actor, 0.5f); F32(Actor, 0.75f);
+                I32(Actor, 11); I32(Actor, 12); I32(Actor, 13);
+            }
+            else if (bGravity)
+            {
+                F32(Actor, 1.25f);               // weightB
+                U32(Actor, 16777217);            // life maximum
+                F32(Actor, 2.0f);                // gravity scale
+                F32(Actor, 0.5f); F32(Actor, 0.75f);
+            }
+            else if (bRune)
+            {
+                I32(Actor, 1);                   // cinematic
+                F32(Actor, 2.5f);                // trigger distance
+                I32(Actor, 3);                   // scenario variable
+                I32(Actor, 4);                   // fx
+                I32(Actor, 5); I32(Actor, 6);    // materials A/B
+            }
+            else if (bMicken)
+            {
+                F32(Actor, 1.25f);               // weightB
+                U32(Actor, 16777217);            // life maximum
+                F32(Actor, 2.0f);                // gravity scale
+                F32(Actor, 0.5f); F32(Actor, 0.75f);
+                I32(Actor, 11); I32(Actor, 12);  // waypoint, actor
+                I32(Actor, 13);                  // field 358
+                F32(Actor, 3.5f);                // field 35c
+                I32(Actor, 14);                  // field 360
+            }
+            else if (bBasicBox)
+            {
+                I32(Actor, 1);                   // field 160
+                U32(Actor, 16777217);            // life maximum
+                U32(Actor, 1); I32(Actor, 21);   // one actor ref
+                F32(Actor, 1.0f); F32(Actor, 2.0f); F32(Actor, 3.0f); F32(Actor, 4.0f);
+                U32(Actor, 11);                  // field 180
+                I32(Actor, 12); I32(Actor, 13); I32(Actor, 14); I32(Actor, 15);
+                U32(Actor, 1);                   // switch: one target
+                for (int32 Item = 0; Item < 7; ++Item) U32(Actor, uint32(31 + Item));
+                for (int32 Item = 0; Item < 8; ++Item) U32(Actor, uint32(41 + Item));
+                U32(Actor, 1); I32(Actor, 2); I32(Actor, 3); I32(Actor, 4); I32(Actor, 5);
+                U32(Actor, 1);                   // add-on sub-object mode
+                F32(Actor, 0.25f); F32(Actor, 0.5f); F32(Actor, 0.75f);
+                F32(Actor, 1.25f); F32(Actor, 1.5f);
+            }
+            else if (bNativCmd)
+            {
+                U32(Actor, 1); I32(Actor, 21);   // one nativ actor ref
+                I32(Actor, 11);                  // field 164
+                U32(Actor, 1); U32(Actor, 22); U32(Actor, 1); I32(Actor, 23);   // A
+                U32(Actor, 0);                   // B
+                U32(Actor, 1); U32(Actor, 24); U32(Actor, 1); I32(Actor, 25);   // C
+                U32(Actor, 0);                   // D
+            }
+            else
+            {
             // Class 0x0d payload: weight, empty carried/zone lists, one no-friction
             // zone with two carried actors, then full platform details.
             F32(Actor, 1.0f);
@@ -174,6 +1178,7 @@ namespace
             F32(Actor, 0.0f);     // push oscillation Y
             U32(Actor, 0);        // sound list A
             U32(Actor, 0);        // sound list B
+            }
             check(Actor.Num() >= 4);
             const uint32 ActorSize = uint32(Actor.Num());
             for (int32 Byte = 0; Byte < 4; ++Byte) Actor[4 + Byte] = uint8(ActorSize >> (Byte * 8));
@@ -308,12 +1313,3360 @@ bool FKyaSmallBankRoundTripTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Edited platform weight"), EditedActor.PlatformWeight, 2.5f);
     TestEqual(TEXT("Edited platform flags"), EditedActor.PlatformProperties.PlatformFlags, int64(99));
 
+    const TArray<FKyaScenarioCondition> OriginalConditions = Actor.Conditions;
+    FKyaScenarioCondition& AddedCondition = Actor.Conditions.AddDefaulted_GetRef();
+    AddedCondition.Variable = 17;
+    AddedCondition.Comparison = 4;
+    AddedCondition.Value = 1;
+    for (int32 Pass = 0; Pass < 2; ++Pass)
+    {
+        TArray<uint8> Resized;
+        FMemoryWriter ResizedWriter(Resized);
+        if (!TestTrue(TEXT("Export resized actor conditions"),
+            Exporter->ExportBinary(Bank, TEXT("bnk"), ResizedWriter, GWarn))) return false;
+        const uint8* ResizedCursor = Resized.GetData();
+        UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(
+            UKyaLevelBank::StaticClass(), GetTransientPackage(), NAME_None, RF_Transient,
+            nullptr, TEXT("bnk"), ResizedCursor, Resized.GetData() + Resized.Num(), GWarn));
+        if (!TestNotNull(TEXT("Reimport resized conditions"), RoundTrip)) return false;
+        const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+        TestEqual(TEXT("Condition count round trips"), Result.Conditions.Num(), Actor.Conditions.Num());
+        if (Pass == 0 && !Result.Conditions.IsEmpty())
+            TestEqual(TEXT("Added condition value round trips"), Result.Conditions.Last().Variable, 17);
+        TestEqual(TEXT("Class payload survives relocation"), Result.PlatformWeight, Actor.PlatformWeight);
+        TestTrue(TEXT("Export preserves asset source bytes"), Bank->BankBytes == Input);
+        if (Pass == 0)
+        {
+            RoundTrip->SceneEnvironment.Actors[0].Conditions.Reset();
+            TArray<uint8> Removed;
+            FMemoryWriter RemovedWriter(Removed);
+            if (!TestTrue(TEXT("Export removal of serialized conditions"),
+                Exporter->ExportBinary(RoundTrip, TEXT("bnk"), RemovedWriter, GWarn))) return false;
+            const uint8* RemovedCursor = Removed.GetData();
+            UKyaLevelBank* RemovedBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(
+                UKyaLevelBank::StaticClass(), GetTransientPackage(), NAME_None, RF_Transient,
+                nullptr, TEXT("bnk"), RemovedCursor, Removed.GetData() + Removed.Num(), GWarn));
+            if (!TestNotNull(TEXT("Reimport removed conditions"), RemovedBank)) return false;
+            TestTrue(TEXT("All conditions removed"), RemovedBank->SceneEnvironment.Actors[0].Conditions.IsEmpty());
+            TestEqual(TEXT("Class data survives removal"),
+                RemovedBank->SceneEnvironment.Actors[0].PlatformWeight, Actor.PlatformWeight);
+        }
+        Actor.Conditions.Reset();
+    }
+    Actor.Conditions = OriginalConditions;
+
     FKyaPlatformNoFrictionZone ExtraZone;
     ExtraZone.ZoneRef = 5;
     Actor.PlatformNoFrictionZones.Add(ExtraZone);
     TArray<uint8> Rejected;
     FMemoryWriter RejectedWriter(Rejected);
     TestFalse(TEXT("Exporter rejects a changed no-friction zone count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaHedgehogFixtureRoundTripTest, "Kya.Bank.HedgehogFixtureRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaHedgehogFixtureRoundTripTest::RunTest(const FString& Parameters)
+{
+    // Source-derived fixture: a 104-byte Hedgehog payload (sub-object mode 1),
+    // a GuardArea behaviour carrying a path index, and an empty WatchDog
+    // behaviour. This is not a game bank; LEVEL_1 has no class 0x22 record.
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x22);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Hedgehog fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Hedgehog fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Hedgehog class id"), Actor.ClassId, int64(0x22));
+    TestEqual(TEXT("Hedgehog actor name"), Actor.Name, FString(TEXT("HEDGEHOG")));
+    TestTrue(TEXT("Hedgehog class payload parses"), Actor.bHasHedgehogData);
+    TestEqual(TEXT("Hedgehog weightB"), Actor.HedgehogWeightB, 1.5f);
+    TestEqual(TEXT("Hedgehog life maximum"), Actor.HedgehogLifeMax, int64(100));
+    TestEqual(TEXT("Hedgehog walk speed"), Actor.HedgehogWalkSpeed, 3.0f);
+    TestEqual(TEXT("Hedgehog run speed"), Actor.HedgehogRunSpeed, 6.0f);
+    TestEqual(TEXT("Hedgehog field 374"), Actor.HedgehogField374, 7);
+    TestEqual(TEXT("Hedgehog field 368"), Actor.HedgehogField368, 9.0f);
+    TestEqual(TEXT("Hedgehog add-on money type"), Actor.HedgehogAddOn.MoneyType, 2);
+    TestEqual(TEXT("Hedgehog add-on sub-object mode"), Actor.HedgehogAddOn.SubObjMode, 1);
+    TestEqual(TEXT("Hedgehog add-on sub-object float 0"), Actor.HedgehogAddOn.SubObjField0, 0.25f);
+    TestEqual(TEXT("Hedgehog add-on sub-object float 14"), Actor.HedgehogAddOn.SubObjField14, 1.5f);
+    TestEqual(TEXT("Hedgehog field 380"), Actor.HedgehogField380, 13);
+    TestEqual(TEXT("Hedgehog fixture leaves no raw class data"), Actor.ClassData.Num(), 0);
+    if (!TestEqual(TEXT("Hedgehog behaviour count"), Actor.Behaviours.Num(), 2)) return false;
+    TestEqual(TEXT("Hedgehog guard-area id"), Actor.Behaviours[0].Id, 3);
+    TestTrue(TEXT("Hedgehog guard-area is typed"), Actor.Behaviours[0].bHasTypedHedgehogBehaviour);
+    TestEqual(TEXT("Hedgehog guard-area path index"), Actor.Behaviours[0].HedgehogPathFollowIndex, 12);
+    TestEqual(TEXT("Hedgehog watchdog id"), Actor.Behaviours[1].Id, 4);
+    TestTrue(TEXT("Hedgehog watchdog is typed"), Actor.Behaviours[1].bHasTypedHedgehogBehaviour);
+    TestEqual(TEXT("Hedgehog watchdog payload is empty"), Actor.Behaviours[1].Data.Num(), 0);
+    TestEqual(TEXT("Hedgehog watchdog has no path index"), Actor.Behaviours[1].HedgehogPathFollowIndex, -1);
+    TestEqual(TEXT("Hedgehog typed field is exportable"),
+        GetKyaActorFieldCapability(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, HedgehogWalkSpeed)).Kind,
+        EKyaFieldCapability::EditableExportable);
+    TestEqual(TEXT("Hedgehog behaviour field is exportable"),
+        GetKyaNestedFieldCapability(TEXT("Behaviours.HedgehogPathFollowIndex")).Kind,
+        EKyaFieldCapability::EditableExportable);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited Hedgehog fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited Hedgehog export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited Hedgehog export preserves every byte"), Plain == Input);
+
+    Actor.HedgehogWalkSpeed = 7.5f;
+    Actor.HedgehogField380 = 222;
+    Actor.HedgehogAddOn.MoneyCount = 9;
+    Actor.Behaviours[0].HedgehogPathFollowIndex = 34;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited Hedgehog fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited Hedgehog export keeps the file size"), Edited.Num(), Input.Num());
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited Hedgehog fixture"), Reimported)) return false;
+    const FKyaActorPlacement& EditedActor = Reimported->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Edited Hedgehog walk speed round trips"), EditedActor.HedgehogWalkSpeed, 7.5f);
+    TestEqual(TEXT("Edited Hedgehog field 380 round trips"), EditedActor.HedgehogField380, 222);
+    TestEqual(TEXT("Edited Hedgehog add-on money count round trips"), EditedActor.HedgehogAddOn.MoneyCount, 9);
+    TestEqual(TEXT("Edited Hedgehog path index round trips"),
+        EditedActor.Behaviours[0].HedgehogPathFollowIndex, 34);
+    TestTrue(TEXT("Reimported Hedgehog watchdog payload stays empty"), EditedActor.Behaviours[1].Data.IsEmpty());
+
+    // The sub-object mode controls the payload size, so a mode edit must be rejected
+    // instead of silently changing the class-data layout.
+    Actor.HedgehogAddOn.SubObjMode = 0;
+    TArray<uint8> Rejected;
+    FMemoryWriter RejectedWriter(Rejected);
+    TestFalse(TEXT("Exporter rejects a Hedgehog sub-object mode change"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaProjectileFixtureRoundTripTest, "Kya.Bank.ProjectileFixtureRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaProjectileFixtureRoundTripTest::RunTest(const FString& Parameters)
+{
+    // Source-derived fixture: 132-byte class payload plus every projectile-owned
+    // behaviour shape (3, 4, 5, 9, 10 with the version-gated float, 11, 12, 13).
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x1c);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Projectile fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Projectile fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Projectile class id"), Actor.ClassId, int64(0x1c));
+    TestEqual(TEXT("Projectile actor name"), Actor.Name, FString(TEXT("PROJECTILE")));
+    TestTrue(TEXT("Projectile class payload parses"), Actor.bHasProjectileData);
+    TestEqual(TEXT("Projectile weightB"), Actor.ProjectileWeightB, 1.25f);
+    TestEqual(TEXT("Projectile life maximum is exact"), Actor.ProjectileLifeMax, int64(16777217));
+    TestEqual(TEXT("Projectile sub-object damage"), Actor.ProjectileSubObj.Damage, 5.0f);
+    TestEqual(TEXT("Projectile pattern material"), Actor.ProjectilePattern.MaterialId, 7);
+    TestEqual(TEXT("Projectile pattern field 28"), Actor.ProjectilePattern.Field28, 10);
+    TestFalse(TEXT("Projectile fixture omits pattern field 24"), Actor.ProjectilePattern.bHasField24);
+    TestEqual(TEXT("Projectile fixture leaves no raw class data"), Actor.ClassData.Num(), 0);
+    if (!TestEqual(TEXT("Projectile behaviour count"), Actor.Behaviours.Num(), 8)) return false;
+
+    const FKyaActorBehaviour& Stand = Actor.Behaviours[0];
+    const FKyaActorBehaviour& Straight = Actor.Behaviours[1];
+    const FKyaActorBehaviour& Portable = Actor.Behaviours[2];
+    const FKyaActorBehaviour& Inventory = Actor.Behaviours[3];
+    const FKyaActorBehaviour& LavaBall = Actor.Behaviours[4];
+    const FKyaActorBehaviour& Excuse = Actor.Behaviours[5];
+    const FKyaActorBehaviour& Inactive = Actor.Behaviours[6];
+    const FKyaActorBehaviour& NewBehaviour = Actor.Behaviours[7];
+    TestEqual(TEXT("Projectile stand id"), Stand.Id, 3);
+    TestTrue(TEXT("Projectile stand is typed"), Stand.bHasTypedProjectileBehaviour);
+    TestEqual(TEXT("Projectile stand material"), Stand.ProjectileBehaviour.MaterialId, 7);
+    TestEqual(TEXT("Projectile straight id"), Straight.Id, 4);
+    TestTrue(TEXT("Projectile straight is typed"), Straight.bHasTypedProjectileBehaviour);
+    TestEqual(TEXT("Projectile straight speed"), Straight.ProjectileBehaviour.Speed, 3.5f);
+    TestEqual(TEXT("Projectile straight acceleration"), Straight.ProjectileBehaviour.Acceleration, 4.5f);
+    TestEqual(TEXT("Projectile straight field 18"), Straight.ProjectileBehaviour.Field18, 5.5f);
+    TestEqual(TEXT("Projectile portable id"), Portable.Id, 5);
+    TestTrue(TEXT("Projectile portable is typed"), Portable.bHasTypedProjectileBehaviour);
+    TestEqual(TEXT("Projectile portable field 10"), Portable.ProjectileBehaviour.Field10, 6.5f);
+    TestEqual(TEXT("Projectile inventory id"), Inventory.Id, 9);
+    TestTrue(TEXT("Projectile inventory is typed"), Inventory.bHasTypedInventoryBehaviour);
+    TestEqual(TEXT("Projectile inventory purchase id"), Inventory.InventoryInfo.PurchaseId, 21);
+    TestEqual(TEXT("Projectile inventory money cost"), Inventory.InventoryInfo.MoneyCost, 23);
+    TestEqual(TEXT("Projectile inventory initial behaviour"), Inventory.InventoryInfo.InitialBehaviourId, 3);
+    TestEqual(TEXT("Projectile lava ball id"), LavaBall.Id, 10);
+    TestTrue(TEXT("Projectile lava ball is typed"), LavaBall.bHasTypedProjectileBehaviour);
+    TestTrue(TEXT("Projectile lava ball has field 18"), LavaBall.ProjectileBehaviour.bHasLavaBallField18);
+    TestEqual(TEXT("Projectile lava ball field 18"), LavaBall.ProjectileBehaviour.LavaBallField18, 4.0f);
+    TestEqual(TEXT("Projectile lava ball path"), LavaBall.ProjectileBehaviour.LavaBallPathIndex, 5);
+    TestEqual(TEXT("Projectile lava ball field 3c"), LavaBall.ProjectileBehaviour.LavaBallField3C, 9);
+    TestEqual(TEXT("Projectile excuse id"), Excuse.Id, 11);
+    TestTrue(TEXT("Projectile excuse is typed"), Excuse.bHasTypedProjectileBehaviour);
+    TestEqual(TEXT("Projectile excuse actor"), Excuse.ProjectileBehaviour.ActorRef, 0);
+    TestEqual(TEXT("Projectile inactive id"), Inactive.Id, 12);
+    TestTrue(TEXT("Projectile inactive is typed"), Inactive.bHasTypedProjectileBehaviour);
+    TestEqual(TEXT("Projectile inactive message"), Inactive.ProjectileBehaviour.InactiveActivateMessageId, 6);
+    TestEqual(TEXT("Projectile inactive flags"), Inactive.ProjectileBehaviour.InactiveFlags, 7);
+    TestEqual(TEXT("Projectile inactive active behaviour"), Inactive.ProjectileBehaviour.InactiveActiveBehaviourId, 3);
+    TestEqual(TEXT("Projectile new id"), NewBehaviour.Id, 13);
+    TestTrue(TEXT("Projectile new is typed"), NewBehaviour.bHasTypedProjectileBehaviour);
+    TestEqual(TEXT("Projectile new behaviour id"), NewBehaviour.ProjectileBehaviour.BehaviourId, 13);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited Projectile fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited Projectile export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited Projectile export preserves every byte"), Plain == Input);
+
+    Actor.ProjectileWeightB = 2.5f;
+    Actor.ProjectileLifeMax = 4000000000ll;
+    Actor.ProjectileSubObj.Damage = 55.0f;
+    Actor.ProjectilePattern.Field28 = 77;
+    Actor.Behaviours[1].ProjectileBehaviour.Speed = 8.5f;
+    Actor.Behaviours[3].InventoryInfo.MoneyCost = 123;
+    Actor.Behaviours[4].ProjectileBehaviour.LavaBallPathIndex = 21;
+    Actor.Behaviours[6].ProjectileBehaviour.InactiveFlags = 99;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited Projectile fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited Projectile export keeps the file size"), Edited.Num(), Input.Num());
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited Projectile fixture"), Reimported)) return false;
+    const FKyaActorPlacement& EditedActor = Reimported->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Edited Projectile weight round trips"), EditedActor.ProjectileWeightB, 2.5f);
+    TestEqual(TEXT("Edited Projectile life maximum round trips"), EditedActor.ProjectileLifeMax,
+        int64(4000000000ll));
+    TestEqual(TEXT("Edited Projectile damage round trips"), EditedActor.ProjectileSubObj.Damage, 55.0f);
+    TestEqual(TEXT("Edited Projectile pattern field round trips"), EditedActor.ProjectilePattern.Field28, 77);
+    TestEqual(TEXT("Edited straight speed round trips"),
+        EditedActor.Behaviours[1].ProjectileBehaviour.Speed, 8.5f);
+    TestEqual(TEXT("Edited inventory cost round trips"),
+        EditedActor.Behaviours[3].InventoryInfo.MoneyCost, 123);
+    TestEqual(TEXT("Edited lava ball path round trips"),
+        EditedActor.Behaviours[4].ProjectileBehaviour.LavaBallPathIndex, 21);
+    TestEqual(TEXT("Edited inactive flags round trips"),
+        EditedActor.Behaviours[6].ProjectileBehaviour.InactiveFlags, 99);
+
+    // Layout-changing edits must be rejected, not silently written.
+    Actor.ProjectilePattern.bHasField24 = true;
+    TArray<uint8> Rejected;
+    FMemoryWriter RejectedWriter(Rejected);
+    TestFalse(TEXT("Exporter rejects a Projectile pattern field 24 change"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    Actor.ProjectilePattern.bHasField24 = false;
+    Actor.ProjectileLifeMax = -1;
+    TArray<uint8> RejectedLife;
+    FMemoryWriter RejectedLifeWriter(RejectedLife);
+    TestFalse(TEXT("Exporter rejects an out-of-range Projectile life maximum"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedLifeWriter, GWarn));
+    Actor.ProjectileLifeMax = 4000000000ll;
+
+    // The inventory presence word selects the payload shape; changing its
+    // zero/non-zero state would corrupt the following fields.
+    Actor.Behaviours[3].InventoryInfo.Field0 = 0;
+    TArray<uint8> RejectedInventory;
+    FMemoryWriter RejectedInventoryWriter(RejectedInventory);
+    TestFalse(TEXT("Exporter rejects a Projectile inventory presence change"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedInventoryWriter, GWarn));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaMovingPlatformFixtureRoundTripTest, "Kya.Bank.MovingPlatformFixtureRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaMovingPlatformFixtureRoundTripTest::RunTest(const FString& Parameters)
+{
+    // The existing small-bank fixture covers the class payload; this variant adds
+    // the one behaviour shape absent from LEVEL_1 (id 10 TeleportRandom).
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x0d, true);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import moving-platform fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Moving-platform fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Moving-platform class id"), Actor.ClassId, int64(0x0d));
+    TestEqual(TEXT("Moving-platform actor name"), Actor.Name, FString(TEXT("PLATFORM")));
+    TestTrue(TEXT("Moving-platform prefix parses"), Actor.bHasPlatformPrefix);
+    TestTrue(TEXT("Moving-platform details parse"), Actor.bHasPlatformDetails);
+    TestEqual(TEXT("Moving-platform weight"), Actor.PlatformWeight, 1.0f);
+    TestEqual(TEXT("Moving-platform actor list"), Actor.PlatformActors.Num(), 0);
+    TestEqual(TEXT("Moving-platform zone list"), Actor.PlatformZones.Num(), 0);
+    if (!TestEqual(TEXT("Moving-platform no-friction zones"), Actor.PlatformNoFrictionZones.Num(), 1)) return false;
+    TestEqual(TEXT("Moving-platform no-friction ref"), Actor.PlatformNoFrictionZones[0].ZoneRef, 42);
+    TestEqual(TEXT("Moving-platform no-friction actor 0"), Actor.PlatformNoFrictionZones[0].Actors[0], 7);
+    TestEqual(TEXT("Moving-platform no-friction actor 1"), Actor.PlatformNoFrictionZones[0].Actors[1], 8);
+    TestEqual(TEXT("Moving-platform camera count"), Actor.PlatformCameras.Num(), 0);
+    TestEqual(TEXT("Moving-platform sound list A"), Actor.PlatformSoundsA.Num(), 0);
+    TestEqual(TEXT("Moving-platform sound list B"), Actor.PlatformSoundsB.Num(), 0);
+    TestEqual(TEXT("Moving-platform flags"), Actor.PlatformProperties.PlatformFlags, int64(14));
+    TestEqual(TEXT("Moving-platform tilt value"), Actor.PlatformProperties.TiltValue, 50.0f);
+    TestEqual(TEXT("Moving-platform fixture leaves no raw class data"), Actor.ClassData.Num(), 0);
+    if (!TestEqual(TEXT("Moving-platform behaviour count"), Actor.Behaviours.Num(), 1)) return false;
+    TestEqual(TEXT("Moving-platform teleport id"), Actor.Behaviours[0].Id, 10);
+    TestTrue(TEXT("Moving-platform teleport is typed"), Actor.Behaviours[0].bHasTypedPlatformBehaviour);
+    TestEqual(TEXT("Moving-platform teleport path"), Actor.Behaviours[0].PlatformBehaviour.PathIndex, 33);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited moving-platform fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited moving-platform export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited moving-platform export preserves every byte"), Plain == Input);
+
+    Actor.PlatformWeight = 2.5f;
+    Actor.PlatformNoFrictionZones[0].ZoneRef = 99;
+    Actor.PlatformNoFrictionZones[0].Actors[0] = 1234;
+    Actor.PlatformProperties.PlatformFlags = 99;
+    Actor.PlatformProperties.TiltValue = 12.5f;
+    Actor.Behaviours[0].PlatformBehaviour.PathIndex = 44;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited moving-platform fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited moving-platform export keeps the file size"), Edited.Num(), Input.Num());
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited moving-platform fixture"), Reimported)) return false;
+    const FKyaActorPlacement& EditedActor = Reimported->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Edited moving-platform weight round trips"), EditedActor.PlatformWeight, 2.5f);
+    TestEqual(TEXT("Edited moving-platform no-friction ref round trips"),
+        EditedActor.PlatformNoFrictionZones[0].ZoneRef, 99);
+    TestEqual(TEXT("Edited moving-platform no-friction actor round trips"),
+        EditedActor.PlatformNoFrictionZones[0].Actors[0], 1234);
+    TestEqual(TEXT("Edited moving-platform flags round trips"), EditedActor.PlatformProperties.PlatformFlags,
+        int64(99));
+    TestEqual(TEXT("Edited moving-platform tilt round trips"), EditedActor.PlatformProperties.TiltValue, 12.5f);
+    TestEqual(TEXT("Edited moving-platform teleport path round trips"),
+        EditedActor.Behaviours[0].PlatformBehaviour.PathIndex, 44);
+
+    Actor.PlatformNoFrictionZones.AddDefaulted();
+    TArray<uint8> Rejected;
+    FMemoryWriter RejectedWriter(Rejected);
+    TestFalse(TEXT("Exporter rejects a changed no-friction zone count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaSwitchFixtureRoundTripTest, "Kya.Bank.SwitchFixtureRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaSwitchFixtureRoundTripTest::RunTest(const FString& Parameters)
+{
+    // Source-derived fixture: one target-switch class payload plus the three
+    // behaviour shapes absent from LEVEL_1 (4 WolfenCounter, 7 Sequence, 8 Timed).
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x11, false, true);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import switch fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Switch fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Switch class id"), Actor.ClassId, int64(0x11));
+    TestEqual(TEXT("Switch actor name"), Actor.Name, FString(TEXT("SWITCH")));
+    TestTrue(TEXT("Switch class payload parses"), Actor.bHasSwitchData);
+    if (!TestEqual(TEXT("Switch target count"), Actor.SwitchTarget.Targets.Num(), 1)) return false;
+    TestEqual(TEXT("Switch target ref"), Actor.SwitchTarget.Targets[0].TargetRef, 31);
+    TestEqual(TEXT("Switch camera index"), Actor.SwitchTarget.Camera.CameraIndex, 41);
+    TestEqual(TEXT("Switch fixture leaves no raw class data"), Actor.ClassData.Num(), 0);
+    if (!TestEqual(TEXT("Switch behaviour count"), Actor.Behaviours.Num(), 3)) return false;
+    const FKyaActorBehaviour& Wolfen = Actor.Behaviours[0];
+    const FKyaActorBehaviour& Sequence = Actor.Behaviours[1];
+    const FKyaActorBehaviour& Timed = Actor.Behaviours[2];
+    TestEqual(TEXT("Switch Wolfen id"), Wolfen.Id, 4);
+    TestTrue(TEXT("Switch Wolfen is typed"), Wolfen.bHasTypedSwitchBehaviour);
+    TestEqual(TEXT("Switch Wolfen required"), Wolfen.SwitchBehaviour.WolfenRequired, 2);
+    TestEqual(TEXT("Switch Wolfen radius"), Wolfen.SwitchBehaviour.WolfenTriggerRadius, 3.5f);
+    TestEqual(TEXT("Switch Wolfen material"), Wolfen.SwitchBehaviour.WolfenMaterialId, 6);
+    TestEqual(TEXT("Switch sequence id"), Sequence.Id, 7);
+    TestTrue(TEXT("Switch sequence is typed"), Sequence.bHasTypedSwitchBehaviour);
+    TestEqual(TEXT("Switch sequence values"), Sequence.SwitchBehaviour.SequenceValues.Num(), 3);
+    TestEqual(TEXT("Switch sequence value 0"), Sequence.SwitchBehaviour.SequenceValues[0], 11);
+    TestEqual(TEXT("Switch sequence value 2"), Sequence.SwitchBehaviour.SequenceValues[2], 13);
+    TestEqual(TEXT("Switch timed id"), Timed.Id, 8);
+    TestTrue(TEXT("Switch timed is typed"), Timed.bHasTypedSwitchBehaviour);
+    TestEqual(TEXT("Switch timed base delay"), Timed.SwitchBehaviour.TimedBaseDelay, 0.5f);
+    if (!TestEqual(TEXT("Switch timed entry count"), Timed.SwitchBehaviour.TimedSwitches.Num(), 2)) return false;
+    TestEqual(TEXT("Switch timed entry 0 targets"), Timed.SwitchBehaviour.TimedSwitches[0].Targets.Num(), 0);
+    TestEqual(TEXT("Switch timed entry 1 target"), Timed.SwitchBehaviour.TimedSwitches[1].Targets[0].TargetRef, 41);
+    TestEqual(TEXT("Switch timed delay 0"), Timed.SwitchBehaviour.TimedDelays[0], 1.5f);
+    TestEqual(TEXT("Switch timed delay 1"), Timed.SwitchBehaviour.TimedDelays[1], 2.5f);
+    TestEqual(TEXT("Switch timed playback"), Timed.SwitchBehaviour.TimedPlaybackMode, 3);
+    TestEqual(TEXT("Switch timed flags"), Timed.SwitchBehaviour.TimedFlags, 4);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited switch fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited switch export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited switch export preserves every byte"), Plain == Input);
+
+    Actor.SwitchTarget.Targets[0].TargetRef = 99;
+    Actor.SwitchTarget.Camera.CameraIndex = 77;
+    Actor.Behaviours[0].SwitchBehaviour.WolfenRequired = 9;
+    Actor.Behaviours[1].SwitchBehaviour.SequenceValues[0] = 21;
+    Actor.Behaviours[2].SwitchBehaviour.TimedDelays[1] = 9.5f;
+    Actor.Behaviours[2].SwitchBehaviour.TimedFlags = 5;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited switch fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited switch export keeps the file size"), Edited.Num(), Input.Num());
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited switch fixture"), Reimported)) return false;
+    const FKyaActorPlacement& EditedActor = Reimported->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Edited switch target round trips"), EditedActor.SwitchTarget.Targets[0].TargetRef, 99);
+    TestEqual(TEXT("Edited switch camera round trips"), EditedActor.SwitchTarget.Camera.CameraIndex, 77);
+    TestEqual(TEXT("Edited switch Wolfen round trips"),
+        EditedActor.Behaviours[0].SwitchBehaviour.WolfenRequired, 9);
+    TestEqual(TEXT("Edited switch sequence round trips"),
+        EditedActor.Behaviours[1].SwitchBehaviour.SequenceValues[0], 21);
+    TestEqual(TEXT("Edited switch timed delay round trips"),
+        EditedActor.Behaviours[2].SwitchBehaviour.TimedDelays[1], 9.5f);
+    TestEqual(TEXT("Edited switch timed flags round trips"),
+        EditedActor.Behaviours[2].SwitchBehaviour.TimedFlags, 5);
+
+    Actor.Behaviours[1].SwitchBehaviour.SequenceValues.Add(99);
+    TArray<uint8> Rejected;
+    FMemoryWriter RejectedWriter(Rejected);
+    TestFalse(TEXT("Exporter rejects a changed switch sequence count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaWindFixtureRoundTripTest, "Kya.Bank.WindFixtureRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaWindFixtureRoundTripTest::RunTest(const FString& Parameters)
+{
+    // Modern 2.2+ Wind payload with three switch records and the empty id 2
+    // behaviour. Real LEVEL_1 Winds use the same class layout.
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x12, false, false, true);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import wind fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Wind fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Wind class id"), Actor.ClassId, int64(0x12));
+    TestEqual(TEXT("Wind actor name"), Actor.Name, FString(TEXT("WIND")));
+    TestTrue(TEXT("Wind class payload parses"), Actor.bHasWindData);
+    TestEqual(TEXT("Wind field 160"), Actor.WindField160, 0x1234);
+    TestEqual(TEXT("Wind max wind"), Actor.WindMaxWind, 1.0f);
+    TestEqual(TEXT("Wind field 190"), Actor.WindField190, 0x5678);
+    TestEqual(TEXT("Wind sound"), Actor.WindSoundRef, 9);
+    TestEqual(TEXT("Wind activation zone"), Actor.WindActivationZoneIndex, 3);
+    TestEqual(TEXT("Wind actor list"), Actor.WindActorRefs.Num(), 0);
+    TestEqual(TEXT("Wind material"), Actor.WindMaterialId, 5);
+    TestEqual(TEXT("Wind zone 1c4"), Actor.WindZoneRef1C4, 8);
+    TestEqual(TEXT("Wind waypoint 1cc"), Actor.WindWaypointRef1CC, 7);
+    TestEqual(TEXT("Wind sector hash"), Actor.WindSectorHierarchyHash, int64(0x5566778811223344ll));
+    if (!TestEqual(TEXT("Wind switch 0 targets"), Actor.WindSwitch1D0.Targets.Num(), 1)) return false;
+    TestEqual(TEXT("Wind switch 0 target ref"), Actor.WindSwitch1D0.Targets[0].TargetRef, 61);
+    TestEqual(TEXT("Wind switch 0 camera"), Actor.WindSwitch1D0.Camera.CameraIndex, 71);
+    TestEqual(TEXT("Wind switch 1 targets"), Actor.WindSwitch1D8.Targets.Num(), 0);
+    TestEqual(TEXT("Wind switch 2 targets"), Actor.WindSwitch1E0.Targets.Num(), 0);
+    TestEqual(TEXT("Wind field 194"), Actor.WindField194, 11.0f);
+    TestEqual(TEXT("Wind field 1a4"), Actor.WindField1A4, 15.0f);
+    TestEqual(TEXT("Wind waypoint ref"), Actor.WindWaypointRef, 17);
+    TestEqual(TEXT("Wind field 1ac"), Actor.WindField1AC, 18.0f);
+    TestEqual(TEXT("Wind field 1b0"), Actor.WindField1B0, 19.0f);
+    TestEqual(TEXT("Wind fixture leaves no raw class data"), Actor.ClassData.Num(), 0);
+    if (!TestEqual(TEXT("Wind behaviour count"), Actor.Behaviours.Num(), 1)) return false;
+    TestEqual(TEXT("Wind behaviour id"), Actor.Behaviours[0].Id, 2);
+    TestEqual(TEXT("Wind behaviour is empty"), Actor.Behaviours[0].Data.Num(), 0);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited wind fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited wind export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited wind export preserves every byte"), Plain == Input);
+
+    Actor.WindField160 = 99;
+    Actor.WindMaxWind = 7.5f;
+    Actor.WindMaterialId = 12;
+    Actor.WindSwitch1D0.Targets[0].TargetRef = 123;
+    Actor.WindField1A0 = 42.0f;
+    Actor.WindField1AC = 43.0f;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited wind fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited wind export keeps the file size"), Edited.Num(), Input.Num());
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited wind fixture"), Reimported)) return false;
+    const FKyaActorPlacement& EditedActor = Reimported->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Edited wind field 160 round trips"), EditedActor.WindField160, 99);
+    TestEqual(TEXT("Edited wind max wind round trips"), EditedActor.WindMaxWind, 7.5f);
+    TestEqual(TEXT("Edited wind material round trips"), EditedActor.WindMaterialId, 12);
+    TestEqual(TEXT("Edited wind switch target round trips"),
+        EditedActor.WindSwitch1D0.Targets[0].TargetRef, 123);
+    TestEqual(TEXT("Edited wind field 1a0 round trips"), EditedActor.WindField1A0, 42.0f);
+    TestEqual(TEXT("Edited wind field 1ac round trips"), EditedActor.WindField1AC, 43.0f);
+
+    Actor.WindActorRefs.Add(9);
+    TArray<uint8> Rejected;
+    FMemoryWriter RejectedWriter(Rejected);
+    TestFalse(TEXT("Exporter rejects a changed wind actor count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaTrapFixtureRoundTripTest, "Kya.Bank.TrapFixtureRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaTrapFixtureRoundTripTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x2c, false, false, false, true);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import trap fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Trap fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Trap class id"), Actor.ClassId, int64(0x2c));
+    TestEqual(TEXT("Trap actor name"), Actor.Name, FString(TEXT("TRAP")));
+    TestTrue(TEXT("Trap class payload parses"), Actor.bHasTrapData);
+    TestEqual(TEXT("Trap weight"), Actor.TrapWeightB, 1.5f);
+    TestEqual(TEXT("Trap actor refs"), Actor.TrapActorRefs.Num(), 0);
+    TestEqual(TEXT("Trap field 14"), Actor.TrapField14, 11);
+    TestEqual(TEXT("Trap field 20"), Actor.TrapField20, 14);
+    TestTrue(TEXT("Trap has field 24"), Actor.bHasTrapField24);
+    TestEqual(TEXT("Trap field 24"), Actor.TrapField24, 15);
+    TestEqual(TEXT("Trap actor ref"), Actor.TrapActorRef, 16);
+    TestEqual(TEXT("Trap speed"), Actor.TrapSpeed, 2.5f);
+    TestEqual(TEXT("Trap acceleration"), Actor.TrapAcceleration, 3.5f);
+    TestEqual(TEXT("Trap path index"), Actor.TrapPathFollowIndex, 17);
+    TestEqual(TEXT("Trap field 4c"), Actor.TrapField4C, 4.5f);
+    TestEqual(TEXT("Trap required escapes"), Actor.TrapRequiredEscapeAttempts, 5);
+    if (!TestEqual(TEXT("Trap stream count"), Actor.TrapStreamEntries.Num(), 1)) return false;
+    TestEqual(TEXT("Trap stream target"), Actor.TrapStreamEntries[0].Target.TargetRef, 21);
+    TestEqual(TEXT("Trap stream camera"), Actor.TrapStreamEntries[0].Camera.CameraIndex, 31);
+    TestEqual(TEXT("Trap fixture leaves no raw class data"), Actor.ClassData.Num(), 0);
+    if (!TestEqual(TEXT("Trap behaviour count"), Actor.Behaviours.Num(), 2)) return false;
+    TestEqual(TEXT("Trap stand id"), Actor.Behaviours[0].Id, 2);
+    TestTrue(TEXT("Trap stand is typed"), Actor.Behaviours[0].bHasTypedTrapBehaviour);
+    TestEqual(TEXT("Trap stand field 0"), Actor.Behaviours[0].TrapBehaviourField0, 1);
+    TestEqual(TEXT("Trap stand field 8"), Actor.Behaviours[0].TrapBehaviourField8, 3);
+    TestEqual(TEXT("Trap inactive id"), Actor.Behaviours[1].Id, 3);
+    TestTrue(TEXT("Trap inactive is typed"), Actor.Behaviours[1].bHasTypedTrapBehaviour);
+    TestEqual(TEXT("Trap inactive field 0"), Actor.Behaviours[1].TrapBehaviourField0, 4);
+    TestEqual(TEXT("Trap inactive field 8"), Actor.Behaviours[1].TrapBehaviourField8, 6);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited trap fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited trap export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited trap export preserves every byte"), Plain == Input);
+
+    Actor.TrapWeightB = 7.5f;
+    Actor.TrapField14 = 91;
+    Actor.TrapActorRef = 92;
+    Actor.TrapSpeed = 8.5f;
+    Actor.TrapStreamEntries[0].Target.TargetRef = 93;
+    Actor.Behaviours[0].TrapBehaviourField4 = 94;
+    Actor.Behaviours[1].TrapBehaviourField8 = 95;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited trap fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited trap export keeps the file size"), Edited.Num(), Input.Num());
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited trap fixture"), Reimported)) return false;
+    const FKyaActorPlacement& EditedActor = Reimported->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Edited trap weight round trips"), EditedActor.TrapWeightB, 7.5f);
+    TestEqual(TEXT("Edited trap field 14 round trips"), EditedActor.TrapField14, 91);
+    TestEqual(TEXT("Edited trap actor ref round trips"), EditedActor.TrapActorRef, 92);
+    TestEqual(TEXT("Edited trap speed round trips"), EditedActor.TrapSpeed, 8.5f);
+    TestEqual(TEXT("Edited trap stream target round trips"),
+        EditedActor.TrapStreamEntries[0].Target.TargetRef, 93);
+    TestEqual(TEXT("Edited trap stand field round trips"),
+        EditedActor.Behaviours[0].TrapBehaviourField4, 94);
+    TestEqual(TEXT("Edited trap inactive field round trips"),
+        EditedActor.Behaviours[1].TrapBehaviourField8, 95);
+
+    Actor.TrapStreamEntries.AddDefaulted();
+    TArray<uint8> Rejected;
+    FMemoryWriter RejectedWriter(Rejected);
+    TestFalse(TEXT("Exporter rejects a changed trap stream count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaWeaponFixtureRoundTripTest, "Kya.Bank.WeaponFixtureRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaWeaponFixtureRoundTripTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x20, false, false, false, false, true);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import weapon fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Weapon fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Weapon class id"), Actor.ClassId, int64(0x20));
+    TestEqual(TEXT("Weapon actor name"), Actor.Name, FString(TEXT("WEAPON")));
+    TestTrue(TEXT("Weapon class payload parses"), Actor.bHasWeaponData);
+    TestEqual(TEXT("Weapon weight"), Actor.WeaponWeightB, 1.5f);
+    TestEqual(TEXT("Weapon field 1d8"), Actor.WeaponField1D8, 2.5f);
+    TestEqual(TEXT("Weapon field 1dc"), Actor.WeaponField1DC, 3.5f);
+    TestEqual(TEXT("Weapon fixture leaves no raw class data"), Actor.ClassData.Num(), 0);
+    if (!TestEqual(TEXT("Weapon behaviour count"), Actor.Behaviours.Num(), 3)) return false;
+    const FKyaActorBehaviour& Pistol = Actor.Behaviours[0];
+    const FKyaActorBehaviour& Sniper = Actor.Behaviours[1];
+    const FKyaActorBehaviour& Rpg = Actor.Behaviours[2];
+    TestEqual(TEXT("Weapon pistol id"), Pistol.Id, 3);
+    TestTrue(TEXT("Weapon pistol is typed"), Pistol.bHasTypedWeaponBehaviour);
+    TestEqual(TEXT("Weapon pistol burst count"), Pistol.WeaponBurst.Num(), 2);
+    TestEqual(TEXT("Weapon pistol field 40"), Pistol.WeaponField40, 21);
+    TestEqual(TEXT("Weapon pistol sound"), Pistol.WeaponSoundIndex, 23);
+    TestEqual(TEXT("Weapon pistol material"), Pistol.WeaponPistolField2E0, 24);
+    TestEqual(TEXT("Weapon sniper id"), Sniper.Id, 4);
+    TestTrue(TEXT("Weapon sniper is typed"), Sniper.bHasTypedWeaponBehaviour);
+    TestEqual(TEXT("Weapon sniper field 40"), Sniper.WeaponField40, 41);
+    TestEqual(TEXT("Weapon sniper texture"), Sniper.WeaponSniperTextureIndex, 44);
+    TestEqual(TEXT("Weapon sniper mesh"), Sniper.WeaponSniperMeshIndex, 45);
+    TestEqual(TEXT("Weapon sniper material"), Sniper.WeaponSniperMaterialId, 46);
+    TestEqual(TEXT("Weapon RPG id"), Rpg.Id, 6);
+    TestTrue(TEXT("Weapon RPG is typed"), Rpg.bHasTypedWeaponBehaviour);
+    TestEqual(TEXT("Weapon RPG refs"), Rpg.WeaponRpgActorRefs.Num(), 4);
+    TestEqual(TEXT("Weapon RPG ref 0"), Rpg.WeaponRpgActorRefs[0], 61);
+    TestEqual(TEXT("Weapon RPG ref 3"), Rpg.WeaponRpgActorRefs[3], 64);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited weapon fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited weapon export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited weapon export preserves every byte"), Plain == Input);
+
+    Actor.WeaponWeightB = 7.5f;
+    Actor.Behaviours[0].WeaponField40 = 91;
+    Actor.Behaviours[1].WeaponSniperMeshIndex = 92;
+    Actor.Behaviours[2].WeaponRpgActorRefs[0] = 93;
+    Actor.Behaviours[0].WeaponBurst[0].Field4 = 94;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited weapon fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited weapon export keeps the file size"), Edited.Num(), Input.Num());
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited weapon fixture"), Reimported)) return false;
+    const FKyaActorPlacement& EditedActor = Reimported->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Edited weapon weight round trips"), EditedActor.WeaponWeightB, 7.5f);
+    TestEqual(TEXT("Edited pistol field round trips"), EditedActor.Behaviours[0].WeaponField40, 91);
+    TestEqual(TEXT("Edited sniper mesh round trips"),
+        EditedActor.Behaviours[1].WeaponSniperMeshIndex, 92);
+    TestEqual(TEXT("Edited RPG ref round trips"),
+        EditedActor.Behaviours[2].WeaponRpgActorRefs[0], 93);
+    TestEqual(TEXT("Edited pistol burst field round trips"),
+        EditedActor.Behaviours[0].WeaponBurst[0].Field4, 94);
+
+    Actor.Behaviours[2].WeaponRpgActorRefs.Add(99);
+    TArray<uint8> Rejected;
+    FMemoryWriter RejectedWriter(Rejected);
+    TestFalse(TEXT("Exporter rejects a changed weapon RPG count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaAraignosFixtureRoundTripTest, "Kya.Bank.AraignosFixtureRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaAraignosFixtureRoundTripTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x21, false, false, false, false, false, true);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Araignos fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Araignos fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Araignos class id"), Actor.ClassId, int64(0x21));
+    TestEqual(TEXT("Araignos actor name"), Actor.Name, FString(TEXT("ARAIGNOS")));
+    TestTrue(TEXT("Araignos class payload parses"), Actor.bHasAraignosData);
+    TestEqual(TEXT("Araignos weight"), Actor.AraignosWeightB, 1.25f);
+    TestEqual(TEXT("Araignos path"), Actor.AraignosPathFollowIndex, 3);
+    TestEqual(TEXT("Araignos field 1f8"), Actor.AraignosField1F8, 2.0f);
+    TestEqual(TEXT("Araignos damage"), Actor.AraignosDamage, 4.0f);
+    TestEqual(TEXT("Araignos sound 240"), Actor.AraignosSoundRef240, 5);
+    TestEqual(TEXT("Araignos add-on money type"), Actor.AraignosAddOn.MoneyType, 2);
+    TestEqual(TEXT("Araignos add-on sub-object mode"), Actor.AraignosAddOn.SubObjMode, 1);
+    TestEqual(TEXT("Araignos add-on float 0"), Actor.AraignosAddOn.SubObjField0, 0.25f);
+    TestEqual(TEXT("Araignos add-on float 14"), Actor.AraignosAddOn.SubObjField14, 1.5f);
+    TestEqual(TEXT("Araignos fixture leaves no raw class data"), Actor.ClassData.Num(), 0);
+    if (!TestEqual(TEXT("Araignos behaviour count"), Actor.Behaviours.Num(), 1)) return false;
+    TestEqual(TEXT("Araignos behaviour id"), Actor.Behaviours[0].Id, 2);
+    TestEqual(TEXT("Araignos behaviour is empty"), Actor.Behaviours[0].Data.Num(), 0);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited Araignos fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited Araignos export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited Araignos export preserves every byte"), Plain == Input);
+
+    Actor.AraignosWeightB = 9.5f;
+    Actor.AraignosPathFollowIndex = 12;
+    Actor.AraignosDamage = 44.0f;
+    Actor.AraignosSoundRef23C = 77;
+    Actor.AraignosAddOn.MoneyCount = 88;
+    Actor.AraignosAddOn.SubObjFieldC = 1.75f;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited Araignos fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited Araignos export keeps the file size"), Edited.Num(), Input.Num());
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited Araignos fixture"), Reimported)) return false;
+    const FKyaActorPlacement& EditedActor = Reimported->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Edited Araignos weight round trips"), EditedActor.AraignosWeightB, 9.5f);
+    TestEqual(TEXT("Edited Araignos path round trips"), EditedActor.AraignosPathFollowIndex, 12);
+    TestEqual(TEXT("Edited Araignos damage round trips"), EditedActor.AraignosDamage, 44.0f);
+    TestEqual(TEXT("Edited Araignos sound round trips"), EditedActor.AraignosSoundRef23C, 77);
+    TestEqual(TEXT("Edited Araignos money count round trips"), EditedActor.AraignosAddOn.MoneyCount, 88);
+    TestEqual(TEXT("Edited Araignos sub-object float round trips"),
+        EditedActor.AraignosAddOn.SubObjFieldC, 1.75f);
+
+    Actor.AraignosAddOn.SubObjMode = 0;
+    TArray<uint8> Rejected;
+    FMemoryWriter RejectedWriter(Rejected);
+    TestFalse(TEXT("Exporter rejects an Araignos sub-object mode change"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaBonusFixtureRoundTripTest, "Kya.Bank.BonusFixtureRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaBonusFixtureRoundTripTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x0e, false, false, false, false, false, false, true);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import bonus fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Bonus fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Bonus class id"), Actor.ClassId, int64(0x0e));
+    TestEqual(TEXT("Bonus actor name"), Actor.Name, FString(TEXT("BONUS")));
+    TestTrue(TEXT("Bonus class payload parses"), Actor.bHasBonusData);
+    TestEqual(TEXT("Bonus weight"), Actor.BonusWeightB, 1.5f);
+    TestEqual(TEXT("Bonus sound"), Actor.BonusSoundRef, 9);
+    TestEqual(TEXT("Bonus flare material"), Actor.BonusFlareMaterialId, 10);
+    TestEqual(TEXT("Bonus animation material"), Actor.BonusAnimMaterialId, 11);
+    TestEqual(TEXT("Bonus fixture leaves no raw class data"), Actor.ClassData.Num(), 0);
+    if (!TestEqual(TEXT("Bonus behaviour count"), Actor.Behaviours.Num(), 4)) return false;
+    const FKyaActorBehaviour& Turn = Actor.Behaviours[0];
+    const FKyaActorBehaviour& Path = Actor.Behaviours[1];
+    const FKyaActorBehaviour& Flock = Actor.Behaviours[2];
+    const FKyaActorBehaviour& AddOn = Actor.Behaviours[3];
+    TestEqual(TEXT("Bonus turn id"), Turn.Id, 3);
+    TestTrue(TEXT("Bonus turn is typed"), Turn.bHasTypedBonusBehaviour);
+    TestEqual(TEXT("Bonus turn field 14"), Turn.BonusField14, 1.0f);
+    TestEqual(TEXT("Bonus turn value"), Turn.BonusTurnValue, 8.0f);
+    TestEqual(TEXT("Bonus path id"), Path.Id, 4);
+    TestTrue(TEXT("Bonus path is typed"), Path.bHasTypedBonusBehaviour);
+    TestEqual(TEXT("Bonus path field 14"), Path.BonusField14, 11.0f);
+    TestEqual(TEXT("Bonus path index"), Path.BonusPathIndex, 18);
+    TestEqual(TEXT("Bonus path field 1f4"), Path.BonusPathField1F4, 19.0f);
+    TestEqual(TEXT("Bonus path field 204"), Path.BonusPathField204, 23);
+    TestEqual(TEXT("Bonus flock id"), Flock.Id, 5);
+    TestTrue(TEXT("Bonus flock is typed"), Flock.bHasTypedBonusBehaviour);
+    TestEqual(TEXT("Bonus flock path"), Flock.BonusFlockPathIndex, 31);
+    TestEqual(TEXT("Bonus add-on id"), AddOn.Id, 6);
+    TestTrue(TEXT("Bonus add-on is typed"), AddOn.bHasTypedBonusBehaviour);
+    TestEqual(TEXT("Bonus add-on field"), AddOn.BonusAddOnField18, 32.0f);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited bonus fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited bonus export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited bonus export preserves every byte"), Plain == Input);
+
+    Actor.BonusWeightB = 9.5f;
+    Actor.BonusFlareMaterialId = 41;
+    Actor.Behaviours[0].BonusTurnValue = 42.0f;
+    Actor.Behaviours[1].BonusPathIndex = 43;
+    Actor.Behaviours[1].BonusPathField200 = 44.0f;
+    Actor.Behaviours[2].BonusFlockPathIndex = 45;
+    Actor.Behaviours[3].BonusAddOnField18 = 46.0f;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited bonus fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited bonus export keeps the file size"), Edited.Num(), Input.Num());
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited bonus fixture"), Reimported)) return false;
+    const FKyaActorPlacement& EditedActor = Reimported->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Edited bonus weight round trips"), EditedActor.BonusWeightB, 9.5f);
+    TestEqual(TEXT("Edited bonus flare round trips"), EditedActor.BonusFlareMaterialId, 41);
+    TestEqual(TEXT("Edited bonus turn round trips"), EditedActor.Behaviours[0].BonusTurnValue, 42.0f);
+    TestEqual(TEXT("Edited bonus path round trips"), EditedActor.Behaviours[1].BonusPathIndex, 43);
+    TestEqual(TEXT("Edited bonus path field round trips"),
+        EditedActor.Behaviours[1].BonusPathField200, 44.0f);
+    TestEqual(TEXT("Edited bonus flock round trips"),
+        EditedActor.Behaviours[2].BonusFlockPathIndex, 45);
+    TestEqual(TEXT("Edited bonus add-on round trips"),
+        EditedActor.Behaviours[3].BonusAddOnField18, 46.0f);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaTeleporterFixtureRoundTripTest, "Kya.Bank.TeleporterFixtureRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaTeleporterFixtureRoundTripTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x24);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import teleporter fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Teleporter fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Teleporter class id"), Actor.ClassId, int64(0x24));
+    TestEqual(TEXT("Teleporter actor name"), Actor.Name, FString(TEXT("TELEPORTER")));
+    TestTrue(TEXT("Teleporter class payload parses"), Actor.bHasTeleporterData);
+    TestEqual(TEXT("Teleporter subsector material"), Actor.TeleporterSubsectorMaterialId, 3);
+    TestEqual(TEXT("Teleporter hash"), Actor.TeleporterHash, int64(0x5566778811223344ll));
+    TestEqual(TEXT("Teleporter field 16c"), Actor.TeleporterField16C, 4);
+    if (!TestEqual(TEXT("Teleporter destination count"), Actor.TeleporterDestinations.Num(), 1)) return false;
+    TestEqual(TEXT("Teleporter destination level"), Actor.TeleporterDestinations[0].LevelId, 5);
+    TestEqual(TEXT("Teleporter destination elevator"), Actor.TeleporterDestinations[0].ElevatorId, 6);
+    if (!TestEqual(TEXT("Teleporter switch 0 targets"), Actor.TeleporterSwitch170.Targets.Num(), 1)) return false;
+    TestEqual(TEXT("Teleporter switch 0 target"), Actor.TeleporterSwitch170.Targets[0].TargetRef, 21);
+    TestEqual(TEXT("Teleporter switch 0 camera"), Actor.TeleporterSwitch170.Camera.CameraIndex, 31);
+    TestEqual(TEXT("Teleporter switch 1 targets"), Actor.TeleporterSwitch178.Targets.Num(), 0);
+    TestEqual(TEXT("Teleporter switch 2 targets"), Actor.TeleporterSwitch180.Targets.Num(), 0);
+    TestEqual(TEXT("Teleporter zone 188"), Actor.TeleporterZone188, 11);
+    TestEqual(TEXT("Teleporter cinematic"), Actor.TeleporterCinematicId, 14);
+    TestEqual(TEXT("Teleporter field 1e0"), Actor.TeleporterField1E0, 19);
+    if (!TestEqual(TEXT("Teleporter waypoint count"), Actor.TeleporterWaypoints.Num(), 2)) return false;
+    TestEqual(TEXT("Teleporter waypoint 0 actor"), Actor.TeleporterWaypoints[0].ActorRef, 61);
+    TestEqual(TEXT("Teleporter waypoint 1 waypoint"), Actor.TeleporterWaypoints[1].WaypointRef, 64);
+    if (!TestEqual(TEXT("Teleporter block count"), Actor.TeleporterConditionedOperations.Num(), 1)) return false;
+    const FKyaTeleporterBlock& Block = Actor.TeleporterConditionedOperations[0];
+    if (!TestEqual(TEXT("Teleporter op count"), Block.Operations.Num(), 2)) return false;
+    TestEqual(TEXT("Teleporter op 0 variable"), Block.Operations[0].ScenaricVariable, 71);
+    TestEqual(TEXT("Teleporter op 1 value"), Block.Operations[1].Value, 76);
+    if (!TestEqual(TEXT("Teleporter condition count"), Block.Conditions.Num(), 2)) return false;
+    TestEqual(TEXT("Teleporter condition 0 combine"), Block.Conditions[0].Combine, 81);
+    TestEqual(TEXT("Teleporter condition 1 value"), Block.Conditions[1].Value, 88);
+    TestEqual(TEXT("Teleporter fixture leaves no raw class data"), Actor.ClassData.Num(), 0);
+    if (!TestEqual(TEXT("Teleporter behaviour count"), Actor.Behaviours.Num(), 1)) return false;
+    TestEqual(TEXT("Teleporter behaviour id"), Actor.Behaviours[0].Id, 2);
+    TestEqual(TEXT("Teleporter behaviour is empty"), Actor.Behaviours[0].Data.Num(), 0);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited teleporter fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited teleporter export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited teleporter export preserves every byte"), Plain == Input);
+
+    Actor.TeleporterSubsectorMaterialId = 91;
+    Actor.TeleporterHash = 0x1122334455667788ll;
+    Actor.TeleporterDestinations[0].LevelId = 92;
+    Actor.TeleporterSwitch170.Targets[0].TargetRef = 93;
+    Actor.TeleporterWaypoints[0].ActorRef = 94;
+    Actor.TeleporterConditionedOperations[0].Operations[1].Value = 95;
+    Actor.TeleporterConditionedOperations[0].Conditions[0].Value = 96;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited teleporter fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited teleporter export keeps the file size"), Edited.Num(), Input.Num());
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited teleporter fixture"), Reimported)) return false;
+    const FKyaActorPlacement& EditedActor = Reimported->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Edited teleporter material round trips"), EditedActor.TeleporterSubsectorMaterialId, 91);
+    TestEqual(TEXT("Edited teleporter hash round trips"), EditedActor.TeleporterHash,
+        int64(0x1122334455667788ll));
+    TestEqual(TEXT("Edited teleporter destination round trips"),
+        EditedActor.TeleporterDestinations[0].LevelId, 92);
+    TestEqual(TEXT("Edited teleporter switch target round trips"),
+        EditedActor.TeleporterSwitch170.Targets[0].TargetRef, 93);
+    TestEqual(TEXT("Edited teleporter waypoint round trips"),
+        EditedActor.TeleporterWaypoints[0].ActorRef, 94);
+    TestEqual(TEXT("Edited teleporter operation round trips"),
+        EditedActor.TeleporterConditionedOperations[0].Operations[1].Value, 95);
+    TestEqual(TEXT("Edited teleporter condition round trips"),
+        EditedActor.TeleporterConditionedOperations[0].Conditions[0].Value, 96);
+
+    Actor.TeleporterDestinations.AddDefaulted();
+    TArray<uint8> Rejected;
+    FMemoryWriter RejectedWriter(Rejected);
+    TestFalse(TEXT("Exporter rejects a changed teleporter destination count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaAmortosFixtureRoundTripTest, "Kya.Bank.AmortosFixtureRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaAmortosFixtureRoundTripTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x29);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Amortos fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Amortos fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Amortos class id"), Actor.ClassId, int64(0x29));
+    TestEqual(TEXT("Amortos actor name"), Actor.Name, FString(TEXT("AMORTOS")));
+    TestTrue(TEXT("Amortos class payload parses"), Actor.bHasAmortosData);
+    if (!TestEqual(TEXT("Amortos checkpoint list"), Actor.AmortosCheckpointActors.Num(), 1)) return false;
+    TestEqual(TEXT("Amortos checkpoint ref"), Actor.AmortosCheckpointActors[0], 11);
+    TestEqual(TEXT("Amortos stream 188"), Actor.AmortosActors188.Num(), 1);
+    TestEqual(TEXT("Amortos stream 188 ref"), Actor.AmortosActors188[0], 12);
+    TestEqual(TEXT("Amortos stream 18c"), Actor.AmortosActors18C.Num(), 0);
+    TestEqual(TEXT("Amortos actor ref"), Actor.AmortosActorRef, 13);
+    // Source serializes 164,168,160,16C,...
+    TestEqual(TEXT("Amortos field 164"), Actor.AmortosField164, 1.0f);
+    TestEqual(TEXT("Amortos field 168"), Actor.AmortosField168, 2.0f);
+    TestEqual(TEXT("Amortos field 160"), Actor.AmortosField160, 3.0f);
+    TestEqual(TEXT("Amortos field 16c"), Actor.AmortosField16C, 4.0f);
+    TestEqual(TEXT("Amortos field 170"), Actor.AmortosField170, 5.0f);
+    TestEqual(TEXT("Amortos field 174"), Actor.AmortosField174, 6.0f);
+    TestEqual(TEXT("Amortos field 178"), Actor.AmortosField178, 7.0f);
+    TestEqual(TEXT("Amortos field 17c"), Actor.AmortosField17C, 8.0f);
+    TestEqual(TEXT("Amortos field 180"), Actor.AmortosField180, 9.0f);
+    TestEqual(TEXT("Amortos add-on money type"), Actor.AmortosAddOn.MoneyType, 2);
+    TestEqual(TEXT("Amortos add-on money count"), Actor.AmortosAddOn.MoneyCount, 3);
+    TestEqual(TEXT("Amortos add-on sub-object mode"), Actor.AmortosAddOn.SubObjMode, 1);
+    TestEqual(TEXT("Amortos add-on float 0"), Actor.AmortosAddOn.SubObjField0, 0.25f);
+    TestEqual(TEXT("Amortos add-on float 14"), Actor.AmortosAddOn.SubObjField14, 1.5f);
+    TestEqual(TEXT("Amortos field 1c8"), Actor.AmortosField1C8, 14);
+    if (!TestEqual(TEXT("Amortos switch 0 targets"), Actor.AmortosSwitch1CC.Targets.Num(), 1)) return false;
+    TestEqual(TEXT("Amortos switch 0 target"), Actor.AmortosSwitch1CC.Targets[0].TargetRef, 21);
+    TestEqual(TEXT("Amortos switch 0 camera"), Actor.AmortosSwitch1CC.Camera.CameraIndex, 31);
+    TestEqual(TEXT("Amortos switch 1 targets"), Actor.AmortosSwitch1D4.Targets.Num(), 0);
+    TestEqual(TEXT("Amortos switch 1 camera"), Actor.AmortosSwitch1D4.Camera.CameraIndex, 41);
+    TestEqual(TEXT("Amortos fixture leaves no raw class data"), Actor.ClassData.Num(), 0);
+    if (!TestEqual(TEXT("Amortos behaviour count"), Actor.Behaviours.Num(), 1)) return false;
+    TestEqual(TEXT("Amortos behaviour id"), Actor.Behaviours[0].Id, 2);
+    TestEqual(TEXT("Amortos behaviour is empty"), Actor.Behaviours[0].Data.Num(), 0);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited Amortos fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited Amortos export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited Amortos export preserves every byte"), Plain == Input);
+
+    Actor.AmortosField164 = 21.5f;
+    Actor.AmortosActorRef = 22;
+    Actor.AmortosField1C8 = 23;
+    Actor.AmortosAddOn.MoneyCount = 24;
+    Actor.AmortosSwitch1CC.Targets[0].TargetRef = 25;
+    Actor.AmortosSwitch1D4.Camera.CameraIndex = 26;
+    Actor.AmortosAddOn.SubObjFieldC = 27.5f;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited Amortos fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited Amortos export keeps the file size"), Edited.Num(), Input.Num());
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited Amortos fixture"), Reimported)) return false;
+    const FKyaActorPlacement& EditedActor = Reimported->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Edited Amortos field 164 round trips"), EditedActor.AmortosField164, 21.5f);
+    TestEqual(TEXT("Edited Amortos actor ref round trips"), EditedActor.AmortosActorRef, 22);
+    TestEqual(TEXT("Edited Amortos field 1c8 round trips"), EditedActor.AmortosField1C8, 23);
+    TestEqual(TEXT("Edited Amortos money count round trips"), EditedActor.AmortosAddOn.MoneyCount, 24);
+    TestEqual(TEXT("Edited Amortos switch target round trips"),
+        EditedActor.AmortosSwitch1CC.Targets[0].TargetRef, 25);
+    TestEqual(TEXT("Edited Amortos switch camera round trips"),
+        EditedActor.AmortosSwitch1D4.Camera.CameraIndex, 26);
+    TestEqual(TEXT("Edited Amortos sub-object float round trips"),
+        EditedActor.AmortosAddOn.SubObjFieldC, 27.5f);
+
+    Actor.AmortosAddOn.SubObjMode = 0;
+    TArray<uint8> Rejected;
+    FMemoryWriter RejectedWriter(Rejected);
+    TestFalse(TEXT("Exporter rejects an Amortos sub-object mode change"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaDcaFixtureRoundTripTest, "Kya.Bank.DcaFixtureRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaDcaFixtureRoundTripTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x1b);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import DCA fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("DCA fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("DCA class id"), Actor.ClassId, int64(0x1b));
+    TestEqual(TEXT("DCA actor name"), Actor.Name, FString(TEXT("DCA")));
+    TestTrue(TEXT("DCA class payload parses"), Actor.bHasDcaData);
+    TestEqual(TEXT("DCA field 504"), Actor.DcaField504, 1);
+    TestEqual(TEXT("DCA field 500"), Actor.DcaField500, 2);
+    TestEqual(TEXT("DCA field 464"), Actor.DcaField464, 3.5f);
+    TestEqual(TEXT("DCA field 508"), Actor.DcaField508, 4);
+    TestEqual(TEXT("DCA field 50c"), Actor.DcaField50C, 5);
+    TestEqual(TEXT("DCA aim adjust"), Actor.DcaAimAdjustDegrees, 6.5f);
+    if (!TestEqual(TEXT("DCA shot stream"), Actor.DcaShotActorRefs.Num(), 1)) return false;
+    TestEqual(TEXT("DCA shot ref"), Actor.DcaShotActorRefs[0], 7);
+    TestEqual(TEXT("DCA field 450"), Actor.DcaField450, 8);
+    TestEqual(TEXT("DCA field 454"), Actor.DcaField454, 9);
+    TestEqual(TEXT("DCA fixture leaves no raw class data"), Actor.ClassData.Num(), 0);
+    if (!TestEqual(TEXT("DCA behaviour count"), Actor.Behaviours.Num(), 3)) return false;
+    const FKyaActorBehaviour& Default = Actor.Behaviours[0];
+    const FKyaActorBehaviour& Controlled = Actor.Behaviours[1];
+    const FKyaActorBehaviour& Trajectory = Actor.Behaviours[2];
+    TestEqual(TEXT("DCA default id"), Default.Id, 2);
+    TestEqual(TEXT("DCA default payload is empty"), Default.Data.Num(), 0);
+    TestEqual(TEXT("DCA controlled id"), Controlled.Id, 3);
+    TestTrue(TEXT("DCA controlled is typed"), Controlled.bHasTypedDcaControlledBehaviour);
+    TestEqual(TEXT("DCA controlled field 0"), Controlled.DcaControlledField0, 1.0f);
+    TestEqual(TEXT("DCA controlled field 4"), Controlled.DcaControlledField4, 2.0f);
+    TestEqual(TEXT("DCA controlled fov"), Controlled.DcaControlledFovDegrees, 4.0f);
+    TestEqual(TEXT("DCA controlled vector 10 x"), float(Controlled.DcaControlledVector10.X), 5.0f);
+    TestEqual(TEXT("DCA controlled vector 20 z"), float(Controlled.DcaControlledVector20.Z), 10.0f);
+    TestEqual(TEXT("DCA trajectory id"), Trajectory.Id, 5);
+    TestTrue(TEXT("DCA trajectory is typed"), Trajectory.bHasTypedDcaTrajectoryBehaviour);
+    TestEqual(TEXT("DCA trajectory actor"), Trajectory.DcaTrajectoryActorRef, 11);
+    TestEqual(TEXT("DCA trajectory field 18"), Trajectory.DcaTrajectoryField18, 12.5f);
+    TestEqual(TEXT("DCA trajectory field 8"), Trajectory.DcaTrajectoryField8, 13);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited DCA fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited DCA export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited DCA export preserves every byte"), Plain == Input);
+
+    Actor.DcaField504 = 21;
+    Actor.DcaField464 = 22.5f;
+    Actor.DcaAimAdjustDegrees = 23.5f;
+    Actor.DcaShotActorRefs[0] = 24;
+    Actor.Behaviours[1].DcaControlledFovDegrees = 25.5f;
+    Actor.Behaviours[2].DcaTrajectoryField18 = 26.5f;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited DCA fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited DCA export keeps the file size"), Edited.Num(), Input.Num());
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited DCA fixture"), Reimported)) return false;
+    const FKyaActorPlacement& EditedActor = Reimported->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Edited DCA field 504 round trips"), EditedActor.DcaField504, 21);
+    TestEqual(TEXT("Edited DCA field 464 round trips"), EditedActor.DcaField464, 22.5f);
+    TestEqual(TEXT("Edited DCA aim adjust round trips"), EditedActor.DcaAimAdjustDegrees, 23.5f);
+    TestEqual(TEXT("Edited DCA shot ref round trips"), EditedActor.DcaShotActorRefs[0], 24);
+    TestEqual(TEXT("Edited DCA controlled fov round trips"),
+        EditedActor.Behaviours[1].DcaControlledFovDegrees, 25.5f);
+    TestEqual(TEXT("Edited DCA trajectory field round trips"),
+        EditedActor.Behaviours[2].DcaTrajectoryField18, 26.5f);
+
+    Actor.DcaShotActorRefs.Add(99);
+    TArray<uint8> Rejected;
+    FMemoryWriter RejectedWriter(Rejected);
+    TestFalse(TEXT("Exporter rejects a changed DCA shot count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaFruitFixtureRoundTripTest, "Kya.Bank.FruitFixtureRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaFruitFixtureRoundTripTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x16);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import fruit fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Fruit fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Fruit class id"), Actor.ClassId, int64(0x16));
+    TestEqual(TEXT("Fruit actor name"), Actor.Name, FString(TEXT("FRUIT")));
+    TestTrue(TEXT("Fruit class payload parses"), Actor.bHasFruitData);
+    TestEqual(TEXT("Fruit weight"), Actor.FruitWeightB, 1.25f);
+    TestEqual(TEXT("Fruit life maximum"), Actor.FruitLifeMax, int64(16777217));
+    TestEqual(TEXT("Fruit gravity"), Actor.FruitGravityScale, 2.5f);
+    TestEqual(TEXT("Fruit dynamic ext 4"), Actor.FruitDynamicExtField4, 0.5f);
+    TestEqual(TEXT("Fruit dynamic ext 8"), Actor.FruitDynamicExtField8, 0.75f);
+    TestEqual(TEXT("Fruit field 360"), Actor.FruitField360, 55);
+    if (!TestEqual(TEXT("Fruit switch targets"), Actor.FruitSwitch.Targets.Num(), 1)) return false;
+    TestEqual(TEXT("Fruit switch target"), Actor.FruitSwitch.Targets[0].TargetRef, 31);
+    TestEqual(TEXT("Fruit switch camera"), Actor.FruitSwitch.Camera.CameraIndex, 41);
+    TestEqual(TEXT("Fruit fixture leaves no raw class data"), Actor.ClassData.Num(), 0);
+    if (!TestEqual(TEXT("Fruit behaviour count"), Actor.Behaviours.Num(), 5)) return false;
+    const FKyaActorBehaviour& Suspended = Actor.Behaviours[0];
+    const FKyaActorBehaviour& Squashed = Actor.Behaviours[1];
+    const FKyaActorBehaviour& Inventory = Actor.Behaviours[2];
+    const FKyaActorBehaviour& Bonus = Actor.Behaviours[3];
+    const FKyaActorBehaviour& Projectile = Actor.Behaviours[4];
+    TestEqual(TEXT("Fruit suspended id"), Suspended.Id, 3);
+    TestEqual(TEXT("Fruit suspended payload is empty"), Suspended.Data.Num(), 0);
+    TestEqual(TEXT("Fruit squashed id"), Squashed.Id, 4);
+    TestTrue(TEXT("Fruit squashed is typed"), Squashed.bHasTypedFruitBehaviour);
+    TestEqual(TEXT("Fruit squashed value"), Squashed.FruitSquashedValue, 1.5f);
+    TestEqual(TEXT("Fruit inventory id"), Inventory.Id, 5);
+    TestTrue(TEXT("Fruit inventory is typed"), Inventory.bHasTypedFruitBehaviour);
+    TestEqual(TEXT("Fruit inventory field 0"), Inventory.FruitInventoryField0, 2);
+    TestEqual(TEXT("Fruit inventory purchase"), Inventory.FruitInventoryPurchaseId, 13);
+    TestEqual(TEXT("Fruit inventory money"), Inventory.FruitInventoryMoneyCost, 15);
+    TestFalse(TEXT("Fruit inventory has no object"), Inventory.FruitInventoryHasObject);
+    TestEqual(TEXT("Fruit inventory initial behaviour"), Inventory.FruitInventoryInitialBehaviour, 3);
+    TestEqual(TEXT("Fruit bonus id"), Bonus.Id, 6);
+    TestTrue(TEXT("Fruit bonus is typed"), Bonus.bHasTypedFruitBehaviour);
+    TestEqual(TEXT("Fruit bonus actor"), Bonus.FruitBonusActorRef, 21);
+    TestEqual(TEXT("Fruit bonus initial behaviour"), Bonus.FruitBonusInitialBehaviour, 22);
+    TestEqual(TEXT("Fruit projectile id"), Projectile.Id, 7);
+    TestFalse(TEXT("Fruit projectile stays raw"), Projectile.bHasTypedFruitBehaviour);
+    TestEqual(TEXT("Fruit projectile raw size"), Projectile.Data.Num(), 4);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited fruit fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited fruit export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited fruit export preserves every byte"), Plain == Input);
+
+    Actor.FruitWeightB = 7.5f;
+    Actor.FruitLifeMax = 4000000000ll;
+    Actor.FruitField360 = 91;
+    Actor.FruitSwitch.Targets[0].TargetRef = 92;
+    Actor.Behaviours[1].FruitSquashedValue = 93.5f;
+    Actor.Behaviours[2].FruitInventoryMoneyCost = 94;
+    Actor.Behaviours[2].FruitInventoryInitialBehaviour = 4;
+    Actor.Behaviours[3].FruitBonusInitialBehaviour = 95;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited fruit fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited fruit export keeps the file size"), Edited.Num(), Input.Num());
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited fruit fixture"), Reimported)) return false;
+    const FKyaActorPlacement& EditedActor = Reimported->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Edited fruit weight round trips"), EditedActor.FruitWeightB, 7.5f);
+    TestEqual(TEXT("Edited fruit life round trips"), EditedActor.FruitLifeMax, int64(4000000000ll));
+    TestEqual(TEXT("Edited fruit field 360 round trips"), EditedActor.FruitField360, 91);
+    TestEqual(TEXT("Edited fruit switch target round trips"),
+        EditedActor.FruitSwitch.Targets[0].TargetRef, 92);
+    TestEqual(TEXT("Edited fruit squashed round trips"),
+        EditedActor.Behaviours[1].FruitSquashedValue, 93.5f);
+    TestEqual(TEXT("Edited fruit inventory money round trips"),
+        EditedActor.Behaviours[2].FruitInventoryMoneyCost, 94);
+    TestEqual(TEXT("Edited fruit inventory initial round trips"),
+        EditedActor.Behaviours[2].FruitInventoryInitialBehaviour, 4);
+    TestEqual(TEXT("Edited fruit bonus initial round trips"),
+        EditedActor.Behaviours[3].FruitBonusInitialBehaviour, 95);
+
+    Actor.FruitLifeMax = -1;
+    TArray<uint8> RejectedLife;
+    FMemoryWriter RejectedLifeWriter(RejectedLife);
+    TestFalse(TEXT("Exporter rejects an out-of-range fruit life maximum"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedLifeWriter, GWarn));
+    Actor.FruitLifeMax = 4000000000ll;
+
+    Actor.FruitSwitch.Targets.AddDefaulted();
+    TArray<uint8> Rejected;
+    FMemoryWriter RejectedWriter(Rejected);
+    TestFalse(TEXT("Exporter rejects a changed fruit switch count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaNativFixtureRoundTripTest, "Kya.Bank.NativFixtureRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaNativFixtureRoundTripTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x0a);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Nativ fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Nativ fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Nativ class id"), Actor.ClassId, int64(0x0a));
+    TestEqual(TEXT("Nativ actor name"), Actor.Name, FString(TEXT("NATIV")));
+    TestTrue(TEXT("Nativ class payload parses"), Actor.bHasNativData);
+    TestEqual(TEXT("Nativ weight"), Actor.NativWeightB, 1.25f);
+    TestEqual(TEXT("Nativ life maximum is exact"), Actor.NativLifeMax, int64(16777217));
+    TestEqual(TEXT("Nativ gravity"), Actor.NativGravityScale, 2.0f);
+    TestEqual(TEXT("Nativ field 350"), Actor.NativField350, 11);
+    TestEqual(TEXT("Nativ field 354"), Actor.NativField354, 12);
+    TestEqual(TEXT("Nativ field 358"), Actor.NativField358, 13);
+    TestEqual(TEXT("Nativ move speed no held"), Actor.NativMoveSpeedNoHeld, 1.5f);
+    TestEqual(TEXT("Nativ move speed held"), Actor.NativMoveSpeedHeld, 2.5f);
+    TestEqual(TEXT("Nativ field 370"), Actor.NativField370, 14);
+    TestEqual(TEXT("Nativ field 368"), Actor.NativField368, 15);
+    TestEqual(TEXT("Nativ field 364"), Actor.NativField364, 16);
+    TestEqual(TEXT("Nativ field 378"), Actor.NativField378, 17);
+    TestEqual(TEXT("Nativ field 37c"), Actor.NativField37C, 18);
+    TestEqual(TEXT("Nativ field 380"), Actor.NativField380, 19);
+    TestEqual(TEXT("Nativ fixture leaves no raw class data"), Actor.ClassData.Num(), 0);
+    if (!TestEqual(TEXT("Nativ behaviour count"), Actor.Behaviours.Num(), 2)) return false;
+    const FKyaActorBehaviour& Exorcism = Actor.Behaviours[0];
+    const FKyaActorBehaviour& TakePut = Actor.Behaviours[1];
+    TestEqual(TEXT("Nativ exorcism id"), Exorcism.Id, 4);
+    TestEqual(TEXT("Nativ exorcism payload is empty"), Exorcism.Data.Num(), 0);
+    TestEqual(TEXT("Nativ take-put id"), TakePut.Id, 6);
+    TestTrue(TEXT("Nativ take-put is typed"), TakePut.bHasTypedNativBehaviour);
+    if (!TestEqual(TEXT("Nativ trajectory count"), TakePut.NativTrajectories.Num(), 1)) return false;
+    TestEqual(TEXT("Nativ trajectory field 0"), TakePut.NativTrajectories[0].Field0, 3.5f);
+    TestEqual(TEXT("Nativ trajectory path"), TakePut.NativTrajectories[0].PathFollowIndex, 21);
+    TestEqual(TEXT("Nativ trajectory field 14"), TakePut.NativTrajectories[0].Field14, 22);
+    TestEqual(TEXT("Nativ trajectory field 18"), TakePut.NativTrajectories[0].Field18, 23.5f);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited Nativ fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited Nativ export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited Nativ export preserves every byte"), Plain == Input);
+
+    Actor.NativWeightB = 7.5f;
+    Actor.NativLifeMax = 4000000000ll;
+    Actor.NativField350 = 91;
+    Actor.NativMoveSpeedHeld = 92.5f;
+    Actor.Behaviours[1].NativTrajectories[0].PathFollowIndex = 93;
+    Actor.Behaviours[1].NativTrajectories[0].Field18 = 94.5f;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited Nativ fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited Nativ export keeps the file size"), Edited.Num(), Input.Num());
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited Nativ fixture"), Reimported)) return false;
+    const FKyaActorPlacement& EditedActor = Reimported->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Edited Nativ weight round trips"), EditedActor.NativWeightB, 7.5f);
+    TestEqual(TEXT("Edited Nativ life round trips"), EditedActor.NativLifeMax, int64(4000000000ll));
+    TestEqual(TEXT("Edited Nativ field 350 round trips"), EditedActor.NativField350, 91);
+    TestEqual(TEXT("Edited Nativ move speed round trips"), EditedActor.NativMoveSpeedHeld, 92.5f);
+    TestEqual(TEXT("Edited Nativ trajectory path round trips"),
+        EditedActor.Behaviours[1].NativTrajectories[0].PathFollowIndex, 93);
+    TestEqual(TEXT("Edited Nativ trajectory field round trips"),
+        EditedActor.Behaviours[1].NativTrajectories[0].Field18, 94.5f);
+
+    Actor.NativLifeMax = -1;
+    TArray<uint8> RejectedLife;
+    FMemoryWriter RejectedLifeWriter(RejectedLife);
+    TestFalse(TEXT("Exporter rejects an out-of-range Nativ life maximum"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedLifeWriter, GWarn));
+    Actor.NativLifeMax = 4000000000ll;
+
+    Actor.Behaviours[1].NativTrajectories.AddDefaulted();
+    TArray<uint8> Rejected;
+    FMemoryWriter RejectedWriter(Rejected);
+    TestFalse(TEXT("Exporter rejects a changed Nativ trajectory count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaWolfenFixtureRoundTripTest, "Kya.Bank.WolfenFixtureRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaWolfenFixtureRoundTripTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x09);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Wolfen fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Wolfen fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Wolfen class id"), Actor.ClassId, int64(0x09));
+    TestEqual(TEXT("Wolfen actor name"), Actor.Name, FString(TEXT("WOLFEN")));
+    TestTrue(TEXT("Wolfen class payload parses"), Actor.bHasWolfenData);
+    TestEqual(TEXT("Wolfen fighter weight"), Actor.FighterWeightB, 1.25f);
+    TestEqual(TEXT("Wolfen fighter life is exact"), Actor.FighterLifeMax, int64(16777217));
+    TestEqual(TEXT("Wolfen vision range"), Actor.WolfenVisionRange, 30.0f);
+    TestEqual(TEXT("Wolfen vision fov"), Actor.WolfenVisionFov, 90.0f);
+    TestEqual(TEXT("Wolfen vision flags"), Actor.WolfenVisionFlags, 0x1234);
+    TestEqual(TEXT("Wolfen start sector"), Actor.WolfenStartSectorId, 1);
+    TestEqual(TEXT("Wolfen hearing range"), Actor.WolfenHearingRangeSquared, 100.0f);
+    TestEqual(TEXT("Wolfen walk speed"), Actor.WolfenWalkSpeed, 4.0f);
+    TestEqual(TEXT("Wolfen default run speed"), Actor.WolfenDefaultRunSpeed, 7.0f);
+    TestEqual(TEXT("Wolfen magic required"), Actor.WolfenMagicRequired, 3);
+    TestEqual(TEXT("Wolfen field d30"), Actor.WolfenFieldD30, 4);
+    TestEqual(TEXT("Wolfen field b90"), Actor.WolfenFieldB90, 1.1f);
+    TestEqual(TEXT("Wolfen field b98"), Actor.WolfenFieldB98, 3.3f);
+    const FKyaWolfenFightParam& Fight = Actor.WolfenFightParamData;
+    if (!TestEqual(TEXT("Wolfen capability 0 field count"), Fight.Capability0Fields.Num(), 5)) return false;
+    TestEqual(TEXT("Wolfen capability 0 field 0"), Fight.Capability0Fields[0], 1);
+    TestEqual(TEXT("Wolfen capability 2 field 4"), Fight.Capability2Fields[4], 10);
+    TestEqual(TEXT("Wolfen configuration count"), Fight.ConfigurationValues.Num(), 4);
+    TestEqual(TEXT("Wolfen configuration field 0"), Fight.ConfigurationValues[0], 0.1f);
+    TestEqual(TEXT("Wolfen capability count"), Fight.Capabilities.Num(), 3);
+    TestEqual(TEXT("Wolfen combo list 1"), Fight.ComboList1.Num(), 1);
+    TestEqual(TEXT("Wolfen combo list 1 value"), Fight.ComboList1[0], 11);
+    TestEqual(TEXT("Wolfen combo list 2 value"), Fight.ComboList2[0], 12);
+    TestEqual(TEXT("Wolfen field after lists"), Fight.FieldAfterLists, 13);
+    TestEqual(TEXT("Wolfen tuning count"), Fight.TuningValues.Num(), 6);
+    TestEqual(TEXT("Wolfen knowledge count"), Fight.Knowledge.Num(), 4);
+    TestEqual(TEXT("Wolfen knowledge 0"), Fight.Knowledge[0], 15);
+    TestEqual(TEXT("Wolfen fixture leaves no raw class data"), Actor.ClassData.Num(), 0);
+    if (!TestEqual(TEXT("Wolfen behaviour count"), Actor.Behaviours.Num(), 3)) return false;
+    const FKyaActorBehaviour& Track = Actor.Behaviours[0];
+    const FKyaActorBehaviour& Dca = Actor.Behaviours[1];
+    const FKyaActorBehaviour& Avoid = Actor.Behaviours[2];
+    TestEqual(TEXT("Wolfen track id"), Track.Id, 15);
+    TestTrue(TEXT("Wolfen track is typed"), Track.bHasTypedWolfenBehaviour);
+    TestEqual(TEXT("Wolfen track field"), Track.WolfenBehaviour.TrackField, 2.5f);
+    TestEqual(TEXT("Wolfen DCA id"), Dca.Id, 23);
+    TestTrue(TEXT("Wolfen DCA is typed"), Dca.bHasTypedWolfenBehaviour);
+    TestEqual(TEXT("Wolfen DCA actor"), Dca.WolfenBehaviour.DcaActorRef, 21);
+    TestEqual(TEXT("Wolfen DCA cooldown"), Dca.WolfenBehaviour.DcaShootCooldown, 3.5f);
+    TestEqual(TEXT("Wolfen avoid id"), Avoid.Id, 24);
+    TestTrue(TEXT("Wolfen avoid is typed"), Avoid.bHasTypedWolfenBehaviour);
+    TestEqual(TEXT("Wolfen avoid field 80"), Avoid.WolfenBehaviour.AvoidField80, 4.5f);
+    TestEqual(TEXT("Wolfen avoid field 84"), Avoid.WolfenBehaviour.AvoidField84, 5.5f);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited Wolfen fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited Wolfen export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited Wolfen export preserves every byte"), Plain == Input);
+
+    Actor.WolfenVisionRange = 91.5f;
+    Actor.FighterLifeMax = 4000000000ll;
+    Actor.WolfenStartSectorId = 4;
+    Actor.WolfenWalkSpeed = 92.5f;
+    Actor.WolfenFightParamData.Capability0Fields[0] = 93;
+    Actor.WolfenFightParamData.ComboList1[0] = 94;
+    Actor.Behaviours[0].WolfenBehaviour.TrackField = 95.5f;
+    Actor.Behaviours[1].WolfenBehaviour.DcaActorRef = 96;
+    Actor.Behaviours[2].WolfenBehaviour.AvoidField84 = 97.5f;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited Wolfen fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited Wolfen export keeps the file size"), Edited.Num(), Input.Num());
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited Wolfen fixture"), Reimported)) return false;
+    const FKyaActorPlacement& EditedActor = Reimported->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Edited Wolfen vision round trips"), EditedActor.WolfenVisionRange, 91.5f);
+    TestEqual(TEXT("Edited Wolfen fighter life round trips"), EditedActor.FighterLifeMax,
+        int64(4000000000ll));
+    TestEqual(TEXT("Edited Wolfen start sector round trips"), EditedActor.WolfenStartSectorId, 4);
+    TestEqual(TEXT("Edited Wolfen walk speed round trips"), EditedActor.WolfenWalkSpeed, 92.5f);
+    TestEqual(TEXT("Edited Wolfen capability field round trips"),
+        EditedActor.WolfenFightParamData.Capability0Fields[0], 93);
+    TestEqual(TEXT("Edited Wolfen combo list round trips"),
+        EditedActor.WolfenFightParamData.ComboList1[0], 94);
+    TestEqual(TEXT("Edited Wolfen track round trips"),
+        EditedActor.Behaviours[0].WolfenBehaviour.TrackField, 95.5f);
+    TestEqual(TEXT("Edited Wolfen DCA actor round trips"),
+        EditedActor.Behaviours[1].WolfenBehaviour.DcaActorRef, 96);
+    TestEqual(TEXT("Edited Wolfen avoid field round trips"),
+        EditedActor.Behaviours[2].WolfenBehaviour.AvoidField84, 97.5f);
+
+    Actor.WolfenFightParamData.ComboList1.Add(99);
+    TArray<uint8> Rejected;
+    FMemoryWriter RejectedWriter(Rejected);
+    TestFalse(TEXT("Exporter rejects a changed Wolfen combo list count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaCommanderFixtureRoundTripTest, "Kya.Bank.CommanderFixtureRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaCommanderFixtureRoundTripTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x13);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Commander fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Commander fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Commander class id"), Actor.ClassId, int64(0x13));
+    TestEqual(TEXT("Commander actor name"), Actor.Name, FString(TEXT("COMMANDER")));
+    TestTrue(TEXT("Commander class payload parses"), Actor.bHasCommanderData);
+    TestEqual(TEXT("Commander detect zone"), Actor.CommanderDetectAreaZoneId, 1);
+    TestEqual(TEXT("Commander guard zone"), Actor.CommanderGuardAreaZoneId, 2);
+    TestEqual(TEXT("Commander field 180"), Actor.CommanderField180, 3);
+    TestEqual(TEXT("Commander new path id"), Actor.CommanderNewPathFindingId, 4);
+    TestEqual(TEXT("Commander actor ref"), Actor.CommanderActorRef, 5);
+    TestEqual(TEXT("Commander squad value"), Actor.CommanderSquadValue, 1.5f);
+    TestEqual(TEXT("Commander squad field 4"), Actor.CommanderSquadField4, 6);
+    TestEqual(TEXT("Commander squad field 8"), Actor.CommanderSquadField8, 7);
+    if (!TestEqual(TEXT("Commander team count"), Actor.CommanderTeamEnemies.Num(), 1)) return false;
+    TestEqual(TEXT("Commander team enemy"), Actor.CommanderTeamEnemies[0], 8);
+    if (!TestEqual(TEXT("Commander component count"), Actor.CommanderSequence.Num(), 1)) return false;
+    TestEqual(TEXT("Commander component field 0"), Actor.CommanderSequence[0].Field0, 9);
+    TestEqual(TEXT("Commander component field 8"), Actor.CommanderSequence[0].Field8, 10);
+    if (!TestEqual(TEXT("Commander camera value count"), Actor.CommanderCameraValues.Num(), 14)) return false;
+    TestEqual(TEXT("Commander camera value 0"), Actor.CommanderCameraValues[0], 1.0f);
+    TestEqual(TEXT("Commander camera value 13"), Actor.CommanderCameraValues[13], 14.0f);
+    TestEqual(TEXT("Commander fixture leaves no raw class data"), Actor.ClassData.Num(), 0);
+    if (!TestEqual(TEXT("Commander behaviour count"), Actor.Behaviours.Num(), 1)) return false;
+    const FKyaActorBehaviour& Commander = Actor.Behaviours[0];
+    TestEqual(TEXT("Commander behaviour id"), Commander.Id, 2);
+    TestTrue(TEXT("Commander behaviour is typed"), Commander.bHasTypedCommanderBehaviour);
+    if (!TestEqual(TEXT("Commander squad config count"), Commander.CommanderSquadConfig.Num(), 2)) return false;
+    TestEqual(TEXT("Commander squad config 0"), Commander.CommanderSquadConfig[0], 7);
+    TestEqual(TEXT("Commander squad config 1"), Commander.CommanderSquadConfig[1], 8);
+    if (!TestEqual(TEXT("Commander switch target count"), Commander.CommanderSwitch.Targets.Num(), 1)) return false;
+    TestEqual(TEXT("Commander switch target"), Commander.CommanderSwitch.Targets[0].TargetRef, 31);
+    TestEqual(TEXT("Commander switch camera"), Commander.CommanderSwitch.Camera.CameraIndex, 41);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited Commander fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited Commander export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited Commander export preserves every byte"), Plain == Input);
+
+    Actor.CommanderDetectAreaZoneId = 91;
+    Actor.CommanderSquadValue = 92.5f;
+    Actor.CommanderTeamEnemies[0] = 93;
+    Actor.CommanderSequence[0].Field8 = 94;
+    Actor.CommanderCameraValues[3] = 95.5f;
+    Actor.Behaviours[0].CommanderSquadConfig[0] = 96;
+    Actor.Behaviours[0].CommanderSwitch.Targets[0].TargetRef = 97;
+    Actor.Behaviours[0].CommanderSwitch.Camera.CameraIndex = 98;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited Commander fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited Commander export keeps the file size"), Edited.Num(), Input.Num());
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited Commander fixture"), Reimported)) return false;
+    const FKyaActorPlacement& EditedActor = Reimported->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Edited Commander detect zone round trips"), EditedActor.CommanderDetectAreaZoneId, 91);
+    TestEqual(TEXT("Edited Commander squad value round trips"), EditedActor.CommanderSquadValue, 92.5f);
+    TestEqual(TEXT("Edited Commander team round trips"), EditedActor.CommanderTeamEnemies[0], 93);
+    TestEqual(TEXT("Edited Commander component round trips"), EditedActor.CommanderSequence[0].Field8, 94);
+    TestEqual(TEXT("Edited Commander camera round trips"), EditedActor.CommanderCameraValues[3], 95.5f);
+    TestEqual(TEXT("Edited Commander squad config round trips"),
+        EditedActor.Behaviours[0].CommanderSquadConfig[0], 96);
+    TestEqual(TEXT("Edited Commander switch target round trips"),
+        EditedActor.Behaviours[0].CommanderSwitch.Targets[0].TargetRef, 97);
+    TestEqual(TEXT("Edited Commander switch camera round trips"),
+        EditedActor.Behaviours[0].CommanderSwitch.Camera.CameraIndex, 98);
+
+    Actor.Behaviours[0].CommanderSwitch.Targets.AddDefaulted();
+    TArray<uint8> Rejected;
+    FMemoryWriter RejectedWriter(Rejected);
+    TestFalse(TEXT("Exporter rejects a changed Commander switch count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaKimFixtureRoundTripTest, "Kya.Bank.KimFixtureRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaKimFixtureRoundTripTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x06);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Kim fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Kim fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Kim class id"), Actor.ClassId, int64(0x06));
+    TestEqual(TEXT("Kim actor name"), Actor.Name, FString(TEXT("KIM")));
+    TestTrue(TEXT("Kim class payload parses"), Actor.bHasKimData);
+    TestEqual(TEXT("Kim fighter weight"), Actor.FighterWeightB, 1.25f);
+    if (!TestEqual(TEXT("Kim bone key count"), Actor.KimBoneKeys.Num(), 10)) return false;
+    TestEqual(TEXT("Kim bone key 0"), Actor.KimBoneKeys[0], 1);
+    TestEqual(TEXT("Kim bone key 9"), Actor.KimBoneKeys[9], 10);
+    TestEqual(TEXT("Kim climb zones"), Actor.KimClimbZones.Num(), 0);
+    TestEqual(TEXT("Kim tutorial zones"), Actor.KimTutorialZones.Num(), 0);
+    TestEqual(TEXT("Kim projectile zones"), Actor.KimProjectileZones.Num(), 0);
+    TestEqual(TEXT("Kim zone pairs"), Actor.KimBoomyZonePairs.Num(), 0);
+    if (!TestEqual(TEXT("Kim zone stream"), Actor.KimZoneStream.Num(), 1)) return false;
+    TestEqual(TEXT("Kim zone stream 0"), Actor.KimZoneStream[0], 11);
+    TestEqual(TEXT("Kim material"), Actor.KimMaterialId, 12);
+    TestEqual(TEXT("Kim fx type"), Actor.KimFxType, 13);
+    TestEqual(TEXT("Kim joke radius"), Actor.KimJokeWarnRadius, 1.5f);
+    TestEqual(TEXT("Kim cameras"), Actor.KimCameras.Num(), 0);
+    TestEqual(TEXT("Kim field 15d4"), Actor.KimField15D4, 14);
+    TestEqual(TEXT("Kim fx init"), Actor.KimFxInitType, 15);
+    if (!TestEqual(TEXT("Kim fx handle count"), Actor.KimFxHandleTypes.Num(), 3)) return false;
+    TestEqual(TEXT("Kim fx handle 2"), Actor.KimFxHandleTypes[2], 18);
+    TestEqual(TEXT("Kim fixture leaves no raw class data"), Actor.ClassData.Num(), 0);
+    if (!TestEqual(TEXT("Kim behaviour count"), Actor.Behaviours.Num(), 1)) return false;
+    TestEqual(TEXT("Kim behaviour id"), Actor.Behaviours[0].Id, 3);
+    TestEqual(TEXT("Kim behaviour is empty"), Actor.Behaviours[0].Data.Num(), 0);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited Kim fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited Kim export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited Kim export preserves every byte"), Plain == Input);
+
+    Actor.FighterWeightB = 91.5f;
+    Actor.KimBoneKeys[0] = 92;
+    Actor.KimZoneStream[0] = 93;
+    Actor.KimMaterialId = 94;
+    Actor.KimFxType = 95;
+    Actor.KimJokeWarnRadius = 96.5f;
+    Actor.KimField15D4 = 97;
+    Actor.KimFxHandleTypes[1] = 98;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited Kim fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited Kim export keeps the file size"), Edited.Num(), Input.Num());
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited Kim fixture"), Reimported)) return false;
+    const FKyaActorPlacement& EditedActor = Reimported->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Edited Kim weight round trips"), EditedActor.FighterWeightB, 91.5f);
+    TestEqual(TEXT("Edited Kim bone round trips"), EditedActor.KimBoneKeys[0], 92);
+    TestEqual(TEXT("Edited Kim zone stream round trips"), EditedActor.KimZoneStream[0], 93);
+    TestEqual(TEXT("Edited Kim material round trips"), EditedActor.KimMaterialId, 94);
+    TestEqual(TEXT("Edited Kim fx type round trips"), EditedActor.KimFxType, 95);
+    TestEqual(TEXT("Edited Kim joke radius round trips"), EditedActor.KimJokeWarnRadius, 96.5f);
+    TestEqual(TEXT("Edited Kim field round trips"), EditedActor.KimField15D4, 97);
+    TestEqual(TEXT("Edited Kim fx handle round trips"), EditedActor.KimFxHandleTypes[1], 98);
+
+    Actor.KimZoneStream.Add(99);
+    TArray<uint8> Rejected;
+    FMemoryWriter RejectedWriter(Rejected);
+    TestFalse(TEXT("Exporter rejects a changed Kim zone-stream count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaBoomyFixtureRoundTripTest, "Kya.Bank.BoomyFixtureRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaBoomyFixtureRoundTripTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x05);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Boomy fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Boomy fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Boomy class id"), Actor.ClassId, int64(0x05));
+    TestEqual(TEXT("Boomy actor name"), Actor.Name, FString(TEXT("BOOMY")));
+    TestTrue(TEXT("Boomy class payload parses"), Actor.bHasBoomyData);
+    TestEqual(TEXT("Boomy weight"), Actor.BoomyWeight, 1.25f);
+    TestEqual(TEXT("Boomy vision range"), Actor.BoomyVisionRange, 30.0f);
+    TestEqual(TEXT("Boomy vision angle"), Actor.BoomyVisionAngle, 90.0f);
+    TestEqual(TEXT("Boomy vision field 38"), Actor.BoomyVisionField38, 10.0f);
+    TestEqual(TEXT("Boomy vision field 3c"), Actor.BoomyVisionField3C, 5.0f);
+    TestEqual(TEXT("Boomy vision flags"), Actor.BoomyVisionFlags, 1);
+    TestEqual(TEXT("Boomy sound 2b8"), Actor.BoomySound2B8, 11);
+    TestEqual(TEXT("Boomy sound 2bc"), Actor.BoomySound2BC, 12);
+    TestEqual(TEXT("Boomy field 744"), Actor.BoomyField744, 2.5f);
+    TestEqual(TEXT("Boomy tail width axis"), Actor.BoomyTailWidthAxis, 1);
+    TestEqual(TEXT("Boomy field 740"), Actor.BoomyField740, 3.5f);
+    TestEqual(TEXT("Boomy tail segments"), Actor.BoomyTailSegments, 4);
+    TestEqual(TEXT("Boomy particle 3d0"), Actor.BoomyParticle3D0, 13);
+    TestEqual(TEXT("Boomy particle 3d4"), Actor.BoomyParticle3D4, 14);
+    TestEqual(TEXT("Boomy particle 3dc"), Actor.BoomyParticle3DC, 15);
+    TestEqual(TEXT("Boomy field 3cc"), Actor.BoomyField3CC, 16);
+    TestEqual(TEXT("Boomy texture"), Actor.BoomyTextureIndex, 17);
+    TestEqual(TEXT("Boomy mesh"), Actor.BoomyMeshIndex, 18);
+    const FKyaActorCamera& Camera = Actor.BoomyCamera;
+    TestEqual(TEXT("Boomy camera fov"), Camera.Fov, 60.0f);
+    TestEqual(TEXT("Boomy camera position x"), float(Camera.Position.X), 1.0f);
+    TestEqual(TEXT("Boomy camera look at z"), float(Camera.LookAt.Z), 6.0f);
+    TestEqual(TEXT("Boomy camera up y"), float(Camera.Up.Y), 1.0f);
+    TestEqual(TEXT("Boomy camera sector"), Camera.SectorId, 1);
+    TestEqual(TEXT("Boomy camera field 08"), Camera.Field08, 2);
+    TestEqual(TEXT("Boomy camera flags"), Camera.Flags, 3);
+    TestEqual(TEXT("Boomy camera target offset y"), float(Camera.TargetOffset.Y), 0.5f);
+    TestTrue(TEXT("Boomy camera has switch"), Camera.bHasSwitch);
+    TestEqual(TEXT("Boomy camera switch actor"), Camera.SwitchActor, 21);
+    if (!TestEqual(TEXT("Boomy camera switch list A"), Camera.SwitchActorsA.Num(), 1)) return false;
+    TestEqual(TEXT("Boomy camera switch entry"), Camera.SwitchActorsA[0], 22);
+    TestEqual(TEXT("Boomy camera switch list B"), Camera.SwitchActorsB.Num(), 0);
+    TestEqual(TEXT("Boomy camera switch value A"), Camera.SwitchValueA, 1.5f);
+    TestEqual(TEXT("Boomy camera switch mode A"), Camera.SwitchModeA, 2);
+    TestEqual(TEXT("Boomy camera switch value B"), Camera.SwitchValueB, 3.5f);
+    TestEqual(TEXT("Boomy camera switch mode B"), Camera.SwitchModeB, 4);
+    TestEqual(TEXT("Boomy camera switch value C"), Camera.SwitchValueC, 5.5f);
+    if (!TestEqual(TEXT("Boomy camera condition count"), Camera.Conditions.Num(), 1)) return false;
+    TestEqual(TEXT("Boomy camera condition combiner"), Camera.Conditions[0].Combiner, 1);
+    TestEqual(TEXT("Boomy camera condition value"), Camera.Conditions[0].Value, 4.5f);
+    TestEqual(TEXT("Boomy camera config flags"), Camera.ConfigFlags, 5);
+    TestEqual(TEXT("Boomy camera config actor B"), Camera.ConfigActorRefB, 7);
+    TestEqual(TEXT("Boomy camera config angle"), Camera.ConfigAngle, 8.5f);
+    if (!TestEqual(TEXT("Boomy camera optional count"), Camera.ConfigOptionalValues.Num(), 5)) return false;
+    TestEqual(TEXT("Boomy camera optional 4"), Camera.ConfigOptionalValues[4], 1.5f);
+    TestEqual(TEXT("Boomy camera pitch z"), float(Camera.PitchAngles.Z), 3.0f);
+    TestEqual(TEXT("Boomy camera distances z"), float(Camera.Distances.Z), 9.0f);
+    if (!TestEqual(TEXT("Boomy camera extra count"), Camera.ExtraValues.Num(), 12)) return false;
+    TestEqual(TEXT("Boomy camera extra 11"), Camera.ExtraValues[11], 12.0f);
+    if (!TestEqual(TEXT("Boomy type count"), Actor.BoomyTypes.Num(), 1)) return false;
+    TestEqual(TEXT("Boomy type field 4"), Actor.BoomyTypes[0].Field4, 2.5f);
+    TestEqual(TEXT("Boomy type vision range"), Actor.BoomyTypes[0].VisionRange, 3.5f);
+    TestEqual(TEXT("Boomy type hit damage"), Actor.BoomyTypes[0].HitDamage, 19);
+    TestEqual(TEXT("Boomy type fx colour"), Actor.BoomyTypes[0].FxColorA, 20);
+    TestEqual(TEXT("Boomy fixture leaves no raw class data"), Actor.ClassData.Num(), 0);
+    if (!TestEqual(TEXT("Boomy behaviour count"), Actor.Behaviours.Num(), 1)) return false;
+    TestEqual(TEXT("Boomy behaviour id"), Actor.Behaviours[0].Id, 2);
+    TestEqual(TEXT("Boomy behaviour is empty"), Actor.Behaviours[0].Data.Num(), 0);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited Boomy fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited Boomy export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited Boomy export preserves every byte"), Plain == Input);
+
+    Actor.BoomyWeight = 91.5f;
+    Actor.BoomyVisionRange = 92.5f;
+    Actor.BoomySound2B8 = 93;
+    Actor.BoomyCamera.Fov = 94.5f;
+    Actor.BoomyCamera.SwitchActorsA[0] = 95;
+    Actor.BoomyCamera.ConfigOptionalValues[2] = 96.5f;
+    Actor.BoomyTypes[0].HitDamage = 97;
+    Actor.BoomyCamera.Conditions[0].Type = 98;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited Boomy fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited Boomy export keeps the file size"), Edited.Num(), Input.Num());
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited Boomy fixture"), Reimported)) return false;
+    const FKyaActorPlacement& EditedActor = Reimported->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Edited Boomy weight round trips"), EditedActor.BoomyWeight, 91.5f);
+    TestEqual(TEXT("Edited Boomy vision round trips"), EditedActor.BoomyVisionRange, 92.5f);
+    TestEqual(TEXT("Edited Boomy sound round trips"), EditedActor.BoomySound2B8, 93);
+    TestEqual(TEXT("Edited Boomy camera fov round trips"), EditedActor.BoomyCamera.Fov, 94.5f);
+    TestEqual(TEXT("Edited Boomy switch entry round trips"),
+        EditedActor.BoomyCamera.SwitchActorsA[0], 95);
+    TestEqual(TEXT("Edited Boomy optional value round trips"),
+        EditedActor.BoomyCamera.ConfigOptionalValues[2], 96.5f);
+    TestEqual(TEXT("Edited Boomy type round trips"), EditedActor.BoomyTypes[0].HitDamage, 97);
+    TestEqual(TEXT("Edited Boomy condition round trips"),
+        EditedActor.BoomyCamera.Conditions[0].Type, 98);
+
+    Actor.BoomyTypes.AddDefaulted();
+    TArray<uint8> Rejected;
+    FMemoryWriter RejectedWriter(Rejected);
+    TestFalse(TEXT("Exporter rejects a changed Boomy type count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaAtonFixtureRoundTripTest, "Kya.Bank.AtonFixtureRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaAtonFixtureRoundTripTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x38);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Aton fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Aton fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Aton class id"), Actor.ClassId, int64(0x38));
+    TestEqual(TEXT("Aton actor name"), Actor.Name, FString(TEXT("ATON")));
+    TestTrue(TEXT("Aton class payload parses"), Actor.bHasAtonData);
+    TestEqual(TEXT("Aton weight"), Actor.AtonWeightB, 1.25f);
+    TestEqual(TEXT("Aton life maximum is exact"), Actor.AtonLifeMax, int64(16777217));
+    TestEqual(TEXT("Aton gravity"), Actor.AtonGravityScale, 2.0f);
+    TestEqual(TEXT("Aton field 354"), Actor.AtonField354, 11);
+    TestEqual(TEXT("Aton field 358"), Actor.AtonField358, 12);
+    TestEqual(TEXT("Aton field 35c"), Actor.AtonField35C, 13);
+    TestEqual(TEXT("Aton field 360"), Actor.AtonField360, 14);
+    TestEqual(TEXT("Aton effect type"), Actor.AtonEffectType, 15);
+    TestEqual(TEXT("Aton texture"), Actor.AtonTextureIndex, 16);
+    TestEqual(TEXT("Aton mesh"), Actor.AtonMeshIndex, 17);
+    TestEqual(TEXT("Aton trail material"), Actor.AtonTrailMaterialId, 18);
+    TestEqual(TEXT("Aton path delay"), Actor.AtonPathDefaultDelay, 1.5f);
+    if (!TestEqual(TEXT("Aton path count"), Actor.AtonPathIndices.Num(), 1)) return false;
+    TestEqual(TEXT("Aton path index"), Actor.AtonPathIndices[0], 21);
+    TestEqual(TEXT("Aton add-on field 18"), Actor.AtonAddOnField18, 7);
+    if (!TestEqual(TEXT("Aton other sub-object count"), Actor.AtonOtherSubObjs.Num(), 1)) return false;
+    TestEqual(TEXT("Aton other sub-object field 0"), Actor.AtonOtherSubObjs[0].Field0, 22);
+    if (!TestEqual(TEXT("Aton other cinematic count"), Actor.AtonOtherSubObjs[0].CinematicIds.Num(), 1)) return false;
+    TestEqual(TEXT("Aton other cinematic"), Actor.AtonOtherSubObjs[0].CinematicIds[0], 23);
+    if (!TestEqual(TEXT("Aton sub-object count"), Actor.AtonSubObjs.Num(), 1)) return false;
+    TestEqual(TEXT("Aton sub-object field 18"), Actor.AtonSubObjs[0].Field18, 24);
+    TestEqual(TEXT("Aton sub-object field 0"), Actor.AtonSubObjs[0].Field0, 25);
+    if (!TestEqual(TEXT("Aton sub-object cinematic count"), Actor.AtonSubObjs[0].CinematicIds.Num(), 1)) return false;
+    TestEqual(TEXT("Aton sub-object cinematic"), Actor.AtonSubObjs[0].CinematicIds[0], 26);
+    TestEqual(TEXT("Aton add-on field 24"), Actor.AtonAddOnField24, 3.5f);
+    TestEqual(TEXT("Aton fixture leaves no raw class data"), Actor.ClassData.Num(), 0);
+    if (!TestEqual(TEXT("Aton behaviour count"), Actor.Behaviours.Num(), 1)) return false;
+    TestEqual(TEXT("Aton behaviour id"), Actor.Behaviours[0].Id, 3);
+    TestEqual(TEXT("Aton behaviour is empty"), Actor.Behaviours[0].Data.Num(), 0);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited Aton fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited Aton export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited Aton export preserves every byte"), Plain == Input);
+
+    Actor.AtonWeightB = 91.5f;
+    Actor.AtonLifeMax = 4000000000ll;
+    Actor.AtonEffectType = 92;
+    Actor.AtonPathIndices[0] = 93;
+    Actor.AtonOtherSubObjs[0].CinematicIds[0] = 94;
+    Actor.AtonSubObjs[0].Field0 = 95;
+    Actor.AtonSubObjs[0].CinematicIds[0] = 96;
+    Actor.AtonAddOnField24 = 97.5f;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited Aton fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited Aton export keeps the file size"), Edited.Num(), Input.Num());
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited Aton fixture"), Reimported)) return false;
+    const FKyaActorPlacement& EditedActor = Reimported->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Edited Aton weight round trips"), EditedActor.AtonWeightB, 91.5f);
+    TestEqual(TEXT("Edited Aton life round trips"), EditedActor.AtonLifeMax, int64(4000000000ll));
+    TestEqual(TEXT("Edited Aton effect round trips"), EditedActor.AtonEffectType, 92);
+    TestEqual(TEXT("Edited Aton path round trips"), EditedActor.AtonPathIndices[0], 93);
+    TestEqual(TEXT("Edited Aton other cinematic round trips"),
+        EditedActor.AtonOtherSubObjs[0].CinematicIds[0], 94);
+    TestEqual(TEXT("Edited Aton sub-object field round trips"), EditedActor.AtonSubObjs[0].Field0, 95);
+    TestEqual(TEXT("Edited Aton sub-object cinematic round trips"),
+        EditedActor.AtonSubObjs[0].CinematicIds[0], 96);
+    TestEqual(TEXT("Edited Aton add-on field 24 round trips"), EditedActor.AtonAddOnField24, 97.5f);
+
+    Actor.AtonLifeMax = -1;
+    TArray<uint8> RejectedLife;
+    FMemoryWriter RejectedLifeWriter(RejectedLife);
+    TestFalse(TEXT("Exporter rejects an out-of-range Aton life maximum"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedLifeWriter, GWarn));
+    Actor.AtonLifeMax = 4000000000ll;
+
+    Actor.AtonSubObjs[0].CinematicIds.Add(99);
+    TArray<uint8> Rejected;
+    FMemoryWriter RejectedWriter(Rejected);
+    TestFalse(TEXT("Exporter rejects a changed Aton cinematic count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaRopeFixtureRoundTripTest, "Kya.Bank.RopeFixtureRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaRopeFixtureRoundTripTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x0f);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Rope fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Rope fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Rope class id"), Actor.ClassId, int64(0x0f));
+    TestEqual(TEXT("Rope actor name"), Actor.Name, FString(TEXT("ROPE")));
+    TestTrue(TEXT("Rope class payload parses"), Actor.bHasRopeData);
+    TestEqual(TEXT("Rope path index"), Actor.RopePathIndex, 1);
+    TestEqual(TEXT("Rope scale"), Actor.RopeScale, 1.5f);
+    TestEqual(TEXT("Rope field 17c"), Actor.RopeField17C, 2.5f);
+    TestEqual(TEXT("Rope material"), Actor.RopeMaterialId, 4);
+    TestEqual(TEXT("Rope colour"), Actor.RopeColor, 0x11223344);
+    TestEqual(TEXT("Rope sound"), Actor.RopeSoundRef, 5);
+    TestEqual(TEXT("Rope field 194"), Actor.RopeField194, 6);
+    TestEqual(TEXT("Rope actor ref A"), Actor.RopeActorRefA, 7);
+    TestEqual(TEXT("Rope actor ref B"), Actor.RopeActorRefB, 8);
+    if (!TestEqual(TEXT("Rope switch target count"), Actor.RopeSwitch.Targets.Num(), 1)) return false;
+    TestEqual(TEXT("Rope switch target"), Actor.RopeSwitch.Targets[0].TargetRef, 21);
+    TestEqual(TEXT("Rope switch camera"), Actor.RopeSwitch.Camera.CameraIndex, 31);
+    TestEqual(TEXT("Rope flags"), Actor.RopeFlags, 2);
+    TestEqual(TEXT("Rope fixture leaves no raw class data"), Actor.ClassData.Num(), 0);
+    if (!TestEqual(TEXT("Rope behaviour count"), Actor.Behaviours.Num(), 1)) return false;
+    TestEqual(TEXT("Rope behaviour id"), Actor.Behaviours[0].Id, 2);
+    TestEqual(TEXT("Rope behaviour is empty"), Actor.Behaviours[0].Data.Num(), 0);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited Rope fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited Rope export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited Rope export preserves every byte"), Plain == Input);
+
+    Actor.RopePathIndex = 91;
+    Actor.RopeScale = 92.5f;
+    Actor.RopeMaterialId = 93;
+    Actor.RopeSoundRef = 94;
+    Actor.RopeSwitch.Targets[0].TargetRef = 95;
+    Actor.RopeSwitch.Camera.CameraIndex = 96;
+    Actor.RopeFlags = 97;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited Rope fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited Rope export keeps the file size"), Edited.Num(), Input.Num());
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited Rope fixture"), Reimported)) return false;
+    const FKyaActorPlacement& EditedActor = Reimported->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Edited Rope path round trips"), EditedActor.RopePathIndex, 91);
+    TestEqual(TEXT("Edited Rope scale round trips"), EditedActor.RopeScale, 92.5f);
+    TestEqual(TEXT("Edited Rope material round trips"), EditedActor.RopeMaterialId, 93);
+    TestEqual(TEXT("Edited Rope sound round trips"), EditedActor.RopeSoundRef, 94);
+    TestEqual(TEXT("Edited Rope switch target round trips"),
+        EditedActor.RopeSwitch.Targets[0].TargetRef, 95);
+    TestEqual(TEXT("Edited Rope switch camera round trips"),
+        EditedActor.RopeSwitch.Camera.CameraIndex, 96);
+    TestEqual(TEXT("Edited Rope flags round trips"), EditedActor.RopeFlags, 97);
+
+    Actor.RopeSwitch.Targets.AddDefaulted();
+    TArray<uint8> Rejected;
+    FMemoryWriter RejectedWriter(Rejected);
+    TestFalse(TEXT("Exporter rejects a changed Rope switch count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaStillerFixtureRoundTripTest, "Kya.Bank.StillerFixtureRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaStillerFixtureRoundTripTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x4c);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Stiller fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Stiller fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Stiller class id"), Actor.ClassId, int64(0x4c));
+    TestEqual(TEXT("Stiller actor name"), Actor.Name, FString(TEXT("STILLER")));
+    TestTrue(TEXT("Stiller class payload parses"), Actor.bHasStillerData);
+    TestEqual(TEXT("Stiller vision range"), Actor.StillerVisionRange, 30.0f);
+    TestEqual(TEXT("Stiller vision half angle"), Actor.StillerVisionHalfAngle, 45.0f);
+    TestEqual(TEXT("Stiller vision field 38"), Actor.StillerVisionField38, 10.0f);
+    TestEqual(TEXT("Stiller vision field 3c"), Actor.StillerVisionField3C, 5.0f);
+    TestEqual(TEXT("Stiller vision flags"), Actor.StillerVisionFlags, 1);
+    TestEqual(TEXT("Stiller field 1d0"), Actor.StillerField1D0, 11);
+    TestEqual(TEXT("Stiller field 1dc"), Actor.StillerField1DC, 14);
+    TestEqual(TEXT("Stiller path index"), Actor.StillerPathIndex, 1);
+    TestEqual(TEXT("Stiller field 1e0"), Actor.StillerField1E0, 2.5f);
+    TestEqual(TEXT("Stiller life max"), Actor.StillerLifeMax, 3.5f);
+    TestEqual(TEXT("Stiller field 1ec"), Actor.StillerField1EC, 4.5f);
+    TestEqual(TEXT("Stiller field 1f4"), Actor.StillerField1F4, 6.5f);
+    TestEqual(TEXT("Stiller field 1f8"), Actor.StillerField1F8, 15);
+    if (!TestEqual(TEXT("Stiller actor count"), Actor.StillerActorRefs.Num(), 1)) return false;
+    TestEqual(TEXT("Stiller actor ref"), Actor.StillerActorRefs[0], 16);
+    TestEqual(TEXT("Stiller field 200"), Actor.StillerField200, 17);
+    if (!TestEqual(TEXT("Stiller switch 208 count"), Actor.StillerSwitch208.Targets.Num(), 1)) return false;
+    TestEqual(TEXT("Stiller switch 208 target"), Actor.StillerSwitch208.Targets[0].TargetRef, 21);
+    TestEqual(TEXT("Stiller switch 208 camera"), Actor.StillerSwitch208.Camera.CameraIndex, 31);
+    TestEqual(TEXT("Stiller switch 210 count"), Actor.StillerSwitch210.Targets.Num(), 0);
+    TestEqual(TEXT("Stiller switch 210 camera"), Actor.StillerSwitch210.Camera.CameraIndex, 41);
+    TestEqual(TEXT("Stiller field 214"), Actor.StillerField214, 18);
+    TestEqual(TEXT("Stiller add-on money type"), Actor.StillerAddOn.MoneyType, 2);
+    TestEqual(TEXT("Stiller add-on money count"), Actor.StillerAddOn.MoneyCount, 3);
+    TestEqual(TEXT("Stiller add-on sub-object mode"), Actor.StillerAddOn.SubObjMode, 1);
+    TestEqual(TEXT("Stiller add-on float 0"), Actor.StillerAddOn.SubObjField0, 0.25f);
+    TestEqual(TEXT("Stiller add-on float 14"), Actor.StillerAddOn.SubObjField14, 1.5f);
+    TestEqual(TEXT("Stiller fixture leaves no raw class data"), Actor.ClassData.Num(), 0);
+    if (!TestEqual(TEXT("Stiller behaviour count"), Actor.Behaviours.Num(), 1)) return false;
+    TestEqual(TEXT("Stiller behaviour id"), Actor.Behaviours[0].Id, 2);
+    TestEqual(TEXT("Stiller behaviour is empty"), Actor.Behaviours[0].Data.Num(), 0);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited Stiller fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited Stiller export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited Stiller export preserves every byte"), Plain == Input);
+
+    Actor.StillerVisionRange = 91.5f;
+    Actor.StillerPathIndex = 92;
+    Actor.StillerLifeMax = 93.5f;
+    Actor.StillerField1F8 = 94;
+    Actor.StillerActorRefs[0] = 95;
+    Actor.StillerSwitch208.Targets[0].TargetRef = 96;
+    Actor.StillerAddOn.MoneyCount = 97;
+    Actor.StillerAddOn.SubObjFieldC = 98.5f;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited Stiller fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited Stiller export keeps the file size"), Edited.Num(), Input.Num());
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited Stiller fixture"), Reimported)) return false;
+    const FKyaActorPlacement& EditedActor = Reimported->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Edited Stiller vision round trips"), EditedActor.StillerVisionRange, 91.5f);
+    TestEqual(TEXT("Edited Stiller path round trips"), EditedActor.StillerPathIndex, 92);
+    TestEqual(TEXT("Edited Stiller life round trips"), EditedActor.StillerLifeMax, 93.5f);
+    TestEqual(TEXT("Edited Stiller field 1f8 round trips"), EditedActor.StillerField1F8, 94);
+    TestEqual(TEXT("Edited Stiller actor ref round trips"), EditedActor.StillerActorRefs[0], 95);
+    TestEqual(TEXT("Edited Stiller switch round trips"),
+        EditedActor.StillerSwitch208.Targets[0].TargetRef, 96);
+    TestEqual(TEXT("Edited Stiller money round trips"), EditedActor.StillerAddOn.MoneyCount, 97);
+    TestEqual(TEXT("Edited Stiller add-on float round trips"),
+        EditedActor.StillerAddOn.SubObjFieldC, 98.5f);
+
+    Actor.StillerSwitch210.Targets.AddDefaulted();
+    TArray<uint8> Rejected;
+    FMemoryWriter RejectedWriter(Rejected);
+    TestFalse(TEXT("Exporter rejects a changed Stiller switch count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaAmbreFixtureRoundTripTest, "Kya.Bank.AmbreFixtureRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaAmbreFixtureRoundTripTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x14);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Ambre fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Ambre fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Ambre class id"), Actor.ClassId, int64(0x14));
+    TestEqual(TEXT("Ambre actor name"), Actor.Name, FString(TEXT("AMBRE")));
+    TestTrue(TEXT("Ambre class payload parses"), Actor.bHasAmbreData);
+    TestEqual(TEXT("Ambre material"), Actor.AmbreMaterialId, 1);
+    TestEqual(TEXT("Ambre effect type"), Actor.AmbreEffectType, 2);
+    TestEqual(TEXT("Ambre texture"), Actor.AmbreTextureIndex, 3);
+    TestEqual(TEXT("Ambre mesh"), Actor.AmbreMeshIndex, 4);
+    TestEqual(TEXT("Ambre field 1d0"), Actor.AmbreField1D0, 5);
+    if (!TestEqual(TEXT("Ambre switch target count"), Actor.AmbreSwitch.Targets.Num(), 1)) return false;
+    TestEqual(TEXT("Ambre switch target"), Actor.AmbreSwitch.Targets[0].TargetRef, 21);
+    TestEqual(TEXT("Ambre switch camera"), Actor.AmbreSwitch.Camera.CameraIndex, 31);
+    TestEqual(TEXT("Ambre fixture leaves no raw class data"), Actor.ClassData.Num(), 0);
+    if (!TestEqual(TEXT("Ambre behaviour count"), Actor.Behaviours.Num(), 1)) return false;
+    TestEqual(TEXT("Ambre behaviour id"), Actor.Behaviours[0].Id, 2);
+    TestEqual(TEXT("Ambre behaviour is empty"), Actor.Behaviours[0].Data.Num(), 0);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited Ambre fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited Ambre export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited Ambre export preserves every byte"), Plain == Input);
+
+    Actor.AmbreMaterialId = 91;
+    Actor.AmbreEffectType = 92;
+    Actor.AmbreTextureIndex = 93;
+    Actor.AmbreMeshIndex = 94;
+    Actor.AmbreField1D0 = 95;
+    Actor.AmbreSwitch.Targets[0].TargetRef = 96;
+    Actor.AmbreSwitch.Camera.CameraIndex = 97;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited Ambre fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited Ambre export keeps the file size"), Edited.Num(), Input.Num());
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited Ambre fixture"), Reimported)) return false;
+    const FKyaActorPlacement& EditedActor = Reimported->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Edited Ambre material round trips"), EditedActor.AmbreMaterialId, 91);
+    TestEqual(TEXT("Edited Ambre effect round trips"), EditedActor.AmbreEffectType, 92);
+    TestEqual(TEXT("Edited Ambre texture round trips"), EditedActor.AmbreTextureIndex, 93);
+    TestEqual(TEXT("Edited Ambre mesh round trips"), EditedActor.AmbreMeshIndex, 94);
+    TestEqual(TEXT("Edited Ambre field 1d0 round trips"), EditedActor.AmbreField1D0, 95);
+    TestEqual(TEXT("Edited Ambre switch target round trips"),
+        EditedActor.AmbreSwitch.Targets[0].TargetRef, 96);
+    TestEqual(TEXT("Edited Ambre switch camera round trips"),
+        EditedActor.AmbreSwitch.Camera.CameraIndex, 97);
+
+    Actor.AmbreSwitch.Targets.AddDefaulted();
+    TArray<uint8> Rejected;
+    FMemoryWriter RejectedWriter(Rejected);
+    TestFalse(TEXT("Exporter rejects a changed Ambre switch count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaFountainFixtureRoundTripTest, "Kya.Bank.FountainFixtureRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaFountainFixtureRoundTripTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x52);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import fountain fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Fountain fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Fountain class id"), Actor.ClassId, int64(0x52));
+    TestEqual(TEXT("Fountain actor name"), Actor.Name, FString(TEXT("FOUNTAIN")));
+    TestTrue(TEXT("Fountain class payload parses"), Actor.bHasBonusFountainData);
+    TestEqual(TEXT("Fountain add-on field 0"), Actor.BonusFountainAddOn.Field0, 1);
+    TestEqual(TEXT("Fountain money type"), Actor.BonusFountainAddOn.MoneyType, 2);
+    TestEqual(TEXT("Fountain money count"), Actor.BonusFountainAddOn.MoneyCount, 3);
+    TestEqual(TEXT("Fountain bonus count"), Actor.BonusFountainAddOn.BonusCount, 4);
+    TestEqual(TEXT("Fountain field c"), Actor.BonusFountainAddOn.FieldC, 5);
+    TestEqual(TEXT("Fountain sub-object mode"), Actor.BonusFountainAddOn.SubObjMode, 1);
+    TestEqual(TEXT("Fountain sub-object float 0"), Actor.BonusFountainAddOn.SubObjField0, 0.25f);
+    TestEqual(TEXT("Fountain sub-object float 14"), Actor.BonusFountainAddOn.SubObjField14, 1.5f);
+    TestEqual(TEXT("Fountain fixture leaves no raw class data"), Actor.ClassData.Num(), 0);
+    if (!TestEqual(TEXT("Fountain behaviour count"), Actor.Behaviours.Num(), 1)) return false;
+    TestEqual(TEXT("Fountain behaviour id"), Actor.Behaviours[0].Id, 2);
+    TestEqual(TEXT("Fountain behaviour is empty"), Actor.Behaviours[0].Data.Num(), 0);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited fountain fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited fountain export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited fountain export preserves every byte"), Plain == Input);
+
+    Actor.BonusFountainAddOn.Field0 = 91;
+    Actor.BonusFountainAddOn.MoneyType = 92;
+    Actor.BonusFountainAddOn.MoneyCount = 93;
+    Actor.BonusFountainAddOn.BonusCount = 94;
+    Actor.BonusFountainAddOn.FieldC = 95;
+    Actor.BonusFountainAddOn.SubObjField4 = 96.5f;
+    Actor.BonusFountainAddOn.SubObjFieldC = 97.5f;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited fountain fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited fountain export keeps the file size"), Edited.Num(), Input.Num());
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited fountain fixture"), Reimported)) return false;
+    const FKyaActorPlacement& EditedActor = Reimported->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Edited fountain field 0 round trips"), EditedActor.BonusFountainAddOn.Field0, 91);
+    TestEqual(TEXT("Edited fountain money type round trips"), EditedActor.BonusFountainAddOn.MoneyType, 92);
+    TestEqual(TEXT("Edited fountain money count round trips"), EditedActor.BonusFountainAddOn.MoneyCount, 93);
+    TestEqual(TEXT("Edited fountain bonus count round trips"), EditedActor.BonusFountainAddOn.BonusCount, 94);
+    TestEqual(TEXT("Edited fountain field c round trips"), EditedActor.BonusFountainAddOn.FieldC, 95);
+    TestEqual(TEXT("Edited fountain sub-object float round trips"),
+        EditedActor.BonusFountainAddOn.SubObjField4, 96.5f);
+    TestEqual(TEXT("Edited fountain sub-object float c round trips"),
+        EditedActor.BonusFountainAddOn.SubObjFieldC, 97.5f);
+
+    Actor.BonusFountainAddOn.SubObjMode = 0;
+    TArray<uint8> Rejected;
+    FMemoryWriter RejectedWriter(Rejected);
+    TestFalse(TEXT("Exporter rejects an out-of-range fountain sub-object mode"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaCheckpointsFixtureRoundTripTest, "Kya.Bank.CheckpointsFixtureRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaCheckpointsFixtureRoundTripTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x1e);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import checkpoints fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Checkpoints fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Checkpoints class id"), Actor.ClassId, int64(0x1e));
+    TestEqual(TEXT("Checkpoints actor name"), Actor.Name, FString(TEXT("CHECKPOINTS")));
+    TestTrue(TEXT("Checkpoints class payload parses"), Actor.bHasTypedCheckpoints);
+    if (!TestEqual(TEXT("Checkpoint count"), Actor.Checkpoints.Num(), 1)) return false;
+    const FKyaCheckpoint& Checkpoint = Actor.Checkpoints[0];
+    TestEqual(TEXT("Checkpoint zone ref"), Checkpoint.ZoneRef, 1);
+    TestEqual(TEXT("Checkpoint waypoint A"), Checkpoint.WaypointA, 2);
+    TestEqual(TEXT("Checkpoint sector"), Checkpoint.SectorId, 3);
+    TestEqual(TEXT("Checkpoint waypoint B"), Checkpoint.WaypointB, 4);
+    TestEqual(TEXT("Checkpoint flags"), Checkpoint.Flags, int64(5));
+    if (!TestEqual(TEXT("Checkpoint actor-waypoint count"), Checkpoint.ActorWaypoints.Num(), 1)) return false;
+    TestEqual(TEXT("Checkpoint actor ref"), Checkpoint.ActorWaypoints[0].ActorRef, 6);
+    TestEqual(TEXT("Checkpoint waypoint ref"), Checkpoint.ActorWaypoints[0].WaypointRef, 7);
+    TestEqual(TEXT("Checkpoints fixture leaves no raw class data"), Actor.ClassData.Num(), 0);
+    if (!TestEqual(TEXT("Checkpoints behaviour count"), Actor.Behaviours.Num(), 1)) return false;
+    TestEqual(TEXT("Checkpoints behaviour id"), Actor.Behaviours[0].Id, 2);
+    TestEqual(TEXT("Checkpoints behaviour is empty"), Actor.Behaviours[0].Data.Num(), 0);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited checkpoints fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited checkpoints export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited checkpoints export preserves every byte"), Plain == Input);
+
+    Actor.Checkpoints[0].ZoneRef = 91;
+    Actor.Checkpoints[0].WaypointA = 92;
+    Actor.Checkpoints[0].SectorId = 93;
+    Actor.Checkpoints[0].WaypointB = 94;
+    Actor.Checkpoints[0].Flags = 95;
+    Actor.Checkpoints[0].ActorWaypoints[0].ActorRef = 96;
+    Actor.Checkpoints[0].ActorWaypoints[0].WaypointRef = 97;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited checkpoints fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited checkpoints export keeps the file size"), Edited.Num(), Input.Num());
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited checkpoints fixture"), Reimported)) return false;
+    const FKyaCheckpoint& EditedCheckpoint = Reimported->SceneEnvironment.Actors[0].Checkpoints[0];
+    TestEqual(TEXT("Edited checkpoint zone round trips"), EditedCheckpoint.ZoneRef, 91);
+    TestEqual(TEXT("Edited checkpoint waypoint A round trips"), EditedCheckpoint.WaypointA, 92);
+    TestEqual(TEXT("Edited checkpoint sector round trips"), EditedCheckpoint.SectorId, 93);
+    TestEqual(TEXT("Edited checkpoint waypoint B round trips"), EditedCheckpoint.WaypointB, 94);
+    TestEqual(TEXT("Edited checkpoint flags round trips"), EditedCheckpoint.Flags, int64(95));
+    TestEqual(TEXT("Edited checkpoint actor ref round trips"),
+        EditedCheckpoint.ActorWaypoints[0].ActorRef, 96);
+    TestEqual(TEXT("Edited checkpoint waypoint ref round trips"),
+        EditedCheckpoint.ActorWaypoints[0].WaypointRef, 97);
+
+    Actor.Checkpoints[0].ActorWaypoints.AddDefaulted();
+    TArray<uint8> Rejected;
+    FMemoryWriter RejectedWriter(Rejected);
+    TestFalse(TEXT("Exporter rejects a changed checkpoint pair count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaBridgeFixtureRoundTripTest, "Kya.Bank.BridgeFixtureRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaBridgeFixtureRoundTripTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x17);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import bridge fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Bridge fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Bridge class id"), Actor.ClassId, int64(0x17));
+    TestEqual(TEXT("Bridge actor name"), Actor.Name, FString(TEXT("BRIDGE")));
+    TestTrue(TEXT("Bridge class payload parses"), Actor.bHasBridgeData);
+    if (!TestEqual(TEXT("Bridge actor ref count"), Actor.BridgeActorRefs.Num(), 1)) return false;
+    TestEqual(TEXT("Bridge actor ref"), Actor.BridgeActorRefs[0], 1);
+    TestEqual(TEXT("Bridge waypoint A"), Actor.BridgeWaypointA, 2);
+    TestEqual(TEXT("Bridge waypoint B"), Actor.BridgeWaypointB, 3);
+    TestEqual(TEXT("Bridge field 330"), Actor.BridgeField330, 1.5f);
+    TestEqual(TEXT("Bridge field 334"), Actor.BridgeField334, 2.5f);
+    TestEqual(TEXT("Bridge field 33c"), Actor.BridgeField33C, 3.5f);
+    TestEqual(TEXT("Bridge field 340"), Actor.BridgeField340, 4.5f);
+    TestEqual(TEXT("Bridge field 338"), Actor.BridgeField338, 5.5f);
+    TestEqual(TEXT("Bridge field 344"), Actor.BridgeField344, 6);
+    TestEqual(TEXT("Bridge config flags"), Actor.BridgeConfigFlags, 7);
+    TestEqual(TEXT("Bridge field 348"), Actor.BridgeField348, 8);
+    TestEqual(TEXT("Bridge step collision scale"), Actor.BridgeStepCollisionScale, 9.5f);
+    TestEqual(TEXT("Bridge fixture leaves no raw class data"), Actor.ClassData.Num(), 0);
+    if (!TestEqual(TEXT("Bridge behaviour count"), Actor.Behaviours.Num(), 2)) return false;
+    const FKyaActorBehaviour& Basic = Actor.Behaviours[0];
+    const FKyaActorBehaviour& Wind = Actor.Behaviours[1];
+    TestEqual(TEXT("Bridge basic id"), Basic.Id, 2);
+    TestTrue(TEXT("Bridge basic is typed"), Basic.bHasTypedBridgeBasicBehaviour);
+    TestEqual(TEXT("Bridge basic direction x"), float(Basic.BridgeBasicDirection.X), 1.0f);
+    TestEqual(TEXT("Bridge basic direction z"), float(Basic.BridgeBasicDirection.Z), 3.0f);
+    TestEqual(TEXT("Bridge basic field 40"), Basic.BridgeBasicField40, 4.0f);
+    TestEqual(TEXT("Bridge basic field 50"), Basic.BridgeBasicField50, 8.0f);
+    TestEqual(TEXT("Bridge wind id"), Wind.Id, 3);
+    TestTrue(TEXT("Bridge wind is typed"), Wind.bHasTypedBridgeWindBehaviour);
+    if (!TestEqual(TEXT("Bridge wind value count"), Wind.BridgeWindValues.Num(), 5)) return false;
+    TestEqual(TEXT("Bridge wind value 0"), Wind.BridgeWindValues[0], 9.0f);
+    TestEqual(TEXT("Bridge wind value 4"), Wind.BridgeWindValues[4], 13.0f);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited bridge fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited bridge export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited bridge export preserves every byte"), Plain == Input);
+
+    Actor.BridgeActorRefs[0] = 91;
+    Actor.BridgeWaypointA = 92;
+    Actor.BridgeField330 = 93.5f;
+    Actor.BridgeConfigFlags = 94;
+    Actor.BridgeStepCollisionScale = 95.5f;
+    Actor.Behaviours[0].BridgeBasicField40 = 96.5f;
+    Actor.Behaviours[1].BridgeWindValues[2] = 97.5f;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited bridge fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited bridge export keeps the file size"), Edited.Num(), Input.Num());
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited bridge fixture"), Reimported)) return false;
+    const FKyaActorPlacement& EditedActor = Reimported->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Edited bridge actor ref round trips"), EditedActor.BridgeActorRefs[0], 91);
+    TestEqual(TEXT("Edited bridge waypoint round trips"), EditedActor.BridgeWaypointA, 92);
+    TestEqual(TEXT("Edited bridge field 330 round trips"), EditedActor.BridgeField330, 93.5f);
+    TestEqual(TEXT("Edited bridge config round trips"), EditedActor.BridgeConfigFlags, 94);
+    TestEqual(TEXT("Edited bridge step scale round trips"), EditedActor.BridgeStepCollisionScale, 95.5f);
+    TestEqual(TEXT("Edited bridge basic field round trips"),
+        EditedActor.Behaviours[0].BridgeBasicField40, 96.5f);
+    TestEqual(TEXT("Edited bridge wind value round trips"),
+        EditedActor.Behaviours[1].BridgeWindValues[2], 97.5f);
+
+    Actor.BridgeActorRefs.Add(99);
+    TArray<uint8> Rejected;
+    FMemoryWriter RejectedWriter(Rejected);
+    TestFalse(TEXT("Exporter rejects a changed bridge actor-ref count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaFogFixtureRoundTripTest, "Kya.Bank.FogFixtureRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaFogFixtureRoundTripTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x3d);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import fog fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Fog fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Fog class id"), Actor.ClassId, int64(0x3d));
+    TestEqual(TEXT("Fog actor name"), Actor.Name, FString(TEXT("FOGMANAGER")));
+    TestTrue(TEXT("Fog class payload parses"), Actor.bHasFogData);
+    if (!TestEqual(TEXT("Fog hierarchy count"), Actor.FogHierarchies.Num(), 1)) return false;
+    TestEqual(TEXT("Fog hierarchy hash"), Actor.FogHierarchies[0].Hash, int64(0x5566778811223344ll));
+    TestEqual(TEXT("Fog hierarchy field 20"), Actor.FogHierarchies[0].Field20, 1.5f);
+    TestEqual(TEXT("Fog hierarchy field 24"), Actor.FogHierarchies[0].Field24, 2.5f);
+    TestEqual(TEXT("Fog fixture leaves no raw class data"), Actor.ClassData.Num(), 0);
+    if (!TestEqual(TEXT("Fog behaviour count"), Actor.Behaviours.Num(), 1)) return false;
+    const FKyaActorBehaviour& Fog = Actor.Behaviours[0];
+    TestEqual(TEXT("Fog behaviour id"), Fog.Id, 2);
+    TestTrue(TEXT("Fog behaviour is typed"), Fog.bHasTypedFogBehaviour);
+    if (!TestEqual(TEXT("Fog zone count"), Fog.FogZones.Num(), 1)) return false;
+    TestEqual(TEXT("Fog zone flags"), Fog.FogZones[0].Flags, 1);
+    TestEqual(TEXT("Fog zone ref"), Fog.FogZones[0].ZoneRef, 2);
+    TestEqual(TEXT("Fog zone clip"), Fog.FogZones[0].ClipValue, 3.5f);
+    TestEqual(TEXT("Fog zone field 4"), Fog.FogZones[0].Field4, 4.5f);
+    TestEqual(TEXT("Fog zone rgba"), Fog.FogZones[0].FogRGBA, 0x11223344);
+    TestEqual(TEXT("Fog zone flags 2"), Fog.FogZones[0].FogFlags, 5);
+    TestEqual(TEXT("Fog zone field 18"), Fog.FogZones[0].Field18, 6.5f);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited fog fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited fog export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited fog export preserves every byte"), Plain == Input);
+
+    Actor.FogHierarchies[0].Hash = 0x1122334455667788ll;
+    Actor.FogHierarchies[0].Field20 = 91.5f;
+    Actor.FogHierarchies[0].Field24 = 92.5f;
+    Actor.Behaviours[0].FogZones[0].ZoneRef = 93;
+    Actor.Behaviours[0].FogZones[0].ClipValue = 94.5f;
+    Actor.Behaviours[0].FogZones[0].FogRGBA = 95;
+    Actor.Behaviours[0].FogZones[0].Field18 = 96.5f;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited fog fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited fog export keeps the file size"), Edited.Num(), Input.Num());
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited fog fixture"), Reimported)) return false;
+    const FKyaActorPlacement& EditedActor = Reimported->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Edited fog hash round trips"), EditedActor.FogHierarchies[0].Hash,
+        int64(0x1122334455667788ll));
+    TestEqual(TEXT("Edited fog field 20 round trips"), EditedActor.FogHierarchies[0].Field20, 91.5f);
+    TestEqual(TEXT("Edited fog field 24 round trips"), EditedActor.FogHierarchies[0].Field24, 92.5f);
+    TestEqual(TEXT("Edited fog zone ref round trips"), EditedActor.Behaviours[0].FogZones[0].ZoneRef, 93);
+    TestEqual(TEXT("Edited fog zone clip round trips"),
+        EditedActor.Behaviours[0].FogZones[0].ClipValue, 94.5f);
+    TestEqual(TEXT("Edited fog zone rgba round trips"),
+        EditedActor.Behaviours[0].FogZones[0].FogRGBA, 95);
+    TestEqual(TEXT("Edited fog zone field 18 round trips"),
+        EditedActor.Behaviours[0].FogZones[0].Field18, 96.5f);
+
+    Actor.FogHierarchies.AddDefaulted();
+    TArray<uint8> Rejected;
+    FMemoryWriter RejectedWriter(Rejected);
+    TestFalse(TEXT("Exporter rejects a changed fog hierarchy count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaShootFixtureRoundTripTest, "Kya.Bank.ShootFixtureRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaShootFixtureRoundTripTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x3e);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import shoot fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Shoot fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Shoot class id"), Actor.ClassId, int64(0x3e));
+    TestEqual(TEXT("Shoot actor name"), Actor.Name, FString(TEXT("SHOOT")));
+    TestTrue(TEXT("Shoot class payload parses"), Actor.bHasShootData);
+    TestEqual(TEXT("Shoot weight"), Actor.ShootWeightB, 1.25f);
+    TestEqual(TEXT("Shoot life maximum is exact"), Actor.ShootLifeMax, int64(16777217));
+    TestEqual(TEXT("Shoot gravity"), Actor.ShootGravityScale, 2.0f);
+    TestEqual(TEXT("Shoot field 350"), Actor.ShootField350, 11);
+    TestEqual(TEXT("Shoot field 354"), Actor.ShootField354, 12);
+    TestEqual(TEXT("Shoot texture"), Actor.ShootTextureIndex, 13);
+    TestEqual(TEXT("Shoot mesh"), Actor.ShootMeshIndex, 14);
+    TestEqual(TEXT("Shoot field 3c0"), Actor.ShootField3C0, 1.0f);
+    TestEqual(TEXT("Shoot field 3cc"), Actor.ShootField3CC, 4.0f);
+    TestEqual(TEXT("Shoot field 3d0"), Actor.ShootField3D0, 15);
+    TestEqual(TEXT("Shoot field 3d4"), Actor.ShootField3D4, 5.0f);
+    TestEqual(TEXT("Shoot field 3e0"), Actor.ShootField3E0, 8.0f);
+    TestEqual(TEXT("Shoot field 3e8"), Actor.ShootField3E8, 16);
+    TestEqual(TEXT("Shoot field 3e4"), Actor.ShootField3E4, 17);
+    TestEqual(TEXT("Shoot field 3ec"), Actor.ShootField3EC, 18);
+    TestEqual(TEXT("Shoot field 3f0"), Actor.ShootField3F0, 19);
+    TestEqual(TEXT("Shoot add-on money type"), Actor.ShootAddOn.MoneyType, 2);
+    TestEqual(TEXT("Shoot add-on money count"), Actor.ShootAddOn.MoneyCount, 3);
+    TestEqual(TEXT("Shoot add-on sub-object mode"), Actor.ShootAddOn.SubObjMode, 1);
+    TestEqual(TEXT("Shoot add-on float 0"), Actor.ShootAddOn.SubObjField0, 0.25f);
+    TestEqual(TEXT("Shoot add-on float 14"), Actor.ShootAddOn.SubObjField14, 1.5f);
+    TestEqual(TEXT("Shoot fixture leaves no raw class data"), Actor.ClassData.Num(), 0);
+    if (!TestEqual(TEXT("Shoot behaviour count"), Actor.Behaviours.Num(), 2)) return false;
+    const FKyaActorBehaviour& Fire = Actor.Behaviours[0];
+    const FKyaActorBehaviour& Wave = Actor.Behaviours[1];
+    TestEqual(TEXT("Shoot fire id"), Fire.Id, 3);
+    TestTrue(TEXT("Shoot fire is typed"), Fire.bHasTypedShootFireBehaviour);
+    TestEqual(TEXT("Shoot fire field 2b0"), Fire.ShootFireField2B0, 7);
+    TestEqual(TEXT("Shoot fire field 8"), Fire.ShootFireField8, 1.5f);
+    TestEqual(TEXT("Shoot fire field 2b4"), Fire.ShootFireField2B4, 2.5f);
+    if (!TestEqual(TEXT("Shoot fire ref count"), Fire.ShootFireActorRefs.Num(), 3)) return false;
+    TestEqual(TEXT("Shoot fire ref 0"), Fire.ShootFireActorRefs[0], 21);
+    TestEqual(TEXT("Shoot fire ref 2"), Fire.ShootFireActorRefs[2], 23);
+    TestEqual(TEXT("Shoot wave id"), Wave.Id, 4);
+    TestTrue(TEXT("Shoot wave is typed"), Wave.bHasTypedShootWaveBehaviour);
+    if (!TestEqual(TEXT("Shoot wave value count"), Wave.ShootWaveValues.Num(), 7)) return false;
+    TestEqual(TEXT("Shoot wave value 0"), Wave.ShootWaveValues[0], 1.0f);
+    TestEqual(TEXT("Shoot wave value 6"), Wave.ShootWaveValues[6], 7.0f);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited shoot fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited shoot export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited shoot export preserves every byte"), Plain == Input);
+
+    Actor.ShootWeightB = 91.5f;
+    Actor.ShootLifeMax = 4000000000ll;
+    Actor.ShootField350 = 92;
+    Actor.ShootField3C0 = 93.5f;
+    Actor.ShootAddOn.MoneyCount = 94;
+    Actor.Behaviours[0].ShootFireActorRefs[1] = 95;
+    Actor.Behaviours[0].ShootFireField8 = 96.5f;
+    Actor.Behaviours[1].ShootWaveValues[3] = 97.5f;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited shoot fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited shoot export keeps the file size"), Edited.Num(), Input.Num());
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited shoot fixture"), Reimported)) return false;
+    const FKyaActorPlacement& EditedActor = Reimported->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Edited shoot weight round trips"), EditedActor.ShootWeightB, 91.5f);
+    TestEqual(TEXT("Edited shoot life round trips"), EditedActor.ShootLifeMax, int64(4000000000ll));
+    TestEqual(TEXT("Edited shoot field 350 round trips"), EditedActor.ShootField350, 92);
+    TestEqual(TEXT("Edited shoot field 3c0 round trips"), EditedActor.ShootField3C0, 93.5f);
+    TestEqual(TEXT("Edited shoot money round trips"), EditedActor.ShootAddOn.MoneyCount, 94);
+    TestEqual(TEXT("Edited shoot fire ref round trips"),
+        EditedActor.Behaviours[0].ShootFireActorRefs[1], 95);
+    TestEqual(TEXT("Edited shoot fire field round trips"),
+        EditedActor.Behaviours[0].ShootFireField8, 96.5f);
+    TestEqual(TEXT("Edited shoot wave round trips"),
+        EditedActor.Behaviours[1].ShootWaveValues[3], 97.5f);
+
+    Actor.Behaviours[0].ShootFireActorRefs.Add(99);
+    TArray<uint8> Rejected;
+    FMemoryWriter RejectedWriter(Rejected);
+    TestFalse(TEXT("Exporter rejects a changed shoot fire-ref count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaMoneyFixtureRoundTripTest, "Kya.Bank.MoneyFixtureRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaMoneyFixtureRoundTripTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x32);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import money fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Money fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Money class id"), Actor.ClassId, int64(0x32));
+    TestEqual(TEXT("Money actor name"), Actor.Name, FString(TEXT("MONEY")));
+    TestTrue(TEXT("Money class payload parses"), Actor.bHasMoneyData);
+    TestEqual(TEXT("Money weight"), Actor.MoneyWeightB, 1.25f);
+    TestEqual(TEXT("Money value"), Actor.MoneyValue, 100);
+    TestEqual(TEXT("Money sound"), Actor.MoneySoundRef, 5);
+    TestEqual(TEXT("Money material"), Actor.MoneyMaterialId, 6);
+    TestEqual(TEXT("Money fixture leaves no raw class data"), Actor.ClassData.Num(), 0);
+    if (!TestEqual(TEXT("Money behaviour count"), Actor.Behaviours.Num(), 2)) return false;
+    const FKyaActorBehaviour& Flock = Actor.Behaviours[0];
+    const FKyaActorBehaviour& AddOn = Actor.Behaviours[1];
+    TestEqual(TEXT("Money flock id"), Flock.Id, 2);
+    TestTrue(TEXT("Money flock is typed"), Flock.bHasTypedMoneyFlockBehaviour);
+    TestEqual(TEXT("Money flock path"), Flock.MoneyFlockPathIndex, 21);
+    TestEqual(TEXT("Money add-on id"), AddOn.Id, 3);
+    TestEqual(TEXT("Money add-on payload is empty"), AddOn.Data.Num(), 0);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited money fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited money export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited money export preserves every byte"), Plain == Input);
+
+    Actor.MoneyWeightB = 91.5f;
+    Actor.MoneyValue = 92;
+    Actor.MoneySoundRef = 93;
+    Actor.MoneyMaterialId = 94;
+    Actor.Behaviours[0].MoneyFlockPathIndex = 95;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited money fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited money export keeps the file size"), Edited.Num(), Input.Num());
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited money fixture"), Reimported)) return false;
+    const FKyaActorPlacement& EditedActor = Reimported->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Edited money weight round trips"), EditedActor.MoneyWeightB, 91.5f);
+    TestEqual(TEXT("Edited money value round trips"), EditedActor.MoneyValue, 92);
+    TestEqual(TEXT("Edited money sound round trips"), EditedActor.MoneySoundRef, 93);
+    TestEqual(TEXT("Edited money material round trips"), EditedActor.MoneyMaterialId, 94);
+    TestEqual(TEXT("Edited money flock path round trips"),
+        EditedActor.Behaviours[0].MoneyFlockPathIndex, 95);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaBoxFixtureRoundTripTest, "Kya.Bank.BoxFixtureRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaBoxFixtureRoundTripTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x35);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import box fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Box fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Box class id"), Actor.ClassId, int64(0x35));
+    TestEqual(TEXT("Box actor name"), Actor.Name, FString(TEXT("BOX")));
+    TestTrue(TEXT("Box class payload parses"), Actor.bHasBoxData);
+    TestEqual(TEXT("Box weight"), Actor.BoxWeightB, 1.25f);
+    TestEqual(TEXT("Box life maximum is exact"), Actor.BoxLifeMax, int64(16777217));
+    TestEqual(TEXT("Box gravity"), Actor.BoxGravityScale, 2.0f);
+    TestEqual(TEXT("Box field 350"), Actor.BoxField350, 11);
+    if (!TestEqual(TEXT("Box actor ref count"), Actor.BoxActorRefs.Num(), 1)) return false;
+    TestEqual(TEXT("Box actor ref"), Actor.BoxActorRefs[0], 21);
+    TestEqual(TEXT("Box field 354"), Actor.BoxField354, 1.0f);
+    TestEqual(TEXT("Box field 360"), Actor.BoxField360, 4.0f);
+    TestEqual(TEXT("Box field 364"), Actor.BoxField364, 12);
+    TestEqual(TEXT("Box field 370"), Actor.BoxField370, 13);
+    TestEqual(TEXT("Box field 374"), Actor.BoxField374, 14);
+    TestEqual(TEXT("Box field 378"), Actor.BoxField378, 15);
+    TestEqual(TEXT("Box field 37c"), Actor.BoxField37C, 16);
+    if (!TestEqual(TEXT("Box switch target count"), Actor.BoxSwitch.Targets.Num(), 1)) return false;
+    TestEqual(TEXT("Box switch target"), Actor.BoxSwitch.Targets[0].TargetRef, 31);
+    TestEqual(TEXT("Box switch camera"), Actor.BoxSwitch.Camera.CameraIndex, 41);
+    TestEqual(TEXT("Box add-on money type"), Actor.BoxAddOn.MoneyType, 2);
+    TestEqual(TEXT("Box add-on money count"), Actor.BoxAddOn.MoneyCount, 3);
+    TestEqual(TEXT("Box add-on sub-object mode"), Actor.BoxAddOn.SubObjMode, 1);
+    TestEqual(TEXT("Box add-on float 0"), Actor.BoxAddOn.SubObjField0, 0.25f);
+    TestEqual(TEXT("Box add-on float 14"), Actor.BoxAddOn.SubObjField14, 1.5f);
+    TestEqual(TEXT("Box fixture leaves no raw class data"), Actor.ClassData.Num(), 0);
+    if (!TestEqual(TEXT("Box behaviour count"), Actor.Behaviours.Num(), 1)) return false;
+    TestEqual(TEXT("Box behaviour id"), Actor.Behaviours[0].Id, 3);
+    TestEqual(TEXT("Box behaviour is empty"), Actor.Behaviours[0].Data.Num(), 0);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited box fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited box export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited box export preserves every byte"), Plain == Input);
+
+    Actor.BoxWeightB = 91.5f;
+    Actor.BoxLifeMax = 4000000000ll;
+    Actor.BoxField350 = 92;
+    Actor.BoxActorRefs[0] = 93;
+    Actor.BoxField364 = 94;
+    Actor.BoxSwitch.Targets[0].TargetRef = 95;
+    Actor.BoxAddOn.MoneyCount = 96;
+    Actor.BoxAddOn.SubObjFieldC = 97.5f;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited box fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited box export keeps the file size"), Edited.Num(), Input.Num());
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited box fixture"), Reimported)) return false;
+    const FKyaActorPlacement& EditedActor = Reimported->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Edited box weight round trips"), EditedActor.BoxWeightB, 91.5f);
+    TestEqual(TEXT("Edited box life round trips"), EditedActor.BoxLifeMax, int64(4000000000ll));
+    TestEqual(TEXT("Edited box field 350 round trips"), EditedActor.BoxField350, 92);
+    TestEqual(TEXT("Edited box actor ref round trips"), EditedActor.BoxActorRefs[0], 93);
+    TestEqual(TEXT("Edited box field 364 round trips"), EditedActor.BoxField364, 94);
+    TestEqual(TEXT("Edited box switch target round trips"),
+        EditedActor.BoxSwitch.Targets[0].TargetRef, 95);
+    TestEqual(TEXT("Edited box money round trips"), EditedActor.BoxAddOn.MoneyCount, 96);
+    TestEqual(TEXT("Edited box add-on float round trips"),
+        EditedActor.BoxAddOn.SubObjFieldC, 97.5f);
+
+    Actor.BoxActorRefs.Add(99);
+    TArray<uint8> Rejected;
+    FMemoryWriter RejectedWriter(Rejected);
+    TestFalse(TEXT("Exporter rejects a changed box actor-ref count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaFxFixtureRoundTripTest, "Kya.Bank.FxFixtureRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaFxFixtureRoundTripTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x2e);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import FX fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("FX fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("FX class id"), Actor.ClassId, int64(0x2e));
+    TestEqual(TEXT("FX actor name"), Actor.Name, FString(TEXT("ACTORFX")));
+    TestTrue(TEXT("FX class payload parses"), Actor.bHasFxData);
+    TestEqual(TEXT("FX field 19c"), Actor.FxField19C, 0.5f);
+    TestEqual(TEXT("FX field 1a0"), Actor.FxField1A0, 1.5f);
+    TestEqual(TEXT("FX fixture leaves no raw class data"), Actor.ClassData.Num(), 0);
+    if (!TestEqual(TEXT("FX behaviour count"), Actor.Behaviours.Num(), 3)) return false;
+    const FKyaActorBehaviour& Single = Actor.Behaviours[0];
+    const FKyaActorBehaviour& Path = Actor.Behaviours[1];
+    const FKyaActorBehaviour& Unknown = Actor.Behaviours[2];
+    TestEqual(TEXT("FX single id"), Single.Id, 2);
+    TestTrue(TEXT("FX single is typed"), Single.bHasTypedFxBehaviour);
+    TestEqual(TEXT("FX single value"), Single.FxBehaviourValue, 7);
+    TestEqual(TEXT("FX path id"), Path.Id, 3);
+    TestTrue(TEXT("FX path is typed"), Path.bHasTypedFxBehaviour);
+    TestEqual(TEXT("FX path value"), Path.FxBehaviourValue, 8);
+    TestEqual(TEXT("FX path index"), Path.FxPathFollowIndex, 9);
+    TestEqual(TEXT("FX unknown id"), Unknown.Id, 4);
+    TestTrue(TEXT("FX unknown is typed"), Unknown.bHasTypedFxBehaviour);
+    if (!TestEqual(TEXT("FX unknown value count"), Unknown.FxUnknownValues.Num(), 2)) return false;
+    TestEqual(TEXT("FX unknown value 0"), Unknown.FxUnknownValues[0], 10);
+    TestEqual(TEXT("FX unknown value 1"), Unknown.FxUnknownValues[1], 11);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited FX fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited FX export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited FX export preserves every byte"), Plain == Input);
+
+    Actor.FxField19C = 91.5f;
+    Actor.FxField1A0 = 92.5f;
+    Actor.Behaviours[0].FxBehaviourValue = 93;
+    Actor.Behaviours[1].FxPathFollowIndex = 94;
+    Actor.Behaviours[2].FxUnknownValues[1] = 95;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited FX fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited FX export keeps the file size"), Edited.Num(), Input.Num());
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited FX fixture"), Reimported)) return false;
+    const FKyaActorPlacement& EditedActor = Reimported->SceneEnvironment.Actors[0];
+    if (!TestEqual(TEXT("Edited FX behaviour count"), EditedActor.Behaviours.Num(), 3)) return false;
+    TestEqual(TEXT("Edited FX field 19c round trips"), EditedActor.FxField19C, 91.5f);
+    TestEqual(TEXT("Edited FX field 1a0 round trips"), EditedActor.FxField1A0, 92.5f);
+    TestEqual(TEXT("Edited FX single round trips"), EditedActor.Behaviours[0].FxBehaviourValue, 93);
+    TestEqual(TEXT("Edited FX path round trips"), EditedActor.Behaviours[1].FxPathFollowIndex, 94);
+    TestEqual(TEXT("Edited FX unknown value round trips"),
+        EditedActor.Behaviours[2].FxUnknownValues[1], 95);
+
+    Actor.Behaviours[2].FxUnknownValues.Add(99);
+    TArray<uint8> Rejected;
+    FMemoryWriter RejectedWriter(Rejected);
+    TestFalse(TEXT("Exporter rejects a changed FX unknown-value count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaClusteriserFixtureRoundTripTest, "Kya.Bank.ClusteriserFixtureRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaClusteriserFixtureRoundTripTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x18);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import clusteriser fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Clusteriser fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Clusteriser class id"), Actor.ClassId, int64(0x18));
+    TestEqual(TEXT("Clusteriser actor name"), Actor.Name, FString(TEXT("CLUSTERISER")));
+    TestEqual(TEXT("Clusteriser has no raw class data"), Actor.ClassData.Num(), 0);
+    if (!TestEqual(TEXT("Clusteriser behaviour count"), Actor.Behaviours.Num(), 1)) return false;
+    const FKyaActorBehaviour& Zones = Actor.Behaviours[0];
+    TestEqual(TEXT("Clusteriser behaviour id"), Zones.Id, 2);
+    TestTrue(TEXT("Clusteriser zones are typed"), Zones.bHasTypedClusterZones);
+    if (!TestEqual(TEXT("Clusteriser zone count"), Zones.ClusterZones.Num(), 1)) return false;
+    const FKyaClusterZone& Zone = Zones.ClusterZones[0];
+    TestEqual(TEXT("Cluster zone flags"), Zone.Flags, int64(1));
+    TestEqual(TEXT("Cluster zone ref"), Zone.ZoneRef, 2);
+    if (!TestEqual(TEXT("Cluster zone actor count"), Zone.Actors.Num(), 1)) return false;
+    TestEqual(TEXT("Cluster zone actor"), Zone.Actors[0], 3);
+    TestEqual(TEXT("Cluster zone other-actor count"), Zone.OtherActors.Num(), 0);
+    if (!TestEqual(TEXT("Cluster zone camera count"), Zone.Cameras.Num(), 1)) return false;
+    TestEqual(TEXT("Cluster zone camera"), Zone.Cameras[0], 4);
+    TestEqual(TEXT("Cluster zone light count"), Zone.Lights.Num(), 0);
+    if (!TestEqual(TEXT("Cluster zone hash count"), Zone.Hashes.Num(), 1)) return false;
+    TestEqual(TEXT("Cluster zone hash"), Zone.Hashes[0], int64(0x5566778811223344ll));
+    TestEqual(TEXT("Cluster zone other ref"), Zone.OtherZoneRef, 5);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited clusteriser fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited clusteriser export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited clusteriser export preserves every byte"), Plain == Input);
+
+    Actor.Behaviours[0].ClusterZones[0].Flags = 91;
+    Actor.Behaviours[0].ClusterZones[0].ZoneRef = 92;
+    Actor.Behaviours[0].ClusterZones[0].Actors[0] = 93;
+    Actor.Behaviours[0].ClusterZones[0].Cameras[0] = 94;
+    Actor.Behaviours[0].ClusterZones[0].Hashes[0] = 0x1122334455667788ll;
+    Actor.Behaviours[0].ClusterZones[0].OtherZoneRef = 95;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited clusteriser fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited clusteriser export keeps the file size"), Edited.Num(), Input.Num());
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited clusteriser fixture"), Reimported)) return false;
+    const FKyaClusterZone& EditedZone =
+        Reimported->SceneEnvironment.Actors[0].Behaviours[0].ClusterZones[0];
+    TestEqual(TEXT("Edited cluster flags round trips"), EditedZone.Flags, int64(91));
+    TestEqual(TEXT("Edited cluster zone ref round trips"), EditedZone.ZoneRef, 92);
+    TestEqual(TEXT("Edited cluster actor round trips"), EditedZone.Actors[0], 93);
+    TestEqual(TEXT("Edited cluster camera round trips"), EditedZone.Cameras[0], 94);
+    TestEqual(TEXT("Edited cluster hash round trips"), EditedZone.Hashes[0],
+        int64(0x1122334455667788ll));
+    TestEqual(TEXT("Edited cluster other ref round trips"), EditedZone.OtherZoneRef, 95);
+
+    Actor.Behaviours[0].ClusterZones[0].Actors.Add(99);
+    TArray<uint8> Rejected;
+    FMemoryWriter RejectedWriter(Rejected);
+    TestFalse(TEXT("Exporter rejects a changed cluster actor count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaCompanionFixtureRoundTripTest, "Kya.Bank.CompanionFixtureRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaCompanionFixtureRoundTripTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x19);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import companion fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Companion fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Companion class id"), Actor.ClassId, int64(0x19));
+    TestEqual(TEXT("Companion actor name"), Actor.Name, FString(TEXT("COMPANION")));
+    TestTrue(TEXT("Companion class payload parses"), Actor.bHasCompanionData);
+    TestEqual(TEXT("Companion weight"), Actor.CompanionWeightB, 1.25f);
+    TestEqual(TEXT("Companion life maximum is exact"), Actor.CompanionLifeMax, int64(16777217));
+    TestEqual(TEXT("Companion gravity"), Actor.CompanionGravityScale, 2.0f);
+    TestEqual(TEXT("Companion field 358"), Actor.CompanionField358, 11);
+    TestEqual(TEXT("Companion material 35c"), Actor.CompanionMaterial35C, 12);
+    TestEqual(TEXT("Companion field 360"), Actor.CompanionField360, 13);
+    TestEqual(TEXT("Companion fixture leaves no raw class data"), Actor.ClassData.Num(), 0);
+    if (!TestEqual(TEXT("Companion behaviour count"), Actor.Behaviours.Num(), 1)) return false;
+    const FKyaActorBehaviour& AlertBehaviour = Actor.Behaviours[0];
+    TestEqual(TEXT("Companion behaviour id"), AlertBehaviour.Id, 3);
+    TestTrue(TEXT("Companion alert is typed"), AlertBehaviour.bHasTypedCompanionBehaviour);
+    if (!TestEqual(TEXT("Companion alert count"), AlertBehaviour.CompanionAlerts.Num(), 1)) return false;
+    const FKyaCompanionAlert& Alert = AlertBehaviour.CompanionAlerts[0];
+    TestEqual(TEXT("Companion alert conditions"), Alert.Conditions.Num(), 0);
+    TestEqual(TEXT("Companion alert flags"), Alert.Flags, 1);
+    TestEqual(TEXT("Companion alert field 08"), Alert.Field08, 2);
+    TestEqual(TEXT("Companion alert field 18"), Alert.Field18, 5.5f);
+    TestEqual(TEXT("Companion alert actor"), Alert.ActorRef, 6);
+    TestEqual(TEXT("Companion alert vector y"), float(Alert.Field20.Y), 8.0f);
+    TestEqual(TEXT("Companion alert camera"), Alert.CameraRef, 10);
+    TestEqual(TEXT("Companion alert list"), Alert.Field34.Num(), 0);
+    TestEqual(TEXT("Companion alert string key"), Alert.LevelStringKey, int64(0x5566778811223344ll));
+    TestEqual(TEXT("Companion alert field 50"), Alert.Field50, 11.5f);
+    TestEqual(TEXT("Companion alert field 58"), Alert.Field58, 12);
+    TestEqual(TEXT("Companion alert field 5c"), Alert.Field5C, 13.5f);
+    TestEqual(TEXT("Companion alert switch targets"), Alert.TargetSwitch.Targets.Num(), 0);
+    TestEqual(TEXT("Companion alert switch camera"), Alert.TargetSwitch.Camera.CameraIndex, 21);
+    TestEqual(TEXT("Companion alert conditioned blocks"), Alert.Field70.Num(), 0);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited companion fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited companion export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited companion export preserves every byte"), Plain == Input);
+
+    Actor.CompanionWeightB = 91.5f;
+    Actor.CompanionLifeMax = 4000000000ll;
+    Actor.CompanionField358 = 92;
+    Actor.CompanionMaterial35C = 93;
+    Actor.Behaviours[0].CompanionAlerts[0].Flags = 94;
+    Actor.Behaviours[0].CompanionAlerts[0].ActorRef = 95;
+    Actor.Behaviours[0].CompanionAlerts[0].LevelStringKey = 0x1122334455667788ll;
+    Actor.Behaviours[0].CompanionAlerts[0].TargetSwitch.Camera.CameraIndex = 96;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited companion fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited companion export keeps the file size"), Edited.Num(), Input.Num());
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited companion fixture"), Reimported)) return false;
+    const FKyaActorPlacement& EditedActor = Reimported->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Edited companion weight round trips"), EditedActor.CompanionWeightB, 91.5f);
+    TestEqual(TEXT("Edited companion life round trips"), EditedActor.CompanionLifeMax, int64(4000000000ll));
+    TestEqual(TEXT("Edited companion field 358 round trips"), EditedActor.CompanionField358, 92);
+    TestEqual(TEXT("Edited companion material round trips"), EditedActor.CompanionMaterial35C, 93);
+    TestEqual(TEXT("Edited companion alert flags round trips"),
+        EditedActor.Behaviours[0].CompanionAlerts[0].Flags, 94);
+    TestEqual(TEXT("Edited companion alert actor round trips"),
+        EditedActor.Behaviours[0].CompanionAlerts[0].ActorRef, 95);
+    TestEqual(TEXT("Edited companion alert string round trips"),
+        EditedActor.Behaviours[0].CompanionAlerts[0].LevelStringKey, int64(0x1122334455667788ll));
+    TestEqual(TEXT("Edited companion alert camera round trips"),
+        EditedActor.Behaviours[0].CompanionAlerts[0].TargetSwitch.Camera.CameraIndex, 96);
+
+    Actor.Behaviours[0].CompanionAlerts.AddDefaulted();
+    TArray<uint8> Rejected;
+    FMemoryWriter RejectedWriter(Rejected);
+    TestFalse(TEXT("Exporter rejects a changed companion alert count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaGravityFixtureRoundTripTest, "Kya.Bank.GravityFixtureRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaGravityFixtureRoundTripTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x10);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import gravity fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Gravity fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Gravity class id"), Actor.ClassId, int64(0x10));
+    TestEqual(TEXT("Gravity actor name"), Actor.Name, FString(TEXT("BELL")));
+    TestTrue(TEXT("Gravity class payload parses"), Actor.bHasGravityAwareData);
+    TestEqual(TEXT("Gravity weight"), Actor.GravityWeightB, 1.25f);
+    TestEqual(TEXT("Gravity life maximum is exact"), Actor.GravityLifeMax, int64(16777217));
+    TestEqual(TEXT("Gravity scale"), Actor.GravityScale, 2.0f);
+    TestEqual(TEXT("Gravity dynamic ext 4"), Actor.GravityDynamicExtField4, 0.5f);
+    TestEqual(TEXT("Gravity dynamic ext 8"), Actor.GravityDynamicExtField8, 0.75f);
+    TestEqual(TEXT("Gravity fixture leaves no raw class data"), Actor.ClassData.Num(), 0);
+    if (!TestEqual(TEXT("Gravity behaviour count"), Actor.Behaviours.Num(), 2)) return false;
+    const FKyaActorBehaviour& Fall = Actor.Behaviours[0];
+    const FKyaActorBehaviour& Bell = Actor.Behaviours[1];
+    TestEqual(TEXT("Gravity fall id"), Fall.Id, 3);
+    TestTrue(TEXT("Gravity fall is typed"), Fall.bHasTypedGravityFallBehaviour);
+    TestEqual(TEXT("Gravity fall sound"), Fall.GravityFallSoundRef, 31);
+    TestEqual(TEXT("Gravity bell id"), Bell.Id, 4);
+    TestTrue(TEXT("Gravity bell is typed"), Bell.bHasTypedGravityBellBehaviour);
+    TestEqual(TEXT("Gravity bell sound"), Bell.GravityBellSoundRef, 32);
+    TestEqual(TEXT("Gravity bell field c"), Bell.GravityBellFieldC, 1.5f);
+    if (!TestEqual(TEXT("Gravity bell switch count"), Bell.GravityBellSwitch.Targets.Num(), 1)) return false;
+    TestEqual(TEXT("Gravity bell switch target"), Bell.GravityBellSwitch.Targets[0].TargetRef, 41);
+    TestEqual(TEXT("Gravity bell switch camera"), Bell.GravityBellSwitch.Camera.CameraIndex, 51);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited gravity fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited gravity export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited gravity export preserves every byte"), Plain == Input);
+
+    Actor.GravityWeightB = 91.5f;
+    Actor.GravityLifeMax = 4000000000ll;
+    Actor.GravityScale = 92.5f;
+    Actor.Behaviours[0].GravityFallSoundRef = 93;
+    Actor.Behaviours[1].GravityBellSoundRef = 94;
+    Actor.Behaviours[1].GravityBellFieldC = 95.5f;
+    Actor.Behaviours[1].GravityBellSwitch.Targets[0].TargetRef = 96;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited gravity fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited gravity export keeps the file size"), Edited.Num(), Input.Num());
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited gravity fixture"), Reimported)) return false;
+    const FKyaActorPlacement& EditedActor = Reimported->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Edited gravity weight round trips"), EditedActor.GravityWeightB, 91.5f);
+    TestEqual(TEXT("Edited gravity life round trips"), EditedActor.GravityLifeMax, int64(4000000000ll));
+    TestEqual(TEXT("Edited gravity scale round trips"), EditedActor.GravityScale, 92.5f);
+    TestEqual(TEXT("Edited gravity fall sound round trips"),
+        EditedActor.Behaviours[0].GravityFallSoundRef, 93);
+    TestEqual(TEXT("Edited gravity bell sound round trips"),
+        EditedActor.Behaviours[1].GravityBellSoundRef, 94);
+    TestEqual(TEXT("Edited gravity bell field c round trips"),
+        EditedActor.Behaviours[1].GravityBellFieldC, 95.5f);
+    TestEqual(TEXT("Edited gravity bell target round trips"),
+        EditedActor.Behaviours[1].GravityBellSwitch.Targets[0].TargetRef, 96);
+
+    Actor.GravityLifeMax = -1;
+    TArray<uint8> RejectedLife;
+    FMemoryWriter RejectedLifeWriter(RejectedLife);
+    TestFalse(TEXT("Exporter rejects an out-of-range gravity life maximum"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedLifeWriter, GWarn));
+    Actor.GravityLifeMax = 4000000000ll;
+
+    Actor.Behaviours[1].GravityBellSwitch.Targets.AddDefaulted();
+    TArray<uint8> Rejected;
+    FMemoryWriter RejectedWriter(Rejected);
+    TestFalse(TEXT("Exporter rejects a changed gravity bell switch count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaRuneFixtureRoundTripTest, "Kya.Bank.RuneFixtureRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaRuneFixtureRoundTripTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x51);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import rune fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Rune fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Rune class id"), Actor.ClassId, int64(0x51));
+    TestEqual(TEXT("Rune actor name"), Actor.Name, FString(TEXT("RUNE")));
+    TestTrue(TEXT("Rune class payload parses"), Actor.bHasRuneData);
+    TestEqual(TEXT("Rune cinematic"), Actor.RuneCinematicId, 1);
+    TestEqual(TEXT("Rune trigger distance"), Actor.RuneTriggerDistance, 2.5f);
+    TestEqual(TEXT("Rune scenario variable"), Actor.RuneScenVarId, 3);
+    TestEqual(TEXT("Rune fx"), Actor.RuneFxId, 4);
+    TestEqual(TEXT("Rune material A"), Actor.RuneMaterialIdA, 5);
+    TestEqual(TEXT("Rune material B"), Actor.RuneMaterialIdB, 6);
+    TestEqual(TEXT("Rune fixture leaves no raw class data"), Actor.ClassData.Num(), 0);
+    if (!TestEqual(TEXT("Rune behaviour count"), Actor.Behaviours.Num(), 1)) return false;
+    TestEqual(TEXT("Rune behaviour id"), Actor.Behaviours[0].Id, 2);
+    TestEqual(TEXT("Rune behaviour is empty"), Actor.Behaviours[0].Data.Num(), 0);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited rune fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited rune export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited rune export preserves every byte"), Plain == Input);
+
+    Actor.RuneCinematicId = 91;
+    Actor.RuneTriggerDistance = 92.5f;
+    Actor.RuneScenVarId = 93;
+    Actor.RuneFxId = 94;
+    Actor.RuneMaterialIdA = 95;
+    Actor.RuneMaterialIdB = 96;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited rune fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited rune export keeps the file size"), Edited.Num(), Input.Num());
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited rune fixture"), Reimported)) return false;
+    const FKyaActorPlacement& EditedActor = Reimported->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Edited rune cinematic round trips"), EditedActor.RuneCinematicId, 91);
+    TestEqual(TEXT("Edited rune trigger round trips"), EditedActor.RuneTriggerDistance, 92.5f);
+    TestEqual(TEXT("Edited rune scenario variable round trips"), EditedActor.RuneScenVarId, 93);
+    TestEqual(TEXT("Edited rune fx round trips"), EditedActor.RuneFxId, 94);
+    TestEqual(TEXT("Edited rune material A round trips"), EditedActor.RuneMaterialIdA, 95);
+    TestEqual(TEXT("Edited rune material B round trips"), EditedActor.RuneMaterialIdB, 96);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaMickenFixtureRoundTripTest, "Kya.Bank.MickenFixtureRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaMickenFixtureRoundTripTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x07);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import micken fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Micken fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Micken class id"), Actor.ClassId, int64(0x07));
+    TestEqual(TEXT("Micken actor name"), Actor.Name, FString(TEXT("MICKEN")));
+    TestTrue(TEXT("Micken class payload parses"), Actor.bHasMickenData);
+    TestEqual(TEXT("Micken weight"), Actor.MickenWeightB, 1.25f);
+    TestEqual(TEXT("Micken life maximum is exact"), Actor.MickenLifeMax, int64(16777217));
+    TestEqual(TEXT("Micken gravity"), Actor.MickenGravityScale, 2.0f);
+    TestEqual(TEXT("Micken waypoint"), Actor.MickenWaypointIndex, 11);
+    TestEqual(TEXT("Micken actor"), Actor.MickenActorIndex, 12);
+    TestEqual(TEXT("Micken field 358"), Actor.MickenField358, 13);
+    TestEqual(TEXT("Micken field 35c"), Actor.MickenField35C, 3.5f);
+    TestEqual(TEXT("Micken field 360"), Actor.MickenField360, 14);
+    TestEqual(TEXT("Micken fixture leaves no raw class data"), Actor.ClassData.Num(), 0);
+    if (!TestEqual(TEXT("Micken behaviour count"), Actor.Behaviours.Num(), 2)) return false;
+    const FKyaActorBehaviour& Eat = Actor.Behaviours[0];
+    TestEqual(TEXT("Micken eat id"), Eat.Id, 4);
+    TestTrue(TEXT("Micken eat is typed"), Eat.bHasTypedMickenBehaviour);
+    TestEqual(TEXT("Micken eat field 8"), Eat.MickenEatField8, 1.5f);
+    TestEqual(TEXT("Micken eat field c"), Eat.MickenEatFieldC, 2.5f);
+    TestEqual(TEXT("Micken eat field 10"), Eat.MickenEatField10, 3);
+    TestEqual(TEXT("Micken eat path"), Eat.MickenEatPathIndex, 21);
+    TestEqual(TEXT("Micken squashed id"), Actor.Behaviours[1].Id, 5);
+    TestEqual(TEXT("Micken squashed is empty"), Actor.Behaviours[1].Data.Num(), 0);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited micken fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited micken export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited micken export preserves every byte"), Plain == Input);
+
+    Actor.MickenWeightB = 91.5f;
+    Actor.MickenLifeMax = 4000000000ll;
+    Actor.MickenWaypointIndex = 92;
+    Actor.MickenField35C = 93.5f;
+    Actor.Behaviours[0].MickenEatField8 = 94.5f;
+    Actor.Behaviours[0].MickenEatField10 = 95;
+    Actor.Behaviours[0].MickenEatPathIndex = 96;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited micken fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited micken export keeps the file size"), Edited.Num(), Input.Num());
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited micken fixture"), Reimported)) return false;
+    const FKyaActorPlacement& EditedActor = Reimported->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Edited micken weight round trips"), EditedActor.MickenWeightB, 91.5f);
+    TestEqual(TEXT("Edited micken life round trips"), EditedActor.MickenLifeMax, int64(4000000000ll));
+    TestEqual(TEXT("Edited micken waypoint round trips"), EditedActor.MickenWaypointIndex, 92);
+    TestEqual(TEXT("Edited micken field 35c round trips"), EditedActor.MickenField35C, 93.5f);
+    TestEqual(TEXT("Edited micken eat field 8 round trips"),
+        EditedActor.Behaviours[0].MickenEatField8, 94.5f);
+    TestEqual(TEXT("Edited micken eat field 10 round trips"),
+        EditedActor.Behaviours[0].MickenEatField10, 95);
+    TestEqual(TEXT("Edited micken eat path round trips"),
+        EditedActor.Behaviours[0].MickenEatPathIndex, 96);
+
+    Actor.MickenLifeMax = -1;
+    TArray<uint8> RejectedLife;
+    FMemoryWriter RejectedLifeWriter(RejectedLife);
+    TestFalse(TEXT("Exporter rejects an out-of-range micken life maximum"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedLifeWriter, GWarn));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaBasicBoxFixtureRoundTripTest, "Kya.Bank.BasicBoxFixtureRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaBasicBoxFixtureRoundTripTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x39);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import basic box fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Basic box fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Basic box class id"), Actor.ClassId, int64(0x39));
+    TestEqual(TEXT("Basic box actor name"), Actor.Name, FString(TEXT("BASICBOX")));
+    TestTrue(TEXT("Basic box class payload parses"), Actor.bHasBasicBoxData);
+    TestEqual(TEXT("Basic box field 160"), Actor.BasicBoxField160, 1);
+    TestEqual(TEXT("Basic box life maximum is exact"), Actor.BasicBoxLifeMax, int64(16777217));
+    if (!TestEqual(TEXT("Basic box actor ref count"), Actor.BasicBoxActorRefs.Num(), 1)) return false;
+    TestEqual(TEXT("Basic box actor ref"), Actor.BasicBoxActorRefs[0], 21);
+    TestEqual(TEXT("Basic box vibration 0"), Actor.BasicBoxVibration0, 1.0f);
+    TestEqual(TEXT("Basic box vibration 3"), Actor.BasicBoxVibration3, 4.0f);
+    TestEqual(TEXT("Basic box field 180"), Actor.BasicBoxField180, 11);
+    TestEqual(TEXT("Basic box field 18c"), Actor.BasicBoxField18C, 12);
+    TestEqual(TEXT("Basic box field 190"), Actor.BasicBoxField190, 13);
+    TestEqual(TEXT("Basic box field 198"), Actor.BasicBoxField198, 14);
+    TestEqual(TEXT("Basic box field 194"), Actor.BasicBoxField194, 15);
+    if (!TestEqual(TEXT("Basic box switch target count"), Actor.BasicBoxSwitch.Targets.Num(), 1)) return false;
+    TestEqual(TEXT("Basic box switch target"), Actor.BasicBoxSwitch.Targets[0].TargetRef, 31);
+    TestEqual(TEXT("Basic box switch camera"), Actor.BasicBoxSwitch.Camera.CameraIndex, 41);
+    TestEqual(TEXT("Basic box add-on money type"), Actor.BasicBoxAddOn.MoneyType, 2);
+    TestEqual(TEXT("Basic box add-on money count"), Actor.BasicBoxAddOn.MoneyCount, 3);
+    TestEqual(TEXT("Basic box add-on sub-object mode"), Actor.BasicBoxAddOn.SubObjMode, 1);
+    TestEqual(TEXT("Basic box add-on float 0"), Actor.BasicBoxAddOn.SubObjField0, 0.25f);
+    TestEqual(TEXT("Basic box add-on float 14"), Actor.BasicBoxAddOn.SubObjField14, 1.5f);
+    TestEqual(TEXT("Basic box fixture leaves no raw class data"), Actor.ClassData.Num(), 0);
+    if (!TestEqual(TEXT("Basic box behaviour count"), Actor.Behaviours.Num(), 1)) return false;
+    TestEqual(TEXT("Basic box behaviour id"), Actor.Behaviours[0].Id, 2);
+    TestEqual(TEXT("Basic box behaviour is empty"), Actor.Behaviours[0].Data.Num(), 0);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited basic box fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited basic box export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited basic box export preserves every byte"), Plain == Input);
+
+    Actor.BasicBoxField160 = 91;
+    Actor.BasicBoxLifeMax = 4000000000ll;
+    Actor.BasicBoxActorRefs[0] = 92;
+    Actor.BasicBoxVibration2 = 93.5f;
+    Actor.BasicBoxField18C = 94;
+    Actor.BasicBoxSwitch.Targets[0].TargetRef = 95;
+    Actor.BasicBoxAddOn.MoneyCount = 96;
+    Actor.BasicBoxAddOn.SubObjFieldC = 97.5f;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited basic box fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited basic box export keeps the file size"), Edited.Num(), Input.Num());
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited basic box fixture"), Reimported)) return false;
+    const FKyaActorPlacement& EditedActor = Reimported->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Edited basic box field 160 round trips"), EditedActor.BasicBoxField160, 91);
+    TestEqual(TEXT("Edited basic box life round trips"), EditedActor.BasicBoxLifeMax, int64(4000000000ll));
+    TestEqual(TEXT("Edited basic box actor ref round trips"), EditedActor.BasicBoxActorRefs[0], 92);
+    TestEqual(TEXT("Edited basic box vibration round trips"), EditedActor.BasicBoxVibration2, 93.5f);
+    TestEqual(TEXT("Edited basic box field 18c round trips"), EditedActor.BasicBoxField18C, 94);
+    TestEqual(TEXT("Edited basic box target round trips"),
+        EditedActor.BasicBoxSwitch.Targets[0].TargetRef, 95);
+    TestEqual(TEXT("Edited basic box money round trips"), EditedActor.BasicBoxAddOn.MoneyCount, 96);
+    TestEqual(TEXT("Edited basic box add-on float round trips"),
+        EditedActor.BasicBoxAddOn.SubObjFieldC, 97.5f);
+
+    Actor.BasicBoxActorRefs.Add(99);
+    TArray<uint8> Rejected;
+    FMemoryWriter RejectedWriter(Rejected);
+    TestFalse(TEXT("Exporter rejects a changed basic box actor-ref count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaNativCmdFixtureRoundTripTest, "Kya.Bank.NativCmdFixtureRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaNativCmdFixtureRoundTripTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x3c);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import nativ command fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("NativCmd fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("NativCmd class id"), Actor.ClassId, int64(0x3c));
+    TestEqual(TEXT("NativCmd actor name"), Actor.Name, FString(TEXT("NATIVCMD")));
+    TestTrue(TEXT("NativCmd class payload parses"), Actor.bHasNativCmdData);
+    if (!TestEqual(TEXT("NativCmd actor ref count"), Actor.NativCmdActorRefs.Num(), 1)) return false;
+    TestEqual(TEXT("NativCmd actor ref"), Actor.NativCmdActorRefs[0], 21);
+    TestEqual(TEXT("NativCmd field 164"), Actor.NativCmdField164, 11);
+    if (!TestEqual(TEXT("NativCmd add-on count"), Actor.NativCmdAddOns.Num(), 4)) return false;
+    if (!TestEqual(TEXT("NativCmd A sub-object count"), Actor.NativCmdAddOns[0].SubObjs.Num(), 1)) return false;
+    TestEqual(TEXT("NativCmd A field 0"), Actor.NativCmdAddOns[0].SubObjs[0].Field0, 22);
+    if (!TestEqual(TEXT("NativCmd A cinematic count"), Actor.NativCmdAddOns[0].SubObjs[0].CinematicIds.Num(), 1)) return false;
+    TestEqual(TEXT("NativCmd A cinematic"), Actor.NativCmdAddOns[0].SubObjs[0].CinematicIds[0], 23);
+    TestEqual(TEXT("NativCmd B sub-object count"), Actor.NativCmdAddOns[1].SubObjs.Num(), 0);
+    TestEqual(TEXT("NativCmd C field 0"), Actor.NativCmdAddOns[2].SubObjs[0].Field0, 24);
+    TestEqual(TEXT("NativCmd C cinematic"), Actor.NativCmdAddOns[2].SubObjs[0].CinematicIds[0], 25);
+    TestEqual(TEXT("NativCmd fixture leaves no raw class data"), Actor.ClassData.Num(), 0);
+    if (!TestEqual(TEXT("NativCmd behaviour count"), Actor.Behaviours.Num(), 1)) return false;
+    TestEqual(TEXT("NativCmd behaviour id"), Actor.Behaviours[0].Id, 2);
+    TestEqual(TEXT("NativCmd behaviour is empty"), Actor.Behaviours[0].Data.Num(), 0);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited nativ command fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited nativ command export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited nativ command export preserves every byte"), Plain == Input);
+
+    Actor.NativCmdActorRefs[0] = 91;
+    Actor.NativCmdField164 = 92;
+    Actor.NativCmdAddOns[0].SubObjs[0].Field0 = 93;
+    Actor.NativCmdAddOns[0].SubObjs[0].CinematicIds[0] = 94;
+    Actor.NativCmdAddOns[2].SubObjs[0].CinematicIds[0] = 95;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited nativ command fixture"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited nativ command export keeps the file size"), Edited.Num(), Input.Num());
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited nativ command fixture"), Reimported)) return false;
+    const FKyaActorPlacement& EditedActor = Reimported->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Edited nativ command ref round trips"), EditedActor.NativCmdActorRefs[0], 91);
+    TestEqual(TEXT("Edited nativ command field 164 round trips"), EditedActor.NativCmdField164, 92);
+    TestEqual(TEXT("Edited nativ command field 0 round trips"),
+        EditedActor.NativCmdAddOns[0].SubObjs[0].Field0, 93);
+    TestEqual(TEXT("Edited nativ command A cinematic round trips"),
+        EditedActor.NativCmdAddOns[0].SubObjs[0].CinematicIds[0], 94);
+    TestEqual(TEXT("Edited nativ command C cinematic round trips"),
+        EditedActor.NativCmdAddOns[2].SubObjs[0].CinematicIds[0], 95);
+
+    Actor.NativCmdAddOns[0].SubObjs[0].CinematicIds.Add(99);
+    TArray<uint8> Rejected;
+    FMemoryWriter RejectedWriter(Rejected);
+    TestFalse(TEXT("Exporter rejects a changed nativ command cinematic count"),
         Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
     return true;
 }
@@ -573,6 +4926,57 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
         TestEqual(TEXT("Araignos mode-zero end"), Araignos.Tail, int64(56));
     }
     {
+        TArray<uint8> HedgehogData;
+        HedgehogData.SetNumZeroed(84);
+        auto WriteU32 = [&HedgehogData](int32 Offset, uint32 Value) {
+            for (int32 Byte = 0; Byte < 4; ++Byte) HedgehogData[Offset + Byte] = uint8(Value >> (Byte * 8));
+        };
+        WriteU32(76, 0);
+        FKyaHedgehogOffsets Hedgehog;
+        if (TestTrue(TEXT("Read Hedgehog fixture without sub-object"), KyaReadHedgehogOffsets(HedgehogData, 0, HedgehogData.Num(), Hedgehog)))
+        {
+            TestEqual(TEXT("Hedgehog weight offset"), Hedgehog.WeightB, int64(0));
+            TestEqual(TEXT("Hedgehog autonomous offset"), Hedgehog.Autonomous, int64(4));
+            TestEqual(TEXT("Hedgehog walk speed offset"), Hedgehog.WalkSpeed, int64(20));
+            TestEqual(TEXT("Hedgehog field 374 offset"), Hedgehog.Fields374, int64(36));
+            TestEqual(TEXT("Hedgehog floats 368 offset"), Hedgehog.Floats368, int64(44));
+            TestEqual(TEXT("Hedgehog add-on offset"), Hedgehog.AddOn, int64(56));
+            TestEqual(TEXT("Hedgehog sub-object mode"), Hedgehog.SubObjModeValue, 0);
+            TestEqual(TEXT("Hedgehog field 380 offset"), Hedgehog.Field380, int64(80));
+            TestEqual(TEXT("Hedgehog fixture end"), Hedgehog.Tail, int64(84));
+        }
+        HedgehogData.SetNumZeroed(104);
+        WriteU32(76, 1);
+        TestTrue(TEXT("Read Hedgehog fixture with sub-object"), KyaReadHedgehogOffsets(HedgehogData, 0, HedgehogData.Num(), Hedgehog));
+        TestEqual(TEXT("Hedgehog sub-object floats offset"), Hedgehog.SubObjFloats, int64(80));
+        TestEqual(TEXT("Hedgehog field 380 after sub-object"), Hedgehog.Field380, int64(100));
+        TestEqual(TEXT("Hedgehog fixture end with sub-object"), Hedgehog.Tail, int64(104));
+        HedgehogData.SetNum(103);
+        TestFalse(TEXT("Reject truncated Hedgehog sub-object"), KyaReadHedgehogOffsets(HedgehogData, 0, HedgehogData.Num(), Hedgehog));
+        HedgehogData.SetNum(83);
+        TestFalse(TEXT("Reject truncated Hedgehog prefix"), KyaReadHedgehogOffsets(HedgehogData, 0, HedgehogData.Num(), Hedgehog));
+    }
+    {
+        TArray<uint8> Behaviour;
+        Behaviour.SetNumZeroed(4);
+        auto WriteU32 = [&Behaviour](int32 Offset, uint32 Value) {
+            for (int32 Byte = 0; Byte < 4; ++Byte) Behaviour[Offset + Byte] = uint8(Value >> (Byte * 8));
+        };
+        WriteU32(0, 42);
+        FKyaHedgehogBehaviourValues Values;
+        if (TestTrue(TEXT("Read Hedgehog guard-area behaviour"), KyaReadHedgehogBehaviour(3, Behaviour, 0, 4, Values)))
+            TestEqual(TEXT("Hedgehog guard-area path index"), Values.PathFollowIndex, 42);
+        if (TestTrue(TEXT("Read Hedgehog guard-area-armor behaviour"), KyaReadHedgehogBehaviour(5, Behaviour, 0, 4, Values)))
+            TestEqual(TEXT("Hedgehog guard-area-armor path index"), Values.PathFollowIndex, 42);
+        if (TestTrue(TEXT("Read Hedgehog watchdog behaviour"), KyaReadHedgehogBehaviour(4, Behaviour, 0, 0, Values)))
+            TestTrue(TEXT("Hedgehog watchdog payload is empty"), Values.bEmptyPayload);
+        if (TestTrue(TEXT("Read Hedgehog watchdog-armor behaviour"), KyaReadHedgehogBehaviour(6, Behaviour, 0, 0, Values)))
+            TestTrue(TEXT("Hedgehog watchdog-armor payload is empty"), Values.bEmptyPayload);
+        TestFalse(TEXT("Reject empty Hedgehog guard-area payload"), KyaReadHedgehogBehaviour(3, Behaviour, 0, 0, Values));
+        TestFalse(TEXT("Reject non-empty Hedgehog watchdog payload"), KyaReadHedgehogBehaviour(4, Behaviour, 0, 4, Values));
+        TestFalse(TEXT("Reject inherited Hedgehog behaviour id"), KyaReadHedgehogBehaviour(2, Behaviour, 0, 4, Values));
+    }
+    {
         TArray<uint8> ProjectileData;
         ProjectileData.SetNumZeroed(136);
         FKyaProjectileOffsets Projectile;
@@ -594,6 +4998,8 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
         }
         ProjectileData.SetNum(135);
         TestFalse(TEXT("Reject partial projectile payload"), KyaReadProjectileOffsets(ProjectileData, 0, ProjectileData.Num(), Projectile));
+        ProjectileData.SetNum(137);
+        TestFalse(TEXT("Reject projectile payload with an unknown tail"), KyaReadProjectileOffsets(ProjectileData, 0, ProjectileData.Num(), Projectile));
         ProjectileData.SetNum(131);
         TestFalse(TEXT("Reject short projectile payload"), KyaReadProjectileOffsets(ProjectileData, 0, ProjectileData.Num(), Projectile));
     }
@@ -672,6 +5078,16 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
             TestEqual(TEXT("Trap stream offset"), Trap.TrapEntries, int64(56));
             TestEqual(TEXT("Trap stream fixture end"), Trap.Tail, int64(116));
         }
+        TrapData.SetNumZeroed(112);
+        WriteU32(48, 1);
+        if (TestTrue(TEXT("Read legacy trap fixture with stream entry"),
+            KyaReadTrapOffsets(TrapData, 0, TrapData.Num(), Trap)))
+        {
+            TestFalse(TEXT("Legacy trap with stream omits field 24"), Trap.bHasField24);
+            TestEqual(TEXT("Legacy trap stream count"), Trap.TrapCount, 1);
+            TestEqual(TEXT("Legacy trap stream offset"), Trap.TrapEntries, int64(52));
+            TestEqual(TEXT("Legacy trap stream fixture end"), Trap.Tail, int64(112));
+        }
         TrapData.SetNum(55);
         TestFalse(TEXT("Reject partial trap payload"), KyaReadTrapOffsets(TrapData, 0, TrapData.Num(), Trap));
         TrapData.SetNum(51);
@@ -721,8 +5137,8 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
             for (int32 Byte = 0; Byte < 4; ++Byte) SwitchData[Offset + Byte] = uint8(Value >> (Byte * 8));
         };
         WriteU32(0, 3);
-        FKyaSwitchOffsets Switch;
-        if (TestTrue(TEXT("Read switch fixture with three targets"), KyaReadSwitchOffsets(SwitchData, 0, SwitchData.Num(), Switch)))
+        FKyaSwitchActorOffsets Switch;
+        if (TestTrue(TEXT("Read switch fixture with three targets"), KyaReadSwitchActorOffsets(SwitchData, 0, SwitchData.Num(), Switch)))
         {
             TestEqual(TEXT("Switch target count"), Switch.Count, 3);
             TestEqual(TEXT("Switch target offset"), Switch.Targets, int64(4));
@@ -730,14 +5146,14 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
             TestEqual(TEXT("Switch fixture end"), Switch.Tail, int64(120));
         }
         WriteU32(0, 0);
-        if (TestTrue(TEXT("Read switch fixture without targets"), KyaReadSwitchOffsets(SwitchData, 0, 36, Switch)))
+        if (TestTrue(TEXT("Read switch fixture without targets"), KyaReadSwitchActorOffsets(SwitchData, 0, 36, Switch)))
         {
             TestEqual(TEXT("Switch empty camera offset"), Switch.Camera, int64(4));
             TestEqual(TEXT("Switch empty fixture end"), Switch.Tail, int64(36));
         }
-        TestFalse(TEXT("Reject truncated switch camera"), KyaReadSwitchOffsets(SwitchData, 0, 35, Switch));
+        TestFalse(TEXT("Reject truncated switch camera"), KyaReadSwitchActorOffsets(SwitchData, 0, 35, Switch));
         WriteU32(0, 4);
-        TestFalse(TEXT("Reject switch target count beyond payload"), KyaReadSwitchOffsets(SwitchData, 0, SwitchData.Num(), Switch));
+        TestFalse(TEXT("Reject switch target count beyond payload"), KyaReadSwitchActorOffsets(SwitchData, 0, SwitchData.Num(), Switch));
     }
     {
         TArray<uint8> BonusData;
@@ -816,15 +5232,15 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
             for (int32 Byte = 0; Byte < 4; ++Byte) Inventory[Offset + Byte] = uint8(Value >> (Byte * 8));
         };
         WriteU32(0, 1); WriteU32(40, 7);
-        FKyaFruitInventoryValues Values;
-        if (TestTrue(TEXT("Read fruit inventory fixture"), KyaReadFruitInventory(Inventory, 0, Inventory.Num(), Values)))
+        FKyaFruitInventoryOffsets Values;
+        if (TestTrue(TEXT("Read fruit inventory fixture"), KyaReadFruitInventoryOffsets(Inventory, 0, Inventory.Num(), Values)))
         {
             TestTrue(TEXT("Fruit inventory has data"), Values.bHasData);
             TestFalse(TEXT("Fruit inventory has no object"), Values.bHasObject);
-            TestEqual(TEXT("Fruit inventory initial behaviour"), Values.InitialBehaviour, 7);
+            TestEqual(TEXT("Fruit inventory initial behaviour offset"), Values.InitialBehaviour, int64(40));
         }
         Inventory.SetNum(43);
-        TestFalse(TEXT("Reject truncated fruit inventory"), KyaReadFruitInventory(Inventory, 0, Inventory.Num(), Values));
+        TestFalse(TEXT("Reject truncated fruit inventory"), KyaReadFruitInventoryOffsets(Inventory, 0, Inventory.Num(), Values));
     }
     {
         TArray<uint8> CommanderData;
@@ -978,23 +5394,23 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
         TArray<uint8> Controlled;
         Controlled.SetNumZeroed(40);
         FKyaDcaBehaviourOffsets Off;
-        if (TestTrue(TEXT("Read DCA controlled behaviour"), KyaReadDcaBehaviour(3, Controlled, 0, Controlled.Num(), Off)))
+        if (TestTrue(TEXT("Read DCA controlled behaviour"), KyaReadDcaBehaviourOffsets(3, Controlled, 0, Controlled.Num(), Off)))
         {
             TestTrue(TEXT("DCA controlled flag"), Off.bControlled);
             TestEqual(TEXT("DCA controlled end"), Off.Tail, int64(40));
         }
         Controlled.SetNum(39);
-        TestFalse(TEXT("Reject truncated DCA controlled behaviour"), KyaReadDcaBehaviour(3, Controlled, 0, Controlled.Num(), Off));
+        TestFalse(TEXT("Reject truncated DCA controlled behaviour"), KyaReadDcaBehaviourOffsets(3, Controlled, 0, Controlled.Num(), Off));
         TArray<uint8> Trajectory;
         Trajectory.SetNumZeroed(12);
-        if (TestTrue(TEXT("Read DCA trajectory behaviour"), KyaReadDcaBehaviour(5, Trajectory, 0, Trajectory.Num(), Off)))
+        if (TestTrue(TEXT("Read DCA trajectory behaviour"), KyaReadDcaBehaviourOffsets(5, Trajectory, 0, Trajectory.Num(), Off)))
         {
             TestTrue(TEXT("DCA trajectory flag"), Off.bTrajectory);
             TestEqual(TEXT("DCA trajectory end"), Off.Tail, int64(12));
         }
         Trajectory.SetNum(11);
-        TestFalse(TEXT("Reject truncated DCA trajectory behaviour"), KyaReadDcaBehaviour(5, Trajectory, 0, Trajectory.Num(), Off));
-        TestFalse(TEXT("Reject unknown DCA behaviour"), KyaReadDcaBehaviour(4, Controlled, 0, Controlled.Num(), Off));
+        TestFalse(TEXT("Reject truncated DCA trajectory behaviour"), KyaReadDcaBehaviourOffsets(5, Trajectory, 0, Trajectory.Num(), Off));
+        TestFalse(TEXT("Reject unknown DCA behaviour"), KyaReadDcaBehaviourOffsets(4, Controlled, 0, Controlled.Num(), Off));
     }
     {
         TArray<uint8> BoxData;
@@ -1200,8 +5616,8 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
         TestFalse(TEXT("Reject truncated rune payload"), KyaReadRuneOffsets(RuneData, 0, RuneData.Num(), Rune));
         TArray<uint8> FountainData;
         FountainData.SetNumZeroed(24);
-        FKyaBonusFountainOffsets Fountain;
-        if (TestTrue(TEXT("Read bonus fountain fixture"), KyaReadBonusFountainOffsets(FountainData, 0, FountainData.Num(), Fountain)))
+        FKyaFountainOffsets Fountain;
+        if (TestTrue(TEXT("Read bonus fountain fixture"), KyaReadFountainOffsets(FountainData, 0, FountainData.Num(), Fountain)))
         {
             TestEqual(TEXT("Bonus fountain add-on offset"), Fountain.AddOn, int64(0));
             TestEqual(TEXT("Bonus fountain mode offset"), Fountain.SubObjMode, int64(20));
@@ -1209,7 +5625,7 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
         }
         FountainData.SetNumZeroed(44);
         FountainData[20] = 1;
-        if (TestTrue(TEXT("Read bonus fountain sub-object fixture"), KyaReadBonusFountainOffsets(FountainData, 0, FountainData.Num(), Fountain)))
+        if (TestTrue(TEXT("Read bonus fountain sub-object fixture"), KyaReadFountainOffsets(FountainData, 0, FountainData.Num(), Fountain)))
         {
             TestEqual(TEXT("Bonus fountain sub-object mode"), Fountain.SubObjModeValue, 1);
             TestEqual(TEXT("Bonus fountain sub-object offset"), Fountain.SubObjFloats, int64(24));
@@ -1251,7 +5667,7 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
         {
             TestEqual(TEXT("Gravity bell sound offset"), Bell.Sound, int64(0));
             TestEqual(TEXT("Gravity bell field c offset"), Bell.FieldC, int64(4));
-            TestEqual(TEXT("Gravity bell switch camera"), Bell.Switch.Camera, int64(12));
+            TestEqual(TEXT("Gravity bell switch camera"), Bell.SwitchCamera, int64(12));
             TestEqual(TEXT("Gravity bell fixture end"), Bell.Tail, int64(44));
         }
         BellData.SetNum(43);
@@ -1374,18 +5790,18 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
             TestEqual(TEXT("Boomy particle 3d0 offset"), Boomy.Particle3D0, int64(48));
             TestEqual(TEXT("Boomy texture offset"), Boomy.Texture, int64(64));
             TestEqual(TEXT("Boomy mesh offset"), Boomy.Mesh, int64(68));
-            TestEqual(TEXT("Boomy camera offset"), Boomy.Camera, int64(72));
-            TestEqual(TEXT("Boomy camera fov offset"), Boomy.CameraFov, int64(72));
-            TestEqual(TEXT("Boomy camera position offset"), Boomy.CameraPosition, int64(76));
-            TestEqual(TEXT("Boomy camera look-at offset"), Boomy.CameraLookAt, int64(88));
-            TestEqual(TEXT("Boomy camera up offset"), Boomy.CameraUp, int64(100));
-            TestEqual(TEXT("Boomy camera sector offset"), Boomy.CameraSector, int64(112));
-            TestEqual(TEXT("Boomy camera flags offset"), Boomy.CameraFlags, int64(120));
-            TestEqual(TEXT("Boomy camera target offset"), Boomy.CameraTargetOffset, int64(124));
-            TestEqual(TEXT("Boomy camera conditions offset"), Boomy.Conditions, int64(136));
-            TestEqual(TEXT("Boomy camera config offset"), Boomy.Config, int64(140));
-            TestEqual(TEXT("Boomy camera config angles offset"), Boomy.ConfigAngles, int64(160));
-            TestEqual(TEXT("Boomy camera extra offset"), Boomy.Extra, int64(196));
+            TestEqual(TEXT("Boomy camera offset"), Boomy.CameraStart, int64(72));
+            TestEqual(TEXT("Boomy camera fov offset"), Boomy.Camera.Fov, int64(72));
+            TestEqual(TEXT("Boomy camera position offset"), Boomy.Camera.Position, int64(76));
+            TestEqual(TEXT("Boomy camera look-at offset"), Boomy.Camera.LookAt, int64(88));
+            TestEqual(TEXT("Boomy camera up offset"), Boomy.Camera.Up, int64(100));
+            TestEqual(TEXT("Boomy camera sector offset"), Boomy.Camera.Sector, int64(112));
+            TestEqual(TEXT("Boomy camera flags offset"), Boomy.Camera.Flags, int64(120));
+            TestEqual(TEXT("Boomy camera target offset"), Boomy.Camera.TargetOffset, int64(124));
+            TestEqual(TEXT("Boomy camera conditions offset"), Boomy.Camera.Conditions, int64(136));
+            TestEqual(TEXT("Boomy camera config offset"), Boomy.Camera.Config, int64(140));
+            TestEqual(TEXT("Boomy camera config angles offset"), Boomy.Camera.ConfigAngles, int64(160));
+            TestEqual(TEXT("Boomy camera extra offset"), Boomy.Camera.Extra, int64(196));
             TestEqual(TEXT("Boomy type count offset"), Boomy.TypeCount, int64(200));
             TestEqual(TEXT("Boomy fixture end"), Boomy.Tail, int64(204));
         }
@@ -1399,19 +5815,19 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
         WriteU32(192, 1); WriteU32(252, 1); WriteU32(304, 1);
         if (TestTrue(TEXT("Read Boomy fixture with camera switch"), KyaReadBoomyOffsets(BoomyData, 0, BoomyData.Num(), Boomy)))
         {
-            TestTrue(TEXT("Boomy camera has switch"), Boomy.bHasSwitch);
-            TestEqual(TEXT("Boomy switch actor offset"), Boomy.SwitchActor, int64(136));
-            TestEqual(TEXT("Boomy switch list A offset"), Boomy.SwitchListA, int64(144));
-            TestEqual(TEXT("Boomy switch list A count"), Boomy.SwitchCountA, 1);
-            TestEqual(TEXT("Boomy switch list B offset"), Boomy.SwitchListB, int64(152));
-            TestEqual(TEXT("Boomy switch list B count"), Boomy.SwitchCountB, 0);
-            TestEqual(TEXT("Boomy switch values offset"), Boomy.SwitchValues, int64(152));
-            TestEqual(TEXT("Boomy switch conditions offset"), Boomy.Conditions, int64(172));
-            TestEqual(TEXT("Boomy switch config offset"), Boomy.Config, int64(176));
-            TestEqual(TEXT("Boomy config mode"), Boomy.ConfigMode, 1);
-            TestEqual(TEXT("Boomy optional config offset"), Boomy.ConfigOptional, int64(196));
-            TestEqual(TEXT("Boomy switch extra offset"), Boomy.Extra, int64(252));
-            TestEqual(TEXT("Boomy extra count"), Boomy.ExtraCount, 1);
+            TestTrue(TEXT("Boomy camera has switch"), Boomy.Camera.bHasSwitch);
+            TestEqual(TEXT("Boomy switch actor offset"), Boomy.Camera.SwitchActor, int64(136));
+            TestEqual(TEXT("Boomy switch list A offset"), Boomy.Camera.SwitchListA, int64(144));
+            TestEqual(TEXT("Boomy switch list A count"), Boomy.Camera.SwitchCountA, 1);
+            TestEqual(TEXT("Boomy switch list B offset"), Boomy.Camera.SwitchListB, int64(152));
+            TestEqual(TEXT("Boomy switch list B count"), Boomy.Camera.SwitchCountB, 0);
+            TestEqual(TEXT("Boomy switch values offset"), Boomy.Camera.SwitchValues, int64(152));
+            TestEqual(TEXT("Boomy switch conditions offset"), Boomy.Camera.Conditions, int64(172));
+            TestEqual(TEXT("Boomy switch config offset"), Boomy.Camera.Config, int64(176));
+            TestEqual(TEXT("Boomy config mode"), Boomy.Camera.ConfigMode, 1);
+            TestEqual(TEXT("Boomy optional config offset"), Boomy.Camera.ConfigOptional, int64(196));
+            TestEqual(TEXT("Boomy switch extra offset"), Boomy.Camera.Extra, int64(252));
+            TestEqual(TEXT("Boomy extra count"), Boomy.Camera.ExtraCount, 1);
             TestEqual(TEXT("Boomy type count offset"), Boomy.TypeCount, int64(304));
             TestEqual(TEXT("Boomy type entry offset"), Boomy.TypeEntries, int64(308));
             TestEqual(TEXT("Boomy type count"), Boomy.TypeCountValue, 1);
@@ -1589,10 +6005,33 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
             TestEqual(TEXT("Platform selector-master camera offset"), Slab.SelectorCamera, int64(68));
             TestEqual(TEXT("Platform selector-master end"), Slab.Tail, int64(100));
         }
+        TArray<uint8> SelectorEmptyData;
+        SelectorEmptyData.SetNumZeroed(64);
+        if (TestTrue(TEXT("Read platform selector-master without lists"),
+            KyaReadPlatformBehaviourOffsets(8, SelectorEmptyData, 0, 64, Slab)))
+        {
+            TestTrue(TEXT("Platform empty selector-master flag"), Slab.bSelectorMaster);
+            TestEqual(TEXT("Platform empty selector-master actor count"), Slab.SelectorActorCountValue, 0);
+            TestEqual(TEXT("Platform empty selector-master switch count"), Slab.SelectorSwitchCountValue, 0);
+            TestEqual(TEXT("Platform empty selector-master camera offset"), Slab.SelectorCamera, int64(32));
+            TestEqual(TEXT("Platform empty selector-master end"), Slab.Tail, int64(64));
+        }
+        TArray<uint8> TeleportData;
+        TeleportData.SetNumZeroed(4);
+        TeleportData[0] = 33;
+        if (TestTrue(TEXT("Read platform teleport-random behaviour"),
+            KyaReadPlatformBehaviourOffsets(10, TeleportData, 0, 4, Slab)))
+        {
+            TestTrue(TEXT("Platform teleport-random flag"), Slab.bTeleportRandom);
+            TestEqual(TEXT("Platform teleport-random path offset"), Slab.PathIndex, int64(0));
+            TestEqual(TEXT("Platform teleport-random end"), Slab.Tail, int64(4));
+        }
+        TestFalse(TEXT("Reject wrong-length teleport-random payload"),
+            KyaReadPlatformBehaviourOffsets(10, TeleportData, 0, 8, Slab));
     }
     {
         TArray<uint8> ProjectileBehaviourData;
-        ProjectileBehaviourData.SetNumZeroed(20);
+        ProjectileBehaviourData.SetNumZeroed(44);
         FKyaProjectileBehaviourOffsets Projectile;
         if (TestTrue(TEXT("Read projectile stand behaviour"), KyaReadProjectileBehaviourOffsets(3, ProjectileBehaviourData, 0, 12, Projectile)))
         {
@@ -1621,8 +6060,46 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
             TestEqual(TEXT("Projectile excuse actor offset"), Projectile.ActorRef, int64(8));
             TestEqual(TEXT("Projectile excuse end"), Projectile.Tail, int64(12));
         }
+        if (TestTrue(TEXT("Read projectile lava ball behaviour"),
+            KyaReadProjectileBehaviourOffsets(10, ProjectileBehaviourData, 0, 40, Projectile)))
+        {
+            TestTrue(TEXT("Projectile lava ball flag"), Projectile.bLavaBall);
+            TestFalse(TEXT("Old lava ball omits field 18"), Projectile.bHasLavaBallField18);
+            TestEqual(TEXT("Lava ball field 14 offset"), Projectile.LavaBallField14, int64(12));
+            TestEqual(TEXT("Lava ball field 30 offset"), Projectile.LavaBallField30, int64(16));
+            TestEqual(TEXT("Lava ball path index offset"), Projectile.LavaBallPathIndex, int64(20));
+            TestEqual(TEXT("Lava ball field 2c offset"), Projectile.LavaBallField2C, int64(24));
+            TestEqual(TEXT("Lava ball field 3c offset"), Projectile.LavaBallField3C, int64(36));
+            TestEqual(TEXT("Old lava ball end"), Projectile.Tail, int64(40));
+        }
+        if (TestTrue(TEXT("Read projectile lava ball with field 18"),
+            KyaReadProjectileBehaviourOffsets(10, ProjectileBehaviourData, 0, 44, Projectile)))
+        {
+            TestTrue(TEXT("New lava ball has field 18"), Projectile.bHasLavaBallField18);
+            TestEqual(TEXT("Lava ball field 18 offset"), Projectile.LavaBallField18, int64(20));
+            TestEqual(TEXT("Shifted lava ball path index offset"), Projectile.LavaBallPathIndex, int64(24));
+            TestEqual(TEXT("Shifted lava ball field 3c offset"), Projectile.LavaBallField3C, int64(40));
+            TestEqual(TEXT("New lava ball end"), Projectile.Tail, int64(44));
+        }
+        if (TestTrue(TEXT("Read projectile inactive behaviour"),
+            KyaReadProjectileBehaviourOffsets(12, ProjectileBehaviourData, 0, 12, Projectile)))
+        {
+            TestTrue(TEXT("Projectile inactive flag"), Projectile.bInactive);
+            TestEqual(TEXT("Inactive activate message offset"), Projectile.InactiveActivateMessageId, int64(0));
+            TestEqual(TEXT("Inactive flags offset"), Projectile.InactiveFlags, int64(4));
+            TestEqual(TEXT("Inactive active behaviour offset"), Projectile.InactiveActiveBehaviourId, int64(8));
+        }
+        if (TestTrue(TEXT("Read projectile new behaviour"),
+            KyaReadProjectileBehaviourOffsets(13, ProjectileBehaviourData, 0, 4, Projectile)))
+        {
+            TestTrue(TEXT("Projectile new flag"), Projectile.bNew);
+            TestEqual(TEXT("Projectile new end"), Projectile.Tail, int64(4));
+        }
         TestFalse(TEXT("Reject wrong-length projectile stand"), KyaReadProjectileBehaviourOffsets(3, ProjectileBehaviourData, 0, 20, Projectile));
         TestFalse(TEXT("Reject unknown projectile behaviour"), KyaReadProjectileBehaviourOffsets(6, ProjectileBehaviourData, 0, 20, Projectile));
+        TestFalse(TEXT("Reject wrong-length lava ball"), KyaReadProjectileBehaviourOffsets(10, ProjectileBehaviourData, 0, 20, Projectile));
+        TestFalse(TEXT("Reject wrong-length inactive"), KyaReadProjectileBehaviourOffsets(12, ProjectileBehaviourData, 0, 16, Projectile));
+        TestFalse(TEXT("Reject wrong-length new projectile"), KyaReadProjectileBehaviourOffsets(13, ProjectileBehaviourData, 0, 8, Projectile));
     }
     {
         TArray<uint8> SwitchBehaviourData;
@@ -1657,8 +6134,43 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
             TestEqual(TEXT("Switch target displacement offset"), Switch.TargetDisplacement, int64(0));
             TestEqual(TEXT("Switch target end"), Switch.Tail, int64(12));
         }
+        if (TestTrue(TEXT("Read switch Wolfen-counter behaviour"),
+            KyaReadSwitchBehaviourOffsets(4, SwitchBehaviourData, 0, 20, Switch)))
+        {
+            TestTrue(TEXT("Switch Wolfen-counter flag"), Switch.bWolfen);
+            TestEqual(TEXT("Wolfen trigger radius offset"), Switch.WolfenTriggerRadius, int64(4));
+            TestEqual(TEXT("Wolfen material offset"), Switch.WolfenMaterialId, int64(16));
+            TestEqual(TEXT("Switch Wolfen-counter end"), Switch.Tail, int64(20));
+        }
+        TArray<uint8> SequenceData;
+        SequenceData.SetNumZeroed(24);
+        SequenceData[8] = 3;
+        if (TestTrue(TEXT("Read switch sequence behaviour"),
+            KyaReadSwitchBehaviourOffsets(7, SequenceData, 0, 24, Switch)))
+        {
+            TestTrue(TEXT("Switch sequence flag"), Switch.bSequence);
+            TestEqual(TEXT("Switch sequence value count"), Switch.SequenceCountValue, 3);
+            TestEqual(TEXT("Switch sequence values offset"), Switch.SequenceValues, int64(12));
+            TestEqual(TEXT("Switch sequence end"), Switch.Tail, int64(24));
+        }
+        TArray<uint8> TimedData;
+        TimedData.SetNumZeroed(124);
+        TimedData[4] = 2;   // two entries
+        TimedData[48] = 1;  // second entry has one target
+        if (TestTrue(TEXT("Read switch timed behaviour"),
+            KyaReadSwitchBehaviourOffsets(8, TimedData, 0, 124, Switch)))
+        {
+            TestTrue(TEXT("Switch timed flag"), Switch.bTimed);
+            TestEqual(TEXT("Switch timed entry count"), Switch.TimedEntryCountValue, 2);
+            TestEqual(TEXT("Switch timed entry 0 count offset"), Switch.TimedEntries[0].Count, int64(8));
+            TestEqual(TEXT("Switch timed entry 0 delay offset"), Switch.TimedEntries[0].Delay, int64(44));
+            TestEqual(TEXT("Switch timed entry 1 camera offset"), Switch.TimedEntries[1].Camera, int64(80));
+            TestEqual(TEXT("Switch timed playback offset"), Switch.TimedPlaybackMode, int64(116));
+            TestEqual(TEXT("Switch timed flags offset"), Switch.TimedFlags, int64(120));
+            TestEqual(TEXT("Switch timed end"), Switch.Tail, int64(124));
+        }
         TestFalse(TEXT("Reject wrong-length switch lever"), KyaReadSwitchBehaviourOffsets(2, SwitchBehaviourData, 0, 76, Switch));
-        TestFalse(TEXT("Reject unknown switch behaviour"), KyaReadSwitchBehaviourOffsets(7, SwitchBehaviourData, 0, 76, Switch));
+        TestFalse(TEXT("Reject unknown switch behaviour"), KyaReadSwitchBehaviourOffsets(9, SwitchBehaviourData, 0, 76, Switch));
     }
     {
         TArray<uint8> WolfenBehaviourData;
@@ -1830,8 +6342,8 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
         InventoryData.SetNumZeroed(44);
         InventoryData[0] = 1;
         InventoryData[36] = 0;
-        FKyaInventoryOffsets Inventory;
-        if (TestTrue(TEXT("Read projectile inventory fixture"), KyaReadInventoryOffsets(InventoryData, 0, 44, Inventory)))
+        FKyaProjectileInventoryOffsets Inventory;
+        if (TestTrue(TEXT("Read projectile inventory fixture"), KyaReadProjectileInventoryOffsets(InventoryData, 0, 44, Inventory)))
         {
             TestEqual(TEXT("Inventory present offset"), Inventory.Field0, int64(0));
             TestEqual(TEXT("Inventory u64 offset"), Inventory.Field8, int64(4));
@@ -1844,7 +6356,7 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
         InventoryData.SetNumZeroed(56);
         InventoryData[0] = 1;
         InventoryData[36] = 1;
-        if (TestTrue(TEXT("Read projectile inventory with object"), KyaReadInventoryOffsets(InventoryData, 0, 56, Inventory)))
+        if (TestTrue(TEXT("Read projectile inventory with object"), KyaReadProjectileInventoryOffsets(InventoryData, 0, 56, Inventory)))
         {
             TestTrue(TEXT("Inventory has object block"), Inventory.bHasObject);
             TestEqual(TEXT("Inventory object id offset"), Inventory.ObjectId, int64(40));
@@ -1853,13 +6365,13 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
         }
         InventoryData.SetNumZeroed(8);
         InventoryData[0] = 0;
-        if (TestTrue(TEXT("Read empty inventory fixture"), KyaReadInventoryOffsets(InventoryData, 0, 8, Inventory)))
+        if (TestTrue(TEXT("Read empty inventory fixture"), KyaReadProjectileInventoryOffsets(InventoryData, 0, 8, Inventory)))
         {
             TestEqual(TEXT("Empty inventory initial behaviour offset"), Inventory.InitialBehaviourId, int64(4));
             TestEqual(TEXT("Empty inventory end"), Inventory.Tail, int64(8));
         }
         InventoryData.SetNum(43);
-        TestFalse(TEXT("Reject truncated inventory"), KyaReadInventoryOffsets(InventoryData, 0, 43, Inventory));
+        TestFalse(TEXT("Reject truncated inventory"), KyaReadProjectileInventoryOffsets(InventoryData, 0, 43, Inventory));
     }    {
         TArray<uint8> WolfenData;
         WolfenData.SetNumZeroed(416);
@@ -3484,7 +7996,7 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
     {
         FKyaActorPlacement& BoxActor = Bank->SceneEnvironment.Actors[BasicBoxActor];
         BoxActor.BasicBoxField160 = 77;
-        BoxActor.BasicBoxLifeMax = 25.0f;
+        BoxActor.BasicBoxLifeMax = 25;
         BoxActor.BasicBoxVibration0 = 1.25f;
         BoxActor.BasicBoxVibration1 = 2.25f;
         BoxActor.BasicBoxVibration2 = 3.25f;
@@ -3548,7 +8060,7 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
     {
         FKyaActorPlacement& Projectile = Bank->SceneEnvironment.Actors[ProjectileActor];
         Projectile.ProjectileWeightB = 1.25f;
-        Projectile.ProjectileLifeMax = 30.0f;
+        Projectile.ProjectileLifeMax = 30;
         Projectile.ProjectileGravityScale = 2.5f;
         Projectile.ProjectileDynamicExtField4 = 3.5f;
         Projectile.ProjectileDynamicExtField8 = 4.5f;
@@ -3662,7 +8174,7 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
     {
         FKyaActorPlacement& Micken = Bank->SceneEnvironment.Actors[MickenActor];
         Micken.MickenWeightB = 0.5f;
-        Micken.MickenLifeMax = 40.0f;
+        Micken.MickenLifeMax = 40;
         Micken.MickenGravityScale = 2.0f;
         Micken.MickenDynamicExtField4 = 3.0f;
         Micken.MickenDynamicExtField8 = 4.0f;
@@ -3800,7 +8312,7 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
     {
         FKyaActorPlacement& Fruit = Bank->SceneEnvironment.Actors[FruitActor];
         Fruit.FruitWeightB = 0.75f;
-        Fruit.FruitLifeMax = 50.0f;
+        Fruit.FruitLifeMax = 50;
         Fruit.FruitGravityScale = 2.75f;
         Fruit.FruitDynamicExtField4 = 3.75f;
         Fruit.FruitDynamicExtField8 = 4.75f;
@@ -3866,7 +8378,7 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
     {
         FKyaActorPlacement& Nativ = Bank->SceneEnvironment.Actors[NativActor];
         Nativ.NativWeightB = 0.65f;
-        Nativ.NativLifeMax = 60.0f;
+        Nativ.NativLifeMax = 60;
         Nativ.NativGravityScale = 2.85f;
         Nativ.NativDynamicExtField4 = 3.85f;
         Nativ.NativDynamicExtField8 = 4.85f;
@@ -3968,7 +8480,7 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
     {
         FKyaActorPlacement& Box = Bank->SceneEnvironment.Actors[BoxClassActor];
         Box.BoxWeightB = 0.45f;
-        Box.BoxLifeMax = 70.0f;
+        Box.BoxLifeMax = 70;
         Box.BoxGravityScale = 2.45f;
         Box.BoxDynamicExtField4 = 3.45f;
         Box.BoxDynamicExtField8 = 4.45f;
@@ -4007,7 +8519,7 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
     {
         FKyaActorPlacement& Shoot = Bank->SceneEnvironment.Actors[ShootActor];
         Shoot.ShootWeightB = 0.25f;
-        Shoot.ShootLifeMax = 80.0f;
+        Shoot.ShootLifeMax = 80;
         Shoot.ShootGravityScale = 2.35f;
         Shoot.ShootDynamicExtField4 = 3.35f;
         Shoot.ShootDynamicExtField8 = 4.35f;
@@ -4103,7 +8615,7 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
     {
         FKyaActorPlacement& Gravity = Bank->SceneEnvironment.Actors[GravityActor];
         Gravity.GravityWeightB = 0.55f;
-        Gravity.GravityLifeMax = 90.0f;
+        Gravity.GravityLifeMax = 90;
         Gravity.GravityScale = 2.95f;
         Gravity.GravityDynamicExtField4 = 3.95f;
         Gravity.GravityDynamicExtField8 = 4.95f;
@@ -4130,7 +8642,7 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
     {
         FKyaActorPlacement& Companion = Bank->SceneEnvironment.Actors[CompanionActor];
         Companion.CompanionWeightB = 0.45f;
-        Companion.CompanionLifeMax = 100.0f;
+        Companion.CompanionLifeMax = 100;
         Companion.CompanionGravityScale = 3.05f;
         Companion.CompanionDynamicExtField4 = 4.05f;
         Companion.CompanionDynamicExtField8 = 5.05f;
@@ -4167,7 +8679,7 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
     {
         FKyaActorPlacement& Aton = Bank->SceneEnvironment.Actors[AtonActor];
         Aton.AtonWeightB = 0.65f;
-        Aton.AtonLifeMax = 110.0f;
+        Aton.AtonLifeMax = 110;
         Aton.AtonGravityScale = 3.15f;
         Aton.AtonDynamicExtField4 = 4.15f;
         Aton.AtonDynamicExtField8 = 5.15f;
@@ -4247,7 +8759,7 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
     {
         FKyaActorPlacement& Kim = Bank->SceneEnvironment.Actors[KimActor];
         Kim.FighterWeightB = 0.85f;
-        Kim.FighterLifeMax = 120.0f;
+        Kim.FighterLifeMax = 120;
         Kim.FighterGravityScale = 2.05f;
         Kim.FighterDynamicExtField4 = 3.05f;
         Kim.FighterDynamicExtField8 = 4.05f;
@@ -4638,7 +9150,7 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
     {
         const FKyaActorPlacement& Box = Reimported->SceneEnvironment.Actors[BasicBoxActor];
         TestEqual(TEXT("Edited basic box field 160"), Box.BasicBoxField160, 77);
-        TestEqual(TEXT("Edited basic box life"), Box.BasicBoxLifeMax, 25.0f);
+        TestEqual(TEXT("Edited basic box life"), Box.BasicBoxLifeMax, int64(25));
         TestEqual(TEXT("Edited basic box vibration 0"), Box.BasicBoxVibration0, 1.25f);
         TestEqual(TEXT("Edited basic box vibration 1"), Box.BasicBoxVibration1, 2.25f);
         TestEqual(TEXT("Edited basic box vibration 2"), Box.BasicBoxVibration2, 3.25f);
@@ -4686,7 +9198,7 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
     {
         const FKyaActorPlacement& Projectile = Reimported->SceneEnvironment.Actors[ProjectileActor];
         TestEqual(TEXT("Edited projectile weight"), Projectile.ProjectileWeightB, 1.25f);
-        TestEqual(TEXT("Edited projectile life"), Projectile.ProjectileLifeMax, 30.0f);
+        TestEqual(TEXT("Edited projectile life"), Projectile.ProjectileLifeMax, int64(30));
         TestEqual(TEXT("Edited projectile gravity"), Projectile.ProjectileGravityScale, 2.5f);
         TestEqual(TEXT("Edited projectile dynamic ext 4"), Projectile.ProjectileDynamicExtField4, 3.5f);
         TestEqual(TEXT("Edited projectile dynamic ext 8"), Projectile.ProjectileDynamicExtField8, 4.5f);
@@ -4845,7 +9357,7 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
     {
         const FKyaActorPlacement& Micken = Reimported->SceneEnvironment.Actors[MickenActor];
         TestEqual(TEXT("Edited Micken weight"), Micken.MickenWeightB, 0.5f);
-        TestEqual(TEXT("Edited Micken life"), Micken.MickenLifeMax, 40.0f);
+        TestEqual(TEXT("Edited Micken life"), Micken.MickenLifeMax, int64(40));
         TestEqual(TEXT("Edited Micken gravity"), Micken.MickenGravityScale, 2.0f);
         TestEqual(TEXT("Edited Micken dynamic ext 4"), Micken.MickenDynamicExtField4, 3.0f);
         TestEqual(TEXT("Edited Micken dynamic ext 8"), Micken.MickenDynamicExtField8, 4.0f);
@@ -4972,7 +9484,7 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
     {
         const FKyaActorPlacement& Fruit = Reimported->SceneEnvironment.Actors[FruitActor];
         TestEqual(TEXT("Edited fruit weight"), Fruit.FruitWeightB, 0.75f);
-        TestEqual(TEXT("Edited fruit life"), Fruit.FruitLifeMax, 50.0f);
+        TestEqual(TEXT("Edited fruit life"), Fruit.FruitLifeMax, int64(50));
         TestEqual(TEXT("Edited fruit gravity"), Fruit.FruitGravityScale, 2.75f);
         TestEqual(TEXT("Edited fruit dynamic ext 4"), Fruit.FruitDynamicExtField4, 3.75f);
         TestEqual(TEXT("Edited fruit dynamic ext 8"), Fruit.FruitDynamicExtField8, 4.75f);
@@ -5025,7 +9537,7 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
     {
         const FKyaActorPlacement& Nativ = Reimported->SceneEnvironment.Actors[NativActor];
         TestEqual(TEXT("Edited Nativ weight"), Nativ.NativWeightB, 0.65f);
-        TestEqual(TEXT("Edited Nativ life"), Nativ.NativLifeMax, 60.0f);
+        TestEqual(TEXT("Edited Nativ life"), Nativ.NativLifeMax, int64(60));
         TestEqual(TEXT("Edited Nativ gravity"), Nativ.NativGravityScale, 2.85f);
         TestEqual(TEXT("Edited Nativ dynamic ext 4"), Nativ.NativDynamicExtField4, 3.85f);
         TestEqual(TEXT("Edited Nativ dynamic ext 8"), Nativ.NativDynamicExtField8, 4.85f);
@@ -5130,7 +9642,7 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
     {
         const FKyaActorPlacement& Box = Reimported->SceneEnvironment.Actors[BoxClassActor];
         TestEqual(TEXT("Edited box weight"), Box.BoxWeightB, 0.45f);
-        TestEqual(TEXT("Edited box life"), Box.BoxLifeMax, 70.0f);
+        TestEqual(TEXT("Edited box life"), Box.BoxLifeMax, int64(70));
         TestEqual(TEXT("Edited box gravity"), Box.BoxGravityScale, 2.45f);
         TestEqual(TEXT("Edited box dynamic ext 4"), Box.BoxDynamicExtField4, 3.45f);
         TestEqual(TEXT("Edited box dynamic ext 8"), Box.BoxDynamicExtField8, 4.45f);
@@ -5170,7 +9682,7 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
     {
         const FKyaActorPlacement& Shoot = Reimported->SceneEnvironment.Actors[ShootActor];
         TestEqual(TEXT("Edited shooter weight"), Shoot.ShootWeightB, 0.25f);
-        TestEqual(TEXT("Edited shooter life"), Shoot.ShootLifeMax, 80.0f);
+        TestEqual(TEXT("Edited shooter life"), Shoot.ShootLifeMax, int64(80));
         TestEqual(TEXT("Edited shooter gravity"), Shoot.ShootGravityScale, 2.35f);
         TestEqual(TEXT("Edited shooter dynamic ext 4"), Shoot.ShootDynamicExtField4, 3.35f);
         TestEqual(TEXT("Edited shooter dynamic ext 8"), Shoot.ShootDynamicExtField8, 4.35f);
@@ -5262,7 +9774,7 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
     {
         const FKyaActorPlacement& Gravity = Reimported->SceneEnvironment.Actors[GravityActor];
         TestEqual(TEXT("Edited gravity weight"), Gravity.GravityWeightB, 0.55f);
-        TestEqual(TEXT("Edited gravity life"), Gravity.GravityLifeMax, 90.0f);
+        TestEqual(TEXT("Edited gravity life"), Gravity.GravityLifeMax, int64(90));
         TestEqual(TEXT("Edited gravity scale"), Gravity.GravityScale, 2.95f);
         TestEqual(TEXT("Edited gravity dynamic ext 4"), Gravity.GravityDynamicExtField4, 3.95f);
         TestEqual(TEXT("Edited gravity dynamic ext 8"), Gravity.GravityDynamicExtField8, 4.95f);
@@ -5281,7 +9793,7 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
     {
         const FKyaActorPlacement& Companion = Reimported->SceneEnvironment.Actors[CompanionActor];
         TestEqual(TEXT("Edited companion weight"), Companion.CompanionWeightB, 0.45f);
-        TestEqual(TEXT("Edited companion life"), Companion.CompanionLifeMax, 100.0f);
+        TestEqual(TEXT("Edited companion life"), Companion.CompanionLifeMax, int64(100));
         TestEqual(TEXT("Edited companion gravity"), Companion.CompanionGravityScale, 3.05f);
         TestEqual(TEXT("Edited companion dynamic ext 4"), Companion.CompanionDynamicExtField4, 4.05f);
         TestEqual(TEXT("Edited companion dynamic ext 8"), Companion.CompanionDynamicExtField8, 5.05f);
@@ -5309,7 +9821,7 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
     {
         const FKyaActorPlacement& Aton = Reimported->SceneEnvironment.Actors[AtonActor];
         TestEqual(TEXT("Edited Aton weight"), Aton.AtonWeightB, 0.65f);
-        TestEqual(TEXT("Edited Aton life"), Aton.AtonLifeMax, 110.0f);
+        TestEqual(TEXT("Edited Aton life"), Aton.AtonLifeMax, int64(110));
         TestEqual(TEXT("Edited Aton gravity"), Aton.AtonGravityScale, 3.15f);
         TestEqual(TEXT("Edited Aton dynamic ext 4"), Aton.AtonDynamicExtField4, 4.15f);
         TestEqual(TEXT("Edited Aton dynamic ext 8"), Aton.AtonDynamicExtField8, 5.15f);
@@ -5388,7 +9900,7 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
     {
         const FKyaActorPlacement& Kim = Reimported->SceneEnvironment.Actors[KimActor];
         TestEqual(TEXT("Edited Kim fighter weight"), Kim.FighterWeightB, 0.85f);
-        TestEqual(TEXT("Edited Kim fighter life"), Kim.FighterLifeMax, 120.0f);
+        TestEqual(TEXT("Edited Kim fighter life"), Kim.FighterLifeMax, int64(120));
         TestEqual(TEXT("Edited Kim fighter gravity"), Kim.FighterGravityScale, 2.05f);
         TestEqual(TEXT("Edited Kim fighter dynamic ext 4"), Kim.FighterDynamicExtField4, 3.05f);
         TestEqual(TEXT("Edited Kim fighter dynamic ext 8"), Kim.FighterDynamicExtField8, 4.05f);
@@ -5843,6 +10355,12 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
         PlatformSlabActor != INDEX_NONE, PlatformMasterActor != INDEX_NONE, PlatformSelectorMasterActor != INDEX_NONE));
     AddInfo(FString::Printf(TEXT("Projectile behaviour coverage: stand=%d straight=%d inventory=%d"),
         ProjectileStandActor != INDEX_NONE, ProjectileStraightActor != INDEX_NONE, InventoryActor != INDEX_NONE));
+    {
+        int32 PatternField24Count = 0;
+        for (const FKyaActorPlacement& Actor : Bank->SceneEnvironment.Actors)
+            if (Actor.bHasProjectileData && Actor.ProjectilePattern.bHasField24) ++PatternField24Count;
+        AddInfo(FString::Printf(TEXT("Projectile class payloads with pattern field24: %d"), PatternField24Count));
+    }
     AddInfo(FString::Printf(TEXT("Switch behaviour coverage: lever=%d magic=%d"), SwitchLeverActor != INDEX_NONE, SwitchMagicActor != INDEX_NONE));
     AddInfo(FString::Printf(TEXT("Wolfen behaviour coverage: track=%d weapon=%d weapon-stand=%d weapon-snipe=%d dca=%d avoid=%d lost=%d watchdog=%d snipe=%d guard=%d escape=%d exorcism=%d"),
         WolfenTrackActor != INDEX_NONE, WolfenTrackWeaponActor != INDEX_NONE, WolfenTrackWeaponStandActor != INDEX_NONE,
@@ -6025,8 +10543,8 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
     }
     if (SwitchActor != INDEX_NONE)
     {
-        FKyaSwitchOffsets Switch;
-        if (KyaReadSwitchOffsets(Input, ActorOffsets[SwitchActor].ClassData, ActorOffsets[SwitchActor].ClassDataSize, Switch))
+        FKyaSwitchActorOffsets Switch;
+        if (KyaReadSwitchActorOffsets(Input, ActorOffsets[SwitchActor].ClassData, ActorOffsets[SwitchActor].ClassDataSize, Switch))
         {
             ChangedFieldOffsets.Add(Switch.Targets);
             ChangedFieldOffsets.Add(Switch.Targets + 12);

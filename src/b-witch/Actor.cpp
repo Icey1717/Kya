@@ -1187,7 +1187,7 @@ bool CActor::SetBehaviour(int behaviourId, int newState, int animationType)
 				bVar2 = true;
 			}
 			else {
-				__debugbreak();
+				//__debugbreak();
 				ACTOR_LOG(LogLevel::Info, "CActor::SetBehaviour Missing Behaviour {} bhvr: {} state: {} anim: {} (cur bhvr: {})", this->name, behaviourId, newState, animationType, this->curBehaviourId);
 				bVar2 = false;
 			}

@@ -6,114 +6,6 @@
 
 namespace
 {
-struct FClassRow
-{
-    int64 ClassId;
-    const TCHAR* Name;
-    const TCHAR* Notes;
-};
-
-// Recovered from the class-specific parsing branches in KyaLevelBankFactory.cpp
-// (each branch sets the matching bHas*Data flag).
-const FClassRow ClassRows[] = {
-    {0x0d, TEXT("Moving platform"), TEXT("CActorMovingPlatform: carried actors, zones, camera/notification records")},
-    {0x39, TEXT("Basic box"), TEXT("life, vibration, switch and add-on generators")},
-    {0x2e, TEXT("FX"), TEXT("two Create-stage floats and single/path behaviour payloads")},
-    {0x21, TEXT("Araignos"), TEXT("movable weight, path follow, sound references, add-on")},
-    {0x1c, TEXT("Projectile"), TEXT("autonomous movement, tuning sub-object, pattern parts")},
-    {0x12, TEXT("Wind"), TEXT("tuning, zones, actor/material references, sector hierarchy")},
-    {0x2c, TEXT("Trap"), TEXT("movement/path settings, escape state, switch stream")},
-    {0x20, TEXT("Weapon"), TEXT("class values and burst/bullets/pistol/sniper/RPG payloads")},
-    {0x11, TEXT("Switch"), TEXT("target list and camera event")},
-    {0x0e, TEXT("Bonus"), TEXT("sound/material values and turn/flock/add-on behaviours")},
-    {0x07, TEXT("Micken"), TEXT("autonomous values, waypoint/actor references, eat behaviour")},
-    {0x09, TEXT("Wolfen"), TEXT("vision/detection, fighter block, blow/grab/reaction/combo databases")},
-    {0x16, TEXT("Fruit"), TEXT("autonomous/switch data and squashed/bonus/inventory behaviours")},
-    {0x13, TEXT("Commander"), TEXT("squad, team, sequence and camera-figure data")},
-    {0x0a, TEXT("Nativ"), TEXT("autonomous/movement fields and take-and-put trajectories")},
-    {0x29, TEXT("Amortos"), TEXT("actor lists, tuning floats, add-on, switch/camera records")},
-    {0x24, TEXT("Teleporter"), TEXT("destinations, switch/camera records, zones, waypoints")},
-    {0x1b, TEXT("DCA"), TEXT("aim/shot tuning and controlled/trajectory behaviours")},
-    {0x35, TEXT("Box"), TEXT("autonomous tuning, actor list, switch and add-on")},
-    {0x32, TEXT("Money"), TEXT("weight, value, sound and material")},
-    {0x3d, TEXT("Fog manager"), TEXT("hierarchy list and streamed fog zones")},
-    {0x3e, TEXT("Shoot"), TEXT("static-mesh/aim tuning and fire/wave behaviours")},
-    {0x14, TEXT("Ambre"), TEXT("mesh/material and switch data")},
-    {0x4c, TEXT("Stiller"), TEXT("vision, path, life, switches and add-on")},
-    {0x51, TEXT("Rune"), TEXT("serialized tuning, references and switch data")},
-    {0x52, TEXT("Bonus fountain"), TEXT("serialized tuning, references and switch data")},
-    {0x0f, TEXT("Rope"), TEXT("serialized tuning, references and switch data")},
-    {0x10, TEXT("Gravity aware"), TEXT("autonomous/behaviour data")},
-    {0x3c, TEXT("Nativ command"), TEXT("add-on lists")},
-    {0x19, TEXT("Companion"), TEXT("autonomous values and ids")},
-    {0x17, TEXT("Bridge"), TEXT("actor/waypoint/config data and behaviours")},
-    {0x38, TEXT("Aton"), TEXT("autonomous values, effect/mesh/material ids, path list, add-on")},
-    {0x06, TEXT("Kim / hero"), TEXT("shared CActorFighter prefix, bone keys, cameras and FX handles")},
-    {0x05, TEXT("Boomy"), TEXT("tail/particle fields, embedded camera, vision/damage table")},
-    {0x1e, TEXT("Checkpoint manager"), TEXT("checkpoint records")},
-};
-
-struct FBehaviourRow
-{
-    int64 ClassId;
-    int32 BehaviourId;
-    const TCHAR* Name;
-};
-
-// Recovered from the class/id branches in KyaLevelBankFactory.cpp. Ids without an
-// entry are reported as unknown rather than invented.
-const FBehaviourRow BehaviourRows[] = {
-    {0x11, 2, TEXT("Switch lever")},
-    {0x11, 3, TEXT("Switch magic")},
-    {0x11, 5, TEXT("Switch multi-condition")},
-    {0x11, 6, TEXT("Switch target")},
-    {0x1c, 3, TEXT("Projectile stand")},
-    {0x1c, 4, TEXT("Projectile straight")},
-    {0x1c, 5, TEXT("Projectile portable")},
-    {0x1c, 11, TEXT("Projectile excuse")},
-    {0x17, 2, TEXT("Bridge basic")},
-    {0x17, 3, TEXT("Bridge wind")},
-    {0x3e, 3, TEXT("Shoot fire")},
-    {0x3e, 4, TEXT("Shoot wave")},
-    {0x10, 3, TEXT("Gravity fall")},
-    {0x10, 4, TEXT("Gravity bell")},
-    {0x06, 9, TEXT("Hero unknown behaviour 9")},
-    {0x06, 10, TEXT("Hero unknown behaviour 10")},
-    {0x06, 11, TEXT("Hero unknown behaviour 11")},
-};
-
-struct FReferenceRow
-{
-    const TCHAR* Name;
-    EKyaReferenceKind Kind;
-    int64 ClassId;
-};
-
-// Top-level scalar reference fields on FKyaActorPlacement. Nested reference arrays
-// and records remain raw values for now. ClassId -1 marks fields meaningful on every
-// class; class-specific rows are only validated and offered for that class.
-const FReferenceRow ReferenceRows[] = {
-    {TEXT("SectorId"), EKyaReferenceKind::Sector, -1},
-    {TEXT("MeshIndex"), EKyaReferenceKind::Mesh, -1},
-    {TEXT("TextureIndex"), EKyaReferenceKind::Texture, -1},
-    {TEXT("DefaultBehaviourId"), EKyaReferenceKind::Behaviour, -1},
-    {TEXT("MickenActorIndex"), EKyaReferenceKind::Actor, 0x07},
-    {TEXT("MickenWaypointIndex"), EKyaReferenceKind::Waypoint, 0x07},
-    {TEXT("TrapActorRef"), EKyaReferenceKind::Actor, 0x2c},
-    {TEXT("CommanderActorRef"), EKyaReferenceKind::Actor, 0x13},
-    {TEXT("AmortosActorRef"), EKyaReferenceKind::Actor, 0x29},
-    {TEXT("RopeActorRefA"), EKyaReferenceKind::Actor, 0x0f},
-    {TEXT("RopeActorRefB"), EKyaReferenceKind::Actor, 0x0f},
-    {TEXT("RopePathIndex"), EKyaReferenceKind::Path, 0x0f},
-    {TEXT("FighterWeaponActorIndex"), EKyaReferenceKind::Actor, 0x06},
-    {TEXT("BridgeWaypointA"), EKyaReferenceKind::Waypoint, 0x17},
-    {TEXT("BridgeWaypointB"), EKyaReferenceKind::Waypoint, 0x17},
-    {TEXT("WindWaypointRef"), EKyaReferenceKind::Waypoint, 0x12},
-    {TEXT("WindWaypointRef1CC"), EKyaReferenceKind::Waypoint, 0x12},
-    {TEXT("WindZoneRef1C4"), EKyaReferenceKind::Zone, 0x12},
-    {TEXT("StillerPathIndex"), EKyaReferenceKind::Path, 0x4c},
-};
-
 int32 CountEntries(const UKyaLevelBank& Bank, int32 Type, int32 Subtype)
 {
     int32 Count = 0;
@@ -127,11 +19,10 @@ FKyaActorClassInfo GetKyaActorClassInfo(int64 ClassId)
 {
     FKyaActorClassInfo Info;
     Info.ClassId = ClassId;
-    for (const FClassRow& Row : ClassRows)
+    if (const FKyaActorFamily* Family = KyaActorFamilies::Find(ClassId))
     {
-        if (Row.ClassId != ClassId) continue;
-        Info.Name = Row.Name;
-        Info.Notes = Row.Notes;
+        Info.Name = Family->DisplayName;
+        Info.Notes = Family->Notes;
         Info.bKnown = true;
         return Info;
     }
@@ -152,12 +43,10 @@ FKyaBehaviourInfo GetKyaBehaviourInfo(int64 ClassId, int32 BehaviourId)
 {
     FKyaBehaviourInfo Info;
     Info.Id = BehaviourId;
-    for (const FBehaviourRow& Row : BehaviourRows)
+    if (const FKyaActorFamilyBehaviour* Row = KyaActorFamilies::FindBehaviour(ClassId, BehaviourId))
     {
-        if (Row.ClassId != ClassId || Row.BehaviourId != BehaviourId) continue;
-        Info.Name = Row.Name;
+        Info.Name = Row->Name;
         Info.bKnown = true;
-        return Info;
     }
     return Info;
 }
@@ -253,12 +142,19 @@ TArray<FKyaBehaviourOption> GetKyaBehaviourOptions(const FKyaActorPlacement& Pla
 
 bool FindKyaReferenceField(FName PropertyName, EKyaReferenceKind& OutKind)
 {
-    for (const FReferenceRow& Row : ReferenceRows)
+    const auto Matches = [PropertyName, &OutKind](TConstArrayView<FKyaActorFamilyReference> Rows)
     {
-        if (PropertyName != FName(Row.Name)) continue;
-        OutKind = Row.Kind;
-        return true;
-    }
+        for (const FKyaActorFamilyReference& Row : Rows)
+        {
+            if (PropertyName != FName(Row.Property)) continue;
+            OutKind = Row.Kind;
+            return true;
+        }
+        return false;
+    };
+    if (Matches(KyaActorFamilies::SharedReferences())) return true;
+    for (const FKyaActorFamily* Family : KyaActorFamilies::All())
+        if (Matches(Family->References)) return true;
     return false;
 }
 
@@ -346,9 +242,11 @@ bool SetKyaFloatField(FKyaActorPlacement& Placement, FName PropertyName, float V
 TArray<FKyaReferenceField> GetKyaReferenceFields()
 {
     TArray<FKyaReferenceField> Fields;
-    Fields.Reserve(UE_ARRAY_COUNT(ReferenceRows));
-    for (const FReferenceRow& Row : ReferenceRows)
-        Fields.Add({FName(Row.Name), Row.Kind, Row.ClassId});
+    for (const FKyaActorFamilyReference& Row : KyaActorFamilies::SharedReferences())
+        Fields.Add({FName(Row.Property), Row.Kind, -1});
+    for (const FKyaActorFamily* Family : KyaActorFamilies::All())
+        for (const FKyaActorFamilyReference& Row : Family->References)
+            Fields.Add({FName(Row.Property), Row.Kind, Family->ClassId});
     return Fields;
 }
 

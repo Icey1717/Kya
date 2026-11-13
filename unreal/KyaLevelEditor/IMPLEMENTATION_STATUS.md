@@ -9,8 +9,10 @@ verified. Reference for behaviour and layouts is this repository's own source
 Last updated: 2026-11-13.
 
 Checklist status: all 80 items are implemented and covered by the
-`Kya.Editor`/`Kya.Bank` automation (44 tests), including structural actor
+`Kya.Editor`/`Kya.Bank` automation (87 tests), including structural actor
 create/duplicate/delete with stream relocation and typed reference remapping.
+Actor/behaviour family coverage beyond LEVEL_1 is tracked separately in
+[ACTOR_BEHAVIOUR_AUDIT.md](ACTOR_BEHAVIOUR_AUDIT.md).
 
 ## 1. Working-tree findings (before this work)
 
@@ -280,6 +282,86 @@ create/duplicate/delete with stream relocation and typed reference remapping.
   only offers editable rows and shows the capability description and reason as the
   row tooltip; patch construction rejects inspect-only/unsupported fields with that
   reason.
+- Actor family metadata is organized as one module per serialized class under
+  `Source/KyaLevel/Private/Actors/`, with shared types in `KyaActorFamily.h` and
+  a registry that the catalog, pickers and tests read. `CActorHedgehog` (class
+  0x22) is the first family fully extracted end to end: typed placement and
+  behaviour fields, a source-derived codec, writer support, Path reference
+  registration, Details applicability and a fixture round trip. LEVEL_1 has no
+  Hedgehog record, so the fixture is the round-trip evidence. Projectile (class
+  0x1c) followed: its class, behaviour 3/4/5/9/10/11/12/13 and inventory codecs
+  live in `Actors/KyaProjectile.h/.cpp`, with a fixture covering all eight
+  payload shapes and real-bank reconciliation of the ids present in LEVEL_1.
+  Moving platform (class 0x0d) followed: carried actors, zones, no-friction
+  zones, cameras, properties, sound streams and behaviours 2-10 now live in
+  `Actors/KyaMovingPlatform.h/.cpp`; the id 10 fixture covers the only shape
+  absent from LEVEL_1, while the real bank covers ids 2-9. Switch (class 0x11)
+  followed: target-switch class data and behaviours 2-8 now live in
+  `Actors/KyaSwitch.h/.cpp`; ids 4/7/8 are fixture-covered, ids 2/3/5/6 come
+  from the real bank. Wind (class 0x12) then moved its tuning/switch class codec
+  to `Actors/KyaWind.h/.cpp`; its only behaviour (id 2) has an empty payload and
+  is covered by both the fixture and the real bank. Trap (class 0x2c) then moved
+  its class, trap-stream and behaviour 2/3 codecs to `Actors/KyaTrap.h/.cpp`.
+  Weapon (class 0x20) then moved its class and pistol/sniper/RPG codecs to
+  `Actors/KyaWeapon.h/.cpp`. Araignos (class 0x21) then moved its class/add-on
+  codec to `Actors/KyaAraignos.h/.cpp`; its empty id 2 behaviour is covered by
+  both the fixture and the real bank. Bonus (class 0x0e) then moved its class and
+  turn/path/flock/add-on codecs to `Actors/KyaBonus.h/.cpp`. Teleporter (class
+  0x24) then moved its class/switch/waypoint/condition codec to
+  `Actors/KyaTeleporter.h/.cpp`; its empty id 2 behaviour is covered by both the
+  fixture and the real bank. Amortos (class 0x29) then moved its class
+  actor-stream/add-on/switch codec to `Actors/KyaAmortos.h/.cpp`; the module also
+  corrects the serialized order of the first three tuning floats. DCA (class
+  0x1b) then moved its class, fire-shot stream and controlled/trajectory codecs
+  to `Actors/KyaDca.h/.cpp`; behaviour 4 remains raw because its source Create is
+  an implementation guard. Fruit (class 0x16) then moved its class and
+  squashed/inventory/bonus codecs to `Actors/KyaFruit.h/.cpp`. Nativ (class 0x0a)
+  then moved its class and take-and-put codec to `Actors/KyaNativ.h/.cpp`. The
+  shared Fighter prefix and switch-script helpers were extracted to
+  `Actors/KyaFighter.h` and `Actors/KyaSwitchScript.h`, and Wolfen (class 0x09)
+  moved its class/fight-parameter and twelve behaviour codecs to
+  `Actors/KyaWolfen.h/.cpp`. Commander (class 0x13) then moved its class and
+  behaviour 2 codec to `Actors/KyaCommander.h/.cpp`. Kim / hero private (class
+  0x06) then moved its class/camera codec to `Actors/KyaKim.h/.cpp`; the shared
+  actor-camera reader lives in `Actors/KyaActorCamera.h`. Boomy (class 0x05) then
+  moved its class/camera/type codec to `Actors/KyaBoomy.h/.cpp`; the shared
+  camera writer `KyaWriteActorCameraValues` is now used by both Kim and Boomy.
+  Aton (class 0x38) then moved its class/path/add-on codec to
+  `Actors/KyaAton.h/.cpp`, and its life maximum is stored as int64 with u32
+  validation. Rope (class 0x0f) then moved its class/switch codec to
+  `Actors/KyaRope.h/.cpp`. Stiller (class 0x4C) then moved its
+  class/switch/add-on codec to `Actors/KyaStiller.h/.cpp`. Ambre (class 0x14)
+  then moved its class/switch codec to `Actors/KyaAmbre.h/.cpp`. Bonus fountain
+  (class 0x52) then moved its add-on codec to `Actors/KyaFountain.h/.cpp`.
+  Checkpoint manager (class 0x1E) then moved its record/pair codec to
+  `Actors/KyaCheckpoints.h/.cpp`. Bridge (class 0x17) then moved its class and
+  basic/wind-aware behaviour codecs to `Actors/KyaBridge.h/.cpp`. Fog manager
+  (class 0x3D) then moved its hierarchy/fog-zone codec to
+  `Actors/KyaFog.h/.cpp`. Shoot (class 0x3E) then moved its class/add-on and
+  fire/wave behaviour codecs to `Actors/KyaShoot.h/.cpp`; its life maximum is
+  stored as int64 with u32 validation. Money (class 0x32) then moved its class
+  and flock/add-on behaviour codecs to `Actors/KyaMoney.h/.cpp`. Box (class 0x35)
+  then moved its class/switch/add-on codec to `Actors/KyaBox.h/.cpp`, and its
+  life maximum is stored as int64 with u32 validation. FX (class 0x2E) then moved
+  its class and single/path/unknown behaviour codecs to
+  `Actors/KyaFx.h/.cpp`. Clusteriser (class 0x18) then moved its behaviour 2
+  zone-list codec to `Actors/KyaClusteriser.h/.cpp`; the module also fixes
+  `Flags` sign-extension by reading the serialized u32 into int64. Companion
+  (class 0x19) then moved its class and alert behaviour codecs to
+  `Actors/KyaCompanion.h/.cpp`; the shared conditioned/scenario readers now live
+  in `Actors/KyaScenarioCondition.h`, and its life maximum is stored as int64
+  with u32 validation. Gravity aware (class 0x10) then moved its class and
+  fall/bell behaviour codecs to `Actors/KyaGravity.h/.cpp`, and its life maximum
+  is stored as int64 with u32 validation. Rune (class 0x51) then moved its class
+  codec to `Actors/KyaRune.h/.cpp`. Micken (class 0x07) then moved its class
+  and eat behaviour codecs to `Actors/KyaMicken.h/.cpp`, and its life maximum is
+  stored as int64 with u32 validation. Basic box (class 0x39) then moved its
+  class codec to `Actors/KyaBasicBox.h/.cpp`, and its life maximum is stored as
+  int64 with u32 validation. Nativ command (class 0x3C) then moved its
+  class/add-on codec to `Actors/KyaNativCmd.h/.cpp`; the shared catch-by-trap and
+  hero-unknown payload readers moved to `Actors/KyaCatchByTrap.h/.cpp` and
+  `Actors/KyaHeroUnknown.h/.cpp`, and the Hedgehog class reader now dispatches
+  through `KyaReadHedgehogActor`. Every actor family is module-backed.
 - `KyaActorCatalog` supplies the recovered presentation data: class names/notes  (derived from the factory's class branches), class-specific behaviour names,
   bank-local mesh/texture reference resolution, sector labels, and a class-gated
   scalar reference-field table. `ValidateKyaActorReferences` reports blocking
@@ -436,6 +518,42 @@ $env:KYA_TEST_BANK = 'G:\repos\Kya\assets\CDEURO\LEVEL\LEVEL_1\LEVEL.BNK'
 ```
 
 Results: `Kya.Bank.LevelOneRoundTrip`, `Kya.Bank.SmallBankRoundTrip`,
+`Kya.Bank.HedgehogFixtureRoundTrip`, `Kya.Bank.ProjectileFixtureRoundTrip`,
+`Kya.Bank.MovingPlatformFixtureRoundTrip`,
+`Kya.Bank.SwitchFixtureRoundTrip`,
+`Kya.Bank.WindFixtureRoundTrip`,
+`Kya.Bank.TrapFixtureRoundTrip`,
+`Kya.Bank.WeaponFixtureRoundTrip`,
+`Kya.Bank.AraignosFixtureRoundTrip`,
+`Kya.Bank.BonusFixtureRoundTrip`,
+`Kya.Bank.TeleporterFixtureRoundTrip`,
+`Kya.Bank.AmortosFixtureRoundTrip`,
+`Kya.Bank.DcaFixtureRoundTrip`,
+`Kya.Bank.FruitFixtureRoundTrip`,
+`Kya.Bank.NativFixtureRoundTrip`,
+`Kya.Bank.WolfenFixtureRoundTrip`,
+`Kya.Bank.CommanderFixtureRoundTrip`,
+`Kya.Bank.KimFixtureRoundTrip`,
+`Kya.Bank.BoomyFixtureRoundTrip`,
+`Kya.Bank.AtonFixtureRoundTrip`,
+`Kya.Bank.RopeFixtureRoundTrip`,
+`Kya.Bank.StillerFixtureRoundTrip`,
+`Kya.Bank.AmbreFixtureRoundTrip`,
+`Kya.Bank.FountainFixtureRoundTrip`,
+`Kya.Bank.CheckpointsFixtureRoundTrip`,
+`Kya.Bank.BridgeFixtureRoundTrip`,
+`Kya.Bank.FogFixtureRoundTrip`,
+`Kya.Bank.ShootFixtureRoundTrip`,
+`Kya.Bank.MoneyFixtureRoundTrip`,
+`Kya.Bank.BoxFixtureRoundTrip`,
+`Kya.Bank.FxFixtureRoundTrip`,
+`Kya.Bank.ClusteriserFixtureRoundTrip`,
+`Kya.Bank.CompanionFixtureRoundTrip`,
+`Kya.Bank.GravityFixtureRoundTrip`,
+`Kya.Bank.RuneFixtureRoundTrip`,
+`Kya.Bank.MickenFixtureRoundTrip`,
+`Kya.Bank.BasicBoxFixtureRoundTrip`,
+`Kya.Bank.NativCmdFixtureRoundTrip`,
 `Kya.Editor.ActorTransformConversion`, `Kya.Editor.ActorEditService`,
 `Kya.Editor.ActorHandleTransform`, `Kya.Editor.ActorOwnedGeometry`,
 `Kya.Editor.ExportValidation`, `Kya.Editor.LevelPreviewPlacement`,

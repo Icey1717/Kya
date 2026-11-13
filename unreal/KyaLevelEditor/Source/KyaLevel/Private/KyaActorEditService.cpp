@@ -185,7 +185,19 @@ bool ValidateKyaActorPlacement(const FKyaActorPlacement& Placement, FString& Out
         return false;
     };
     if (!RequireU32(Placement.LightingFlags, TEXT("Lighting flags")) ||
-        !RequireU32(Placement.HashCode, TEXT("Hash code")))
+        !RequireU32(Placement.HashCode, TEXT("Hash code")) ||
+        !RequireU32(Placement.HedgehogLifeMax, TEXT("Hedgehog life maximum")) ||
+        !RequireU32(Placement.ProjectileLifeMax, TEXT("Projectile life maximum")) ||
+        !RequireU32(Placement.FruitLifeMax, TEXT("Fruit life maximum")) ||
+        !RequireU32(Placement.NativLifeMax, TEXT("Nativ life maximum")) ||
+        !RequireU32(Placement.FighterLifeMax, TEXT("Fighter life maximum")) ||
+        !RequireU32(Placement.AtonLifeMax, TEXT("Aton life maximum")) ||
+        !RequireU32(Placement.ShootLifeMax, TEXT("Shoot life maximum")) ||
+        !RequireU32(Placement.BoxLifeMax, TEXT("Box life maximum")) ||
+        !RequireU32(Placement.CompanionLifeMax, TEXT("Companion life maximum")) ||
+        !RequireU32(Placement.GravityLifeMax, TEXT("Gravity-aware life maximum")) ||
+        !RequireU32(Placement.MickenLifeMax, TEXT("Micken life maximum")) ||
+        !RequireU32(Placement.BasicBoxLifeMax, TEXT("Basic box life maximum")))
         return false;
     return true;
 }

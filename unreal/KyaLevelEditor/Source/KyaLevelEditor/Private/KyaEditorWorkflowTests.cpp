@@ -978,6 +978,181 @@ bool FKyaActorCatalogTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Switch multi-condition label"), GetKyaBehaviourLabel(0x11, 5),
         FString(TEXT("Switch multi-condition (5)")));
     TestTrue(TEXT("Unknown behaviour is labelled"), GetKyaBehaviourLabel(0x17, 4).Contains(TEXT("unknown")));
+    TestEqual(TEXT("Hedgehog class label"), GetKyaActorClassLabel(0x22), FString(TEXT("Hedgehog (34)")));
+    TestTrue(TEXT("Hedgehog class notes are recovered"),
+        GetKyaActorClassInfo(0x22).Notes.Contains(TEXT("CAddOnGenerator")));
+    TestEqual(TEXT("Hedgehog guard area label"), GetKyaBehaviourLabel(0x22, 3), FString(TEXT("Guard area (3)")));
+    TestEqual(TEXT("Hedgehog watchdog label"), GetKyaBehaviourLabel(0x22, 4), FString(TEXT("Watch dog (4)")));
+    TestEqual(TEXT("Hedgehog guard area armor label"), GetKyaBehaviourLabel(0x22, 5),
+        FString(TEXT("Guard area armor (5)")));
+    TestEqual(TEXT("Hedgehog watchdog armor label"), GetKyaBehaviourLabel(0x22, 6),
+        FString(TEXT("Watch dog armor (6)")));
+    TestTrue(TEXT("Hedgehog inherited behaviour is not invented"),
+        GetKyaBehaviourLabel(0x22, 2).Contains(TEXT("unknown")));
+    TestTrue(TEXT("Hedgehog family is registered"), KyaActorFamilies::Find(0x22) != nullptr);
+    TestEqual(TEXT("Clusteriser class label"), GetKyaActorClassLabel(0x18), FString(TEXT("Clusteriser (24)")));
+    TestEqual(TEXT("Clusteriser behaviour label"), GetKyaBehaviourLabel(0x18, 2), FString(TEXT("Cluster zones (2)")));
+    TestEqual(TEXT("Moving platform trajectory label"), GetKyaBehaviourLabel(0x0d, 2),
+        FString(TEXT("Trajectory (2)")));
+    TestEqual(TEXT("Moving platform teleport-random label"), GetKyaBehaviourLabel(0x0d, 10),
+        FString(TEXT("Teleport random (10)")));
+    TestEqual(TEXT("Moving platform source type"), FString(KyaActorFamilies::Find(0x0d)->SourceType),
+        FString(TEXT("CActorMovingPlatform")));
+    TestEqual(TEXT("Switch Wolfen-counter label"), GetKyaBehaviourLabel(0x11, 4),
+        FString(TEXT("Wolfen counter (4)")));
+    TestEqual(TEXT("Switch sequence label"), GetKyaBehaviourLabel(0x11, 7),
+        FString(TEXT("Switch sequence (7)")));
+    TestEqual(TEXT("Switch timed label"), GetKyaBehaviourLabel(0x11, 8),
+        FString(TEXT("Switch timed (8)")));
+    TestEqual(TEXT("Wind behaviour label"), GetKyaBehaviourLabel(0x12, 2), FString(TEXT("Wind (2)")));
+    TestEqual(TEXT("Wind source type"), FString(KyaActorFamilies::Find(0x12)->SourceType),
+        FString(TEXT("CActorWind")));
+    TestEqual(TEXT("Trap stand label"), GetKyaBehaviourLabel(0x2c, 2), FString(TEXT("Trap stand (2)")));
+    TestEqual(TEXT("Trap inactive label"), GetKyaBehaviourLabel(0x2c, 3), FString(TEXT("Inactive (3)")));
+    TestEqual(TEXT("Trap source type"), FString(KyaActorFamilies::Find(0x2c)->SourceType),
+        FString(TEXT("CActorTrap")));
+    TestEqual(TEXT("Weapon pistol label"), GetKyaBehaviourLabel(0x20, 3), FString(TEXT("Pistol (3)")));
+    TestEqual(TEXT("Weapon RPG label"), GetKyaBehaviourLabel(0x20, 6), FString(TEXT("RPG (6)")));
+    TestEqual(TEXT("Weapon source type"), FString(KyaActorFamilies::Find(0x20)->SourceType),
+        FString(TEXT("CActorWeapon")));
+    TestEqual(TEXT("Araignos default label"), GetKyaBehaviourLabel(0x21, 2),
+        FString(TEXT("Araignos default (2)")));
+    TestEqual(TEXT("Araignos source type"), FString(KyaActorFamilies::Find(0x21)->SourceType),
+        FString(TEXT("CActorAraignos")));
+    TestEqual(TEXT("Bonus turn label"), GetKyaBehaviourLabel(0x0e, 3), FString(TEXT("Bonus turn (3)")));
+    TestEqual(TEXT("Bonus path label"), GetKyaBehaviourLabel(0x0e, 4), FString(TEXT("Bonus path (4)")));
+    TestEqual(TEXT("Bonus source type"), FString(KyaActorFamilies::Find(0x0e)->SourceType),
+        FString(TEXT("CActorBonus")));
+    TestEqual(TEXT("Teleporter default label"), GetKyaBehaviourLabel(0x24, 2),
+        FString(TEXT("Teleporter default (2)")));
+    TestEqual(TEXT("Teleporter source type"), FString(KyaActorFamilies::Find(0x24)->SourceType),
+        FString(TEXT("CActorTeleporter")));
+    TestEqual(TEXT("Amortos stand label"), GetKyaBehaviourLabel(0x29, 2),
+        FString(TEXT("Amortos stand (2)")));
+    TestEqual(TEXT("Amortos source type"), FString(KyaActorFamilies::Find(0x29)->SourceType),
+        FString(TEXT("CActorAmortos")));
+    TestEqual(TEXT("DCA controlled label"), GetKyaBehaviourLabel(0x1b, 3),
+        FString(TEXT("DCA controlled (3)")));
+    TestEqual(TEXT("DCA trajectory label"), GetKyaBehaviourLabel(0x1b, 5),
+        FString(TEXT("DCA trajectory (5)")));
+    TestEqual(TEXT("DCA source type"), FString(KyaActorFamilies::Find(0x1b)->SourceType),
+        FString(TEXT("CActorDCA")));
+    TestEqual(TEXT("Fruit squashed label"), GetKyaBehaviourLabel(0x16, 4),
+        FString(TEXT("Fruit squashed (4)")));
+    TestEqual(TEXT("Fruit bonus label"), GetKyaBehaviourLabel(0x16, 6),
+        FString(TEXT("Fruit bonus (6)")));
+    TestEqual(TEXT("Fruit source type"), FString(KyaActorFamilies::Find(0x16)->SourceType),
+        FString(TEXT("CActorFruit")));
+    TestEqual(TEXT("Nativ take-and-put label"), GetKyaBehaviourLabel(0x0a, 6),
+        FString(TEXT("Nativ take and put (6)")));
+    TestEqual(TEXT("Nativ source type"), FString(KyaActorFamilies::Find(0x0a)->SourceType),
+        FString(TEXT("CActorNativ")));
+    TestEqual(TEXT("Wolfen track label"), GetKyaBehaviourLabel(0x09, 15),
+        FString(TEXT("Track (15)")));
+    TestEqual(TEXT("Wolfen DCA label"), GetKyaBehaviourLabel(0x09, 23),
+        FString(TEXT("Wolfen DCA (23)")));
+    TestEqual(TEXT("Wolfen source type"), FString(KyaActorFamilies::Find(0x09)->SourceType),
+        FString(TEXT("CActorWolfen")));
+    TestEqual(TEXT("Commander label"), GetKyaBehaviourLabel(0x13, 2),
+        FString(TEXT("Commander (2)")));
+    TestEqual(TEXT("Commander source type"), FString(KyaActorFamilies::Find(0x13)->SourceType),
+        FString(TEXT("CActorCommander")));
+    TestEqual(TEXT("Kim source type"), FString(KyaActorFamilies::Find(0x06)->SourceType),
+        FString(TEXT("CActorHeroPrivate")));
+    TestEqual(TEXT("Boomy launch label"), GetKyaBehaviourLabel(0x05, 2),
+        FString(TEXT("Boomy launch (2)")));
+    TestEqual(TEXT("Boomy source type"), FString(KyaActorFamilies::Find(0x05)->SourceType),
+        FString(TEXT("CActorBoomy")));
+    TestEqual(TEXT("Aton escape label"), GetKyaBehaviourLabel(0x38, 3),
+        FString(TEXT("Aton escape (3)")));
+    TestEqual(TEXT("Aton source type"), FString(KyaActorFamilies::Find(0x38)->SourceType),
+        FString(TEXT("CActorAton")));
+    TestEqual(TEXT("Rope stand label"), GetKyaBehaviourLabel(0x0f, 2),
+        FString(TEXT("Rope stand (2)")));
+    TestEqual(TEXT("Rope source type"), FString(KyaActorFamilies::Find(0x0f)->SourceType),
+        FString(TEXT("CActorRope")));
+    TestEqual(TEXT("Stiller stand label"), GetKyaBehaviourLabel(0x4c, 2),
+        FString(TEXT("Stiller stand (2)")));
+    TestEqual(TEXT("Stiller source type"), FString(KyaActorFamilies::Find(0x4c)->SourceType),
+        FString(TEXT("CActorStiller")));
+    TestEqual(TEXT("Ambre label"), GetKyaBehaviourLabel(0x14, 2),
+        FString(TEXT("Ambre (2)")));
+    TestEqual(TEXT("Ambre unknown label"), GetKyaBehaviourLabel(0x14, 3),
+        FString(TEXT("Ambre unknown (3)")));
+    TestEqual(TEXT("Ambre source type"), FString(KyaActorFamilies::Find(0x14)->SourceType),
+        FString(TEXT("CActorAmbre")));
+    TestEqual(TEXT("Fountain label"), GetKyaBehaviourLabel(0x52, 2),
+        FString(TEXT("Bonus fountain stand (2)")));
+    TestEqual(TEXT("Fountain source type"), FString(KyaActorFamilies::Find(0x52)->SourceType),
+        FString(TEXT("CActorBonusFountain")));
+    TestEqual(TEXT("Checkpoints label"), GetKyaBehaviourLabel(0x1e, 2),
+        FString(TEXT("Checkpoint (2)")));
+    TestEqual(TEXT("Checkpoints source type"), FString(KyaActorFamilies::Find(0x1e)->SourceType),
+        FString(TEXT("CActorCheckpointManager")));
+    TestEqual(TEXT("Bridge basic label"), GetKyaBehaviourLabel(0x17, 2),
+        FString(TEXT("Bridge basic (2)")));
+    TestEqual(TEXT("Bridge wind label"), GetKyaBehaviourLabel(0x17, 3),
+        FString(TEXT("Bridge wind (3)")));
+    TestEqual(TEXT("Bridge source type"), FString(KyaActorFamilies::Find(0x17)->SourceType),
+        FString(TEXT("CActorBridge")));
+    TestEqual(TEXT("Fog zones label"), GetKyaBehaviourLabel(0x3d, 2),
+        FString(TEXT("Fog zones (2)")));
+    TestEqual(TEXT("Fog source type"), FString(KyaActorFamilies::Find(0x3d)->SourceType),
+        FString(TEXT("CActorFogManager")));
+    TestEqual(TEXT("Shoot fire label"), GetKyaBehaviourLabel(0x3e, 3),
+        FString(TEXT("Shoot fire (3)")));
+    TestEqual(TEXT("Shoot wave label"), GetKyaBehaviourLabel(0x3e, 4),
+        FString(TEXT("Shoot fire wave (4)")));
+    TestEqual(TEXT("Shoot source type"), FString(KyaActorFamilies::Find(0x3e)->SourceType),
+        FString(TEXT("CActorShoot")));
+    TestEqual(TEXT("Money flock label"), GetKyaBehaviourLabel(0x32, 2),
+        FString(TEXT("Money flock (2)")));
+    TestEqual(TEXT("Money add-on label"), GetKyaBehaviourLabel(0x32, 3),
+        FString(TEXT("Money add-on (3)")));
+    TestEqual(TEXT("Money source type"), FString(KyaActorFamilies::Find(0x32)->SourceType),
+        FString(TEXT("CActorMoney")));
+    TestEqual(TEXT("Box stand label"), GetKyaBehaviourLabel(0x35, 3),
+        FString(TEXT("Box stand (3)")));
+    TestEqual(TEXT("Box source type"), FString(KyaActorFamilies::Find(0x35)->SourceType),
+        FString(TEXT("CActorBox")));
+    TestEqual(TEXT("FX single label"), GetKyaBehaviourLabel(0x2e, 2),
+        FString(TEXT("FX single (2)")));
+    TestEqual(TEXT("FX path label"), GetKyaBehaviourLabel(0x2e, 3),
+        FString(TEXT("FX path (3)")));
+    TestEqual(TEXT("FX source type"), FString(KyaActorFamilies::Find(0x2e)->SourceType),
+        FString(TEXT("CActorFx")));
+    TestEqual(TEXT("Cluster zones label"), GetKyaBehaviourLabel(0x18, 2),
+        FString(TEXT("Cluster zones (2)")));
+    TestEqual(TEXT("Clusteriser source type"), FString(KyaActorFamilies::Find(0x18)->SourceType),
+        FString(TEXT("CActorClusteriser")));
+    TestEqual(TEXT("Companion alert label"), GetKyaBehaviourLabel(0x19, 3),
+        FString(TEXT("Companion alert (3)")));
+    TestEqual(TEXT("Companion source type"), FString(KyaActorFamilies::Find(0x19)->SourceType),
+        FString(TEXT("CActorCompanion")));
+    TestEqual(TEXT("Gravity fall label"), GetKyaBehaviourLabel(0x10, 3),
+        FString(TEXT("Gravity fall (3)")));
+    TestEqual(TEXT("Gravity bell label"), GetKyaBehaviourLabel(0x10, 4),
+        FString(TEXT("Gravity bell (4)")));
+    TestEqual(TEXT("Gravity source type"), FString(KyaActorFamilies::Find(0x10)->SourceType),
+        FString(TEXT("CActorGravityAware")));
+    TestEqual(TEXT("Rune label"), GetKyaBehaviourLabel(0x51, 2),
+        FString(TEXT("Rune (2)")));
+    TestEqual(TEXT("Rune source type"), FString(KyaActorFamilies::Find(0x51)->SourceType),
+        FString(TEXT("CActorRune")));
+    TestEqual(TEXT("Micken eat label"), GetKyaBehaviourLabel(0x07, 4),
+        FString(TEXT("Micken eat (4)")));
+    TestEqual(TEXT("Micken source type"), FString(KyaActorFamilies::Find(0x07)->SourceType),
+        FString(TEXT("CActorMicken")));
+    TestEqual(TEXT("Basic box stand label"), GetKyaBehaviourLabel(0x39, 2),
+        FString(TEXT("Basic box stand (2)")));
+    TestEqual(TEXT("Basic box source type"), FString(KyaActorFamilies::Find(0x39)->SourceType),
+        FString(TEXT("CActorBasicBox")));
+    TestEqual(TEXT("Nativ command stand label"), GetKyaBehaviourLabel(0x3c, 2),
+        FString(TEXT("Nativ command stand (2)")));
+    TestEqual(TEXT("Nativ command source type"), FString(KyaActorFamilies::Find(0x3c)->SourceType),
+        FString(TEXT("CActorNativCmd")));
+    TestFalse(TEXT("Hedgehog behaviour path index is not a top-level reference"), GetKyaReferenceFields().ContainsByPredicate(
+        [](const FKyaReferenceField& Field) { return Field.PropertyName == FName(TEXT("HedgehogPathFollowIndex")); }));
 
     // Bank-local reference resolution and pickers.
     TestEqual(TEXT("Model ordinals follow type-4 entries"), GetKyaModelOrdinals(*Bank).Num(), 2);
@@ -3345,9 +3520,9 @@ bool FKyaSectorIsolationTest::RunTest(const FString& Parameters)
         // the raw import lives in the transient package and cannot be written to disk.
         {
             const FString BankName = Level.Bank->GetName();
-            UPackage* BankPackage = CreatePackage(*FString::Printf(TEXT("/Game/KyaLevels/%s/%s"),
-                *BankName, *BankName));
-            UKyaLevelBank* SaveableBank = DuplicateObject<UKyaLevelBank>(Level.Bank, BankPackage, *BankName);
+            UPackage* BankPackage = CreatePackage(*FString::Printf(TEXT("/Game/KyaLevels/%s/LEVEL"),
+                *BankName));
+            UKyaLevelBank* SaveableBank = DuplicateObject<UKyaLevelBank>(Level.Bank, BankPackage, TEXT("LEVEL"));
             if (!TestNotNull(TEXT("Duplicate the isolated main bank for saving"), SaveableBank))
             {
                 bSetupOk = false;
@@ -3378,6 +3553,10 @@ bool FKyaSectorIsolationTest::RunTest(const FString& Parameters)
             break;
         }
         Level.Preview->LevelSet = Level.LevelSet;
+        TestEqual(TEXT("Both root banks have the real shared name"), Level.Bank->GetName(), FString(TEXT("LEVEL")));
+        TestEqual(TEXT("Descriptor is scoped to the full root bank package"),
+            FPackageName::GetLongPackagePath(Level.LevelSet->GetOutermost()->GetName()),
+            Level.Bank->GetOutermost()->GetName());
         const FKyaSectorDiscoveryResult Discovery = KyaDiscoverSectors(Level.Preview, true);
         TestTrue(TEXT("The isolated level imports fresh sectors"), Discovery.Imported > 0);
         TestEqual(TEXT("The isolated level reuses nothing on first discovery"), Discovery.Reused, 0);
@@ -3410,6 +3589,9 @@ bool FKyaSectorIsolationTest::RunTest(const FString& Parameters)
         {
             TestNotNull(TEXT("Every association resolves to a bank"), Sector.Bank.Get());
             if (!Sector.Bank) continue;
+            TestEqual(TEXT("Sector destination is scoped to the full root bank package"),
+                FPackageName::GetLongPackagePath(Sector.Bank->GetOutermost()->GetName()),
+                Level.Bank->GetOutermost()->GetName());
             TestTrue(TEXT("Associations stay inside their own source root"),
                 FPaths::ConvertRelativePathToFull(Sector.Bank->SourceFilename)
                     .StartsWith(FPaths::ConvertRelativePathToFull(Level.Root), ESearchCase::IgnoreCase));
@@ -3418,6 +3600,41 @@ bool FKyaSectorIsolationTest::RunTest(const FString& Parameters)
         }
         TestNotNull(TEXT("The descriptor keeps its main bank"), Level.LevelSet->MainBank.Get());
         TestEqual(TEXT("Both levels share the same sector count"), Level.SectorCount, Levels[0].SectorCount);
+    }
+
+    // Sector visibility affects presentation without removing associations or bytes.
+    {
+        FIsolatedLevel& Level = Levels[0];
+        const FKyaLevelSetSector& Sector = Level.LevelSet->Sectors[0];
+        const int32 Id = Sector.SectorId;
+        const TArray<uint8> OriginalBytes = Sector.Bank->BankBytes;
+        const int32 AssociatedCount = Level.Preview->SectorBanks.Num();
+        const auto TriangleCount = [](AKyaLevelPreview* Preview) {
+            int32 Count = 0;
+            for (int32 Index = 0; Index < Preview->Mesh->GetNumSections(); ++Index)
+                if (const FProcMeshSection* Section = Preview->Mesh->GetProcMeshSection(Index); Section && Section->bSectionVisible)
+                    for (int32 Triangle = 0; Triangle + 2 < Section->ProcIndexBuffer.Num(); Triangle += 3)
+                        if (Section->ProcIndexBuffer[Triangle] != Section->ProcIndexBuffer[Triangle + 1] &&
+                            Section->ProcIndexBuffer[Triangle] != Section->ProcIndexBuffer[Triangle + 2] &&
+                            Section->ProcIndexBuffer[Triangle + 1] != Section->ProcIndexBuffer[Triangle + 2]) ++Count;
+            return Count;
+        };
+        const int32 VisibleTriangles = TriangleCount(Level.Preview);
+        const int64 BuildsBeforeVisibility = Level.Preview->BuildCount;
+        const int32 DecodesBeforeVisibility = Level.Preview->GetGeometryDecodeCount();
+        Level.Preview->SetSectorVisible(Id, false);
+        TestFalse(TEXT("Sector checkbox hides its sector"), Level.Preview->IsSectorVisible(Id));
+        TestTrue(TEXT("Hiding a sector removes its shared geometry"),
+            TriangleCount(Level.Preview) < VisibleTriangles);
+        TestEqual(TEXT("Hiding keeps bank associations"), Level.Preview->SectorBanks.Num(), AssociatedCount);
+        TestTrue(TEXT("Hiding leaves bank bytes intact"), Sector.Bank->BankBytes == OriginalBytes);
+        TestTrue(TEXT("Other preview stays visible"), Levels[1].Preview->IsSectorVisible(Id));
+        TestTrue(TEXT("Global content stays visible"), Level.Preview->IsSectorVisible(-1));
+        Level.Preview->SetSectorVisible(Id, true);
+        TestEqual(TEXT("Showing restores shared geometry"), TriangleCount(Level.Preview), VisibleTriangles);
+        TestEqual(TEXT("Sector toggles never rebuild the preview"), Level.Preview->BuildCount, BuildsBeforeVisibility);
+        TestEqual(TEXT("Sector toggles never decode geometry"),
+            Level.Preview->GetGeometryDecodeCount(), DecodesBeforeVisibility);
     }
 
     // --- repeated discovery creates no duplicates or new assets --------------------
@@ -5414,21 +5631,26 @@ bool FKyaLevelActionsReportingTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Validation offers Details navigation"), bAction);
 
     // Export Kya Level reports the same findings before replacing any output and logs
-    // the unsupported bank with a bank link instead of only a dialog line.
+    // the unsupported bank as a blocking error with a bank link.
     Listing->ClearMessages();
+    AddExpectedError(TEXT("Cannot export bank:"), EAutomationExpectedErrorFlags::Contains, 1);
     TArray<FString> Messages;
     const FString Destination = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("KyaExportReportingTest"));
     const bool bExported = KyaExportLevelBanks({ Bank }, Destination, Messages);
     TestFalse(TEXT("Unsupported bank is not exported"), bExported);
-    bool bExportSkip = false;
+    bool bExportBlocked = false;
     bool bExportIssue = false;
     for (const TSharedRef<FTokenizedMessage>& Message : Listing->GetFilteredMessages())
     {
         const FString Text = Message->ToText().ToString();
-        if (Text.Contains(TEXT("Unchanged dependency"))) bExportSkip = true;
+        if (Text.Contains(TEXT("Cannot export bank:")) && Message->GetSeverity() == EMessageSeverity::Error)
+        {
+            for (const TSharedRef<IMessageToken>& Token : Message->GetMessageTokens())
+                if (Token->GetType() == EMessageToken::AssetName) bExportBlocked = true;
+        }
         if (Text.Contains(TEXT("TrapActorRef"))) bExportIssue = true;
     }
-    TestTrue(TEXT("Export logs the unsupported bank actionably"), bExportSkip);
+    TestTrue(TEXT("Export logs the unsupported bank as a blocking error with a bank link"), bExportBlocked);
     TestTrue(TEXT("Export reports actor/property findings"), bExportIssue);
 
     // A writer rejection with actor context is reported by record identity and
@@ -5757,6 +5979,26 @@ bool FKyaAuthoringVisibilityTest::RunTest(const FString& Parameters)
         TestEqual(TEXT("Authoring handle keeps the sector grouping"), Authored->ActorSectorId, 2);
         TestTrue(TEXT("Authoring handle is selectable"), Authored->IsSelectable());
     }
+
+    {
+        const FScopedTransaction Transaction(FText::FromString(TEXT("Hide sector test")));
+        Preview->SetSectorVisible(1, false);
+    }
+    TestTrue(TEXT("Sector checkbox hides loaded actor handles"), Preview->GetActorHandle(1)->IsTemporarilyHiddenInEditor());
+    TestNotNull(TEXT("Global actor remains visible"), Preview->GetActorHandle(0));
+    if (GEditor)
+    {
+        TestTrue(TEXT("Sector visibility supports undo"), GEditor->UndoTransaction());
+        TestTrue(TEXT("Undo restores checkbox state"), Preview->IsSectorVisible(1));
+        TestNotNull(TEXT("Undo restores sector actor handles"), Preview->GetActorHandle(1));
+        TestTrue(TEXT("Sector visibility supports redo"), GEditor->RedoTransaction());
+        TestTrue(TEXT("Redo hides sector actor handles again"), Preview->GetActorHandle(1)->IsTemporarilyHiddenInEditor());
+    }
+    Preview->SetSectorVisible(1, true);
+    Preview->SetSectorVisible(2, false);
+    TestTrue(TEXT("Explicit hide overrides unloaded-sector authoring visibility"), Preview->GetActorHandle(2)->IsTemporarilyHiddenInEditor());
+    Preview->SetSectorVisible(2, true);
+    TestEqual(TEXT("Visibility preserves sector associations"), Preview->SectorBanks.Num(), 1);
 
     // A locked comparison/capture camera always uses native culling and refreshes
     // membership immediately (no extra rebuild required).

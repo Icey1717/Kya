@@ -1,10 +1,25 @@
 # Kya Level Editor
 
+Scenario conditions show a readable expression, named AND/OR/XOR and comparison
+menus, and a variable picker with the recovered `SCN_*` names from
+`src/b-witch/LevelScheduler.h`. Raw integer fields remain available, including
+for variables without recovered names and unknown codes. Values are signed
+integer thresholds/states, without universal story labels. For example,
+variable 0, comparison 4, value 1 means `Freed Wolfens [0] >= 1`.
+The semantics follow `ScenaricCondition.cpp`: comparison codes 0..6 mean always,
+less, less-or-equal, equal, greater-or-equal, greater, not-equal. Conditions fold
+in list order from true; an empty list passes. Actor loading forces the first
+join to AND, while conditioned-operation blocks preserve it. Source comparison
+addresses are PS2 `0x001175e0` (test/join), `0x00117440` (fold),
+`0x001174c0` (actor condition loading), and `0x00117210` (conditioned operations).
+
 This plugin is under development. A `.bnk` file can be imported as an asset;
 the original bytes are retained. The initial scene configuration, collision bank
 values, animation allocation count, actor class allocations, and the scene's
 initial fog, clipping, mipmap settings and basic main camera fields can be edited on
-the asset and exported to an uncompressed bank. Array sizes are fixed. The export path is
+the asset and exported to an uncompressed bank. Actor conditions support adding and
+removing entries; export rebuilds their actor chunks and relocates subsequent bank data.
+Other array sizes are fixed. The export path is
 experimental; a fixed-size actor scale edit has been verified in the running game,
 while count- or size-changing edits are rejected. Assets imported before
 the scene and actor Create fields were expanded must be reimported to populate
@@ -458,8 +473,8 @@ actors, or on every preview in the level when nothing is selected.
 | --- | --- |
 | `Kya.Validate` | Validate every bank of the level set and report which banks the writer cannot export, without writing anything. |
 | `Kya.Export [dir]` | Validate, stage and publish the level's banks to `Saved/KyaExport/<BankName>.bnk` (or `dir`). Existing files are only replaced after every staged output validated. |
-| `Kya.DiscoverSectors [0]` | Find sibling `SECT<digits>.BNK` files next to the main bank's source, reuse already-imported assets by source provenance, and import missing ones into `/Game/KyaLevels/<Level>`. `0` disables importing. Duplicate numeric IDs are reported as ambiguous, actor sector references with no file are reported as missing, destinations already occupied by a bank from a different source are rejected, and cancelling leaves a coherent partial result. |
-| `Kya.CreateLevelSet` | Create or update the persisted `UKyaLevelSet` asset for the selected preview (`/Game/KyaLevels/<Bank>/<Bank>LevelSet`). It records the main bank, sector associations with their source filenames, the source root and an import revision; the preview and `Refresh Sector Discovery` keep it in sync. Descriptor sector IDs are authoritative (a manually associated bank does not have to match its `SECT<number>` filename), and an existing descriptor that belongs to a different main bank is never overwritten. |
+| `Kya.DiscoverSectors [0]` | Find sibling `SECT<digits>.BNK` files next to the main bank's source, reuse already-imported assets by source provenance, and import missing ones into a folder named after the main bank's full Unreal package path. `0` disables importing. Duplicate numeric IDs are reported as ambiguous, actor sector references with no file are reported as missing, destinations already occupied by a bank from a different source are rejected, and cancelling leaves a coherent partial result. |
+| `Kya.CreateLevelSet` | Create or update the persisted `UKyaLevelSet` asset for the selected preview (`<MainBankPackage>/<Bank>LevelSet`). It records the main bank, sector associations with their source filenames, the source root and an import revision; the preview and `Refresh Sector Discovery` keep it in sync. Descriptor sector IDs are authoritative (a manually associated bank does not have to match its `SECT<number>` filename), and an existing descriptor that belongs to a different main bank is never overwritten. |
 | `Kya.SaveLevel` | Save the bank packages used by the preview (saving Unreal assets is separate from exporting game banks). |
 | `Kya.CreateActor` | Append a new bank actor record based on the selected actor's class and layout, with a unique name in its fixed slot. |
 | `Kya.DuplicateActor` | Append a copy of the selected bank actor record with a new identity; the actor stream and entry/type tables are rebuilt. |
@@ -473,12 +488,27 @@ discarding changes. `Kya.Export` writes `.bnk` files and never overwrites the
 original source bank.
 
 Sector discovery is per level: two levels whose folders contain identically named
-`SECT<digits>.BNK` files import into their own `/Game/KyaLevels/<Level>` folders and
-never share bank objects, so associations stay inside the level that discovered them.
+`SECT<digits>.BNK` files use the main bank's full package path as their destination
+folder. For example, `/Game/KyaLevels/LEVEL_1/LEVEL.LEVEL` imports sectors into
+`/Game/KyaLevels/LEVEL_1/LEVEL/SECT1.SECT1`; a root bank named `LEVEL` in `LEVEL_2`
+gets a separate folder. Import root banks into separate Content Browser folders.
+Existing sector assets are reused by their full source filenames, so rerunning
+discovery repairs previously blocked imports without moving existing assets.
 `Kya.Editor.SectorIsolation` covers this end to end, including saving the descriptor
 and banks, forcing a package reload, and confirming the reopened descriptor restores
-the same sector ids, source filenames and preview mapping while repeated discovery
+the same sector ids, source filenames and preview mapping with both root banks named
+`LEVEL`, while repeated discovery
 still imports nothing.
+
+Select the level preview and expand **Sector Visibility** in Details to show or hide
+individual sectors. The numbered checkbox list includes associated banks and sector
+IDs referenced by actors. Unchecking a sector hides its scenery, actors and diagnostic
+shapes while retaining its bank association. These preview settings save with the map,
+support undo/redo and do not change exported banks. Global scene content stays visible.
+Sector toggles reuse the published geometry, textures and generated handles; they
+update visibility without rebuilding or decoding the level. Native camera culling
+and sector visibility are applied together, so camera movement cannot reveal a
+sector that was unchecked.
 
 ### Manual viewport acceptance pass
 
