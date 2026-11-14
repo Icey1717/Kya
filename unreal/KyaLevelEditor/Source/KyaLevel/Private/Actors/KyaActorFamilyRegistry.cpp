@@ -1,5 +1,20 @@
 #include "KyaActorFamily.h"
 extern const FKyaActorFamily GKyaHunterActorFamily;
+extern const FKyaActorFamily GKyaEventGeneratorActorFamily;
+extern const FKyaActorFamily GKyaExplosiveDistributorActorFamily;
+extern const FKyaActorFamily GKyaShockerActorFamily;
+extern const FKyaActorFamily GKyaNativShopActorFamily;
+extern const FKyaActorFamily GKyaPunchingBallActorFamily;
+extern const FKyaActorFamily GKyaNoseMonsterActorFamily;
+extern const FKyaActorFamily GKyaPatternActorFamily;
+extern const FKyaActorFamily GKyaShipActorFamily;
+extern const FKyaActorFamily GKyaBunchActorFamily;
+extern const FKyaActorFamily GKyaBrazulActorFamily;
+extern const FKyaActorFamily GKyaMiniGameActorFamily;
+extern const FKyaActorFamily GKyaMiniGameTimeAttackActorFamily;
+extern const FKyaActorFamily GKyaMiniGameBoxCounterActorFamily;
+extern const FKyaActorFamily GKyaMiniGameBoomyActorFamily;
+extern const FKyaActorFamily GKyaMiniGameDistanceActorFamily;
 extern const FKyaActorFamily GKyaHelperSignActorFamily;
 extern const FKyaActorFamily GKyaWoodMonsterActorFamily;
 extern const FKyaActorFamily GKyaShockerCmdActorFamily;
@@ -57,6 +72,21 @@ extern const FKyaActorFamily GKyaStillerActorFamily;
 extern const FKyaActorFamily GKyaRuneActorFamily;
 extern const FKyaActorFamily GKyaBonusFountainActorFamily;
 const FKyaActorFamily* const Families[] = {
+    &GKyaEventGeneratorActorFamily,
+    &GKyaExplosiveDistributorActorFamily,
+    &GKyaShockerActorFamily,
+    &GKyaNativShopActorFamily,
+    &GKyaPunchingBallActorFamily,
+    &GKyaNoseMonsterActorFamily,
+    &GKyaPatternActorFamily,
+    &GKyaShipActorFamily,
+    &GKyaBunchActorFamily,
+    &GKyaBrazulActorFamily,
+    &GKyaMiniGameActorFamily,
+    &GKyaMiniGameTimeAttackActorFamily,
+    &GKyaMiniGameBoxCounterActorFamily,
+    &GKyaMiniGameBoomyActorFamily,
+    &GKyaMiniGameDistanceActorFamily,
     &GKyaHunterActorFamily,
     &GKyaHelperSignActorFamily,
     &GKyaWoodMonsterActorFamily,
@@ -159,11 +189,21 @@ bool KyaActorFamilies::HasEmptyPayload(int64 ClassId, int32 BehaviourId)
         {
         case 0x0a: // Nativ -> Autonomous
         case 0x0b: // Electrolla -> Actor
+        case 0x26: // NoseMonster -> Autonomous
         case 0x27: // WoodMonster -> Actor
         case 0x2a: // Woof -> Autonomous
         case 0x2b: // HelperSign -> Actor
+        case 0x30: // PunchingBall -> Fighter -> Autonomous
         case 0x2f: // Egg -> Actor
         case 0x31: // AmortosCmd -> Actor
+        case 0x34: // NativShop -> Actor
+        case 0x36: // Ship -> Actor
+        case 0x3f: // Pattern controller -> Autonomous
+        case 0x44: // MiniGame -> Actor
+        case 0x45: // MiniGame time attack
+        case 0x46: // MiniGame box counter
+        case 0x47: // MiniGame boomy
+        case 0x55: // MiniGame distance
         case 0x33: // JamGut -> Autonomous
         case 0x37: // CareBoy -> Actor
         case 0x3a: // Acceleratos -> Actor
@@ -172,6 +212,8 @@ bool KyaActorFamilies::HasEmptyPayload(int64 ClassId, int32 BehaviourId)
         case 0x43: // MiniGamesOrganizer -> Actor
         case 0x48: // Hunter -> Autonomous
         case 0x49: // AddOnPurchase -> Actor
+        case 0x4e: // Bunch -> Wolfen -> Fighter
+        case 0x4f: // Brazul -> Wolfen -> Fighter
         case 0x4d: // Blazer -> Autonomous
         case 0x50: // ShockerCmd -> Actor
         case 0x53: // BombLauncher -> Actor
@@ -182,6 +224,14 @@ bool KyaActorFamilies::HasEmptyPayload(int64 ClassId, int32 BehaviourId)
             return false;
         }
     }
+    if (ClassId == 0x26) return BehaviourId >= 2 && BehaviourId <= 4;
+    if (ClassId == 0x4e) return BehaviourId == 3 || BehaviourId == 4;
+    if (ClassId == 0x4f) return BehaviourId >= 3 && BehaviourId <= 6;
+    if (ClassId == 0x44 || ClassId == 0x45 || ClassId == 0x46 || ClassId == 0x47 ||
+        ClassId == 0x55) return BehaviourId == 2 || BehaviourId == 4; // training/multi Create bodies are empty // fighter Create bodies are empty // fighter default/projected
+    if (ClassId == 0x36) return BehaviourId == 2; // ShipFly::Create
+    if (ClassId == 0x3f) return BehaviourId == 4; // PatternMultiple::Create
+    if (ClassId == 0x30) return BehaviourId >= 3 && BehaviourId <= 7; // fighter/stand Create bodies are empty
     if (ClassId == 0x48) return BehaviourId == 3; // HunterWatch::Create
     if (ClassId == 0x4d) return BehaviourId == 3; // BlazerStand::Create
     if (ClassId == 0x2a) return BehaviourId == 3 || BehaviourId == 4; // Woof Guard/VerticalJump::Create
@@ -221,8 +271,11 @@ bool KyaActorFamilies::UsesCatchByTrap(int64 ClassId, int32 BehaviourId)
     case 0x33: // JamGut
     case 0x38: // Aton
     case 0x3e: // Shoot
+    case 0x3f: // Pattern controller -> Autonomous
     case 0x48: // Hunter
     case 0x4d: // Blazer
+    case 0x4e: // Bunch -> Wolfen -> Fighter
+    case 0x4f: // Brazul -> Wolfen -> Fighter
         return true;
     default:
         return false;

@@ -22,6 +22,17 @@
 #include "KyaBankExport.h"
 #include "KyaSectorBankExport.h"
 #include "KyaCameraStream.h"
+#include "Actors/KyaEventGenerator.h"
+#include "Actors/KyaExplosiveDistributor.h"
+#include "Actors/KyaShocker.h"
+#include "Actors/KyaNativShop.h"
+#include "Actors/KyaPunchingBall.h"
+#include "Actors/KyaNoseMonster.h"
+#include "Actors/KyaPattern.h"
+#include "Actors/KyaShip.h"
+#include "Actors/KyaBunch.h"
+#include "Actors/KyaBrazul.h"
+#include "Actors/KyaMiniGame.h"
 #include "Actors/KyaHedgehog.h"
 #include "Actors/KyaProjectile.h"
 #include "Actors/KyaMovingPlatform.h"
@@ -215,6 +226,41 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
         const bool HasPlatform = Actor.ClassId == 0x0d && KyaReadPlatformPrefix(MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Platform);
         FKyaPlatformDetailsOffsets Details;
         const bool HasDetails = HasPlatform && KyaReadPlatformDetails(MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Platform.Suffix, Offsets.ClassData + Offsets.ClassDataSize - Platform.Suffix, Details);
+        FKyaEventGeneratorOffsets EventGenerator;
+        const bool HasEventGenerator = Actor.ClassId == 0x3b && KyaReadEventGeneratorOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, EventGenerator);
+        FKyaExplosiveDistributorOffsets ExplosiveDistributor;
+        const bool HasExplosiveDistributor = Actor.ClassId == 0x1d && KyaReadExplosiveDistributorOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, ExplosiveDistributor);
+        FKyaShockerOffsets Shocker;
+        const bool HasShocker = Actor.ClassId == 0x4b && KyaReadShockerOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Shocker);
+        FKyaNativShopOffsets NativShop;
+        const bool HasNativShop = Actor.ClassId == 0x34 && KyaReadNativShopOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, NativShop);
+        FKyaPunchingBallOffsets PunchingBall;
+        const bool HasPunchingBall = Actor.ClassId == 0x30 && KyaReadPunchingBallOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, PunchingBall);
+        FKyaNoseMonsterOffsets NoseMonster;
+        const bool HasNoseMonster = Actor.ClassId == 0x26 && KyaReadNoseMonsterOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, NoseMonster);
+        FKyaPatternOffsets Pattern;
+        const bool HasPattern = Actor.ClassId == 0x3f && KyaReadPatternOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Pattern);
+        FKyaShipOffsets Ship;
+        const bool HasShip = Actor.ClassId == 0x36 && KyaReadShipOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Ship);
+        FKyaBunchOffsets Bunch;
+        const bool HasBunch = Actor.ClassId == 0x4e && KyaReadBunchOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Bunch);
+        FKyaBrazulOffsets Brazul;
+        const bool HasBrazul = Actor.ClassId == 0x4f && KyaReadBrazulOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Brazul);
+        const bool bMiniGameClass = Actor.ClassId == 0x44 || Actor.ClassId == 0x45 ||
+            Actor.ClassId == 0x46 || Actor.ClassId == 0x47 || Actor.ClassId == 0x55;
+        FKyaMiniGameOffsets MiniGame;
+        const bool HasMiniGame = bMiniGameClass && KyaReadMiniGameOffsets(Actor.ClassId,
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, MiniGame);
         FKyaBasicBoxOffsets Box;
         const bool HasBox = Actor.ClassId == 0x39 && KyaReadBasicBoxOffsets(
             MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Box);
@@ -409,11 +455,22 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
         if (HasJamGut != Actor.bHasJamGutData || (HasJamGut &&
             (Actor.JamGutData.bHasField41C != JamGut.bHasField41C || Actor.JamGutData.Checkpoints.Num() != JamGut.CheckpointCount ||
                 Actor.JamGutData.Paths.Num() != JamGut.PathCount))) return false;
-        const int64 RawOffset = HasJamGut ? JamGut.Tail : HasWantedZoo ? WantedZoo.Tail : HasCredits ? Credits.Tail : HasMiniGamesSupport ? MiniGamesSupport.Tail : HasWoof ? Woof.Tail : HasBlazer ? Blazer.Tail : HasBombLauncher ? BombLauncher.Tail : HasElectrolla ? Electrolla.Tail : (Actor.ClassId == 0x37 && Actor.bHasCareBoyData) ? Offsets.ClassData + 12 : HasEgg ? Egg.Tail : HasPatternCmd ? PatternCmd.Tail : HasAmortosCmd ? AmortosCmd.Tail : HasAddOnPurchase ? AddOnPurchase.Tail : (Actor.ClassId == 0x3a && Actor.bHasAcceleratosData) ? Offsets.ClassData + 20 : HasShockerCmd ? ShockerCmd.Tail : (Actor.ClassId == 0x27 && Actor.bHasWoodMonsterData) ? Offsets.ClassData + 16 : (Actor.ClassId == 0x2b && Actor.bHasHelperSignData) ? Offsets.ClassData + 12 : (Actor.ClassId == 0x48 && Actor.bHasHunterData) ? Offsets.ClassData + 40 : HasAton ? Aton.Tail : (HasBridge ? Bridge.Tail : (HasCompanion ? Companion.Tail : (HasGravity ? Gravity.Tail : (HasNativCmd ? Command.Tail : (HasCheckpoints ? CheckpointData.Tail : (HasRope ? Rope.Tail : (HasFountain ? Fountain.Tail : (HasRune ? Rune.Tail : (HasStiller ? Stiller.Tail : (HasAmbre ? Ambre.Tail : (HasShoot ? Shoot.Tail : (HasFog ? Fog.Tail : (HasMoney ? Money.Tail : (HasBoxClass ? BoxClass.Tail : (HasDca ? Dca.Tail : (HasTeleporter ? Teleporter.Tail : (HasAmortos ? Amortos.Tail : (HasNativ ? Nativ.Tail : (HasCommander ? Commander.Tail : (HasFruit ? Fruit.Tail : (HasWolfen ? Wolfen.WeaponIndex : (HasMicken ? Micken.Tail : (HasBonus ? Bonus.Tail : (HasSwitch ? SwitchData.Tail : (HasWeapon ? Weapon.Tail : (HasTrap ? Trap.Tail : (HasWind ? Wind.Tail : (HasProjectile ? Projectile.Tail : (HasHedgehog ? Hedgehog.Tail : (HasAraignos ? Araignos.Tail : (HasFx ? Fx.Tail : (HasBox ? Box.Tail : (HasDetails ? Details.Tail : (HasPlatform ? Platform.Suffix : Offsets.ClassData))))))))))))))))))))))))))))))))));
+        const int64 RawOffset = HasMiniGame ? MiniGame.Tail : HasBrazul ? Brazul.Tail : HasBunch ? Bunch.Tail : HasShip ? Ship.Tail : HasPattern ? Pattern.Tail : HasNoseMonster ? NoseMonster.Tail : HasPunchingBall ? PunchingBall.Tail : HasNativShop ? NativShop.Tail : HasShocker ? Shocker.Tail : HasExplosiveDistributor ? ExplosiveDistributor.Tail : HasEventGenerator ? EventGenerator.Tail : HasJamGut ? JamGut.Tail : HasWantedZoo ? WantedZoo.Tail : HasCredits ? Credits.Tail : HasMiniGamesSupport ? MiniGamesSupport.Tail : HasWoof ? Woof.Tail : HasBlazer ? Blazer.Tail : HasBombLauncher ? BombLauncher.Tail : HasElectrolla ? Electrolla.Tail : (Actor.ClassId == 0x37 && Actor.bHasCareBoyData) ? Offsets.ClassData + 12 : HasEgg ? Egg.Tail : HasPatternCmd ? PatternCmd.Tail : HasAmortosCmd ? AmortosCmd.Tail : HasAddOnPurchase ? AddOnPurchase.Tail : (Actor.ClassId == 0x3a && Actor.bHasAcceleratosData) ? Offsets.ClassData + 20 : HasShockerCmd ? ShockerCmd.Tail : (Actor.ClassId == 0x27 && Actor.bHasWoodMonsterData) ? Offsets.ClassData + 16 : (Actor.ClassId == 0x2b && Actor.bHasHelperSignData) ? Offsets.ClassData + 12 : (Actor.ClassId == 0x48 && Actor.bHasHunterData) ? Offsets.ClassData + 40 : HasAton ? Aton.Tail : (HasBridge ? Bridge.Tail : (HasCompanion ? Companion.Tail : (HasGravity ? Gravity.Tail : (HasNativCmd ? Command.Tail : (HasCheckpoints ? CheckpointData.Tail : (HasRope ? Rope.Tail : (HasFountain ? Fountain.Tail : (HasRune ? Rune.Tail : (HasStiller ? Stiller.Tail : (HasAmbre ? Ambre.Tail : (HasShoot ? Shoot.Tail : (HasFog ? Fog.Tail : (HasMoney ? Money.Tail : (HasBoxClass ? BoxClass.Tail : (HasDca ? Dca.Tail : (HasTeleporter ? Teleporter.Tail : (HasAmortos ? Amortos.Tail : (HasNativ ? Nativ.Tail : (HasCommander ? Commander.Tail : (HasFruit ? Fruit.Tail : (HasWolfen ? Wolfen.WeaponIndex : (HasMicken ? Micken.Tail : (HasBonus ? Bonus.Tail : (HasSwitch ? SwitchData.Tail : (HasWeapon ? Weapon.Tail : (HasTrap ? Trap.Tail : (HasWind ? Wind.Tail : (HasProjectile ? Projectile.Tail : (HasHedgehog ? Hedgehog.Tail : (HasAraignos ? Araignos.Tail : (HasFx ? Fx.Tail : (HasBox ? Box.Tail : (HasDetails ? Details.Tail : (HasPlatform ? Platform.Suffix : Offsets.ClassData))))))))))))))))))))))))))))))))));
         const int64 BoomyRawOffset = HasBoomy ? Boomy.Tail : RawOffset;
         if (Actor.bHasHelperSignData != (Actor.ClassId == 0x2b && Offsets.ClassDataSize >= 12)) return false;
         const int64 KimRawOffset = HasKim ? Kim.Tail : RawOffset;
-        if (HasPlatform != Actor.bHasPlatformPrefix || HasDetails != Actor.bHasPlatformDetails || HasBox != Actor.bHasBasicBoxData ||
+        if (HasPlatform != Actor.bHasPlatformPrefix || HasDetails != Actor.bHasPlatformDetails || HasEventGenerator != Actor.bHasEventGeneratorData ||
+            HasExplosiveDistributor != Actor.bHasExplosiveDistributorData ||
+            HasShocker != Actor.bHasShockerData ||
+            HasNativShop != Actor.bHasNativShopData ||
+            HasPunchingBall != Actor.bHasPunchingBallData ||
+            HasNoseMonster != Actor.bHasNoseMonsterData ||
+            HasPattern != Actor.bHasPatternData ||
+            HasShip != Actor.bHasShipData ||
+            HasBunch != Actor.bHasBunchData ||
+            HasBrazul != Actor.bHasBrazulData ||
+            HasMiniGame != Actor.bHasMiniGameData ||
+            HasBox != Actor.bHasBasicBoxData ||
             HasFx != Actor.bHasFxData || HasAraignos != Actor.bHasAraignosData || HasProjectile != Actor.bHasProjectileData ||
             HasHedgehog != Actor.bHasHedgehogData ||
             HasWind != Actor.bHasWindData || HasTrap != Actor.bHasTrapData || HasWeapon != Actor.bHasWeaponData ||
@@ -732,7 +789,7 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
             if (Source.bHasTypedWolfenBehaviour)
             {
                 FKyaWolfenBehaviourOffsets Off;
-                if (Actor.ClassId != 0x09 ||
+                if ((Actor.ClassId != 0x09 && Actor.ClassId != 0x4e && Actor.ClassId != 0x4f) ||
                     !KyaReadWolfenBehaviourOffsets(Source.Id, MakeArrayView(Bytes.GetData(), int32(SceneEnd)),
                         Location.Payload, Location.Size, Off)) return false;
             }
@@ -1159,7 +1216,51 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
                 if (!KyaWriteBonusBehaviour(Source, Bytes, BehaviourOffset.Payload,
                     BehaviourOffset.Size)) return false;
             }
-            if (Actor.Behaviours[Behaviour].bHasTypedMickenBehaviour)
+            if (Actor.Behaviours[Behaviour].bHasTypedNativShopBehaviour)
+            {
+                const FKyaActorBehaviour& Source = Actor.Behaviours[Behaviour];
+                if (!KyaWriteNativShopBehaviour(Source, Bytes, BehaviourOffset.Payload,
+                    BehaviourOffset.Size)) return false;
+            }
+                        if (Actor.Behaviours[Behaviour].bHasTypedMiniGameBetting)
+            {
+                const FKyaActorBehaviour& Source = Actor.Behaviours[Behaviour];
+                if (!KyaWriteMiniGameBehaviour(Source, Bytes, BehaviourOffset.Payload,
+                    BehaviourOffset.Size)) return false;
+            }
+                        if (Actor.Behaviours[Behaviour].bHasTypedBrazulA ||
+                Actor.Behaviours[Behaviour].bHasTypedBrazulB)
+            {
+                const FKyaActorBehaviour& Source = Actor.Behaviours[Behaviour];
+                if (!KyaWriteBrazulBehaviour(Source, Bytes, BehaviourOffset.Payload,
+                    BehaviourOffset.Size)) return false;
+            }
+                        if (Actor.Behaviours[Behaviour].bHasTypedBunchRepel ||
+                Actor.Behaviours[Behaviour].bHasTypedBunchFence)
+            {
+                const FKyaActorBehaviour& Source = Actor.Behaviours[Behaviour];
+                if (!KyaWriteBunchBehaviour(Source, Bytes, BehaviourOffset.Payload,
+                    BehaviourOffset.Size)) return false;
+            }
+                        if (Actor.Behaviours[Behaviour].bHasTypedPatternBehaviour)
+            {
+                const FKyaActorBehaviour& Source = Actor.Behaviours[Behaviour];
+                if (!KyaWritePatternBehaviour(Source, Bytes, BehaviourOffset.Payload,
+                    BehaviourOffset.Size)) return false;
+            }
+                        if (Actor.Behaviours[Behaviour].bHasTypedShockerBehaviour)
+            {
+                const FKyaActorBehaviour& Source = Actor.Behaviours[Behaviour];
+                if (!KyaWriteShockerBehaviour(Source, Bytes, BehaviourOffset.Payload,
+                    BehaviourOffset.Size)) return false;
+            }
+                        if (Actor.Behaviours[Behaviour].bHasTypedEventGeneratorBehaviour)
+            {
+                const FKyaActorBehaviour& Source = Actor.Behaviours[Behaviour];
+                if (!KyaWriteEventGeneratorBehaviour(Source, Bytes, BehaviourOffset.Payload,
+                    BehaviourOffset.Size)) return false;
+            }
+                        if (Actor.Behaviours[Behaviour].bHasTypedMickenBehaviour)
             {
                 const FKyaActorBehaviour& Source = Actor.Behaviours[Behaviour];
                 if (!KyaWriteMickenBehaviour(Source, Bytes, BehaviourOffset.Payload,
@@ -1348,6 +1449,41 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
         const bool HasPlatform = Actor.bHasPlatformPrefix && KyaReadPlatformPrefix(MakeArrayView(Bank->BankBytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Platform);
         FKyaPlatformDetailsOffsets Details;
         const bool HasDetails = HasPlatform && Actor.bHasPlatformDetails && KyaReadPlatformDetails(MakeArrayView(Bank->BankBytes.GetData(), int32(SceneEnd)), Platform.Suffix, Offsets.ClassData + Offsets.ClassDataSize - Platform.Suffix, Details);
+        FKyaEventGeneratorOffsets EventGenerator;
+        const bool HasEventGenerator = Actor.ClassId == 0x3b && KyaReadEventGeneratorOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, EventGenerator);
+        FKyaExplosiveDistributorOffsets ExplosiveDistributor;
+        const bool HasExplosiveDistributor = Actor.ClassId == 0x1d && KyaReadExplosiveDistributorOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, ExplosiveDistributor);
+        FKyaShockerOffsets Shocker;
+        const bool HasShocker = Actor.ClassId == 0x4b && KyaReadShockerOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Shocker);
+        FKyaNativShopOffsets NativShop;
+        const bool HasNativShop = Actor.ClassId == 0x34 && KyaReadNativShopOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, NativShop);
+        FKyaPunchingBallOffsets PunchingBall;
+        const bool HasPunchingBall = Actor.ClassId == 0x30 && KyaReadPunchingBallOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, PunchingBall);
+        FKyaNoseMonsterOffsets NoseMonster;
+        const bool HasNoseMonster = Actor.ClassId == 0x26 && KyaReadNoseMonsterOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, NoseMonster);
+        FKyaPatternOffsets Pattern;
+        const bool HasPattern = Actor.ClassId == 0x3f && KyaReadPatternOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Pattern);
+        FKyaShipOffsets Ship;
+        const bool HasShip = Actor.ClassId == 0x36 && KyaReadShipOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Ship);
+        FKyaBunchOffsets Bunch;
+        const bool HasBunch = Actor.ClassId == 0x4e && KyaReadBunchOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Bunch);
+        FKyaBrazulOffsets Brazul;
+        const bool HasBrazul = Actor.ClassId == 0x4f && KyaReadBrazulOffsets(
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Brazul);
+        const bool bMiniGameClass = Actor.ClassId == 0x44 || Actor.ClassId == 0x45 ||
+            Actor.ClassId == 0x46 || Actor.ClassId == 0x47 || Actor.ClassId == 0x55;
+        FKyaMiniGameOffsets MiniGame;
+        const bool HasMiniGame = bMiniGameClass && KyaReadMiniGameOffsets(Actor.ClassId,
+            MakeArrayView(Bytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, MiniGame);
         FKyaBasicBoxOffsets Box;
         const bool HasBox = Actor.ClassId == 0x39 && KyaReadBasicBoxOffsets(
             MakeArrayView(Bank->BankBytes.GetData(), int32(SceneEnd)), Offsets.ClassData, Offsets.ClassDataSize, Box);
@@ -1543,7 +1679,7 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
         if (HasJamGut != Actor.bHasJamGutData || (HasJamGut &&
             (Actor.JamGutData.bHasField41C != JamGut.bHasField41C || Actor.JamGutData.Checkpoints.Num() != JamGut.CheckpointCount ||
                 Actor.JamGutData.Paths.Num() != JamGut.PathCount))) return false;
-        const int64 RawOffset = HasJamGut ? JamGut.Tail : HasWantedZoo ? WantedZoo.Tail : HasCredits ? Credits.Tail : HasMiniGamesSupport ? MiniGamesSupport.Tail : HasWoof ? Woof.Tail : HasBlazer ? Blazer.Tail : HasBombLauncher ? BombLauncher.Tail : HasElectrolla ? Electrolla.Tail : (Actor.ClassId == 0x37 && Actor.bHasCareBoyData) ? Offsets.ClassData + 12 : HasEgg ? Egg.Tail : HasPatternCmd ? PatternCmd.Tail : HasAmortosCmd ? AmortosCmd.Tail : HasAddOnPurchase ? AddOnPurchase.Tail : (Actor.ClassId == 0x3a && Actor.bHasAcceleratosData) ? Offsets.ClassData + 20 : HasShockerCmd ? ShockerCmd.Tail : (Actor.ClassId == 0x27 && Actor.bHasWoodMonsterData) ? Offsets.ClassData + 16 : (Actor.ClassId == 0x2b && Actor.bHasHelperSignData) ? Offsets.ClassData + 12 : (Actor.ClassId == 0x48 && Actor.bHasHunterData) ? Offsets.ClassData + 40 : HasAton ? Aton.Tail : (HasBridge ? Bridge.Tail : (HasCompanion ? Companion.Tail : (HasGravity ? Gravity.Tail : (HasNativCmd ? Command.Tail : (HasCheckpoints ? CheckpointData.Tail : (HasRope ? Rope.Tail : (HasFountain ? Fountain.Tail : (HasRune ? Rune.Tail : (HasStiller ? Stiller.Tail : (HasAmbre ? Ambre.Tail : (HasShoot ? Shoot.Tail : (HasFog ? Fog.Tail : (HasMoney ? Money.Tail : (HasBoxClass ? BoxClass.Tail : (HasDca ? Dca.Tail : (HasTeleporter ? Teleporter.Tail : (HasAmortos ? Amortos.Tail : (HasNativ ? Nativ.Tail : (HasCommander ? Commander.Tail : (HasFruit ? Fruit.Tail : (HasWolfen ? Wolfen.WeaponIndex : (HasMicken ? Micken.Tail : (HasBonus ? Bonus.Tail : (HasSwitch ? SwitchData.Tail : (HasWeapon ? Weapon.Tail : (HasTrap ? Trap.Tail : (HasWind ? Wind.Tail : (HasProjectile ? Projectile.Tail : (HasHedgehog ? Hedgehog.Tail : (HasAraignos ? Araignos.Tail : (HasFx ? Fx.Tail : (HasBox ? Box.Tail : (HasDetails ? Details.Tail : (HasPlatform ? Platform.Suffix : Offsets.ClassData))))))))))))))))))))))))))))))))));
+        const int64 RawOffset = HasMiniGame ? MiniGame.Tail : HasBrazul ? Brazul.Tail : HasBunch ? Bunch.Tail : HasShip ? Ship.Tail : HasPattern ? Pattern.Tail : HasNoseMonster ? NoseMonster.Tail : HasPunchingBall ? PunchingBall.Tail : HasNativShop ? NativShop.Tail : HasShocker ? Shocker.Tail : HasExplosiveDistributor ? ExplosiveDistributor.Tail : HasEventGenerator ? EventGenerator.Tail : HasJamGut ? JamGut.Tail : HasWantedZoo ? WantedZoo.Tail : HasCredits ? Credits.Tail : HasMiniGamesSupport ? MiniGamesSupport.Tail : HasWoof ? Woof.Tail : HasBlazer ? Blazer.Tail : HasBombLauncher ? BombLauncher.Tail : HasElectrolla ? Electrolla.Tail : (Actor.ClassId == 0x37 && Actor.bHasCareBoyData) ? Offsets.ClassData + 12 : HasEgg ? Egg.Tail : HasPatternCmd ? PatternCmd.Tail : HasAmortosCmd ? AmortosCmd.Tail : HasAddOnPurchase ? AddOnPurchase.Tail : (Actor.ClassId == 0x3a && Actor.bHasAcceleratosData) ? Offsets.ClassData + 20 : HasShockerCmd ? ShockerCmd.Tail : (Actor.ClassId == 0x27 && Actor.bHasWoodMonsterData) ? Offsets.ClassData + 16 : (Actor.ClassId == 0x2b && Actor.bHasHelperSignData) ? Offsets.ClassData + 12 : (Actor.ClassId == 0x48 && Actor.bHasHunterData) ? Offsets.ClassData + 40 : HasAton ? Aton.Tail : (HasBridge ? Bridge.Tail : (HasCompanion ? Companion.Tail : (HasGravity ? Gravity.Tail : (HasNativCmd ? Command.Tail : (HasCheckpoints ? CheckpointData.Tail : (HasRope ? Rope.Tail : (HasFountain ? Fountain.Tail : (HasRune ? Rune.Tail : (HasStiller ? Stiller.Tail : (HasAmbre ? Ambre.Tail : (HasShoot ? Shoot.Tail : (HasFog ? Fog.Tail : (HasMoney ? Money.Tail : (HasBoxClass ? BoxClass.Tail : (HasDca ? Dca.Tail : (HasTeleporter ? Teleporter.Tail : (HasAmortos ? Amortos.Tail : (HasNativ ? Nativ.Tail : (HasCommander ? Commander.Tail : (HasFruit ? Fruit.Tail : (HasWolfen ? Wolfen.WeaponIndex : (HasMicken ? Micken.Tail : (HasBonus ? Bonus.Tail : (HasSwitch ? SwitchData.Tail : (HasWeapon ? Weapon.Tail : (HasTrap ? Trap.Tail : (HasWind ? Wind.Tail : (HasProjectile ? Projectile.Tail : (HasHedgehog ? Hedgehog.Tail : (HasAraignos ? Araignos.Tail : (HasFx ? Fx.Tail : (HasBox ? Box.Tail : (HasDetails ? Details.Tail : (HasPlatform ? Platform.Suffix : Offsets.ClassData))))))))))))))))))))))))))))))))));
         const int64 SecondPassRawOffset = HasKim ? Kim.Tail : (HasBoomy ? Boomy.Tail : RawOffset);
         if (Actor.bHasHunterData != (Actor.ClassId == 0x48 && Offsets.ClassDataSize >= 40)) return false;
         if (Actor.bHasHelperSignData != (Actor.ClassId == 0x2b && Offsets.ClassDataSize >= 12)) return false;
@@ -1559,6 +1695,50 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
         if (HasBox)
         {
             if (!KyaWriteBasicBoxActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
+        }
+        if (HasEventGenerator)
+        {
+            if (!KyaWriteEventGeneratorActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
+        }
+        if (HasExplosiveDistributor)
+        {
+            if (!KyaWriteExplosiveDistributorActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
+        }
+        if (HasShocker)
+        {
+            if (!KyaWriteShockerActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
+        }
+        if (HasNativShop)
+        {
+            if (!KyaWriteNativShopActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
+        }
+        if (HasPunchingBall)
+        {
+            if (!KyaWritePunchingBallActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
+        }
+        if (HasNoseMonster)
+        {
+            if (!KyaWriteNoseMonsterActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
+        }
+        if (HasPattern)
+        {
+            if (!KyaWritePatternActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
+        }
+        if (HasShip)
+        {
+            if (!KyaWriteShipActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
+        }
+        if (HasBunch)
+        {
+            if (!KyaWriteBunchActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
+        }
+        if (HasBrazul)
+        {
+            if (!KyaWriteBrazulActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
+        }
+        if (HasMiniGame)
+        {
+            if (!KyaWriteMiniGameActor(Actor, Bytes, Offsets.ClassData, Offsets.ClassDataSize)) return false;
         }
         if (HasWolfen)
         {

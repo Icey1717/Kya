@@ -500,6 +500,98 @@ struct FKyaStreamEventCamera
     UPROPERTY(EditAnywhere, Category="Camera event") float Field1C = 0;
 };
 
+/** One CBehaviourBrazulA_SubObj record. */
+USTRUCT(BlueprintType)
+struct FKyaBrazulSubObj
+{
+    GENERATED_BODY()
+    UPROPERTY(EditAnywhere, Category="Brazul") int32 Field0 = 0;
+    UPROPERTY(EditAnywhere, Category="Brazul") int32 Field4 = 0;
+    UPROPERTY(EditAnywhere, Category="Brazul") float Field8 = 0;
+    UPROPERTY(EditAnywhere, Category="Brazul") int32 FieldC = 0;
+    UPROPERTY(EditAnywhere, Category="Brazul") int32 Field10 = 0;
+    UPROPERTY(EditAnywhere, EditFixedSize, Category="Brazul") TArray<int32> PathIndices;
+};
+
+/** One S_BUNCH_STREAM_ENTRY serialized by CActorBunch. */
+USTRUCT(BlueprintType)
+struct FKyaBunchStreamEntry
+{
+    GENERATED_BODY()
+    UPROPERTY(EditAnywhere, Category="Bunch") int32 Field0 = 0;
+    UPROPERTY(EditAnywhere, Category="Bunch") int32 HasBehaviour = 0;
+    UPROPERTY(EditAnywhere, Category="Bunch") int32 BehaviourId = -1;
+    UPROPERTY(EditAnywhere, Category="Bunch") int32 ZoneId = 0;
+    UPROPERTY(EditAnywhere, Category="Bunch") int32 FieldC = 0;
+};
+
+/** One fence entry in CBehaviourBunchFence (waypoint ref + word). */
+USTRUCT(BlueprintType)
+struct FKyaBunchFenceEntry
+{
+    GENERATED_BODY()
+    UPROPERTY(EditAnywhere, Category="Bunch") int32 Ref = -1;
+    UPROPERTY(EditAnywhere, Category="Bunch") int32 Field4 = 0;
+};
+
+USTRUCT(BlueprintType)
+struct FKyaBunchFenceGroup
+{
+    GENERATED_BODY()
+    UPROPERTY(EditAnywhere, Category="Bunch") int32 Field0 = 0;
+    UPROPERTY(EditAnywhere, Category="Bunch") int32 Field4 = 0;
+    UPROPERTY(EditAnywhere, EditFixedSize, Category="Bunch") TArray<FKyaBunchFenceEntry> Entries;
+};
+
+/** One ZonePathEntry serialized by CActorNoseMonster. */
+USTRUCT(BlueprintType)
+struct FKyaNoseMonsterZonePath
+{
+    GENERATED_BODY()
+    UPROPERTY(EditAnywhere, Category="Nose monster") int32 ZoneRef = -1;
+    UPROPERTY(EditAnywhere, Category="Nose monster") int32 PathFollowRef = -1;
+};
+
+/** One S_TRAP_STREAM_ENTRY serialized by CActorPunchingBall. */
+USTRUCT(BlueprintType)
+struct FKyaPunchingBallTrapEntry
+{
+    GENERATED_BODY()
+    UPROPERTY(EditAnywhere, Category="Punching ball") int32 TargetRef = -1;
+    UPROPERTY(EditAnywhere, Category="Punching ball") int32 CutsceneId = 0;
+    UPROPERTY(EditAnywhere, Category="Punching ball") int32 Flags = 0;
+    UPROPERTY(EditAnywhere, Category="Punching ball") int32 MessageId = 0;
+    UPROPERTY(EditAnywhere, Category="Punching ball") int32 MessageFlags = 0;
+    UPROPERTY(EditAnywhere, Category="Punching ball") int32 Field14 = 0;
+    UPROPERTY(EditAnywhere, Category="Punching ball") int32 Field18 = 0;
+    UPROPERTY(EditAnywhere, Category="Punching ball") FKyaStreamEventCamera Camera;
+};
+
+/** CCircularWaveShoot record serialized by CBehaviourShockerFireWave. */
+USTRUCT(BlueprintType)
+struct FKyaShockerWave
+{
+    GENERATED_BODY()
+    UPROPERTY(EditAnywhere, Category="Shocker wave") float Field8 = 0;
+    UPROPERTY(EditAnywhere, Category="Shocker wave") float FieldC = 0;
+    UPROPERTY(EditAnywhere, Category="Shocker wave") float Field10 = 0;
+    UPROPERTY(EditAnywhere, Category="Shocker wave") float Field14 = 0;
+    UPROPERTY(EditAnywhere, Category="Shocker wave") float Field18 = 0;
+    UPROPERTY(EditAnywhere, Category="Shocker wave") float Field1C = 0;
+    UPROPERTY(EditAnywhere, Category="Shocker wave") int32 MaterialId = -1;
+    UPROPERTY(EditAnywhere, Category="Shocker wave") int32 Field24 = 0;
+};
+
+/** One _s_projectile record serialized by CActorExplosiveDistributor. */
+USTRUCT(BlueprintType)
+struct FKyaExplosiveProjectile
+{
+    GENERATED_BODY()
+    UPROPERTY(EditAnywhere, Category="Explosive distributor") int32 ActorRef = -1;
+    UPROPERTY(EditAnywhere, Category="Explosive distributor") FVector Direction = FVector::ZeroVector;
+    UPROPERTY(EditAnywhere, Category="Explosive distributor") float EjectForce = 0;
+};
+
 /** S_NTF_SWITCH: switch target list followed by one camera event. */
 USTRUCT(BlueprintType)
 struct FKyaSwitch
@@ -507,6 +599,41 @@ struct FKyaSwitch
     GENERATED_BODY()
     UPROPERTY(EditAnywhere, EditFixedSize, Category="Switch") TArray<FKyaSwitchTarget> Targets;
     UPROPERTY(EditAnywhere, Category="Switch") FKyaStreamEventCamera Camera;
+};
+
+/** One S_MINI_GAME_SCORE record. */
+USTRUCT(BlueprintType)
+struct FKyaMiniGameScore
+{
+    GENERATED_BODY()
+    UPROPERTY(EditAnywhere, Category="Minigame") float Score = 0;
+    UPROPERTY(EditAnywhere, Category="Minigame") FString Name;
+};
+
+/** One S_MINI_GAME_BET record (minigame behaviour 3). */
+USTRUCT(BlueprintType)
+struct FKyaMiniGameBet
+{
+    GENERATED_BODY()
+    UPROPERTY(EditAnywhere, Category="Minigame") int32 Cost = 0;
+    UPROPERTY(EditAnywhere, Category="Minigame") int32 Reward = 0;
+};
+
+/** One S_MINI_GAME_BOOMY_TARGET record. */
+USTRUCT(BlueprintType)
+struct FKyaMiniGameBoomyTarget
+{
+    GENERATED_BODY()
+    UPROPERTY(EditAnywhere, Category="Minigame") int32 ActorRef = -1;
+    UPROPERTY(EditAnywhere, Category="Minigame") FKyaSwitch Switch;
+};
+
+/** One S_MINI_GAME_BOOMY_SEQUENCE record. */
+USTRUCT(BlueprintType)
+struct FKyaMiniGameSequence
+{
+    GENERATED_BODY()
+    UPROPERTY(EditAnywhere, EditFixedSize, Category="Minigame") TArray<int32> TargetIndices;
 };
 
 USTRUCT(BlueprintType)
@@ -943,6 +1070,81 @@ struct FKyaActorBehaviour
     /** Behaviour 2 flock path. Behaviour 3 add-on has an empty Create. */
     UPROPERTY(VisibleAnywhere, Category="Behaviour") bool bHasTypedMoneyFlockBehaviour = false;
     UPROPERTY(EditAnywhere, Category="Money behaviour", meta=(EditCondition="bHasTypedMoneyFlockBehaviour")) int32 MoneyFlockPathIndex = -1;
+    /** CBehaviourEventGen (id 2): fixed header, managers stay raw. */
+    UPROPERTY(VisibleAnywhere, Category="Behaviour") bool bHasTypedEventGeneratorBehaviour = false;
+    UPROPERTY(EditAnywhere, Category="Event generator behaviour", meta=(EditCondition="bHasTypedEventGeneratorBehaviour")) int32 EventGeneratorFieldC = 0;
+    UPROPERTY(EditAnywhere, Category="Event generator behaviour", meta=(EditCondition="bHasTypedEventGeneratorBehaviour")) float EventGeneratorField10 = 0;
+    /** CBehaviourShockerFireWave (id 3). */
+    UPROPERTY(VisibleAnywhere, Category="Behaviour") bool bHasTypedShockerBehaviour = false;
+    UPROPERTY(EditAnywhere, Category="Shocker behaviour", meta=(EditCondition="bHasTypedShockerBehaviour")) FKyaShockerWave ShockerWave;
+    /** CBehaviourNativShopSell (id 2): camera/sub-object refs, path, material, music, zone, three floats. */
+    UPROPERTY(VisibleAnywhere, Category="Behaviour") bool bHasTypedNativShopBehaviour = false;
+    UPROPERTY(EditAnywhere, Category="Nativ shop behaviour", meta=(EditCondition="bHasTypedNativShopBehaviour")) int32 NativShopCameraRef = -1;
+    UPROPERTY(EditAnywhere, EditFixedSize, Category="Nativ shop behaviour", meta=(EditCondition="bHasTypedNativShopBehaviour")) TArray<int32> NativShopSubObjActorRefs;
+    UPROPERTY(EditAnywhere, Category="Nativ shop behaviour", meta=(EditCondition="bHasTypedNativShopBehaviour")) int32 NativShopPathIndex = -1;
+    UPROPERTY(EditAnywhere, Category="Nativ shop behaviour", meta=(EditCondition="bHasTypedNativShopBehaviour")) int32 NativShopMaterialId = -1;
+    UPROPERTY(EditAnywhere, Category="Nativ shop behaviour", meta=(EditCondition="bHasTypedNativShopBehaviour")) int32 NativShopMusicIndex = -1;
+    UPROPERTY(EditAnywhere, Category="Nativ shop behaviour", meta=(EditCondition="bHasTypedNativShopBehaviour")) int32 NativShopZoneRef = -1;
+    UPROPERTY(EditAnywhere, Category="Nativ shop behaviour", meta=(EditCondition="bHasTypedNativShopBehaviour")) float NativShopFieldC4 = 0;
+    UPROPERTY(EditAnywhere, Category="Nativ shop behaviour", meta=(EditCondition="bHasTypedNativShopBehaviour")) float NativShopFieldC8 = 0;
+    UPROPERTY(EditAnywhere, Category="Nativ shop behaviour", meta=(EditCondition="bHasTypedNativShopBehaviour")) float NativShopFieldCC = 0;
+    /** CBehaviourPatternAlone (id 3): three floats plus CPatternPart. */
+    UPROPERTY(VisibleAnywhere, Category="Behaviour") bool bHasTypedPatternBehaviour = false;
+    UPROPERTY(EditAnywhere, Category="Pattern controller behaviour", meta=(EditCondition="bHasTypedPatternBehaviour")) float PatternField90 = 0;
+    UPROPERTY(EditAnywhere, Category="Pattern controller behaviour", meta=(EditCondition="bHasTypedPatternBehaviour")) float PatternField94 = 0;
+    UPROPERTY(EditAnywhere, Category="Pattern controller behaviour", meta=(EditCondition="bHasTypedPatternBehaviour")) float PatternField98 = 0;
+    UPROPERTY(EditAnywhere, Category="Pattern controller behaviour", meta=(EditCondition="bHasTypedPatternBehaviour")) float PatternPartField4 = 0;
+    UPROPERTY(EditAnywhere, Category="Pattern controller behaviour", meta=(EditCondition="bHasTypedPatternBehaviour")) float PatternPartField0 = 0;
+    UPROPERTY(EditAnywhere, Category="Pattern controller behaviour", meta=(EditCondition="bHasTypedPatternBehaviour")) float PatternPartFieldC = 0;
+    UPROPERTY(EditAnywhere, Category="Pattern controller behaviour", meta=(EditCondition="bHasTypedPatternBehaviour")) float PatternPartField8 = 0;
+    UPROPERTY(EditAnywhere, Category="Pattern controller behaviour", meta=(EditCondition="bHasTypedPatternBehaviour")) float PatternPartField10 = 0;
+    UPROPERTY(EditAnywhere, Category="Pattern controller behaviour", meta=(EditCondition="bHasTypedPatternBehaviour")) float PatternPartField14 = 0;
+    UPROPERTY(EditAnywhere, Category="Pattern controller behaviour", meta=(EditCondition="bHasTypedPatternBehaviour")) int32 PatternPartMaterialId = -1;
+    UPROPERTY(EditAnywhere, Category="Pattern controller behaviour", meta=(EditCondition="bHasTypedPatternBehaviour")) float PatternPartField1C = 0;
+    UPROPERTY(EditAnywhere, Category="Pattern controller behaviour", meta=(EditCondition="bHasTypedPatternBehaviour")) float PatternPartField20 = 0;
+    /** True when CPatternPart serialized the scene >= 2.21 field 0x24. */
+    UPROPERTY(VisibleAnywhere, Category="Pattern controller behaviour", meta=(EditCondition="bHasTypedPatternBehaviour")) bool bPatternPartHasField24 = false;
+    UPROPERTY(EditAnywhere, Category="Pattern controller behaviour", meta=(EditCondition="bHasTypedPatternBehaviour && bPatternPartHasField24")) float PatternPartField24 = 1;
+    UPROPERTY(EditAnywhere, Category="Pattern controller behaviour", meta=(EditCondition="bHasTypedPatternBehaviour")) int32 PatternPartField28 = 0;
+    /** CBehaviourBunchRepel (id 26). */
+    UPROPERTY(VisibleAnywhere, Category="Behaviour") bool bHasTypedBunchRepel = false;
+    UPROPERTY(EditAnywhere, Category="Bunch repel", meta=(EditCondition="bHasTypedBunchRepel")) int32 BunchRepelWayPointRef = -1;
+    UPROPERTY(EditAnywhere, Category="Bunch repel", meta=(EditCondition="bHasTypedBunchRepel")) int32 BunchRepelShockWaveCount = 0;
+    UPROPERTY(EditAnywhere, Category="Bunch repel", meta=(EditCondition="bHasTypedBunchRepel")) float BunchRepelField14 = 0;
+    UPROPERTY(EditAnywhere, Category="Bunch repel", meta=(EditCondition="bHasTypedBunchRepel")) float BunchRepelShockWaveField10 = 0;
+    UPROPERTY(EditAnywhere, Category="Bunch repel", meta=(EditCondition="bHasTypedBunchRepel")) float BunchRepelShockWaveField14 = 0;
+    UPROPERTY(EditAnywhere, EditFixedSize, Category="Bunch repel", meta=(EditCondition="bHasTypedBunchRepel")) TArray<int32> BunchRepelIndices;
+    UPROPERTY(EditAnywhere, Category="Bunch repel", meta=(EditCondition="bHasTypedBunchRepel")) float BunchRepelDamage = 0;
+    UPROPERTY(EditAnywhere, Category="Bunch repel", meta=(EditCondition="bHasTypedBunchRepel")) float BunchRepelMsgHitField30 = 0;
+    UPROPERTY(EditAnywhere, Category="Bunch repel", meta=(EditCondition="bHasTypedBunchRepel")) float BunchRepelMsgHitField70 = 0;
+    UPROPERTY(EditAnywhere, Category="Bunch repel", meta=(EditCondition="bHasTypedBunchRepel")) FVector BunchRepelVector20 = FVector::ZeroVector;
+    UPROPERTY(EditAnywhere, Category="Bunch repel", meta=(EditCondition="bHasTypedBunchRepel")) FVector BunchRepelVector30 = FVector::ZeroVector;
+    UPROPERTY(EditAnywhere, Category="Bunch repel", meta=(EditCondition="bHasTypedBunchRepel")) int32 BunchRepelMeshComponentId = 0;
+    UPROPERTY(EditAnywhere, Category="Bunch repel", meta=(EditCondition="bHasTypedBunchRepel")) int32 BunchRepelMeshIndex = 0;
+    UPROPERTY(EditAnywhere, Category="Bunch repel", meta=(EditCondition="bHasTypedBunchRepel")) int32 BunchRepelMeshType = 0;
+    UPROPERTY(EditAnywhere, Category="Bunch repel", meta=(EditCondition="bHasTypedBunchRepel")) int32 BunchRepelReserved = 0;
+    UPROPERTY(EditAnywhere, Category="Bunch repel", meta=(EditCondition="bHasTypedBunchRepel")) int32 BunchRepelDefaultId = 0;
+    /** CBehaviourBunchFence (id 27). */
+    UPROPERTY(VisibleAnywhere, Category="Behaviour") bool bHasTypedBunchFence = false;
+    UPROPERTY(EditAnywhere, Category="Bunch fence", meta=(EditCondition="bHasTypedBunchFence")) int32 BunchFenceActorRef = -1;
+    UPROPERTY(EditAnywhere, Category="Bunch fence", meta=(EditCondition="bHasTypedBunchFence")) int32 BunchFenceWayPointRef = -1;
+    UPROPERTY(EditAnywhere, EditFixedSize, Category="Bunch fence", meta=(EditCondition="bHasTypedBunchFence")) TArray<int32> BunchFenceWayPoints;
+    UPROPERTY(EditAnywhere, EditFixedSize, Category="Bunch fence", meta=(EditCondition="bHasTypedBunchFence")) TArray<FKyaBunchFenceGroup> BunchFenceGroups;
+    UPROPERTY(EditAnywhere, Category="Bunch fence", meta=(EditCondition="bHasTypedBunchFence")) int32 BunchFenceMeshF0Texture = 0;
+    UPROPERTY(EditAnywhere, Category="Bunch fence", meta=(EditCondition="bHasTypedBunchFence")) int32 BunchFenceMeshF0Mesh = 0;
+    UPROPERTY(EditAnywhere, Category="Bunch fence", meta=(EditCondition="bHasTypedBunchFence")) int32 BunchFenceMesh70Texture = 0;
+    UPROPERTY(EditAnywhere, Category="Bunch fence", meta=(EditCondition="bHasTypedBunchFence")) int32 BunchFenceMesh70Mesh = 0;
+    UPROPERTY(EditAnywhere, EditFixedSize, Category="Bunch fence", meta=(EditCondition="bHasTypedBunchFence")) TArray<int32> BunchFenceFxTypes;
+    /** CBehaviourBrazulA (id 26). */
+    UPROPERTY(VisibleAnywhere, Category="Behaviour") bool bHasTypedBrazulA = false;
+    UPROPERTY(EditAnywhere, EditFixedSize, Category="Brazul behaviour", meta=(EditCondition="bHasTypedBrazulA")) TArray<FKyaBrazulSubObj> BrazulSubObjs;
+    /** CBehaviourBrazulB (id 27). */
+    UPROPERTY(VisibleAnywhere, Category="Behaviour") bool bHasTypedBrazulB = false;
+    UPROPERTY(EditAnywhere, Category="Brazul behaviour", meta=(EditCondition="bHasTypedBrazulB")) int32 BrazulBWayPointRef = -1;
+    UPROPERTY(EditAnywhere, Category="Brazul behaviour", meta=(EditCondition="bHasTypedBrazulB")) FKyaSwitch BrazulBSwitch;
+    /** CBehaviourMiniGameBetting (id 3) shared by all minigame classes. */
+    UPROPERTY(VisibleAnywhere, Category="Behaviour") bool bHasTypedMiniGameBetting = false;
+    UPROPERTY(EditAnywhere, EditFixedSize, Category="Minigame behaviour", meta=(EditCondition="bHasTypedMiniGameBetting")) TArray<FKyaMiniGameBet> MiniGameBets;
     UPROPERTY(EditAnywhere, EditFixedSize, Category="Behaviour", meta=(EditCondition="!bHasTypedJamGutBehaviour && !bHasTypedEmptyBehaviour && !bHasTypedWoodMonsterBehaviour && !bHasTypedHelperSignBehaviour && !bHasTypedClusterZones && !bHasTypedFxBehaviour && !bHasTypedTrapBehaviour && !bHasTypedWeaponBehaviour && !bHasTypedBonusBehaviour && !bHasTypedMickenBehaviour && !bHasTypedFruitBehaviour && !bHasTypedCommanderBehaviour && !bHasTypedNativBehaviour && !bHasTypedCinematicBehaviour && !bHasTypedDcaControlledBehaviour && !bHasTypedDcaTrajectoryBehaviour && !bHasTypedFogBehaviour && !bHasTypedShootFireBehaviour && !bHasTypedShootWaveBehaviour && !bHasTypedGravityFallBehaviour && !bHasTypedGravityBellBehaviour && !bHasTypedBridgeBasicBehaviour && !bHasTypedBridgeWindBehaviour && !bHasTypedCompanionBehaviour && !bHasTypedPlatformBehaviour && !bHasTypedProjectileBehaviour && !bHasTypedSwitchBehaviour && !bHasTypedWolfenBehaviour && !bHasTypedCatchByTrapBehaviour && !bHasTypedHeroUnknownBehaviour && !bHasTypedInventoryBehaviour && !bHasTypedHedgehogBehaviour && !bHasTypedMoneyFlockBehaviour")) TArray<uint8> Data;
     /** Decoded for clusteriser class 0x18, behaviour 2. */
     UPROPERTY(EditAnywhere, EditFixedSize, Category="Cluster zones", meta=(EditCondition="bHasTypedClusterZones")) TArray<FKyaClusterZone> ClusterZones;
@@ -1849,6 +2051,172 @@ struct FKyaActorPlacement
     UPROPERTY(EditAnywhere, EditFixedSize, Category="Nativ command", meta=(EditCondition="bHasNativCmdData")) TArray<int32> NativCmdActorRefs;
     UPROPERTY(EditAnywhere, Category="Nativ command", meta=(EditCondition="bHasNativCmdData")) int32 NativCmdField164 = 0;
     UPROPERTY(EditAnywhere, EditFixedSize, Category="Nativ command", meta=(EditCondition="bHasNativCmdData")) TArray<FKyaNativCmdAddOn> NativCmdAddOns;
+    UPROPERTY(VisibleAnywhere, Category="Event generator") bool bHasEventGeneratorData = false;
+    /** CActorEventGenerator::Create flag word. */
+    UPROPERTY(EditAnywhere, Category="Event generator", meta=(EditCondition="bHasEventGeneratorData")) int32 EventGeneratorEnabled = 0;
+    /** CActorEventGenerator::Create zone reference. */
+    UPROPERTY(EditAnywhere, Category="Event generator", meta=(EditCondition="bHasEventGeneratorData")) int32 EventGeneratorZoneRef = -1;
+    UPROPERTY(VisibleAnywhere, Category="Explosive distributor") bool bHasExplosiveDistributorData = false;
+    UPROPERTY(EditAnywhere, Category="Explosive distributor", meta=(EditCondition="bHasExplosiveDistributorData")) float ExplosiveDistributorRadius = 0;
+    UPROPERTY(EditAnywhere, Category="Explosive distributor", meta=(EditCondition="bHasExplosiveDistributorData")) float ExplosiveDistributorAngle = 0;
+    UPROPERTY(EditAnywhere, EditFixedSize, Category="Explosive distributor", meta=(EditCondition="bHasExplosiveDistributorData")) TArray<FKyaExplosiveProjectile> ExplosiveDistributorProjectiles;
+    UPROPERTY(EditAnywhere, Category="Explosive distributor", meta=(EditCondition="bHasExplosiveDistributorData")) FKyaStreamEventCamera ExplosiveDistributorCamera;
+    UPROPERTY(VisibleAnywhere, Category="Shocker") bool bHasShockerData = false;
+    UPROPERTY(EditAnywhere, Category="Shocker", meta=(EditCondition="bHasShockerData")) float ShockerField350 = 0;
+    UPROPERTY(EditAnywhere, Category="Shocker", meta=(EditCondition="bHasShockerData")) float ShockerField354 = 0;
+    UPROPERTY(EditAnywhere, Category="Shocker", meta=(EditCondition="bHasShockerData")) float ShockerField358 = 0;
+    UPROPERTY(EditAnywhere, Category="Shocker", meta=(EditCondition="bHasShockerData")) float ShockerField35C = 0;
+    UPROPERTY(EditAnywhere, Category="Shocker", meta=(EditCondition="bHasShockerData")) float ShockerField364 = 0;
+    UPROPERTY(EditAnywhere, Category="Shocker", meta=(EditCondition="bHasShockerData")) float ShockerField368 = 0;
+    UPROPERTY(EditAnywhere, Category="Shocker", meta=(EditCondition="bHasShockerData")) float ShockerField360 = 0;
+    UPROPERTY(EditAnywhere, Category="Shocker", meta=(EditCondition="bHasShockerData")) float ShockerFieldF0 = 0;
+    UPROPERTY(EditAnywhere, Category="Shocker", meta=(EditCondition="bHasShockerData")) float ShockerField36C = 0;
+    UPROPERTY(EditAnywhere, Category="Shocker", meta=(EditCondition="bHasShockerData")) int32 ShockerZoneInner = -1;
+    UPROPERTY(EditAnywhere, Category="Shocker", meta=(EditCondition="bHasShockerData")) int32 ShockerZoneOuter = -1;
+    UPROPERTY(EditAnywhere, Category="Shocker", meta=(EditCondition="bHasShockerData")) FKyaSwitch ShockerSwitch;
+    UPROPERTY(EditAnywhere, Category="Shocker", meta=(EditCondition="bHasShockerData")) int32 ShockerField380 = 0;
+    UPROPERTY(EditAnywhere, Category="Shocker", meta=(EditCondition="bHasShockerData")) int32 ShockerField384 = 0;
+    UPROPERTY(EditAnywhere, Category="Shocker", meta=(EditCondition="bHasShockerData")) int32 ShockerField388 = 0;
+    UPROPERTY(EditAnywhere, Category="Shocker", meta=(EditCondition="bHasShockerData")) int32 ShockerField38C = 0;
+    UPROPERTY(EditAnywhere, Category="Shocker", meta=(EditCondition="bHasShockerData")) int32 ShockerField390 = 0;
+    UPROPERTY(EditAnywhere, Category="Shocker", meta=(EditCondition="bHasShockerData")) int32 ShockerField394 = 0;
+    UPROPERTY(EditAnywhere, Category="Shocker", meta=(EditCondition="bHasShockerData")) int32 ShockerField398 = 0;
+    UPROPERTY(EditAnywhere, Category="Shocker", meta=(EditCondition="bHasShockerData")) int32 ShockerBoneId = 0;
+    UPROPERTY(EditAnywhere, Category="Shocker", meta=(EditCondition="bHasShockerData")) FKyaAddOnGenerator ShockerAddOn;
+    UPROPERTY(VisibleAnywhere, Category="Nativ shop") bool bHasNativShopData = false;
+    UPROPERTY(EditAnywhere, Category="Nativ shop", meta=(EditCondition="bHasNativShopData")) float NativShopRadius = 0;
+    /** CActorNativShop::Create class-name string (0x16C); cannot grow past its stored span. */
+    UPROPERTY(EditAnywhere, Category="Nativ shop", meta=(EditCondition="bHasNativShopData")) FString NativShopName;
+    UPROPERTY(EditAnywhere, EditFixedSize, Category="Nativ shop", meta=(EditCondition="bHasNativShopData")) TArray<int32> NativShopActorRefs;
+    UPROPERTY(EditAnywhere, Category="Nativ shop", meta=(EditCondition="bHasNativShopData")) int32 NativShopEpisodeThresholdLink = 0;
+    UPROPERTY(EditAnywhere, Category="Nativ shop", meta=(EditCondition="bHasNativShopData")) int32 NativShopField174 = 0;
+    UPROPERTY(EditAnywhere, Category="Nativ shop", meta=(EditCondition="bHasNativShopData")) int32 NativShopActorRef = -1;
+    UPROPERTY(VisibleAnywhere, Category="Punching ball") bool bHasPunchingBallData = false;
+    UPROPERTY(EditAnywhere, Category="Punching ball", meta=(EditCondition="bHasPunchingBallData")) float PunchingBallFieldA80 = 0;
+    UPROPERTY(EditAnywhere, Category="Punching ball", meta=(EditCondition="bHasPunchingBallData")) float PunchingBallFieldA84 = 0;
+    UPROPERTY(EditAnywhere, Category="Punching ball", meta=(EditCondition="bHasPunchingBallData")) float PunchingBallFieldA88 = 0;
+    UPROPERTY(EditAnywhere, Category="Punching ball", meta=(EditCondition="bHasPunchingBallData")) float PunchingBallFieldA8C = 0;
+    UPROPERTY(EditAnywhere, EditFixedSize, Category="Punching ball", meta=(EditCondition="bHasPunchingBallData")) TArray<FKyaPunchingBallTrapEntry> PunchingBallTrapEntries;
+    UPROPERTY(EditAnywhere, Category="Punching ball", meta=(EditCondition="bHasPunchingBallData")) int32 PunchingBallActorRefA94 = -1;
+    UPROPERTY(EditAnywhere, Category="Punching ball", meta=(EditCondition="bHasPunchingBallData")) int32 PunchingBallActorRefA98 = -1;
+    /** CCamFigData::Create: exactly fourteen floats. */
+    UPROPERTY(EditAnywhere, EditFixedSize, Category="Punching ball", meta=(EditCondition="bHasPunchingBallData")) TArray<float> PunchingBallCamFigFloats;
+    UPROPERTY(VisibleAnywhere, Category="Nose monster") bool bHasNoseMonsterData = false;
+    /** True when the record uses the scene >= 2.21 layout with fields 0x378/0x37C. */
+    UPROPERTY(VisibleAnywhere, Category="Nose monster", meta=(EditCondition="bHasNoseMonsterData")) bool bNoseMonsterHasVersionFloats = false;
+    UPROPERTY(EditAnywhere, Category="Nose monster", meta=(EditCondition="bHasNoseMonsterData")) int32 NoseMonsterZoneRef = -1;
+    UPROPERTY(EditAnywhere, Category="Nose monster", meta=(EditCondition="bHasNoseMonsterData")) float NoseMonsterField384 = 0;
+    UPROPERTY(EditAnywhere, Category="Nose monster", meta=(EditCondition="bHasNoseMonsterData")) float NoseMonsterField354 = 0;
+    UPROPERTY(EditAnywhere, Category="Nose monster", meta=(EditCondition="bHasNoseMonsterData")) float NoseMonsterField358 = 0;
+    UPROPERTY(EditAnywhere, Category="Nose monster", meta=(EditCondition="bHasNoseMonsterData")) float NoseMonsterField35C = 0;
+    UPROPERTY(EditAnywhere, Category="Nose monster", meta=(EditCondition="bHasNoseMonsterData")) float NoseMonsterField360 = 0;
+    UPROPERTY(EditAnywhere, Category="Nose monster", meta=(EditCondition="bHasNoseMonsterData && bNoseMonsterHasVersionFloats")) float NoseMonsterField378 = 0;
+    UPROPERTY(EditAnywhere, Category="Nose monster", meta=(EditCondition="bHasNoseMonsterData && bNoseMonsterHasVersionFloats")) float NoseMonsterField37C = 0;
+    UPROPERTY(EditAnywhere, Category="Nose monster", meta=(EditCondition="bHasNoseMonsterData")) int32 NoseMonsterField364 = 0;
+    UPROPERTY(EditAnywhere, Category="Nose monster", meta=(EditCondition="bHasNoseMonsterData")) float NoseMonsterField370 = 0;
+    UPROPERTY(EditAnywhere, Category="Nose monster", meta=(EditCondition="bHasNoseMonsterData")) float NoseMonsterField374 = 0;
+    UPROPERTY(EditAnywhere, EditFixedSize, Category="Nose monster", meta=(EditCondition="bHasNoseMonsterData")) TArray<FKyaNoseMonsterZonePath> NoseMonsterZonePathEntries;
+    UPROPERTY(EditAnywhere, Category="Nose monster", meta=(EditCondition="bHasNoseMonsterData")) int32 NoseMonsterField36C = 0;
+    UPROPERTY(EditAnywhere, EditFixedSize, Category="Nose monster", meta=(EditCondition="bHasNoseMonsterData")) TArray<int32> NoseMonsterFireShotActorRefs;
+    UPROPERTY(EditAnywhere, Category="Nose monster", meta=(EditCondition="bHasNoseMonsterData")) int32 NoseMonsterField630 = -1;
+    UPROPERTY(EditAnywhere, Category="Nose monster", meta=(EditCondition="bHasNoseMonsterData")) int32 NoseMonsterField380 = 0;
+    UPROPERTY(EditAnywhere, Category="Nose monster", meta=(EditCondition="bHasNoseMonsterData")) float NoseMonsterField690 = 0;
+    UPROPERTY(EditAnywhere, Category="Nose monster", meta=(EditCondition="bHasNoseMonsterData")) float NoseMonsterField694 = 0;
+    UPROPERTY(EditAnywhere, Category="Nose monster", meta=(EditCondition="bHasNoseMonsterData")) float NoseMonsterField698 = 0;
+    UPROPERTY(EditAnywhere, Category="Nose monster", meta=(EditCondition="bHasNoseMonsterData")) float NoseMonsterField69C = 0;
+    UPROPERTY(EditAnywhere, Category="Nose monster", meta=(EditCondition="bHasNoseMonsterData")) int32 NoseMonsterField6A0 = 0;
+    UPROPERTY(EditAnywhere, Category="Nose monster", meta=(EditCondition="bHasNoseMonsterData")) int32 NoseMonsterField6A4 = 0;
+    UPROPERTY(EditAnywhere, Category="Nose monster", meta=(EditCondition="bHasNoseMonsterData")) int32 NoseMonsterField6A8 = 0;
+    UPROPERTY(EditAnywhere, Category="Nose monster", meta=(EditCondition="bHasNoseMonsterData")) FKyaSwitch NoseMonsterSwitch;
+    UPROPERTY(VisibleAnywhere, Category="Pattern controller") bool bHasPatternData = false;
+    UPROPERTY(EditAnywhere, Category="Pattern controller", meta=(EditCondition="bHasPatternData")) float PatternField350 = 0;
+    UPROPERTY(EditAnywhere, Category="Pattern controller", meta=(EditCondition="bHasPatternData")) float PatternField354 = 0;
+    UPROPERTY(EditAnywhere, Category="Pattern controller", meta=(EditCondition="bHasPatternData")) float PatternField358 = 0;
+    UPROPERTY(EditAnywhere, Category="Pattern controller", meta=(EditCondition="bHasPatternData")) float PatternField35C = 0;
+    UPROPERTY(EditAnywhere, Category="Pattern controller", meta=(EditCondition="bHasPatternData")) float PatternField364 = 0;
+    UPROPERTY(EditAnywhere, Category="Pattern controller", meta=(EditCondition="bHasPatternData")) float PatternField360 = 0;
+    UPROPERTY(EditAnywhere, Category="Pattern controller", meta=(EditCondition="bHasPatternData")) float PatternField368 = 0;
+    UPROPERTY(EditAnywhere, Category="Pattern controller", meta=(EditCondition="bHasPatternData")) int32 PatternField36C = 0;
+    UPROPERTY(EditAnywhere, Category="Pattern controller", meta=(EditCondition="bHasPatternData")) int32 PatternField370 = 0;
+    UPROPERTY(EditAnywhere, Category="Pattern controller", meta=(EditCondition="bHasPatternData")) int32 PatternBoneId = 0;
+    UPROPERTY(EditAnywhere, Category="Pattern controller", meta=(EditCondition="bHasPatternData")) FKyaAddOnGenerator PatternAddOn;
+    UPROPERTY(VisibleAnywhere, Category="Ship") bool bHasShipData = false;
+    UPROPERTY(EditAnywhere, EditFixedSize, Category="Ship", meta=(EditCondition="bHasShipData")) TArray<int32> ShipCareBoyActorRefs;
+    UPROPERTY(EditAnywhere, EditFixedSize, Category="Ship", meta=(EditCondition="bHasShipData")) TArray<int32> ShipFxIntValues;
+    UPROPERTY(EditAnywhere, Category="Ship", meta=(EditCondition="bHasShipData")) int32 ShipJawCareBoyRef = -1;
+    UPROPERTY(EditAnywhere, Category="Ship", meta=(EditCondition="bHasShipData")) int32 ShipAirCannonRef = -1;
+    UPROPERTY(EditAnywhere, Category="Ship", meta=(EditCondition="bHasShipData")) int32 ShipHunterRef = -1;
+    UPROPERTY(EditAnywhere, Category="Ship", meta=(EditCondition="bHasShipData")) float ShipField214 = 0;
+    UPROPERTY(EditAnywhere, Category="Ship", meta=(EditCondition="bHasShipData")) float ShipField210 = 0;
+    UPROPERTY(EditAnywhere, Category="Ship", meta=(EditCondition="bHasShipData")) float ShipField218 = 0;
+    UPROPERTY(EditAnywhere, Category="Ship", meta=(EditCondition="bHasShipData")) float ShipField21C = 0;
+    UPROPERTY(EditAnywhere, Category="Ship", meta=(EditCondition="bHasShipData")) float ShipField220 = 0;
+    UPROPERTY(EditAnywhere, Category="Ship", meta=(EditCondition="bHasShipData")) float ShipField224 = 0;
+    UPROPERTY(EditAnywhere, Category="Ship", meta=(EditCondition="bHasShipData")) float ShipField230 = 0;
+    UPROPERTY(EditAnywhere, Category="Ship", meta=(EditCondition="bHasShipData")) float ShipKimTouchRange = 0;
+    UPROPERTY(EditAnywhere, Category="Ship", meta=(EditCondition="bHasShipData")) float ShipField22C = 0;
+    UPROPERTY(EditAnywhere, Category="Ship", meta=(EditCondition="bHasShipData")) int32 ShipFxField18 = 0;
+    UPROPERTY(EditAnywhere, Category="Ship", meta=(EditCondition="bHasShipData")) int32 ShipField234 = 0;
+    UPROPERTY(EditAnywhere, Category="Ship", meta=(EditCondition="bHasShipData")) int32 ShipField238 = 0;
+    UPROPERTY(EditAnywhere, Category="Ship", meta=(EditCondition="bHasShipData")) int32 ShipField1AC = -1;
+    UPROPERTY(EditAnywhere, EditFixedSize, Category="Ship", meta=(EditCondition="bHasShipData")) TArray<int32> ShipWords18C;
+    UPROPERTY(EditAnywhere, Category="Ship", meta=(EditCondition="bHasShipData")) int32 ShipField19C = 0;
+    UPROPERTY(EditAnywhere, Category="Ship", meta=(EditCondition="bHasShipData")) int32 ShipField1A0 = 0;
+    UPROPERTY(EditAnywhere, Category="Ship", meta=(EditCondition="bHasShipData")) int32 ShipField1A4 = 0;
+    UPROPERTY(EditAnywhere, Category="Ship", meta=(EditCondition="bHasShipData")) int32 ShipField1A8 = 0;
+    UPROPERTY(EditAnywhere, Category="Ship", meta=(EditCondition="bHasShipData")) float ShipVisionRange = 0;
+    UPROPERTY(EditAnywhere, Category="Ship", meta=(EditCondition="bHasShipData")) float ShipVisionHalfAngle = 0;
+    UPROPERTY(EditAnywhere, Category="Ship", meta=(EditCondition="bHasShipData")) float ShipVisionField38 = 0;
+    UPROPERTY(EditAnywhere, Category="Ship", meta=(EditCondition="bHasShipData")) float ShipVisionField3C = 0;
+    UPROPERTY(EditAnywhere, Category="Ship", meta=(EditCondition="bHasShipData")) int32 ShipVisionFlags = 0;
+    UPROPERTY(EditAnywhere, Category="Ship", meta=(EditCondition="bHasShipData")) FKyaSwitch ShipSwitch;
+    UPROPERTY(VisibleAnywhere, Category="Bunch") bool bHasBunchData = false;
+    UPROPERTY(EditAnywhere, Category="Bunch", meta=(EditCondition="bHasBunchData")) float BunchFieldFC8 = 0;
+    UPROPERTY(EditAnywhere, EditFixedSize, Category="Bunch", meta=(EditCondition="bHasBunchData")) TArray<FKyaBunchStreamEntry> BunchStreamEntries;
+    UPROPERTY(EditAnywhere, Category="Bunch", meta=(EditCondition="bHasBunchData")) int32 BunchMeshComponentId = 0;
+    UPROPERTY(EditAnywhere, Category="Bunch", meta=(EditCondition="bHasBunchData")) int32 BunchMeshIndex = 0;
+    UPROPERTY(VisibleAnywhere, Category="Brazul") bool bHasBrazulData = false;
+    UPROPERTY(EditAnywhere, Category="Brazul", meta=(EditCondition="bHasBrazulData")) float BrazulFieldFC0 = 0;
+    UPROPERTY(EditAnywhere, Category="Brazul", meta=(EditCondition="bHasBrazulData")) float BrazulFieldFC4 = 0;
+    UPROPERTY(EditAnywhere, Category="Brazul", meta=(EditCondition="bHasBrazulData")) int32 BrazulPathIndex = -1;
+    UPROPERTY(EditAnywhere, Category="Brazul", meta=(EditCondition="bHasBrazulData")) int32 BrazulField1060 = 0;
+    UPROPERTY(EditAnywhere, Category="Brazul", meta=(EditCondition="bHasBrazulData")) int32 BrazulReserved = 0;
+    UPROPERTY(EditAnywhere, Category="Brazul", meta=(EditCondition="bHasBrazulData")) int32 BrazulMaterialId = -1;
+    UPROPERTY(EditAnywhere, Category="Brazul", meta=(EditCondition="bHasBrazulData")) int32 BrazulSparkParamA = 0;
+    UPROPERTY(EditAnywhere, Category="Brazul", meta=(EditCondition="bHasBrazulData")) int32 BrazulSparkParamB = 0;
+    UPROPERTY(EditAnywhere, EditFixedSize, Category="Brazul", meta=(EditCondition="bHasBrazulData")) TArray<int32> BrazulFxHandles;
+    UPROPERTY(EditAnywhere, Category="Brazul", meta=(EditCondition="bHasBrazulData")) int32 BrazulFxInit = 0;
+    UPROPERTY(EditAnywhere, Category="Brazul", meta=(EditCondition="bHasBrazulData")) int32 BrazulMeshATexture = 0;
+    UPROPERTY(EditAnywhere, Category="Brazul", meta=(EditCondition="bHasBrazulData")) int32 BrazulMeshAMesh = 0;
+    UPROPERTY(EditAnywhere, Category="Brazul", meta=(EditCondition="bHasBrazulData")) int32 BrazulMeshBTexture = 0;
+    UPROPERTY(EditAnywhere, Category="Brazul", meta=(EditCondition="bHasBrazulData")) int32 BrazulMeshBMesh = 0;
+    UPROPERTY(VisibleAnywhere, Category="Minigame") bool bHasMiniGameData = false;
+    UPROPERTY(EditAnywhere, Category="Minigame", meta=(EditCondition="bHasMiniGameData")) int64 MiniGameField160 = 0;
+    UPROPERTY(EditAnywhere, Category="Minigame", meta=(EditCondition="bHasMiniGameData")) int32 MiniGameField168 = 0;
+    UPROPERTY(EditAnywhere, Category="Minigame", meta=(EditCondition="bHasMiniGameData")) int32 MiniGameField16C = 0;
+    UPROPERTY(EditAnywhere, EditFixedSize, Category="Minigame", meta=(EditCondition="bHasMiniGameData")) TArray<int32> MiniGameActorRefs;
+    UPROPERTY(EditAnywhere, EditFixedSize, Category="Minigame", meta=(EditCondition="bHasMiniGameData")) TArray<float> MiniGameFloats;
+    UPROPERTY(EditAnywhere, EditFixedSize, Category="Minigame", meta=(EditCondition="bHasMiniGameData")) TArray<FKyaMiniGameScore> MiniGameScores;
+    /** True when the scene >= 2.21 default-score record is present. */
+    UPROPERTY(VisibleAnywhere, Category="Minigame", meta=(EditCondition="bHasMiniGameData")) bool bMiniGameHasDefaultScore = false;
+    UPROPERTY(EditAnywhere, Category="Minigame", meta=(EditCondition="bHasMiniGameData && bMiniGameHasDefaultScore")) FKyaMiniGameScore MiniGameDefaultScore;
+    UPROPERTY(EditAnywhere, Category="Minigame", meta=(EditCondition="bHasMiniGameData")) int32 MiniGameWayPointRef = -1;
+    UPROPERTY(EditAnywhere, Category="Minigame", meta=(EditCondition="bHasMiniGameData")) int32 MiniGameField190 = 0;
+    UPROPERTY(EditAnywhere, Category="Minigame", meta=(EditCondition="bHasMiniGameData")) int64 MiniGameField1A8 = 0;
+    UPROPERTY(EditAnywhere, Category="Minigame", meta=(EditCondition="bHasMiniGameData")) FKyaSwitch MiniGameSwitch;
+    /** 0x45 TimeAttack. */
+    UPROPERTY(EditAnywhere, Category="Minigame", meta=(EditCondition="bHasMiniGameData")) int32 MiniGameTimeAttackField1E0 = 0;
+    /** 0x46 BoxCounter and 0x47 Boomy. */
+    UPROPERTY(EditAnywhere, Category="Minigame", meta=(EditCondition="bHasMiniGameData")) float MiniGameTimeLimit = 0;
+    /** 0x55 Distance. */
+    UPROPERTY(EditAnywhere, Category="Minigame", meta=(EditCondition="bHasMiniGameData")) int32 MiniGamePathA = -1;
+    UPROPERTY(EditAnywhere, Category="Minigame", meta=(EditCondition="bHasMiniGameData")) int32 MiniGamePathB = -1;
+    /** 0x47 Boomy. */
+    UPROPERTY(EditAnywhere, EditFixedSize, Category="Minigame", meta=(EditCondition="bHasMiniGameData")) TArray<FKyaMiniGameBoomyTarget> MiniGameBoomyTargets;
+    UPROPERTY(EditAnywhere, EditFixedSize, Category="Minigame", meta=(EditCondition="bHasMiniGameData")) TArray<FKyaMiniGameBoomyTarget> MiniGameBoomyPenaltyTargets;
+    UPROPERTY(EditAnywhere, Category="Minigame", meta=(EditCondition="bHasMiniGameData")) int32 MiniGameMaxPenalties = 0;
+    UPROPERTY(EditAnywhere, Category="Minigame", meta=(EditCondition="bHasMiniGameData")) int32 MiniGameGameFlags = 0;
+    UPROPERTY(EditAnywhere, EditFixedSize, Category="Minigame", meta=(EditCondition="bHasMiniGameData")) TArray<FKyaMiniGameSequence> MiniGameSequences;
     UPROPERTY(VisibleAnywhere, Category="Companion") bool bHasCompanionData = false;
     UPROPERTY(EditAnywhere, Category="Companion", meta=(EditCondition="bHasCompanionData")) float CompanionWeightB = 0;
     UPROPERTY(EditAnywhere, Category="Companion", meta=(EditCondition="bHasCompanionData")) int64 CompanionLifeMax = 0;

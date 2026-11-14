@@ -9,10 +9,11 @@ verified. Reference for behaviour and layouts is this repository's own source
 Last updated: 2026-11-13.
 
 Checklist status: all 80 items are implemented and covered by the
-`Kya.Editor`/`Kya.Bank` automation (87 tests), including structural actor
+`Kya.Editor`/`Kya.Bank` automation (100 tests), including structural actor
 create/duplicate/delete with stream relocation and typed reference remapping.
 Actor/behaviour family coverage beyond LEVEL_1 is tracked separately in
-[ACTOR_BEHAVIOUR_AUDIT.md](ACTOR_BEHAVIOUR_AUDIT.md).
+[ACTOR_BEHAVIOUR_AUDIT.md](ACTOR_BEHAVIOUR_AUDIT.md): all 16 level banks were
+scanned. EventGenerator (0x3B) has a typed header plus raw manager tail; every other class id with a payload is now fully typed, including the minigame family (0x45/0x47/0x55 in NATIV, 0x44/0x46 source-only via fixtures). The remaining audit work is verification, not migration. Those remain the next migration targets; the 37 LEVEL_1/Hedgehog class ids are module-backed.
 
 ## 1. Working-tree findings (before this work)
 
@@ -554,6 +555,19 @@ Results: `Kya.Bank.LevelOneRoundTrip`, `Kya.Bank.SmallBankRoundTrip`,
 `Kya.Bank.MickenFixtureRoundTrip`,
 `Kya.Bank.BasicBoxFixtureRoundTrip`,
 `Kya.Bank.NativCmdFixtureRoundTrip`,
+`Kya.Bank.EventGeneratorFixtureRoundTrip`,
+`Kya.Bank.ExplosiveDistributorFixtureRoundTrip`,
+`Kya.Bank.ShockerFixtureRoundTrip`,
+`Kya.Bank.NativShopFixtureRoundTrip`,
+`Kya.Bank.PunchingBallFixtureRoundTrip`,
+`Kya.Bank.NoseMonsterFixtureRoundTrip`,
+`Kya.Bank.PatternFixtureRoundTrip`,
+`Kya.Bank.ShipFixtureRoundTrip`,
+`Kya.Bank.BunchFixtureRoundTrip`,
+`Kya.Bank.BrazulFixtureRoundTrip`,
+`Kya.Bank.MiniGameTimeAttackFixtureRoundTrip`,
+`Kya.Bank.MiniGameBoomyFixtureRoundTrip`,
+`Kya.Bank.MiniGameVariantsFixtureRoundTrip`,
 `Kya.Editor.ActorTransformConversion`, `Kya.Editor.ActorEditService`,
 `Kya.Editor.ActorHandleTransform`, `Kya.Editor.ActorOwnedGeometry`,
 `Kya.Editor.ExportValidation`, `Kya.Editor.LevelPreviewPlacement`,

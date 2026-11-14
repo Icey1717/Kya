@@ -1151,6 +1151,58 @@ bool FKyaActorCatalogTest::RunTest(const FString& Parameters)
         FString(TEXT("Nativ command stand (2)")));
     TestEqual(TEXT("Nativ command source type"), FString(KyaActorFamilies::Find(0x3c)->SourceType),
         FString(TEXT("CActorNativCmd")));
+    TestEqual(TEXT("Event generator label"), GetKyaBehaviourLabel(0x3b, 2),
+        FString(TEXT("Event generator (2)")));
+    TestEqual(TEXT("Event generator source type"), FString(KyaActorFamilies::Find(0x3b)->SourceType),
+        FString(TEXT("CActorEventGenerator")));
+    TestEqual(TEXT("Explosive distributor label"), GetKyaBehaviourLabel(0x1d, 2),
+        FString(TEXT("Explosive distributor (2)")));
+    TestEqual(TEXT("Explosive distributor source type"), FString(KyaActorFamilies::Find(0x1d)->SourceType),
+        FString(TEXT("CActorExplosiveDistributor")));
+    TestEqual(TEXT("Shocker fire wave label"), GetKyaBehaviourLabel(0x4b, 3),
+        FString(TEXT("Shocker fire wave (3)")));
+    TestEqual(TEXT("Shocker source type"), FString(KyaActorFamilies::Find(0x4b)->SourceType),
+        FString(TEXT("CActorShocker")));
+    TestEqual(TEXT("Nativ shop label"), GetKyaBehaviourLabel(0x34, 2),
+        FString(TEXT("Nativ shop sell (2)")));
+    TestEqual(TEXT("Nativ shop source type"), FString(KyaActorFamilies::Find(0x34)->SourceType),
+        FString(TEXT("CActorNativShop")));
+    TestEqual(TEXT("Punching ball label"), GetKyaBehaviourLabel(0x30, 7),
+        FString(TEXT("Punching ball stand (7)")));
+    TestEqual(TEXT("Punching ball source type"), FString(KyaActorFamilies::Find(0x30)->SourceType),
+        FString(TEXT("CActorPunchingBall")));
+    TestEqual(TEXT("Nose monster label"), GetKyaBehaviourLabel(0x26, 3),
+        FString(TEXT("Nose monster attack (3)")));
+    TestEqual(TEXT("Nose monster source type"), FString(KyaActorFamilies::Find(0x26)->SourceType),
+        FString(TEXT("CActorNoseMonster")));
+    TestEqual(TEXT("Pattern alone label"), GetKyaBehaviourLabel(0x3f, 3),
+        FString(TEXT("Pattern alone (3)")));
+    TestEqual(TEXT("Pattern source type"), FString(KyaActorFamilies::Find(0x3f)->SourceType),
+        FString(TEXT("CActorPattern")));
+    TestEqual(TEXT("Ship fly label"), GetKyaBehaviourLabel(0x36, 2),
+        FString(TEXT("Ship fly (2)")));
+    TestEqual(TEXT("Ship source type"), FString(KyaActorFamilies::Find(0x36)->SourceType),
+        FString(TEXT("CActorShip")));
+    TestEqual(TEXT("Bunch label"), GetKyaBehaviourLabel(0x4e, 26),
+        FString(TEXT("Bunch repel (26)")));
+    TestEqual(TEXT("Bunch source type"), FString(KyaActorFamilies::Find(0x4e)->SourceType),
+        FString(TEXT("CActorBunch")));
+    TestEqual(TEXT("Brazul label"), GetKyaBehaviourLabel(0x4f, 26),
+        FString(TEXT("Brazul A (26)")));
+    TestEqual(TEXT("Brazul source type"), FString(KyaActorFamilies::Find(0x4f)->SourceType),
+        FString(TEXT("CActorBrazul")));
+    TestEqual(TEXT("Minigame betting label"), GetKyaBehaviourLabel(0x44, 3),
+        FString(TEXT("Minigame betting (3)")));
+    TestEqual(TEXT("Minigame source type"), FString(KyaActorFamilies::Find(0x44)->SourceType),
+        FString(TEXT("CActorMiniGame")));
+    TestEqual(TEXT("Minigame time-attack source type"), FString(KyaActorFamilies::Find(0x45)->SourceType),
+        FString(TEXT("CActorMiniGameTimeAttack")));
+    TestEqual(TEXT("Minigame box-counter source type"), FString(KyaActorFamilies::Find(0x46)->SourceType),
+        FString(TEXT("CActorMiniGameBoxCounter")));
+    TestEqual(TEXT("Minigame Boomy source type"), FString(KyaActorFamilies::Find(0x47)->SourceType),
+        FString(TEXT("CActorMiniGameBoomy")));
+    TestEqual(TEXT("Minigame distance source type"), FString(KyaActorFamilies::Find(0x55)->SourceType),
+        FString(TEXT("CActorMiniGameDistance")));
     TestFalse(TEXT("Hedgehog behaviour path index is not a top-level reference"), GetKyaReferenceFields().ContainsByPredicate(
         [](const FKyaReferenceField& Field) { return Field.PropertyName == FName(TEXT("HedgehogPathFollowIndex")); }));
 

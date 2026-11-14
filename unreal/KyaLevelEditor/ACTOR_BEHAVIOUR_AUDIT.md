@@ -486,6 +486,783 @@ validation, raw fallback and shared undo/refresh follow the existing Catch codec
 Fixtures, UI and PS2 address verification remain outstanding. No builds or tests
 were run.
 
+## Findings: Shared base classes
+
+Status: **shared, non-instantiated bases documented. They have no class id of
+their own; their serialized records are consumed by the family modules.**
+Source traces are from `CActor::Create` (`Actor.cpp:693`), `CActorMovable::Create`
+(`ActorMovable.cpp`), `CActorAutonomous::Create` (`ActorAutonomous.cpp`),
+`CActorCinematic::Create` (`Actor_Cinematic.cpp:220`), `CActorFighter::Create`
+and `CActorHeroPrivate::Create` (`ActorHero_Private.cpp`).
+
+| Base | Serialized contract | Editor path | Evidence | Exclusions |
+| --- | --- | --- | --- | --- |
+| `CActor` | Name string + 4-byte align, placement, macro-animation list, model strings, common block (default behaviour, bounding sphere, clipping, visibility/culling distances, field 20, sector, hash, lod bias, actor flags, animation layers, lighting, scenario conditions) | `KyaReadActorOffsets` (`KyaCameraStream.h`), `FKyaActorPlacement` (`KyaLevelBank.h`), factory common block | Every real-bank round trip (`Kya.Bank.LevelOneRoundTrip`, `Kya.Bank.SelectedActorRoundTrip`) and every fixture test | Objective/condition/map chunks are scene-level, not actor records |
+| `CActorMovable` | Weight f32 at class payload +0 (4 bytes) | Consumed by every Movable/Autonomous family codec (e.g. `KyaHedgehog.cpp` weight at offset 0) | Family fixtures assert weight; `LevelOne`/`SelectedActor` round trips | None |
+| `CActorAutonomous` | Life maximum u32 at +4, gravity scale f32 at +8, dynamic-extension f32 at +12 and +16 (16 bytes) | Consumed by every Autonomous family codec (`KyaHedgehog.cpp`, `KyaAton.cpp`, `KyaShoot.cpp`, ...), writers range-check the u32 | Fixtures assert exact u32 values (e.g. 16777217) and gravity; `LevelOne` | None |
+| `CActorFighter` | `Actors/KyaFighter.h` prefix: weight, autonomous prefix, 156-byte fixed block, blow/grab/react/combo arrays, weapon index | `KyaFighter.h` shared reader; Wolfen and Kim class modules | `Kya.Bank.WolfenFixtureRoundTrip`, `Kya.Bank.KimFixtureRoundTrip` | Fight-parameter block remains Wolfen-specific |
+| `CActorHero` | No `CActorHero::Create` body exists in the recovered source; class 0x06 instantiates `CActorHeroPrivate` | `Actors/KyaKim.h/.cpp` (Kim finding) | `Kya.Bank.KimFixtureRoundTrip` | Inherited record is audited as part of `CActorHeroPrivate` |
+| `CActorCinematic` | `Create(ByteCode*)` returns immediately: empty class payload | Generic zero-length class-data fallback; no typed fields | Cross-bank scan: class 0x00 (`WOLFENFLAG`, `ATEA_CIN`) reports `withRaw=0` in 6 banks (LEVEL_2/3/9/10/12/NATIV) | None |
+
+## Findings: Shared base behaviours
+
+Status: **shared behaviour records documented; typed where the plugin already has
+a codec, explicit disposition otherwise.** Source traces are from `Actor.cpp`
+and the named actor sources.
+
+| Behaviour | Serialized contract | Editor path / disposition | Evidence |
+| --- | --- | --- | --- |
+| `CBehaviour` | `Create` returns immediately: empty payload | Empty payload is only promoted through the verified `KyaActorFamilies::HasEmptyPayload` applicability map; factory still requires size 0 | Inherited Stand applicability note; every zero-size behaviour row |
+| `CBehaviourStand` | `Create` is not overridden: empty payload; id 0 via `CActor::BuildBehaviour` | `KyaActorFamilies::HasEmptyPayload` traces id 0 to `CActor`; factory promotes only on zero bytes | Bank inventories show id 0 size 0 (e.g. DCA `AIRCANON_L1`) |
+| `CBehaviourInactive` | 12 bytes: activate message s32, flags u32, active behaviour id s32 (`Actor.cpp:5655`) | Typed for Projectile id 12 (`InactiveActivateMessageId`, `InactiveFlags`, `InactiveActiveBehaviourId`); other classes keep the raw payload | `Actors/KyaProjectile.*`; source layout above |
+| `CBehaviourCinematic` | 4 bytes: leave-behaviour id s32 (`Actor_Cinematic.cpp:272`) | Typed for id 1 with size 4 (`bHasTypedCinematicBehaviour`, `CinematicLeaveBehaviourId`); writer validates size 4 | Bank inventories: id 1 size 4 for Wolfen, Kim, Aton and others |
+| `CBehaviourAutonomous` | No `Create` override: empty payload | Empty disposition through the applicability map | `ActorAutonomous.cpp`; zero-size id records |
+| `CBehaviourCatchByTrap` | Conditioned-operation block array (`condOpArray.Create`, `ActorAutonomous.cpp:2187`) | `Actors/KyaCatchByTrap.h/.cpp` + `KyaActorFamilies::UsesCatchByTrap`; readers/writers shared | Micken/Nativ/Projectile/Hedgehog/Aton/Shoot/Hunter/Blazer inventories: id 2 (4/24 bytes) |
+
+## Findings: Implemented behaviours without a dedicated payload codec
+
+Status: **rows that are implemented through shared/family code or are empty by
+source contract; no new class ids.**
+
+| Behaviour | Disposition | Evidence |
+| --- | --- | --- |
+| `CActorBridge::CBhvBasic` | 32-byte basic payload handled by `Actors/KyaBridge.*` (direction + five floats) | `Kya.Bank.BridgeFixtureRoundTrip`; LEVEL_2 class 0x17 id 2 size 32 |
+| `CActorBridge::CBhvWindAware` | 20-byte wind payload handled by `Actors/KyaBridge.*` (five floats) | `Kya.Bank.BridgeFixtureRoundTrip`; source-derived (absent from LEVEL_2) |
+| `CActorDCA::CBhvIAControlled` | id 4 source `Create` is `IMPLEMENTATION_GUARD()`; payload retained raw, not typed | `ActorDCA.cpp:998`; no id-4 instance in LEVEL_1/2 inventories |
+| `CBehaviourCommanderBeatUp` | No `Create` override; id 3 empty on top of `CBehaviourCommander` | `ActorCommander.h`; LEVEL_2 inventory shows only id 2 |
+| `CBehaviourInventory` | `inventoryInfo.Create` + initial behaviour id s32 (`BehaviourInventory.cpp:6`); typed for Projectile id 9 | `Actors/KyaProjectile.*`, `Kya.Bank.ProjectileFixtureRoundTrip` |
+| `CBehaviourRideJamGut` / `CBehaviourHeroRideJamGut` | `CBehaviourRideJamGut::Create` reads the mount/command record (`ActorHero.cpp:1901`); `HeroRideJamGut` adds no `Create`. Retained raw pending JamGut bank evidence | Source layout above; no mounted-JamGut instance in the scanned banks |
+| `CBehaviourFighter` / `...Slave` / `...Ridden` / `...Projected` | No `Create` overrides: empty payloads; Wolfen ids 3/4/5/6 dispatch here | LEVEL_2 inventory: Wolfen ids 3/4/5/6 size 0 |
+| `CBehaviourFighterWolfen` / `CBehaviourWolfenFighterRidden` / `...Slave` / `...Projected` | `CBehaviourFighterWolfen::Create` returns immediately (`ActorWolfen.cpp:10813`); derived classes add no `Create` | Source above; Wolfen ids 3/4/5/6 size 0 |
+| `CBehaviourTrackStand` | Inherits `CBehaviourWolfen::Create` (flags u32, 4 bytes); no own `Create` | `ActorWolfen.cpp:9461`; no id-16 instance in LEVEL_2 |
+| `CBehaviourSleep` | Inherits `CBehaviourWatchDog::Create`; same layout as Wolfen id 10 (88 bytes in LEVEL_2) | `ActorWolfen.cpp:9332`; LEVEL_2 id 12 size 88. Wolfen codec currently handles id 10 but not 12, so id 12 stays raw |
+| `CBehaviourWolfenGrindDeath` | Extends `CBehaviour`; no `Create` override: empty payload | `ActorWolfen.h:899`; no id-25 instance in LEVEL_2 |
+| `S_MINI_GAME_NAME_BEHAVIOUR` | Not a `CBehaviour`: a name/tag struct used by the minigame tables | `ActorMiniGame.cpp` declaration; not a serialized behaviour row |
+
+## Findings: Event generator
+
+Status: **class header and behaviour header typed; manager payloads stay raw**.
+
+- Source classes: `CActorEventGenerator` (`CActor` -> `CObject`) and
+  `CBehaviourEventGen`.
+- Factory registration: class 0x3B (`Types.h`; `CActorEventGenerator::Create`
+  at `ActorEventGenerator.cpp:359`).
+- `BuildBehaviour` only adds id 2 (`behaviourEventGen`); ids 0/1 are inherited.
+- Class payload: `u32` global-event flag, `s32` zone reference, then twelve
+  `PTMF_Ext` manager `Create` calls. Six of the twelve registrations are
+  `DummyTempFunc` placeholders in the decompiled source
+  (`ActorEventGenerator.cpp:389-404`), so the manager byte order cannot be
+  reconstructed exactly; the leading 8 bytes are typed and the rest is preserved
+  as `ClassData`.
+- Behaviour 2 payload: `s32` field 0xC, `f32` field 0x10, then nine manager
+  `Create` calls. Source layouts: camera s32, cinematic s32, message count +
+  12-byte entries, slow-down count + 16-byte entries, quake-A count + 16-byte
+  entries, quake-B count + 24-byte entries (one read is inside a commented
+  `CAM_QUAKE` call, so its original width is not provable), quake-C count +
+  28-byte entries, draw-A fixed 8 bytes, draw-B count + 20-byte entries. Only
+  the 8-byte header is typed; manager bytes stay raw.
+- Editor model/reader/writer: `Public/Actors/KyaEventGenerator.h` and
+  `Private/Actors/KyaEventGenerator.cpp`; factory class/behaviour dispatch and
+  exporter writer wired; catalog family `KyaEventGeneratorActorFamily.cpp`
+  registers `CActorEventGenerator` and ids 0/1/2. Model fields:
+  `EventGeneratorEnabled`, `EventGeneratorZoneRef`,
+  `EventGeneratorFieldC`, `EventGeneratorField10`.
+- Capability/applicability: typed header fields are editable; the raw manager
+  bytes are preserved byte-for-byte. The generic behaviour `Data` gate is left
+  unchanged because the meta string is already at the engine's 1024-character
+  limit, so the raw block remains visible for this family.
+- Tests: `Kya.Bank.EventGeneratorFixtureRoundTrip` (class flag/zone, behaviour
+  header, raw tails, byte-identical unedited export, four edited fields through
+  export/reimport). Real-bank evidence: `Kya.Bank.SelectedActorRoundTrip` run
+  against `LEVEL_2/LEVEL.BNK` exports the bank byte-identically with the new
+  reader/writer (LEVEL_2 has five class-0x3b actors, ids 2 sizes 56/60, raw
+  class payloads 60-68 bytes).
+- Remaining exclusions: manager payloads are not typed; the six
+  `DummyTempFunc` registrations and the commented `CAM_QUAKE` read need Ghidra
+  or a matching original binary before their byte order can be proven.
+
+## Findings: Explosive distributor
+
+Status: **class codec extracted; behaviour id 2 audited as empty**.
+
+- Source classes: `CActorExplosiveDistributor` (`CActor` -> `CObject`) and
+  `CBehaviourExplosiveDistributor`.
+- Factory registration: class 0x1D; `CActorExplosiveDistributor::Create` at
+  `ActorExplosiveDistributor.cpp:19`.
+- `BuildBehaviour` only adds id 2; ids 0/1 are inherited.
+  `CBehaviourExplosiveDistributor::Create` returns immediately (empty payload).
+- Class payload layout (relative to the first class-specific byte):
+
+  | Section | Layout |
+  | --- | --- |
+  | radius | f32 (the game squares it at runtime) |
+  | angle | f32 (the game takes its cosine at runtime) |
+  | projectiles | count u32 + count x 20-byte record |
+  | projectile | actor reference s32, direction xyz f32, eject force f32 |
+  | camera | 32-byte `S_STREAM_EVENT_CAMERA` (index, flags, three f32, actor, zone, one f32) |
+
+  Bytes after the camera remain raw in `ClassData`. The 20-byte stride and
+  44-byte fixed part explain the observed bank sizes: 64 (1 projectile), 84 (2)
+  and 124 (4).
+- Editor model/reader/writer: `Public/Actors/KyaExplosiveDistributor.h` and
+  `Private/Actors/KyaExplosiveDistributor.cpp`; model fields
+  `ExplosiveDistributorRadius`, `ExplosiveDistributorAngle`,
+  `ExplosiveDistributorProjectiles`, `ExplosiveDistributorCamera`. Factory class
+  dispatch and exporter writer wired; `ExplosiveDistributor.Tail` is in both
+  `RawOffset` chains. Catalog family
+  `KyaExplosiveDistributorActorFamily.cpp` registers `CActorExplosiveDistributor`
+  and ids 0/1/2.
+- Capability/applicability: every serialized field is editable; the projectile
+  count is validated before writing so the optional list cannot change size.
+  Runtime transformations (squaring the radius, cosine of the angle, direction
+  normalisation) are not applied to the stored values.
+- Tests: `Kya.Bank.ExplosiveDistributorFixtureRoundTrip` (two projectiles, full
+  camera, byte-identical unedited export, seven edited fields through
+  export/reimport, projectile-count rejection). Real-bank evidence:
+  `Kya.Bank.SelectedActorRoundTrip` against `LEVEL_2/LEVEL.BNK` exports
+  byte-identically; LEVEL_2 has class-0x1d actors with 64-byte class payloads.
+- Remaining exclusions: Ghidra is unavailable, so no PS2 addresses were
+  recorded. Direction/eject-force units are the stored values; runtime scaling
+  is out of scope.
+
+## Findings: Shocker
+
+Status: **class and fire-wave behaviour codecs extracted**.
+
+- Source classes: `CActorShocker` (`CActorAutonomous` -> `CActorMovable` ->
+  `CActor`), `CBehaviourShocker` and `CBehaviourShockerFireWave`.
+- Factory registration: class 0x4B; `CActorShocker::Create` at
+  `ActorShocker.cpp:54`.
+- `BuildBehaviour` only adds id 3 (`SHOCKER_BEHAVIOUR_FIRE_WAVE`); ids 0/1/2 are
+  inherited (`CBehaviourShocker::Create` is empty).
+- Class payload layout (relative to the first class-specific byte):
+
+  | Section | Layout |
+  | --- | --- |
+  | autonomous prefix | weight f32, life u32, gravity f32, two dynamic-ext f32 (20 bytes) |
+  | tuning | fields 350/354/358/35C/364/368/360/F0/36C f32 (nine) |
+  | zones | inner zone s32 (0x374), outer zone s32 (0x370) |
+  | switch | `S_NTF_SWITCH_ONOFF`: count u32 + count x 28-byte target + 32-byte camera |
+  | fields | field 380 u32, fields 384/388/38C/390/394/398 s32, bone id u32 |
+  | add-on | 20-byte `CAddOnGenerator`; sub-object mode u32, then five f32 when 1 |
+
+  Bytes after the add-on remain raw in `ClassData`. With no switch targets the
+  record is 156 bytes (mode 0) or 176 (mode 1); each switch target adds 28,
+  matching the observed 156/184 bank payloads.
+- Behaviour 3 payload (`CBehaviourShockerFireWave::Create` ->
+  `CCircularWaveShoot::Create`): six f32, material id s32 and field 24 s32
+  (32 bytes, matching every LEVEL_2 shocker).
+- Editor model/reader/writer: `Public/Actors/KyaShocker.h` and
+  `Private/Actors/KyaShocker.cpp`; model fields `ShockerField350`...
+  `ShockerBoneId`, `ShockerSwitch`, `ShockerAddOn`, `ShockerWave`. Factory class
+  and behaviour dispatch wired; `Shocker.Tail` is in both `RawOffset` chains.
+  Catalog family `KyaShockerActorFamily.cpp` registers `CActorShocker` and ids
+  0/1/2/3.
+- Capability/applicability: every serialized field is editable; switch target
+  count and add-on mode are validated before writing. Runtime animation lookups
+  (`FUN_001156e0`) and the derived spark parameters are not serialized.
+- Tests: `Kya.Bank.ShockerFixtureRoundTrip` (full class payload with one switch
+  target, mode-1 add-on, wave behaviour; byte-identical unedited export, eight
+  edited fields through export/reimport, switch-count rejection). Real-bank
+  evidence: `Kya.Bank.SelectedActorRoundTrip` against `LEVEL_2/LEVEL.BNK`
+  exports byte-identically; LEVEL_2 has four class-0x4b actors with behaviour 3
+  (32 bytes).
+- Remaining exclusions: Ghidra is unavailable, so no PS2 addresses were
+  recorded. Material/bone/zone ids are scalar references without per-entry
+  pickers.
+
+## Findings: Nativ shop
+
+Status: **class codec and behaviour id 2 typed**.
+
+- Source classes: `CActorNativShop` (`CActor` -> `CObject`) and
+  `CBehaviourNativShopSell`.
+- Factory registration: class 0x34; `CActorNativShop::Create` at
+  `ActorNativShop.cpp:33`.
+- `BuildBehaviour` only adds id 2; ids 0/1 are inherited from `CActor`
+  (`CBehaviourStand::Create` empty, `CBehaviourCinematic` 4 bytes).
+- Class payload layout (relative to the first class-specific byte):
+
+  | Section | Layout |
+  | --- | --- |
+  | radius | f32 (the game squares it at runtime) |
+  | class name | NUL-terminated string (`ByteCode::GetString`), seek aligned up to 4 |
+  | actors | `S_ACTOR_STREAM_REF`: count u32 + count x 4-byte actor references |
+  | episode link | episode threshold link u32 (`episodeThresholdLink`) |
+  | field | field 0x174 u32 |
+  | actor | actor reference s32 |
+
+  `field_0x17C` is set to zero at runtime and is not serialized. The observed
+  payload sizes match 4 + aligned string + 4 + 4n + 12: LEVEL_4's 64-byte
+  payloads use 13-character names (16-byte aligned string) with seven actor
+  entries, and NATIV's 76-byte payloads are consistent with ten.
+- Behaviour 2 payload (`CBehaviourNativShopSell::Create`, 52 bytes):
+
+  | Section | Layout |
+  | --- | --- |
+  | camera | camera stream reference s32 |
+  | sub-objects | five actor stream references s32 (purchasable slots) |
+  | path | `CPathFollowReader` index s32 |
+  | material | material id s32 |
+  | music | music index u32 |
+  | zone | zone reference s32 |
+  | fields | fields 0xC4/0xC8/0xCC f32 |
+
+  The per-slot `field_0x4/8/C/10`, `bCanPurchase` and
+  `selectedPurchaseItemIndex` are derived in memory and are not serialized.
+- Editor model/reader/writer: `Public/Actors/KyaNativShop.h` and
+  `Private/Actors/KyaNativShop.cpp`; model fields `NativShopRadius`,
+  `NativShopName`, `NativShopActorRefs`, `NativShopEpisodeThresholdLink`,
+  `NativShopField174`, `NativShopActorRef`, `NativShopCameraRef`,
+  `NativShopSubObjActorRefs`, `NativShopPathIndex`, `NativShopMaterialId`,
+  `NativShopMusicIndex`, `NativShopZoneRef`, `NativShopFieldC4/C8/CC`. Factory
+  class/behaviour dispatch, exporter writer and `NativShop.Tail` in both
+  `RawOffset` chains. Catalog family `KyaNativShopActorFamily.cpp` registers
+  `CActorNativShop` and ids 0/1/2; 0x34 was added to
+  `KyaActorFamilies::HasEmptyPayload` for id 0.
+- Capability/applicability: every serialized field is editable. The class name
+  is written inside its original aligned span and is rejected if longer (the
+  game stores an in-place pointer); the actor list count is validated before
+  writing.
+- Tests: `Kya.Bank.NativShopFixtureRoundTrip` (class name and actor list, all
+  52 behaviour bytes, byte-identical unedited export, nine edited fields through
+  export/reimport, actor-count rejection, over-long name rejection).
+  Real-bank evidence: `Kya.Bank.SelectedActorRoundTrip` against both
+  `LEVEL_4/LEVEL.BNK` (5 class-0x34 actors, previously raw up to 64 bytes) and
+  `NATIV/LEVEL.BNK` (9 class-0x34 actors) exports byte-identically; a
+  post-change class inventory reports `withRaw=0` for 0x34 in NATIV.
+- Remaining exclusions: Ghidra is unavailable, so no PS2 addresses were
+  recorded. The music index is kept numeric; runtime `CAudioManager` pointer
+  resolution is out of scope.
+
+## Findings: Punching ball
+
+Status: **class codec extracted; all five BuildBehaviour ids audited as empty**.
+
+- Source classes: `CActorPunchingBall` (`CActorFighter` -> `CActorAutonomous` ->
+  `CActorMovable` -> `CActor`), `CBehaviourPunchingBall`,
+  `CBehaviourPunchingBallStand`, `CBehaviourPunchingBallSlave`,
+  `CBehaviourPunchingBallRidden` and `CBehaviourPunchingBallDefault`.
+- Factory registration: class 0x30; `CActorPunchingBall::Create` at
+  `ActorPunchingBall.cpp:9`.
+- `BuildBehaviour` adds id 3 (fighter default), 4 (projected), 5 (ridden),
+  6 (slave) and 7 (`PUNCHING_BALL_BEHAVIOUR_STAND`); every one of those
+  `Create` bodies returns immediately, so all five payloads are empty
+  (`ActorPunchingBall.cpp:530`, `:552`). Ids 0/1 are inherited from `CActor`.
+- Class payload layout (after the shared `CActorFighter` prefix):
+
+  | Section | Layout |
+  | --- | --- |
+  | tuning | fields 0xA80/0xA84/0xA88/0xA8C f32 |
+  | trap stream | `S_TRAP_STREAM_REF`: count u32 + count x 60-byte entry |
+  | trap entry | `S_STREAM_NTF_TARGET_SWITCH` (target ref, cutscene id, flags, message id, message flags, fields 0x14/0x18) + 32-byte `S_STREAM_EVENT_CAMERA` |
+  | actors | actor references 0xA94 and 0xA98 s32 |
+  | camera | `CCamFigData::Create`: exactly fourteen f32 |
+
+  The fighter prefix is parsed with the shared `Actors/KyaFighter.h` reader
+  (`KyaReadFighterPrefixEnd`) but its bytes are left untouched; only the
+  PunchingBall block is typed and written. The 60-byte trap stride and 56-byte
+  camera block explain the observed payloads (84 bytes plus 60 per target;
+  cross-bank maximum 728 including the fighter prefix).
+- Editor model/reader/writer: `Public/Actors/KyaPunchingBall.h` and
+  `Private/Actors/KyaPunchingBall.cpp`; model fields `PunchingBallFieldA80`
+  ... `PunchingBallFieldA8C`, `PunchingBallTrapEntries` (typed
+  `FKyaPunchingBallTrapEntry` incl. camera), `PunchingBallActorRefA94/A98` and
+  `PunchingBallCamFigFloats`. Factory class dispatch, exporter writer and
+  `PunchingBall.Tail` in both `RawOffset` chains. Catalog family
+  `KyaPunchingBallActorFamily.cpp` registers `CActorPunchingBall` and ids
+  0/1/3/4/5/6/7; `0x30` was added to `KyaActorFamilies::HasEmptyPayload` for
+  id 0 and ids 3-7.
+- Capability/applicability: the trap list count and the fourteen-float camera
+  list are validated before writing, so neither can change size. The fighter
+  prefix remains raw and is not exposed for editing through this module.
+- Tests: `Kya.Bank.PunchingBallFixtureRoundTrip` (fighter prefix, four tuning
+  floats, one trap entry with a full camera, two actor refs, fourteen camera
+  floats, two empty behaviours, byte-identical unedited export, five edited
+  fields through export/reimport, trap-count and float-count rejection).
+  Real-bank evidence: `Kya.Bank.SelectedActorRoundTrip` against both
+  `LEVEL_4/LEVEL.BNK` and `NATIV/LEVEL.BNK` exports byte-identically; a
+  post-change class inventory reports `withRaw=0` for 0x30 in both banks
+  (previously raw up to 728 bytes).
+- Remaining exclusions: Ghidra is unavailable, so no PS2 addresses were
+  recorded. `CCamFigData`'s derived runtime angles/scales and the fighter
+  prefix's fight-parameter records are not re-exposed here.
+
+## Findings: Nose monster
+
+Status: **class codec extracted; all three BuildBehaviour ids audited as empty**.
+
+- Source classes: `CActorNoseMonster` (`CActorAutonomous` -> `CActorMovable` ->
+  `CActor`), `CBehaviourNoseMonster`, `CBehaviourNoseMonsterSleep`,
+  `CBehaviourNoseMonsterAttack` and `CBehaviourNoseMonsterDeath`.
+- Factory registration: class 0x26; `CActorNoseMonster::Create` at
+  `ActorNoseMonster.cpp:17`.
+- `BuildBehaviour` adds id 2 (sleep), 3 (attack) and 4 (death); all three
+  inherit the empty `CBehaviourNoseMonster::Create`
+  (`ActorNoseMonster.cpp:1124`). Ids 0/1 are inherited.
+- Class payload layout (after the 20-byte autonomous prefix):
+
+  | Section | Layout |
+  | --- | --- |
+  | zone | zone reference s32 |
+  | tuning | fields 0x384/0x354/0x358/0x35C/0x360 f32 |
+  | version block | fields 0x378/0x37C f32, present only when `CScene::field_0x1C >= 2.21` |
+  | fields | field 0x364 u32, fields 0x370/0x374 f32 |
+  | zone paths | `ZonePathEntryList`: count u32 + count x 8-byte `ZonePathEntry` (zone ref + path-follow ref) |
+  | field | field 0x36C u32 |
+  | fire shot | `CFireShot`: `S_ACTOR_STREAM_REF` count u32 + count x 4-byte actor refs |
+  | fields | field 0x630 s32, field 0x380 u32, fields 0x690/0x694/0x698/0x69C f32, fields 0x6A0/0x6A4/0x6A8 u32 |
+  | notification | `S_NTF_SWITCH_ONOFF`: count u32 + count x 28-byte target + 32-byte camera |
+
+  The scene-version gate changes the record by eight bytes, so the reader parses
+  both shapes and selects the one that consumes the payload exactly (falling
+  back to the versioned shape). The writer rejects any attempt to change the
+  detected layout. The LEVEL_2 actor resolves to the versioned shape.
+- Editor model/reader/writer: `Public/Actors/KyaNoseMonster.h` and
+  `Private/Actors/KyaNoseMonster.cpp`; model fields `NoseMonsterZoneRef`,
+  `NoseMonsterField384/354/358/35C/360`, `NoseMonsterField378/37C`,
+  `NoseMonsterField364/370/374`, `NoseMonsterZonePathEntries`,
+  `NoseMonsterField36C`, `NoseMonsterFireShotActorRefs`, `NoseMonsterField630`,
+  `NoseMonsterField380`, `NoseMonsterField690/694/698/69C`,
+  `NoseMonsterField6A0/6A4/6A8` and `NoseMonsterSwitch`, plus the read-only
+  `bNoseMonsterHasVersionFloats` shape flag. Factory class dispatch, exporter
+  writer and `NoseMonster.Tail` in both `RawOffset` chains. Catalog family
+  `KyaNoseMonsterActorFamily.cpp` registers `CActorNoseMonster` and ids
+  0/1/2/3/4; `0x26` was added to `KyaActorFamilies::HasEmptyPayload` for id 0
+  and ids 2-4.
+- Capability/applicability: every serialized field is editable except the
+  layout-shape flag; zone-path, fire-shot and switch counts are validated before
+  writing. Runtime substitutions (radius default 5.0, angle defaults) are not
+  applied to the stored values.
+- Tests: `Kya.Bank.NoseMonsterFixtureRoundTrip` (versioned layout with one zone
+  path, two fire-shot refs and one switch target, three empty behaviours,
+  byte-identical unedited export, seven edited fields through export/reimport,
+  layout-version and zone-path-count rejection). Real-bank evidence:
+  `Kya.Bank.SelectedActorRoundTrip` against `LEVEL_2/LEVEL.BNK` exports
+  byte-identically, the post-change class inventory reports `withRaw=0`
+  (previously raw up to 304 bytes), and a direct probe shows the real actor uses
+  the versioned shape (`versionFloats=True`, zone 109, field 0x36C 5).
+- Remaining exclusions: Ghidra is unavailable, so no PS2 addresses were
+  recorded. The scene-version value used by the game is inferred from record
+  length, not from a bank-level version field (the plugin does not expose one).
+
+## Findings: Pattern controller
+
+Status: **class and behaviour 3 codecs extracted; behaviour 4 audited as empty**.
+
+- Source classes: `CActorPattern` (class 0x3F, `PATTERN_CON`; `CActorAutonomous`
+  -> `CActorMovable` -> `CActor`), `CBehaviourPattern`,
+  `CBehaviourPatternAlone` and `CBehaviourPatternMultiple`.
+- Factory registration: class 0x3F (`ActorFactory.cpp:387`); bank actors are
+  named `LINER`/`LINER_L1`, which is why the cross-bank table lists 0x3F as
+  LINER. `CActorPattern::Create` is at `ActorPattern.cpp:15`.
+- `BuildBehaviour` adds id 3 (alone) and 4 (multiple); `CBehaviourPattern` and
+  `CBehaviourPatternMultiple::Create` are empty (`ActorPattern.cpp:241`,
+  `:342`). Ids 0/1 are inherited and id 2 is the shared catch-by-trap
+  behaviour (`CActorAutonomous::BuildBehaviour`).
+- Class payload layout (after the 20-byte autonomous prefix):
+
+  | Section | Layout |
+  | --- | --- |
+  | tuning | fields 0x350/0x354/0x358/0x35C/0x364/0x360/0x368 f32 |
+  | fields | field 0x36C s32, field 0x370 s32 |
+  | bone | bone id u32 |
+  | add-on | `CAddOnGenerator`: field 0, money type, money count, bonus count, field 0xC (five words) |
+  | add-on sub-object | mode u32; when 1, five f32 (scene angles/scale) |
+
+  The bank records are 84 bytes with mode 0; mode 1 adds 20 bytes.
+- Behaviour 3 payload (`CBehaviourPatternAlone::Create` -> `CPatternPart`):
+
+  | Section | Layout |
+  | --- | --- |
+  | tuning | fields 0x90/0x94/0x98 f32 |
+  | pattern part | six f32 (fields 0x4/0x0/0xC/0x8/0x10/0x14) |
+  | material | material id s32 |
+  | fields | field 0x1C f32, field 0x20 f32 |
+  | version field | field 0x24 f32, present only when `CScene::field_0x1C >= 2.21` |
+  | field | field 0x28 u32 |
+
+  Observed payloads are 56 bytes (versioned); the reader also accepts the
+  52-byte older shape and rejects a layout change on write.
+- Editor model/reader/writer: `Public/Actors/KyaPattern.h` and
+  `Private/Actors/KyaPattern.cpp`; model fields `PatternField350` ...
+  `PatternField368`, `PatternField36C/370`, `PatternBoneId`, `PatternAddOn`,
+  and the behaviour fields `PatternField90/94/98`,
+  `PatternPartField4/0/C/8/10/14`, `PatternPartMaterialId`,
+  `PatternPartField1C/20/24/28`, plus the read-only
+  `bPatternPartHasField24`. Factory class/behaviour dispatch, exporter writer
+  and `Pattern.Tail` in both `RawOffset` chains. Catalog family
+  `KyaPatternActorFamily.cpp` registers `CActorPattern` and ids 0/1/2/3/4;
+  0x3F was added to `KyaActorFamilies::HasEmptyPayload` for id 0 and id 4 and
+  to `UsesCatchByTrap`.
+- Capability/applicability: every serialized field is editable except the
+  add-on mode and the pattern-part shape flag; both are validated on write so
+  the record cannot change size.
+- Tests: `Kya.Bank.PatternFixtureRoundTrip` (84-byte class record with mode 0,
+  56-byte behaviour 3, empty behaviour 4, byte-identical unedited export, seven
+  edited fields through export/reimport, add-on-mode and pattern-shape
+  rejection). Real-bank evidence: `Kya.Bank.SelectedActorRoundTrip` against
+  `LEVEL_5/LEVEL.BNK` exports byte-identically and the post-change inventory
+  reports `withRaw=0` for both class-0x3F actors (previously raw up to 84
+  bytes).
+- Remaining exclusions: Ghidra is unavailable, so no PS2 addresses were
+  recorded. `CPatternPart` runtime point-pattern initialization and the
+  add-on generator's generated money/bonus instances are out of scope.
+
+## Findings: Ship
+
+Status: **class codec extracted; behaviour id 2 audited as empty**.
+
+- Source classes: `CActorShip` (class 0x36; `CActor` -> `CObject`),
+  `CBehaviourShip` and `CBehaviourShipFLY`. Bank actors are named
+  `HUNTERSHIP_01`, which is why the cross-bank table lists 0x36 as HUNTERSHIP.
+- Factory registration: class 0x36 (`Types.h` `SHIP`); `CActorShip::Create` at
+  `ActorShip.cpp:12`.
+- `BuildBehaviour` only adds id 2 (`SHIP_BEHAVIOUR_FLY`); both
+  `CBehaviourShip::Create` and `CBehaviourShipFLY::Create` return immediately
+  (`ActorShip.cpp:956`, `:978`). Ids 0/1 are inherited.
+- Class payload layout (relative to the first class-specific byte):
+
+  | Section | Layout |
+  | --- | --- |
+  | care boys | `S_ACTOR_STREAM_REF`: count u32 + count x 4-byte actor references |
+  | fx ints | `CFxArrayManager`: count s32 + count x s32 |
+  | actors | jaw care-boy, air-cannon and hunter references s32 |
+  | tuning | fields 0x214/0x210/0x218/0x21C/0x220/0x224/0x230, `kimTouchRange`, field 0x22C f32 |
+  | fields | fx `field_0x18` s32, fields 0x234/0x238 s32, field 0x1AC s32 |
+  | block A | fields 0x18C[0..3] u32 |
+  | block B | fields 0x19C/0x1A0/0x1A4/0x1A8 u32 |
+  | vision | `CVision::Create`: four f32 + flags u32 |
+  | notification | `S_NTF_SWITCH`: count u32 + count x 28-byte target + 32-byte camera |
+
+  The real LEVEL_3 record is 244 bytes and is consumed exactly, with four
+  care-boy refs, three fx ints and two switch targets.
+- Editor model/reader/writer: `Public/Actors/KyaShip.h` and
+  `Private/Actors/KyaShip.cpp`; model fields `ShipCareBoyActorRefs`,
+  `ShipFxIntValues`, `ShipJawCareBoyRef`/`ShipAirCannonRef`/`ShipHunterRef`,
+  `ShipField214` ... `ShipKimTouchRange`/`ShipField22C`, `ShipFxField18`,
+  `ShipField234/238/1AC`, `ShipWords18C`, `ShipField19C/1A0/1A4/1A8`,
+  `ShipVisionRange/HalfAngle/Field38/Field3C/Flags` and `ShipSwitch`. Factory
+  class dispatch, exporter writer and `Ship.Tail` in both `RawOffset` chains.
+  Catalog family `KyaShipActorFamily.cpp` registers `CActorShip` and ids 0/1/2;
+  0x36 was added to `KyaActorFamilies::HasEmptyPayload` for id 0 and id 2.
+- Capability/applicability: every serialized field is editable; the care-boy
+  list, fx list, 4-word block and switch count are validated before writing so
+  the record cannot change size.
+- Tests: `Kya.Bank.ShipFixtureRoundTrip` (both lists, three actor refs, nine
+  floats, both word blocks, vision and one switch target, empty behaviour 2,
+  byte-identical unedited export, seven edited fields through export/reimport,
+  care-boy-count and word-block rejection). Real-bank evidence: LEVEL_3 class
+  inventory reports `withRaw=0` for 0x36 (previously raw up to 244 bytes) and a
+  direct probe of `HUNTERSHIP_01` (actor index 483) shows four care-boy refs,
+  three fx ints, vision range 34 and two switch targets with no raw tail.
+- Remaining exclusions: Ghidra is unavailable, so no PS2 addresses were
+  recorded. The whole-bank `Kya.Bank.SelectedActorRoundTrip` on LEVEL_3 stops
+  at actor index 301 (a pre-existing moving-platform record unrelated to this
+  class; the ship is index 483, so it is never reached). The ship class itself
+  is fully consumed by the inventory probe above; per-actor export of index 483
+  cannot be exercised until that platform record is fixed.
+
+## Findings: Bunch
+
+Status: **class block and both Bunch behaviours typed; Wolfen behaviour ids
+reuse the shared Wolfen codec**.
+
+- Source classes: `CActorBunch` (class 0x4E; `CActorWolfen` -> `CActorFighter`),
+  `CBehaviourBunch`, `CBehaviourBunchRepel`, `CBehaviourBunchFence`,
+  `CBehaviourBunchFighterProjected` and `CBehaviourFighterBunch`.
+- Factory registration: class 0x4E; `CActorBunch::Create` at
+  `ActorBunch.cpp:11`.
+- `BuildBehaviour` adds id 3 (fighter default), 4 (projected), 26
+  (`BUNCH_BEHAVIOUR_REPEL`) and 27 (`BUNCH_BEHAVIOUR_FENCE`); every other id
+  delegates to `CActorWolfen::BuildBehaviour`, so the Wolfen behaviour codec now
+  accepts class 0x4E as well. `CBehaviourBunch::Create`,
+  `CBehaviourBunchFighterProjected` and `CBehaviourFighterBunch` add no Create
+  body of their own.
+- Class payload layout: the shared `CActorWolfen` prefix (parsed only to locate
+  its end, bytes untouched), then:
+
+  | Section | Layout |
+  | --- | --- |
+  | field | field 0xFC8 f32 |
+  | entries | count u32 + records |
+  | entry | field 0 u32, has-behaviour u32; when nonzero a behaviour id u32; zone id u32; field 0xC u32 |
+  | mesh | mesh component id s32, mesh index s32 |
+
+  The real LEVEL_9 record is 3960 bytes and is consumed exactly after the
+  Wolfen prefix.
+- Behaviour 26 (`CBehaviourBunchRepel`, 80 + 4n bytes):
+
+  | Section | Layout |
+  | --- | --- |
+  | waypoint | waypoint stream reference s32 |
+  | shockwaves | count u32, then three f32 (field 0x14, shock-wave fields 0x10/0x14) |
+  | indices | count u32 + count x u32 |
+  | message | damage f32, field 0x30 f32, field 0x70 f32 |
+  | vectors | vector 0x20 xyz f32, vector 0x30 xyz f32 |
+  | mesh | component s32, mesh s32, type u32, reserved u32, default id u32 |
+
+- Behaviour 27 (`CBehaviourBunchFence`):
+
+  | Section | Layout |
+  | --- | --- |
+  | refs | actor stream reference s32, waypoint stream reference s32 |
+  | waypoints | count u32 + count x s32 |
+  | fences | count u32 + groups |
+  | group | field 0 u32, field 4 u32, entry count u32, then entries |
+  | entry | waypoint reference s32, field 4 s32 |
+  | meshes | StaticMeshComponentAdvanced field 0xF0 (two s32), field 0x70 (two s32) |
+  | fx | four u32 effect types |
+
+- Editor model/reader/writer: `Public/Actors/KyaBunch.h` and
+  `Private/Actors/KyaBunch.cpp`; model fields `BunchFieldFC8`,
+  `BunchStreamEntries`, `BunchMeshComponentId/MeshIndex`,
+  `BunchRepelWayPointRef`, `BunchRepelShockWaveCount`,
+  `BunchRepelField14/ShockWaveField10/ShockWaveField14`, `BunchRepelIndices`,
+  `BunchRepelDamage/MsgHitField30/MsgHitField70`,
+  `BunchRepelVector20/30`, `BunchRepelMeshComponentId/MeshIndex/MeshType/
+  Reserved/DefaultId`, `BunchFenceActorRef/WayPointRef`, `BunchFenceWayPoints`,
+  `BunchFenceGroups`, the two mesh pairs and `BunchFenceFxTypes`. Factory
+  class/behaviour dispatch, exporter class and behaviour writers,
+  `Bunch.Tail` in both `RawOffset` chains. Catalog family
+  `KyaBunchActorFamily.cpp` registers `CActorBunch` and the full id set;
+  0x4E was added to `HasEmptyPayload` for id 0/3/4 and to `UsesCatchByTrap`.
+- Capability/applicability: every typed field is editable; entry, index, fence
+  and group counts are validated before writing so records cannot change size.
+  The Wolfen prefix remains raw and is not editable through this module.
+- Tests: `Kya.Bank.BunchFixtureRoundTrip` (Wolfen prefix, two stream entries
+  with and without a behaviour id, empty ids 3/4, typed Wolfen track id 15,
+  repel id 26 and fence id 27, byte-identical unedited export, nine edited
+  fields through export/reimport, entry-count and repel-index-count rejection).
+  Real-bank evidence: `Kya.Bank.SelectedActorRoundTrip` on `LEVEL_9/LEVEL.BNK`
+  exports byte-identically and the class inventory reports `withRaw=0` for 0x4E
+  (previously raw up to 3960 bytes).
+- Remaining exclusions: Ghidra is unavailable, so no PS2 addresses were
+  recorded. Shock-wave and fence mesh runtime instances and the Wolfen prefix's
+  fight-parameter records are not re-exposed here.
+
+## Findings: Brazul
+
+Status: **class block and both Brazul behaviours typed; Wolfen ids reuse the
+shared Wolfen codec**.
+
+- Source classes: `CActorBrazul` (class 0x4F; `CActorWolfen` -> `CActorFighter`),
+  `CBehaviourBrazulA`, `CBehaviourBrazulB` and `CBehaviourFighterBrazul`.
+- Factory registration: class 0x4F; `CActorBrazul::Create` at
+  `ActorBrazul.cpp:8`.
+- `BuildBehaviour` adds id 3 (fighter default), 26 (`CBehaviourBrazulA`) and 27
+  (`CBehaviourBrazulB`); every other id delegates to `CActorWolfen::BuildBehaviour`,
+  so the Wolfen behaviour codec accepts class 0x4F too. Ids 4/5/6 are the
+  inherited fighter behaviours and `CBehaviourFighterBrazul` adds no Create body.
+- Class payload layout (after the shared `CActorWolfen` prefix, whose bytes are
+  untouched):
+
+  | Section | Layout |
+  | --- | --- |
+  | fields | fields 0xFC0/0xFC4 f32 |
+  | path | `CPathFollowReader` index s32 |
+  | fields | field 0x1060 u32, reserved u32 |
+  | material | material id s32 |
+  | sparks | two spark parameters u32 |
+  | fx | three `CFxHandleExt` ids u32, fx init u32, two more handle ids u32 |
+  | meshes | two `StaticMeshComponentAdvanced` records (texture + mesh s32) |
+
+  The real bank record is 2964 bytes and is consumed exactly after the Wolfen
+  prefix.
+- Behaviour 26 (`CBehaviourBrazulA`): count u32 + sub-objects. Each sub-object:
+  field 0 s32, field 4 u32, field 8 f32, fields 0xC/0x10 u32, path count u32 +
+  count x `CPathFollowReader` index s32.
+- Behaviour 27 (`CBehaviourBrazulB`): waypoint stream reference s32 plus one
+  `S_NTF_SWITCH` (count u32 + count x 28-byte target + 32-byte camera).
+- Editor model/reader/writer: `Public/Actors/KyaBrazul.h` and
+  `Private/Actors/KyaBrazul.cpp`; model fields `BrazulFieldFC0/FC4`,
+  `BrazulPathIndex`, `BrazulField1060`, `BrazulReserved`, `BrazulMaterialId`,
+  `BrazulSparkParamA/B`, `BrazulFxHandles`, `BrazulFxInit`,
+  `BrazulMeshATexture/Mesh`, `BrazulMeshBTexture/Mesh`, and the behaviour fields
+  `BrazulSubObjs`, `BrazulBWayPointRef`, `BrazulBSwitch`. Factory class and
+  behaviour dispatch, exporter class/behaviour writers, `Brazul.Tail` in both
+  `RawOffset` chains. Catalog family `KyaBrazulActorFamily.cpp` registers
+  `CActorBrazul` and the full id set; 0x4F was added to `HasEmptyPayload` for
+  id 0/3/4/5/6 and to `UsesCatchByTrap`.
+- Capability/applicability: every typed field is editable; fx-handle, sub-object
+  and path counts are validated before writing so records cannot change size.
+  The Wolfen prefix remains raw and is not editable through this module.
+- Tests: `Kya.Bank.BrazulFixtureRoundTrip` (Wolfen prefix, five fx handles with
+  the init word between the groups, both meshes, empty fighter ids 3/4, typed
+  Wolfen track id 15, Brazul A sub-object with two paths and Brazul B switch,
+  byte-identical unedited export, nine edited fields through export/reimport,
+  fx-count and path-count rejection). Real-bank evidence:
+  `Kya.Bank.SelectedActorRoundTrip` exports `LEVEL_11`, `LEVEL_12` and
+  `LEVEL_13` byte-identically and the class inventory reports `withRaw=0` for
+  0x4F (previously raw up to 2964 bytes).
+- Remaining exclusions: Ghidra is unavailable, so no PS2 addresses were
+  recorded. Spark/bone-physics runtime instances and the Wolfen fight-parameter
+  records are not re-exposed here.
+
+## Findings: Minigame family
+
+Status: **all five minigame class ids and the shared behaviour ids typed**.
+
+- Source classes: `CActorMiniGame` (class 0x44), `CActorMiniGameTimeAttack`
+  (0x45), `CActorMiniGameBoxCounter` (0x46), `CActorMiniGameBoomy` (0x47),
+  `CActorMiniGameDistance` (0x55), and the behaviours `CBehaviourMiniGame`
+  (base), `CBehaviourMiniGameTraining`, `CBehaviourMiniGameBetting` and
+  `CBehaviourMiniGameMulti`. The four variant actors reuse those behaviour
+  classes (their `Training`/`Betting`/`Multi` wrappers add no `Create` body).
+- Factory registration: 0x44/0x45/0x46/0x47/0x55; `CActorMiniGame::Create` at
+  `ActorMiniGame.cpp:785`.
+- `BuildBehaviour` maps id 2 (`training`), 3 (`betting`) and 4 (`multi`); ids
+  0/1 are inherited. `CBehaviourMiniGameTraining` and `CBehaviourMiniGameMulti`
+  have empty `Create`; `CBehaviourMiniGameBetting::Create` reads a bet count and
+  count x {cost s32, reward s32} (`ActorMiniGame.cpp:1253`).
+- Shared class layout:
+
+  | Section | Layout |
+  | --- | --- |
+  | fields | field 0x160 u64, fields 0x168/0x16C u32 |
+  | actors | `S_ACTOR_STREAM_REF`: count u32 + count x 4-byte actor refs |
+  | floats | count s32 + count x f32 |
+  | scores | count s32 + scores |
+  | score | score f32, name string (`ByteCode::GetString`, 4-byte aligned) |
+  | default score | score f32 + name string, present only when the scene is >= 2.21 |
+  | refs | waypoint ref s32, field 0x190 s32, field 0x1A8 u64 |
+  | notification | `S_NTF_SWITCH`: count u32 + count x 28-byte target + 32-byte camera |
+
+  The scene-version default score changes the record size; the reader parses
+  both shapes and selects the one that consumes the payload exactly, and the
+  writer rejects a shape change.
+- Variant tails:
+
+  | Class | Tail |
+  | --- | --- |
+  | 0x44 base | none |
+  | 0x45 TimeAttack | field 0x1E0 s32 |
+  | 0x46 BoxCounter | time limit f32 |
+  | 0x47 Boomy | target list, penalty-target list, time limit f32, max penalties s32, game flags u32, sequence list |
+  | 0x55 Distance | two `CPathFollowReader` indices s32 |
+
+  A Boomy target is an actor ref s32 plus one `S_NTF_SWITCH`; a Boomy sequence is
+  a count s32 followed by count x target index s32.
+- Editor model/reader/writer: `Public/Actors/KyaMiniGame.h` and
+  `Private/Actors/KyaMiniGame.cpp`; model fields `MiniGameField160/168/16C`,
+  `MiniGameActorRefs`, `MiniGameFloats`, `MiniGameScores`,
+  `bMiniGameHasDefaultScore`, `MiniGameDefaultScore`, `MiniGameWayPointRef`,
+  `MiniGameField190/1A8`, `MiniGameSwitch`,
+  `MiniGameTimeAttackField1E0`, `MiniGameTimeLimit`, `MiniGamePathA/B`,
+  `MiniGameBoomyTargets`, `MiniGameBoomyPenaltyTargets`,
+  `MiniGameMaxPenalties`, `MiniGameGameFlags`, `MiniGameSequences`, and the
+  behaviour field `MiniGameBets`. Factory class/behaviour dispatch, exporter
+  class and behaviour writers, `MiniGame.Tail` in both `RawOffset` chains.
+  Catalog families `KyaMiniGameActorFamily.cpp` register all five classes with
+  ids 0/1/2/3/4 and ids 3 for the betting codec; all five ids were added to
+  `HasEmptyPayload` for id 0/2/4.
+- Capability/applicability: every typed field is editable. Score names are
+  written inside their original aligned span (growth is rejected); score,
+  float, actor, bet, target, penalty and sequence counts are validated before
+  writing.
+- Tests: `Kya.Bank.MiniGameTimeAttackFixtureRoundTrip`,
+  `Kya.Bank.MiniGameBoomyFixtureRoundTrip` and
+  `Kya.Bank.MiniGameVariantsFixtureRoundTrip` (0x44 base and 0x46 box counter).
+  They cover score names, the default score, the switch, betting, the
+  time-attack field, Boomy target/penalty/sequence lists, byte-identical
+  unedited export, edited-field round trips and count rejections. 0x44 and 0x46
+  do not appear in any shipped bank (all 16 banks were scanned); their evidence
+  is the fixture round trip. Real-bank evidence:
+  `Kya.Bank.SelectedActorRoundTrip` on `NATIV/LEVEL.BNK` exports
+  byte-identically and the class inventory reports `withRaw=0` for 0x45 (8
+  actors), 0x47 (2) and 0x55 (1); previously raw up to 3988 bytes.
+- Remaining exclusions: Ghidra is unavailable, so no PS2 addresses were
+  recorded. 0x44/0x46 have no shipped-bank instance; score-list runtime sorting
+  and the minigame manager/organizer wiring are out of scope.
+
+## Findings: Row-to-finding index
+
+Every checklist row that predates the per-family findings above is linked
+here to the finding or progress section that records its factory ids,
+behaviour ids and payload disposition.
+
+| Row | Covering finding | Disposition |
+| --- | --- | --- |
+| `CActorAcceleratos` | Implementation progress: Helper Sign, Wood Monster, Shocker Command, Acceleratos | class and behaviour codecs in `Actors/KyaAcceleratos.*`, `KyaHelperSign.*`, `KyaShockerCmd.*`, `KyaWoodMonster.*` |
+| `CActorHelperSign` | Implementation progress: Helper Sign, Wood Monster, Shocker Command, Acceleratos | class and behaviour codecs in `Actors/KyaAcceleratos.*`, `KyaHelperSign.*`, `KyaShockerCmd.*`, `KyaWoodMonster.*` |
+| `CActorShockerCmd` | Implementation progress: Helper Sign, Wood Monster, Shocker Command, Acceleratos | class and behaviour codecs in `Actors/KyaAcceleratos.*`, `KyaHelperSign.*`, `KyaShockerCmd.*`, `KyaWoodMonster.*` |
+| `CActorWoodMonster` | Implementation progress: Helper Sign, Wood Monster, Shocker Command, Acceleratos | class and behaviour codecs in `Actors/KyaAcceleratos.*`, `KyaHelperSign.*`, `KyaShockerCmd.*`, `KyaWoodMonster.*` |
+| `CBehaviourBlazer` | Implementation progress: Blazer | class codec in `Actors/KyaBlazer.*`; behaviour 3 is empty |
+| `CBehaviourBlazerStand` | Implementation progress: Blazer | class codec in `Actors/KyaBlazer.*`; behaviour 3 is empty |
+| `CActorDCA::CBhvDefault` | Findings: DCA | behaviour 2 empty; behaviours 3/5 typed in `Actors/KyaDca.*` |
+| `CActorDCA::CBhvControlled` | Findings: DCA | behaviour 2 empty; behaviours 3/5 typed in `Actors/KyaDca.*` |
+| `CActorDCA::CBhvTrajectory` | Findings: DCA | behaviour 2 empty; behaviours 3/5 typed in `Actors/KyaDca.*` |
+| `CBehaviourFighterSlave` | Findings: Shared base behaviours | fighter ids 4/5/6 dispatch to empty Create bodies |
+| `CBehaviourFighterRidden` | Findings: Shared base behaviours | fighter ids 4/5/6 dispatch to empty Create bodies |
+| `CBehaviourFighterProjected` | Findings: Shared base behaviours | fighter ids 4/5/6 dispatch to empty Create bodies |
+| `CActorFx::CBhvSingle` | Findings: FX | behaviour ids 2/3/4 typed in `Actors/KyaFx.*` |
+| `CActorFx::CBhvPath` | Findings: FX | behaviour ids 2/3/4 typed in `Actors/KyaFx.*` |
+| `CActorFx::CBhvUnknown` | Findings: FX | behaviour ids 2/3/4 typed in `Actors/KyaFx.*` |
+| `CBehaviourHelperSignStand` | Implementation progress: Helper Sign, Wood Monster, Shocker Command, Acceleratos | HelperSign stand id is empty in `Actors/KyaHelperSign.*` |
+| `CBehaviourHunter` | Implementation progress: Hunter | behaviour codecs in `Actors/KyaHunter.*`; the watch id is empty |
+| `CBehaviourHunterWatch` | Implementation progress: Hunter | behaviour codecs in `Actors/KyaHunter.*`; the watch id is empty |
+| `CBehaviourMiniGameBoomyTraining` | Findings: Minigame family | variant wrappers reuse the base training (empty), betting (typed) and multi (empty) codecs |
+| `CBehaviourMiniGameBoomyBetting` | Findings: Minigame family | variant wrappers reuse the base training (empty), betting (typed) and multi (empty) codecs |
+| `CBehaviourMiniGameBoomyMulti` | Findings: Minigame family | variant wrappers reuse the base training (empty), betting (typed) and multi (empty) codecs |
+| `CBehaviourMiniGameBoxCounterTraining` | Findings: Minigame family | variant wrappers reuse the base training (empty), betting (typed) and multi (empty) codecs |
+| `CBehaviourMiniGameBoxCounterBetting` | Findings: Minigame family | variant wrappers reuse the base training (empty), betting (typed) and multi (empty) codecs |
+| `CBehaviourMiniGameBoxCounterMulti` | Findings: Minigame family | variant wrappers reuse the base training (empty), betting (typed) and multi (empty) codecs |
+| `CBehaviourMiniGameDistanceTraining` | Findings: Minigame family | variant wrappers reuse the base training (empty), betting (typed) and multi (empty) codecs |
+| `CBehaviourMiniGameDistanceBetting` | Findings: Minigame family | variant wrappers reuse the base training (empty), betting (typed) and multi (empty) codecs |
+| `CBehaviourMiniGameDistanceMulti` | Findings: Minigame family | variant wrappers reuse the base training (empty), betting (typed) and multi (empty) codecs |
+| `CBehaviourMiniGameTimeAttackTraining` | Findings: Minigame family | variant wrappers reuse the base training (empty), betting (typed) and multi (empty) codecs |
+| `CBehaviourMiniGameTimeAttackBetting` | Findings: Minigame family | variant wrappers reuse the base training (empty), betting (typed) and multi (empty) codecs |
+| `CBehaviourMiniGameTimeAttackMulti` | Findings: Minigame family | variant wrappers reuse the base training (empty), betting (typed) and multi (empty) codecs |
+| `CBehaviourMiniGamesManager` | Implementation progress: Minigames Manager and Organizer | class/behaviour codecs in `Actors/KyaMiniGames*.*`; stand ids empty |
+| `CBehaviourMiniGamesManagerStand` | Implementation progress: Minigames Manager and Organizer | class/behaviour codecs in `Actors/KyaMiniGames*.*`; stand ids empty |
+| `CBehaviourMiniGamesOrganizer` | Implementation progress: Minigames Manager and Organizer | class/behaviour codecs in `Actors/KyaMiniGames*.*`; stand ids empty |
+| `CBehaviourMiniGamesOrganizerStand` | Implementation progress: Minigames Manager and Organizer | class/behaviour codecs in `Actors/KyaMiniGames*.*`; stand ids empty |
+| `CBehaviourPlatformStand` | Findings: Moving platform | platform behaviour ids typed in `Actors/KyaMovingPlatform.*`; slab/destroyed and stand bodies are source-disposed |
+| `CBehaviourPlatformTrajectory` | Findings: Moving platform | platform behaviour ids typed in `Actors/KyaMovingPlatform.*`; slab/destroyed and stand bodies are source-disposed |
+| `CBehaviourPlatformSlab` | Findings: Moving platform | platform behaviour ids typed in `Actors/KyaMovingPlatform.*`; slab/destroyed and stand bodies are source-disposed |
+| `CBehaviourPlatformDestroyed` | Findings: Moving platform | platform behaviour ids typed in `Actors/KyaMovingPlatform.*`; slab/destroyed and stand bodies are source-disposed |
+| `CBehaviourWeighingMachine` | Findings: Moving platform | platform behaviour ids typed in `Actors/KyaMovingPlatform.*`; slab/destroyed and stand bodies are source-disposed |
+| `CBehaviourWeighingMachineMaster` | Findings: Moving platform | platform behaviour ids typed in `Actors/KyaMovingPlatform.*`; slab/destroyed and stand bodies are source-disposed |
+| `CBehaviourWeighingMachineSlave` | Findings: Moving platform | platform behaviour ids typed in `Actors/KyaMovingPlatform.*`; slab/destroyed and stand bodies are source-disposed |
+| `CBehaviourSelector` | Findings: Moving platform | platform behaviour ids typed in `Actors/KyaMovingPlatform.*`; slab/destroyed and stand bodies are source-disposed |
+| `CBehaviourSelectorMaster` | Findings: Moving platform | platform behaviour ids typed in `Actors/KyaMovingPlatform.*`; slab/destroyed and stand bodies are source-disposed |
+| `CBehaviourSelectorSlave` | Findings: Moving platform | platform behaviour ids typed in `Actors/KyaMovingPlatform.*`; slab/destroyed and stand bodies are source-disposed |
+| `CBehaviourTeleportRandom` | Findings: Teleporter | `CBehaviourTeleportRandom` typed in `Actors/KyaTeleporter.*` |
+| `CBehaviourNativExorcisme` | Findings: Nativ | speak/live/seller/take-and-put/exorcism codecs in `Actors/KyaNativ.*` (see also the Nativ progress sections) |
+| `CBehaviourNativSeller` | Findings: Nativ | speak/live/seller/take-and-put/exorcism codecs in `Actors/KyaNativ.*` (see also the Nativ progress sections) |
+| `CBehaviourNativTakeAndPut` | Findings: Nativ | speak/live/seller/take-and-put/exorcism codecs in `Actors/KyaNativ.*` (see also the Nativ progress sections) |
+| `CBehaviourNativSpeak` | Findings: Nativ | speak/live/seller/take-and-put/exorcism codecs in `Actors/KyaNativ.*` (see also the Nativ progress sections) |
+| `CBehaviourNativLive` | Findings: Nativ | speak/live/seller/take-and-put/exorcism codecs in `Actors/KyaNativ.*` (see also the Nativ progress sections) |
+| `CBehaviourProjectileStand` | Findings: Projectile | projectile behaviour ids typed in `Actors/KyaProjectile.*` |
+| `CBehaviourProjectileLavaBall` | Findings: Projectile | projectile behaviour ids typed in `Actors/KyaProjectile.*` |
+| `CBehaviourProjectileStraight` | Findings: Projectile | projectile behaviour ids typed in `Actors/KyaProjectile.*` |
+| `CBehaviourProjectileExcuse` | Findings: Projectile | projectile behaviour ids typed in `Actors/KyaProjectile.*` |
+| `CBehaviourProjectilePortable` | Findings: Projectile | projectile behaviour ids typed in `Actors/KyaProjectile.*` |
+| `CBehaviourProjectileNew` | Findings: Projectile | projectile behaviour ids typed in `Actors/KyaProjectile.*` |
+| `CBehaviourSwitchLever` | Findings: Switch | switch behaviour ids typed in `Actors/KyaSwitch.*` |
+| `CBehaviourSwitchMagic` | Findings: Switch | switch behaviour ids typed in `Actors/KyaSwitch.*` |
+| `CBehaviourSwitchWolfenCounter` | Findings: Switch | switch behaviour ids typed in `Actors/KyaSwitch.*` |
+| `CBehaviourSwitchTarget` | Findings: Switch | switch behaviour ids typed in `Actors/KyaSwitch.*` |
+| `CBehaviourSwitchTimed` | Findings: Switch | switch behaviour ids typed in `Actors/KyaSwitch.*` |
+| `CBehaviourSwitchMultiCondition` | Findings: Switch | switch behaviour ids typed in `Actors/KyaSwitch.*` |
+| `CBehaviourSwitchSequence` | Findings: Switch | switch behaviour ids typed in `Actors/KyaSwitch.*` |
+| `CBehaviourLost` | Findings: Wolfen | Wolfen behaviour ids typed in `Actors/KyaWolfen.*` (fighter variants are empty) |
+| `CBehaviourExorcism` | Findings: Wolfen | Wolfen behaviour ids typed in `Actors/KyaWolfen.*` (fighter variants are empty) |
+| `CBehaviourEscape` | Findings: Wolfen | Wolfen behaviour ids typed in `Actors/KyaWolfen.*` (fighter variants are empty) |
+| `CBehaviourWolfenWeapon` | Findings: Wolfen | Wolfen behaviour ids typed in `Actors/KyaWolfen.*` (fighter variants are empty) |
+| `CBehaviourSnipe` | Findings: Wolfen | Wolfen behaviour ids typed in `Actors/KyaWolfen.*` (fighter variants are empty) |
+| `CBehaviourTrackWeaponStand` | Findings: Wolfen | Wolfen behaviour ids typed in `Actors/KyaWolfen.*` (fighter variants are empty) |
+| `CBehaviourTrackWeapon` | Findings: Wolfen | Wolfen behaviour ids typed in `Actors/KyaWolfen.*` (fighter variants are empty) |
+| `CBehaviourTrackWeaponSnipe` | Findings: Wolfen | Wolfen behaviour ids typed in `Actors/KyaWolfen.*` (fighter variants are empty) |
+| `CBehaviourAvoid` | Findings: Wolfen | Wolfen behaviour ids typed in `Actors/KyaWolfen.*` (fighter variants are empty) |
+| `CBehaviourGuardArea` | Findings: Wolfen | Wolfen behaviour ids typed in `Actors/KyaWolfen.*` (fighter variants are empty) |
+| `CBehaviourDCA` | Findings: Wolfen | Wolfen behaviour ids typed in `Actors/KyaWolfen.*` (fighter variants are empty) |
+| `CBehaviourWolfenFighterSlave` | Findings: Wolfen | Wolfen behaviour ids typed in `Actors/KyaWolfen.*` (fighter variants are empty) |
+| `CBehaviourWolfenFighterProjected` | Findings: Wolfen | Wolfen behaviour ids typed in `Actors/KyaWolfen.*` (fighter variants are empty) |
+| `CBehaviourWoof` | Implementation progress: Woof | Woof behaviour codecs in `Actors/KyaWoof.*` |
+| `CBehaviourWoofGuard` | Implementation progress: Woof | Woof behaviour codecs in `Actors/KyaWoof.*` |
+| `CBehaviourWoofVerticalJump` | Implementation progress: Woof | Woof behaviour codecs in `Actors/KyaWoof.*` |
+
 ## Findings: Hedgehog
 
 Status: **implemented in the editor and source-verified; no LEVEL_1 instance**.
@@ -2537,6 +3314,42 @@ Nativ command inventory (same bank): 1 class-0x3c actor carrying the empty
 stand behaviour id 2. Reproduce with `KYA_ACTOR_CLASS=0x3c`.
 
 
+### Cross-bank coverage (all 16 LEVEL banks)
+
+LEVEL_1 alone is fully consumed (`withRaw=0`), but the tables above cover the
+whole `src/` hierarchy, and other banks instantiate classes that LEVEL_1 does
+not. Running `inventory_actor_classes.py` against every `assets/CDEURO/LEVEL/*`
+bank gives the full serialized set: 86 distinct class ids. 13 of them still
+produce nonempty `ClassData`; none is fully unparsed any more. 0x3b keeps a
+typed header with a raw manager tail, and every other id
+(0x1d/0x26/0x30/0x34/0x36/0x3f/0x45/0x47/0x4b/0x4e/0x4f/0x55) is fully typed:
+
+| Class | Example actor | Max raw | Banks | Finding |
+| --- | --- | --- | --- | --- |
+| 0x1d | EXPLOSIVE_DISTRIBUTOR | 124 | 10,2,3,5,6,7,8 | module-backed (Findings: Explosive distributor) |
+| 0x26 | NOZEMONSTER | 304 | 2 | module-backed (Findings: Nose monster) |
+| 0x30 | PUNCHINGBALL | 728 | 4,NATIV | module-backed (Findings: Punching ball) |
+| 0x34 | NATIV_SHOP | 76 | 4,NATIV | module-backed (Findings: Nativ shop) |
+| 0x36 | HUNTERSHIP_01 (Ship) | 244 | 3 | module-backed (Findings: Ship) |
+| 0x3b | EVENTGENERATOR | 68 | 10,12,13,2,3,4,5,6,7,8,9 | header typed, managers raw (Findings: Event generator) |
+| 0x3f | LINER (Pattern controller) | 84 | 5 | module-backed (Findings: Pattern controller) |
+| 0x45 | MINIGAMESTIMEATTACK | 180 | NATIV | module-backed (Findings: Minigame family) |
+| 0x47 | MINIGAMEBOOMY | 3988 | NATIV | module-backed (Findings: Minigame family) |
+| 0x4b | SHOCKER | 184 | 10,2,3,7 | module-backed (Findings: Shocker) |
+| 0x4e | KRONOS_BUNCH | 3960 | 13,9 | module-backed (Findings: Bunch) |
+| 0x4f | BRAZUL | 3004 | 11,12,13 | module-backed (Findings: Brazul) |
+| 0x55 | MINIGAMEDISTANCE | 176 | NATIV | module-backed (Findings: Minigame family) |
+
+The remaining class ids have empty class payloads (`withRaw=0`); their
+behaviours still need the same per-behaviour inventory check. The actor and
+behaviour checklists therefore stay unchecked for every type that is not one of
+the 37 audited LEVEL_1/Hedgehog families until these banks are covered, and the
+LEVEL_1 "fully consumed" statement must not be read as game-wide coverage.
+
+Reproduce the per-bank scan with `KYA_ACTOR_BANK=<bank>` and
+`Tools/inventory_actor_classes.py` (one line per class id, including
+`withRaw`/`maxRaw`).
+
 ## Finding template
 
 For each family, record: source classes; factory and behaviour IDs; inherited
@@ -2575,10 +3388,14 @@ status symbols when comparing or refreshing the generated inventory.
 
 ## Actor checklist
 
+Legend: `[x]` = audited and module-backed; `[~]` = implementation or
+empty-payload disposition recorded, verification still open; `[ ]` = not yet
+audited (source-only type or still-raw cross-bank class).
+
 | Status | Source type | Immediate base(s) | Declaration |
 | --- | --- | --- | --- |
-| [ ] | `CActor` | `CObject` | [src/b-witch/Actor.h:515](../../src/b-witch/Actor.h#L515) |
-| [ ] | `CActorCinematic` | `CActor` | [src/b-witch/Actor_Cinematic.h:38](../../src/b-witch/Actor_Cinematic.h#L38) |
+| [~] | `CActor` | `CObject` | [src/b-witch/Actor.h:515](../../src/b-witch/Actor.h#L515) |
+| [~] | `CActorCinematic` | `CActor` | [src/b-witch/Actor_Cinematic.h:38](../../src/b-witch/Actor_Cinematic.h#L38) |
 | [~] | `CActorAcceleratos` | `CActor` | [src/b-witch/ActorAcceleratos.h:42](../../src/b-witch/ActorAcceleratos.h#L42) |
 | [~] | `CActorAddOnPurchase` | `CActor` | [src/b-witch/ActorAddOnPurchase.h:19](../../src/b-witch/ActorAddOnPurchase.h#L19) |
 | [~] | `CActorAmbre` | `CActor` | [src/b-witch/ActorAmbre.h:42](../../src/b-witch/ActorAmbre.h#L42) |
@@ -2586,7 +3403,7 @@ status symbols when comparing or refreshing the generated inventory.
 | [~] | `CActorAmortosCmd` | `CActor` | [src/b-witch/ActorAmortosCmd.h:35](../../src/b-witch/ActorAmortosCmd.h#L35) |
 | [~] | `CActorAraignos` | `CActorMovable` | [src/b-witch/ActorAraignos.h:16](../../src/b-witch/ActorAraignos.h#L16) |
 | [~] | `CActorAton` | `CActorAutonomous` | [src/b-witch/ActorAton.h:74](../../src/b-witch/ActorAton.h#L74) |
-| [ ] | `CActorAutonomous` | `CActorMovable` | [src/b-witch/ActorAutonomous.h:112](../../src/b-witch/ActorAutonomous.h#L112) |
+| [~] | `CActorAutonomous` | `CActorMovable` | [src/b-witch/ActorAutonomous.h:112](../../src/b-witch/ActorAutonomous.h#L112) |
 | [~] | `CActorBasicBox` | `CActor` | [src/b-witch/ActorBasicBox.h:38](../../src/b-witch/ActorBasicBox.h#L38) |
 | [~] | `CActorBlazer` | `CActorAutonomous` | [src/b-witch/ActorBlazer.h:43](../../src/b-witch/ActorBlazer.h#L43) |
 | [~] | `CActorBombLauncher` | `CActor` | [src/b-witch/ActorBombLauncher.h:33](../../src/b-witch/ActorBombLauncher.h#L33) |
@@ -2594,9 +3411,9 @@ status symbols when comparing or refreshing the generated inventory.
 | [~] | `CActorBonusFountain` | `CActor` | [src/b-witch/ActorBonusFountain.h:25](../../src/b-witch/ActorBonusFountain.h#L25) |
 | [~] | `CActorBoomy` | `CActorMovable` | [src/b-witch/ActorBoomy.h:51](../../src/b-witch/ActorBoomy.h#L51) |
 | [~] | `CActorBox` | `CActorAutonomous` | [src/b-witch/ActorBox.h:40](../../src/b-witch/ActorBox.h#L40) |
-| [ ] | `CActorBrazul` | `CActorWolfen` | [src/b-witch/ActorBrazul.h:142](../../src/b-witch/ActorBrazul.h#L142) |
+| [~] | `CActorBrazul` | `CActorWolfen` | [src/b-witch/ActorBrazul.h:142](../../src/b-witch/ActorBrazul.h#L142) |
 | [~] | `CActorBridge` | `CActor` | [src/b-witch/ActorBridge.h:177](../../src/b-witch/ActorBridge.h#L177) |
-| [ ] | `CActorBunch` | `CActorWolfen` | [src/b-witch/ActorBunch.h:183](../../src/b-witch/ActorBunch.h#L183) |
+| [~] | `CActorBunch` | `CActorWolfen` | [src/b-witch/ActorBunch.h:183](../../src/b-witch/ActorBunch.h#L183) |
 | [~] | `CActorCareBoy` | `CActorMovable` | [src/b-witch/ActorCareBoy.h:33](../../src/b-witch/ActorCareBoy.h#L33) |
 | [~] | `CActorCheckpointManager` | `CActor` | [src/b-witch/ActorCheckpointManager.h:34](../../src/b-witch/ActorCheckpointManager.h#L34) |
 | [~] | `CActorClusteriser` | `CActor` | [src/b-witch/ActorClusteriser.h:78](../../src/b-witch/ActorClusteriser.h#L78) |
@@ -2606,42 +3423,42 @@ status symbols when comparing or refreshing the generated inventory.
 | [~] | `CActorDCA` | `CActor` | [src/b-witch/ActorDCA.h:30](../../src/b-witch/ActorDCA.h#L30) |
 | [~] | `CActorEgg` | `CActorMovable` | [src/b-witch/ActorEgg.h:33](../../src/b-witch/ActorEgg.h#L33) |
 | [~] | `CActorElectrolla` | `CActor` | [src/b-witch/ActorElectrolla.h:33](../../src/b-witch/ActorElectrolla.h#L33) |
-| [ ] | `CActorEventGenerator` | `CActor` | [src/b-witch/ActorEventGenerator.h:159](../../src/b-witch/ActorEventGenerator.h#L159) |
-| [ ] | `CActorExplosiveDistributor` | `CActor` | [src/b-witch/ActorExplosiveDistributor.h:29](../../src/b-witch/ActorExplosiveDistributor.h#L29) |
-| [ ] | `CActorFighter` | `CActorAutonomous` | [src/b-witch/ActorFighter.h:567](../../src/b-witch/ActorFighter.h#L567) |
+| [~] | `CActorEventGenerator` | `CActor` | [src/b-witch/ActorEventGenerator.h:159](../../src/b-witch/ActorEventGenerator.h#L159) |
+| [~] | `CActorExplosiveDistributor` | `CActor` | [src/b-witch/ActorExplosiveDistributor.h:29](../../src/b-witch/ActorExplosiveDistributor.h#L29) |
+| [~] | `CActorFighter` | `CActorAutonomous` | [src/b-witch/ActorFighter.h:567](../../src/b-witch/ActorFighter.h#L567) |
 | [~] | `CActorFogManager` | `CActor` | [src/b-witch/ActorFogManager.h:67](../../src/b-witch/ActorFogManager.h#L67) |
 | [~] | `CActorFruit` | `CActorAutonomous` | [src/b-witch/ActorFruit.h:63](../../src/b-witch/ActorFruit.h#L63) |
 | [~] | `CActorFx` | `CActor` | [src/b-witch/ActorFx.h:14](../../src/b-witch/ActorFx.h#L14) |
 | [~] | `CActorGravityAware` | `CActorAutonomous` | [src/b-witch/ActorGravityAware.h:47](../../src/b-witch/ActorGravityAware.h#L47) |
 | [~] | `CActorHedgehog` | `CActorAutonomous` | [src/b-witch/ActorHedgehog.h:72](../../src/b-witch/ActorHedgehog.h#L72) |
 | [~] | `CActorHelperSign` | `CActor` | [src/b-witch/ActorHelperSign.h:82](../../src/b-witch/ActorHelperSign.h#L82) |
-| [ ] | `CActorHero` | `CActorFighter` | [src/b-witch/ActorHero.h:336](../../src/b-witch/ActorHero.h#L336) |
+| [~] | `CActorHero` | `CActorFighter` | [src/b-witch/ActorHero.h:336](../../src/b-witch/ActorHero.h#L336) |
 | [~] | `CActorHeroPrivate` | `CActorHero` | [src/b-witch/ActorHero_Private.h:220](../../src/b-witch/ActorHero_Private.h#L220) |
 | [~] | `CActorHunter` | `CActorAutonomous` | [src/b-witch/ActorHunter.h:33](../../src/b-witch/ActorHunter.h#L33) |
 | [~] | `CActorJamGut` | `CActorAutonomous` | [src/b-witch/ActorJamGut.h:101](../../src/b-witch/ActorJamGut.h#L101) |
 | [~] | `CActorMicken` | `CActorAutonomous` | [src/b-witch/ActorMicken.h:76](../../src/b-witch/ActorMicken.h#L76) |
-| [ ] | `CActorMiniGame` | `CActor` | [src/b-witch/ActorMiniGame.h:121](../../src/b-witch/ActorMiniGame.h#L121) |
-| [ ] | `CActorMiniGameBoomy` | `CActorMiniGame` | [src/b-witch/ActorMiniGameBoomy.h:61](../../src/b-witch/ActorMiniGameBoomy.h#L61) |
-| [ ] | `CActorMiniGameBoxCounter` | `CActorMiniGame` | [src/b-witch/ActorMiniGameBoxCounter.h:37](../../src/b-witch/ActorMiniGameBoxCounter.h#L37) |
-| [ ] | `CActorMiniGameDistance` | `CActorMiniGame` | [src/b-witch/ActorMiniGameDistance.h:38](../../src/b-witch/ActorMiniGameDistance.h#L38) |
+| [~] | `CActorMiniGame` | `CActor` | [src/b-witch/ActorMiniGame.h:121](../../src/b-witch/ActorMiniGame.h#L121) |
+| [~] | `CActorMiniGameBoomy` | `CActorMiniGame` | [src/b-witch/ActorMiniGameBoomy.h:61](../../src/b-witch/ActorMiniGameBoomy.h#L61) |
+| [~] | `CActorMiniGameBoxCounter` | `CActorMiniGame` | [src/b-witch/ActorMiniGameBoxCounter.h:37](../../src/b-witch/ActorMiniGameBoxCounter.h#L37) |
+| [~] | `CActorMiniGameDistance` | `CActorMiniGame` | [src/b-witch/ActorMiniGameDistance.h:38](../../src/b-witch/ActorMiniGameDistance.h#L38) |
 | [~] | `CActorMiniGamesManager` | `CActor` | [src/b-witch/ActorMiniGamesManager.h:35](../../src/b-witch/ActorMiniGamesManager.h#L35) |
 | [~] | `CActorMiniGamesOrganizer` | `CActor` | [src/b-witch/ActorMiniGamesOrganizer.h:39](../../src/b-witch/ActorMiniGamesOrganizer.h#L39) |
-| [ ] | `CActorMiniGameTimeAttack` | `CActorMiniGame` | [src/b-witch/ActorMiniGameTimeAttack.h:37](../../src/b-witch/ActorMiniGameTimeAttack.h#L37) |
+| [~] | `CActorMiniGameTimeAttack` | `CActorMiniGame` | [src/b-witch/ActorMiniGameTimeAttack.h:37](../../src/b-witch/ActorMiniGameTimeAttack.h#L37) |
 | [~] | `CActorMoney` | `CActorMovable` | [src/b-witch/ActorMoney.h:101](../../src/b-witch/ActorMoney.h#L101) |
-| [ ] | `CActorMovable` | `CActor` | [src/b-witch/ActorMovable.h:140](../../src/b-witch/ActorMovable.h#L140) |
+| [~] | `CActorMovable` | `CActor` | [src/b-witch/ActorMovable.h:140](../../src/b-witch/ActorMovable.h#L140) |
 | [~] | `CActorMovingPlatform` | `CActorMovable` | [src/b-witch/ActorMovingPlatform.h:343](../../src/b-witch/ActorMovingPlatform.h#L343) |
 | [~] | `CActorNativ` | `CActorAutonomous` | [src/b-witch/ActorNativ.h:360](../../src/b-witch/ActorNativ.h#L360) |
 | [~] | `CActorNativCmd` | `CActor` | [src/b-witch/ActorNativCmd.h:86](../../src/b-witch/ActorNativCmd.h#L86) |
-| [ ] | `CActorNativShop` | `CActor` | [src/b-witch/ActorNativShop.h:106](../../src/b-witch/ActorNativShop.h#L106) |
-| [ ] | `CActorNoseMonster` | `CActorAutonomous` | [src/b-witch/ActorNoseMonster.h:74](../../src/b-witch/ActorNoseMonster.h#L74) |
-| [ ] | `CActorPattern` | `CActorAutonomous` | [src/b-witch/ActorPattern.h:74](../../src/b-witch/ActorPattern.h#L74) |
+| [~] | `CActorNativShop` | `CActor` | [src/b-witch/ActorNativShop.h:106](../../src/b-witch/ActorNativShop.h#L106) |
+| [~] | `CActorNoseMonster` | `CActorAutonomous` | [src/b-witch/ActorNoseMonster.h:74](../../src/b-witch/ActorNoseMonster.h#L74) |
+| [~] | `CActorPattern` | `CActorAutonomous` | [src/b-witch/ActorPattern.h:74](../../src/b-witch/ActorPattern.h#L74) |
 | [~] | `CActorPatternCmd` | `CActor` | [src/b-witch/ActorPatternCmd.h:40](../../src/b-witch/ActorPatternCmd.h#L40) |
 | [~] | `CActorProjectile` | `CActorAutonomous` | [src/b-witch/ActorProjectile.h:181](../../src/b-witch/ActorProjectile.h#L181) |
-| [ ] | `CActorPunchingBall` | `CActorFighter` | [src/b-witch/ActorPunchingBall.h:68](../../src/b-witch/ActorPunchingBall.h#L68) |
+| [~] | `CActorPunchingBall` | `CActorFighter` | [src/b-witch/ActorPunchingBall.h:68](../../src/b-witch/ActorPunchingBall.h#L68) |
 | [~] | `CActorRope` | `CActor` | [src/b-witch/ActorRope.h:25](../../src/b-witch/ActorRope.h#L25) |
 | [~] | `CActorRune` | `CActor` | [src/b-witch/ActorRune.h:27](../../src/b-witch/ActorRune.h#L27) |
-| [ ] | `CActorShip` | `CActor` | [src/b-witch/ActorShip.h:64](../../src/b-witch/ActorShip.h#L64) |
-| [ ] | `CActorShocker` | `CActorAutonomous` | [src/b-witch/ActorShocker.h:60](../../src/b-witch/ActorShocker.h#L60) |
+| [~] | `CActorShip` | `CActor` | [src/b-witch/ActorShip.h:64](../../src/b-witch/ActorShip.h#L64) |
+| [~] | `CActorShocker` | `CActorAutonomous` | [src/b-witch/ActorShocker.h:60](../../src/b-witch/ActorShocker.h#L60) |
 | [~] | `CActorShockerCmd` | `CActor` | [src/b-witch/ActorShockerCmd.h:42](../../src/b-witch/ActorShockerCmd.h#L42) |
 | [~] | `CActorShoot` | `CActorAutonomous` | [src/b-witch/ActorShoot.h:68](../../src/b-witch/ActorShoot.h#L68) |
 | [~] | `CActorStiller` | `CActor` | [src/b-witch/ActorStiller.h:49](../../src/b-witch/ActorStiller.h#L49) |
@@ -2657,12 +3474,16 @@ status symbols when comparing or refreshing the generated inventory.
 
 ## Behaviour checklist
 
+Legend: `[~]` = implementation or empty-payload disposition recorded,
+verification still open; `[ ]` = not yet audited (source-only behaviour or a
+still-raw cross-bank class).
+
 | Status | Source type | Immediate base(s) | Declaration |
 | --- | --- | --- | --- |
-| [ ] | `CBehaviour` | � | [src/b-witch/Actor.h:225](../../src/b-witch/Actor.h#L225) |
-| [ ] | `CBehaviourInactive` | `CBehaviour` | [src/b-witch/Actor.h:247](../../src/b-witch/Actor.h#L247) |
-| [ ] | `CBehaviourStand` | `CBehaviour` | [src/b-witch/Actor.h:263](../../src/b-witch/Actor.h#L263) |
-| [ ] | `CBehaviourCinematic` | `CBehaviour` | [src/b-witch/Actor_Cinematic.h:15](../../src/b-witch/Actor_Cinematic.h#L15) |
+| [~] | `CBehaviour` | � | [src/b-witch/Actor.h:225](../../src/b-witch/Actor.h#L225) |
+| [~] | `CBehaviourInactive` | `CBehaviour` | [src/b-witch/Actor.h:247](../../src/b-witch/Actor.h#L247) |
+| [~] | `CBehaviourStand` | `CBehaviour` | [src/b-witch/Actor.h:263](../../src/b-witch/Actor.h#L263) |
+| [~] | `CBehaviourCinematic` | `CBehaviour` | [src/b-witch/Actor_Cinematic.h:15](../../src/b-witch/Actor_Cinematic.h#L15) |
 | [~] | `CBehaviourAcceleratos` | `CBehaviour` | [src/b-witch/ActorAcceleratos.h:12](../../src/b-witch/ActorAcceleratos.h#L12) |
 | [~] | `CBehaviourAcceleratosStand` | `CBehaviourAcceleratos` | [src/b-witch/ActorAcceleratos.h:21](../../src/b-witch/ActorAcceleratos.h#L21) |
 | [~] | `CBhvAddOnPurchase` | `CBehaviour` | [src/b-witch/ActorAddOnPurchase.h:10](../../src/b-witch/ActorAddOnPurchase.h#L10) |
@@ -2675,8 +3496,8 @@ status symbols when comparing or refreshing the generated inventory.
 | [~] | `CActorAraignos::CBhvDefault` | `CBehaviour` | [src/b-witch/ActorAraignos.h:19](../../src/b-witch/ActorAraignos.h#L19) |
 | [~] | `CBehaviourAton` | `CBehaviour` | [src/b-witch/ActorAton.h:52](../../src/b-witch/ActorAton.h#L52) |
 | [~] | `CBehaviourAtonEscape` | `CBehaviourAton` | [src/b-witch/ActorAton.h:63](../../src/b-witch/ActorAton.h#L63) |
-| [ ] | `CBehaviourAutonomous` | `CBehaviour` | [src/b-witch/ActorAutonomous.h:64](../../src/b-witch/ActorAutonomous.h#L64) |
-| [ ] | `CBehaviourCatchByTrap` | `CBehaviourAutonomous` | [src/b-witch/ActorAutonomous.h:74](../../src/b-witch/ActorAutonomous.h#L74) |
+| [~] | `CBehaviourAutonomous` | `CBehaviour` | [src/b-witch/ActorAutonomous.h:64](../../src/b-witch/ActorAutonomous.h#L64) |
+| [~] | `CBehaviourCatchByTrap` | `CBehaviourAutonomous` | [src/b-witch/ActorAutonomous.h:74](../../src/b-witch/ActorAutonomous.h#L74) |
 | [~] | `CBehaviourBasicBox` | `CBehaviour` | [src/b-witch/ActorBasicBox.h:14](../../src/b-witch/ActorBasicBox.h#L14) |
 | [~] | `CBehaviourBasicBoxStand` | `CBehaviourBasicBox` | [src/b-witch/ActorBasicBox.h:25](../../src/b-witch/ActorBasicBox.h#L25) |
 | [~] | `CBehaviourBlazer` | `CBehaviour` | [src/b-witch/ActorBlazer.h:21](../../src/b-witch/ActorBlazer.h#L21) |
@@ -2693,39 +3514,39 @@ status symbols when comparing or refreshing the generated inventory.
 | [~] | `CBehaviourBoomyLaunch` | `CBehaviour` | [src/b-witch/ActorBoomy.h:32](../../src/b-witch/ActorBoomy.h#L32) |
 | [~] | `CBehaviourBox` | `CBehaviour` | [src/b-witch/ActorBox.h:18](../../src/b-witch/ActorBox.h#L18) |
 | [~] | `CBehaviourBoxStand` | `CBehaviourBox` | [src/b-witch/ActorBox.h:29](../../src/b-witch/ActorBox.h#L29) |
-| [ ] | `CBehaviourBrazulA` | `CBehaviour` | [src/b-witch/ActorBrazul.h:77](../../src/b-witch/ActorBrazul.h#L77) |
-| [ ] | `CBehaviourBrazulB` | `CBehaviour` | [src/b-witch/ActorBrazul.h:106](../../src/b-witch/ActorBrazul.h#L106) |
-| [ ] | `CBehaviourFighterBrazul` | `CBehaviourFighterWolfen` | [src/b-witch/ActorBrazul.h:124](../../src/b-witch/ActorBrazul.h#L124) |
-| [ ] | `CActorBridge::CBhvBasic` | `CBehaviour` | [src/b-witch/ActorBridge.h:180](../../src/b-witch/ActorBridge.h#L180) |
-| [ ] | `CActorBridge::CBhvWindAware` | `CBehaviour` | [src/b-witch/ActorBridge.h:202](../../src/b-witch/ActorBridge.h#L202) |
-| [ ] | `CBehaviourBunch` | `CBehaviour` | [src/b-witch/ActorBunch.h:60](../../src/b-witch/ActorBunch.h#L60) |
-| [ ] | `CBehaviourBunchRepel` | `CBehaviourBunch` | [src/b-witch/ActorBunch.h:77](../../src/b-witch/ActorBunch.h#L77) |
-| [ ] | `CBehaviourBunchFence` | `CBehaviourBunch` | [src/b-witch/ActorBunch.h:120](../../src/b-witch/ActorBunch.h#L120) |
-| [ ] | `CBehaviourBunchFighterProjected` | `CBehaviourWolfenFighterProjected` | [src/b-witch/ActorBunch.h:164](../../src/b-witch/ActorBunch.h#L164) |
-| [ ] | `CBehaviourFighterBunch` | `CBehaviourFighterWolfen` | [src/b-witch/ActorBunch.h:170](../../src/b-witch/ActorBunch.h#L170) |
+| [~] | `CBehaviourBrazulA` | `CBehaviour` | [src/b-witch/ActorBrazul.h:77](../../src/b-witch/ActorBrazul.h#L77) |
+| [~] | `CBehaviourBrazulB` | `CBehaviour` | [src/b-witch/ActorBrazul.h:106](../../src/b-witch/ActorBrazul.h#L106) |
+| [~] | `CBehaviourFighterBrazul` | `CBehaviourFighterWolfen` | [src/b-witch/ActorBrazul.h:124](../../src/b-witch/ActorBrazul.h#L124) |
+| [~] | `CActorBridge::CBhvBasic` | `CBehaviour` | [src/b-witch/ActorBridge.h:180](../../src/b-witch/ActorBridge.h#L180) |
+| [~] | `CActorBridge::CBhvWindAware` | `CBehaviour` | [src/b-witch/ActorBridge.h:202](../../src/b-witch/ActorBridge.h#L202) |
+| [~] | `CBehaviourBunch` | `CBehaviour` | [src/b-witch/ActorBunch.h:60](../../src/b-witch/ActorBunch.h#L60) |
+| [~] | `CBehaviourBunchRepel` | `CBehaviourBunch` | [src/b-witch/ActorBunch.h:77](../../src/b-witch/ActorBunch.h#L77) |
+| [~] | `CBehaviourBunchFence` | `CBehaviourBunch` | [src/b-witch/ActorBunch.h:120](../../src/b-witch/ActorBunch.h#L120) |
+| [~] | `CBehaviourBunchFighterProjected` | `CBehaviourWolfenFighterProjected` | [src/b-witch/ActorBunch.h:164](../../src/b-witch/ActorBunch.h#L164) |
+| [~] | `CBehaviourFighterBunch` | `CBehaviourFighterWolfen` | [src/b-witch/ActorBunch.h:170](../../src/b-witch/ActorBunch.h#L170) |
 | [~] | `CBehaviourCareBoy` | `CBehaviour` | [src/b-witch/ActorCareBoy.h:12](../../src/b-witch/ActorCareBoy.h#L12) |
 | [~] | `CBehaviourCareBoySteady` | `CBehaviourCareBoy` | [src/b-witch/ActorCareBoy.h:23](../../src/b-witch/ActorCareBoy.h#L23) |
 | [~] | `CBehaviourCheckpoint` | `CBehaviour` | [src/b-witch/ActorCheckpointManager.h:11](../../src/b-witch/ActorCheckpointManager.h#L11) |
 | [~] | `CBehaviourClusteriserZones` | `CBehaviour` | [src/b-witch/ActorClusteriser.h:37](../../src/b-witch/ActorClusteriser.h#L37) |
 | [~] | `CBehaviourCommander` | `CBehaviour` | [src/b-witch/ActorCommander.h:31](../../src/b-witch/ActorCommander.h#L31) |
-| [ ] | `CBehaviourCommanderBeatUp` | `CBehaviourCommander` | [src/b-witch/ActorCommander.h:52](../../src/b-witch/ActorCommander.h#L52) |
+| [~] | `CBehaviourCommanderBeatUp` | `CBehaviourCommander` | [src/b-witch/ActorCommander.h:52](../../src/b-witch/ActorCommander.h#L52) |
 | [~] | `CBehaviourCommanderDefault` | `CBehaviourCommander` | [src/b-witch/ActorCommander.h:67](../../src/b-witch/ActorCommander.h#L67) |
 | [~] | `CBehaviourCompanion` | `CBehaviour` | [src/b-witch/ActorCompanion.h:67](../../src/b-witch/ActorCompanion.h#L67) |
 | [~] | `CBehaviourCredits` | `CBehaviour` | [src/b-witch/ActorCredits.h:20](../../src/b-witch/ActorCredits.h#L20) |
 | [~] | `CBehaviourCreditsDefault` | `CBehaviourCredits` | [src/b-witch/ActorCredits.h:28](../../src/b-witch/ActorCredits.h#L28) |
 | [~] | `CActorDCA::CBhvDefault` | `CBehaviour` | [src/b-witch/ActorDCA.h:36](../../src/b-witch/ActorDCA.h#L36) |
 | [~] | `CActorDCA::CBhvControlled` | `CActorDCA::CBhvDefault` | [src/b-witch/ActorDCA.h:51](../../src/b-witch/ActorDCA.h#L51) |
-| [ ] | `CActorDCA::CBhvIAControlled` | `CActorDCA::CBhvControlled` | [src/b-witch/ActorDCA.h:63](../../src/b-witch/ActorDCA.h#L63) |
+| [~] | `CActorDCA::CBhvIAControlled` | `CActorDCA::CBhvControlled` | [src/b-witch/ActorDCA.h:63](../../src/b-witch/ActorDCA.h#L63) |
 | [~] | `CActorDCA::CBhvTrajectory` | `CActorDCA::CBhvDefault` | [src/b-witch/ActorDCA.h:69](../../src/b-witch/ActorDCA.h#L69) |
 | [~] | `CBehaviourEgg` | `CBehaviour` | [src/b-witch/ActorEgg.h:11](../../src/b-witch/ActorEgg.h#L11) |
 | [~] | `CBehaviourEggMove` | `CBehaviourEgg` | [src/b-witch/ActorEgg.h:22](../../src/b-witch/ActorEgg.h#L22) |
 | [~] | `CBehaviourElectrolla` | `CBehaviour` | [src/b-witch/ActorElectrolla.h:22](../../src/b-witch/ActorElectrolla.h#L22) |
-| [ ] | `CBehaviourEventGen` | `CBehaviour` | [src/b-witch/ActorEventGenerator.h:69](../../src/b-witch/ActorEventGenerator.h#L69) |
-| [ ] | `CBehaviourExplosiveDistributor` | `CBehaviour` | [src/b-witch/ActorExplosiveDistributor.h:18](../../src/b-witch/ActorExplosiveDistributor.h#L18) |
-| [ ] | `CBehaviourFighter` | `CBehaviour` | [src/b-witch/ActorFighter.h:1073](../../src/b-witch/ActorFighter.h#L1073) |
-| [ ] | `CBehaviourFighterSlave` | `CBehaviourFighter` | [src/b-witch/ActorFighter.h:1096](../../src/b-witch/ActorFighter.h#L1096) |
-| [ ] | `CBehaviourFighterRidden` | `CBehaviourFighter` | [src/b-witch/ActorFighter.h:1118](../../src/b-witch/ActorFighter.h#L1118) |
-| [ ] | `CBehaviourFighterProjected` | `CBehaviourFighter` | [src/b-witch/ActorFighter.h:1139](../../src/b-witch/ActorFighter.h#L1139) |
+| [~] | `CBehaviourEventGen` | `CBehaviour` | [src/b-witch/ActorEventGenerator.h:69](../../src/b-witch/ActorEventGenerator.h#L69) |
+| [~] | `CBehaviourExplosiveDistributor` | `CBehaviour` | [src/b-witch/ActorExplosiveDistributor.h:18](../../src/b-witch/ActorExplosiveDistributor.h#L18) |
+| [~] | `CBehaviourFighter` | `CBehaviour` | [src/b-witch/ActorFighter.h:1073](../../src/b-witch/ActorFighter.h#L1073) |
+| [~] | `CBehaviourFighterSlave` | `CBehaviourFighter` | [src/b-witch/ActorFighter.h:1096](../../src/b-witch/ActorFighter.h#L1096) |
+| [~] | `CBehaviourFighterRidden` | `CBehaviourFighter` | [src/b-witch/ActorFighter.h:1118](../../src/b-witch/ActorFighter.h#L1118) |
+| [~] | `CBehaviourFighterProjected` | `CBehaviourFighter` | [src/b-witch/ActorFighter.h:1139](../../src/b-witch/ActorFighter.h#L1139) |
 | [~] | `CBehaviourFogManagerZones` | `CBehaviour` | [src/b-witch/ActorFogManager.h:53](../../src/b-witch/ActorFogManager.h#L53) |
 | [~] | `CBehaviourFruit` | `CBehaviour` | [src/b-witch/ActorFruit.h:16](../../src/b-witch/ActorFruit.h#L16) |
 | [~] | `CBehaviourFruitSuspended` | `CBehaviourFruit` | [src/b-witch/ActorFruit.h:26](../../src/b-witch/ActorFruit.h#L26) |
@@ -2744,11 +3565,11 @@ status symbols when comparing or refreshing the generated inventory.
 | [~] | `CBehaviourHelperSign` | `CBehaviour` | [src/b-witch/ActorHelperSign.h:21](../../src/b-witch/ActorHelperSign.h#L21) |
 | [~] | `CBehaviourHelperSignStand` | `CBehaviourHelperSign` | [src/b-witch/ActorHelperSign.h:31](../../src/b-witch/ActorHelperSign.h#L31) |
 | [~] | `CBehaviourHelperSignHighScore` | `CBehaviourHelperSign` | [src/b-witch/ActorHelperSign.h:44](../../src/b-witch/ActorHelperSign.h#L44) |
-| [ ] | `CBehaviourRideJamGut` | `CBehaviour` | [src/b-witch/ActorHero.h:299](../../src/b-witch/ActorHero.h#L299) |
+| [~] | `CBehaviourRideJamGut` | `CBehaviour` | [src/b-witch/ActorHero.h:299](../../src/b-witch/ActorHero.h#L299) |
 | [~] | `CBehaviourHero` | `CBehaviourFighter` | [src/b-witch/ActorHero_Private.h:131](../../src/b-witch/ActorHero_Private.h#L131) |
 | [~] | `CBehaviourHeroUnknown` | `CBehaviourHero` | [src/b-witch/ActorHero_Private.h:142](../../src/b-witch/ActorHero_Private.h#L142) |
 | [~] | `CBehaviourHeroDefault` | `CBehaviourHero` | [src/b-witch/ActorHero_Private.h:154](../../src/b-witch/ActorHero_Private.h#L154) |
-| [ ] | `CBehaviourHeroRideJamGut` | `CBehaviourRideJamGut` | [src/b-witch/ActorHero_Private.h:1006](../../src/b-witch/ActorHero_Private.h#L1006) |
+| [~] | `CBehaviourHeroRideJamGut` | `CBehaviourRideJamGut` | [src/b-witch/ActorHero_Private.h:1006](../../src/b-witch/ActorHero_Private.h#L1006) |
 | [~] | `CBehaviourHunter` | `CBehaviour` | [src/b-witch/ActorHunter.h:12](../../src/b-witch/ActorHunter.h#L12) |
 | [~] | `CBehaviourHunterWatch` | `CBehaviourHunter` | [src/b-witch/ActorHunter.h:23](../../src/b-witch/ActorHunter.h#L23) |
 | [~] | `CBehaviourJamGut` | `CBehaviour` | [src/b-witch/ActorJamGut.h:51](../../src/b-witch/ActorJamGut.h#L51) |
@@ -2758,27 +3579,27 @@ status symbols when comparing or refreshing the generated inventory.
 | [~] | `CBehaviourMickenEat` | `CBehaviourMicken` | [src/b-witch/ActorMicken.h:32](../../src/b-witch/ActorMicken.h#L32) |
 | [~] | `CBehaviourMickenKicked` | `CBehaviourMicken` | [src/b-witch/ActorMicken.h:50](../../src/b-witch/ActorMicken.h#L50) |
 | [~] | `CBehaviourMickenSquashed` | `CBehaviourMicken` | [src/b-witch/ActorMicken.h:61](../../src/b-witch/ActorMicken.h#L61) |
-| [ ] | `S_MINI_GAME_NAME_BEHAVIOUR` | `CBehaviour` | [src/b-witch/ActorMiniGame.cpp:1115](../../src/b-witch/ActorMiniGame.cpp#L1115) |
-| [ ] | `CBehaviourMiniGame` | `CBehaviour` | [src/b-witch/ActorMiniGame.h:45](../../src/b-witch/ActorMiniGame.h#L45) |
-| [ ] | `CBehaviourMiniGameBetting` | `CBehaviourMiniGame` | [src/b-witch/ActorMiniGame.h:57](../../src/b-witch/ActorMiniGame.h#L57) |
-| [ ] | `CBehaviourMiniGameTraining` | `CBehaviourMiniGame` | [src/b-witch/ActorMiniGame.h:81](../../src/b-witch/ActorMiniGame.h#L81) |
-| [ ] | `CBehaviourMiniGameMulti` | `CBehaviourMiniGame` | [src/b-witch/ActorMiniGame.h:98](../../src/b-witch/ActorMiniGame.h#L98) |
-| [ ] | `CBehaviourMiniGameBoomyTraining` | `CBehaviourMiniGameTraining` | [src/b-witch/ActorMiniGameBoomy.h:31](../../src/b-witch/ActorMiniGameBoomy.h#L31) |
-| [ ] | `CBehaviourMiniGameBoomyBetting` | `CBehaviourMiniGameBetting` | [src/b-witch/ActorMiniGameBoomy.h:41](../../src/b-witch/ActorMiniGameBoomy.h#L41) |
-| [ ] | `CBehaviourMiniGameBoomyMulti` | `CBehaviourMiniGameMulti` | [src/b-witch/ActorMiniGameBoomy.h:51](../../src/b-witch/ActorMiniGameBoomy.h#L51) |
-| [ ] | `CBehaviourMiniGameBoxCounterTraining` | `CBehaviourMiniGameTraining` | [src/b-witch/ActorMiniGameBoxCounter.h:7](../../src/b-witch/ActorMiniGameBoxCounter.h#L7) |
-| [ ] | `CBehaviourMiniGameBoxCounterBetting` | `CBehaviourMiniGameBetting` | [src/b-witch/ActorMiniGameBoxCounter.h:17](../../src/b-witch/ActorMiniGameBoxCounter.h#L17) |
-| [ ] | `CBehaviourMiniGameBoxCounterMulti` | `CBehaviourMiniGameMulti` | [src/b-witch/ActorMiniGameBoxCounter.h:27](../../src/b-witch/ActorMiniGameBoxCounter.h#L27) |
-| [ ] | `CBehaviourMiniGameDistanceTraining` | `CBehaviourMiniGameTraining` | [src/b-witch/ActorMiniGameDistance.h:8](../../src/b-witch/ActorMiniGameDistance.h#L8) |
-| [ ] | `CBehaviourMiniGameDistanceBetting` | `CBehaviourMiniGameBetting` | [src/b-witch/ActorMiniGameDistance.h:18](../../src/b-witch/ActorMiniGameDistance.h#L18) |
-| [ ] | `CBehaviourMiniGameDistanceMulti` | `CBehaviourMiniGameMulti` | [src/b-witch/ActorMiniGameDistance.h:28](../../src/b-witch/ActorMiniGameDistance.h#L28) |
+| [~] | `S_MINI_GAME_NAME_BEHAVIOUR` | `CBehaviour` | [src/b-witch/ActorMiniGame.cpp:1115](../../src/b-witch/ActorMiniGame.cpp#L1115) |
+| [~] | `CBehaviourMiniGame` | `CBehaviour` | [src/b-witch/ActorMiniGame.h:45](../../src/b-witch/ActorMiniGame.h#L45) |
+| [~] | `CBehaviourMiniGameBetting` | `CBehaviourMiniGame` | [src/b-witch/ActorMiniGame.h:57](../../src/b-witch/ActorMiniGame.h#L57) |
+| [~] | `CBehaviourMiniGameTraining` | `CBehaviourMiniGame` | [src/b-witch/ActorMiniGame.h:81](../../src/b-witch/ActorMiniGame.h#L81) |
+| [~] | `CBehaviourMiniGameMulti` | `CBehaviourMiniGame` | [src/b-witch/ActorMiniGame.h:98](../../src/b-witch/ActorMiniGame.h#L98) |
+| [~] | `CBehaviourMiniGameBoomyTraining` | `CBehaviourMiniGameTraining` | [src/b-witch/ActorMiniGameBoomy.h:31](../../src/b-witch/ActorMiniGameBoomy.h#L31) |
+| [~] | `CBehaviourMiniGameBoomyBetting` | `CBehaviourMiniGameBetting` | [src/b-witch/ActorMiniGameBoomy.h:41](../../src/b-witch/ActorMiniGameBoomy.h#L41) |
+| [~] | `CBehaviourMiniGameBoomyMulti` | `CBehaviourMiniGameMulti` | [src/b-witch/ActorMiniGameBoomy.h:51](../../src/b-witch/ActorMiniGameBoomy.h#L51) |
+| [~] | `CBehaviourMiniGameBoxCounterTraining` | `CBehaviourMiniGameTraining` | [src/b-witch/ActorMiniGameBoxCounter.h:7](../../src/b-witch/ActorMiniGameBoxCounter.h#L7) |
+| [~] | `CBehaviourMiniGameBoxCounterBetting` | `CBehaviourMiniGameBetting` | [src/b-witch/ActorMiniGameBoxCounter.h:17](../../src/b-witch/ActorMiniGameBoxCounter.h#L17) |
+| [~] | `CBehaviourMiniGameBoxCounterMulti` | `CBehaviourMiniGameMulti` | [src/b-witch/ActorMiniGameBoxCounter.h:27](../../src/b-witch/ActorMiniGameBoxCounter.h#L27) |
+| [~] | `CBehaviourMiniGameDistanceTraining` | `CBehaviourMiniGameTraining` | [src/b-witch/ActorMiniGameDistance.h:8](../../src/b-witch/ActorMiniGameDistance.h#L8) |
+| [~] | `CBehaviourMiniGameDistanceBetting` | `CBehaviourMiniGameBetting` | [src/b-witch/ActorMiniGameDistance.h:18](../../src/b-witch/ActorMiniGameDistance.h#L18) |
+| [~] | `CBehaviourMiniGameDistanceMulti` | `CBehaviourMiniGameMulti` | [src/b-witch/ActorMiniGameDistance.h:28](../../src/b-witch/ActorMiniGameDistance.h#L28) |
 | [~] | `CBehaviourMiniGamesManager` | `CBehaviour` | [src/b-witch/ActorMiniGamesManager.h:13](../../src/b-witch/ActorMiniGamesManager.h#L13) |
 | [~] | `CBehaviourMiniGamesManagerStand` | `CBehaviourMiniGamesManager` | [src/b-witch/ActorMiniGamesManager.h:24](../../src/b-witch/ActorMiniGamesManager.h#L24) |
 | [~] | `CBehaviourMiniGamesOrganizer` | `CBehaviour` | [src/b-witch/ActorMiniGamesOrganizer.h:16](../../src/b-witch/ActorMiniGamesOrganizer.h#L16) |
 | [~] | `CBehaviourMiniGamesOrganizerStand` | `CBehaviourMiniGamesOrganizer` | [src/b-witch/ActorMiniGamesOrganizer.h:27](../../src/b-witch/ActorMiniGamesOrganizer.h#L27) |
-| [ ] | `CBehaviourMiniGameTimeAttackTraining` | `CBehaviourMiniGameTraining` | [src/b-witch/ActorMiniGameTimeAttack.h:7](../../src/b-witch/ActorMiniGameTimeAttack.h#L7) |
-| [ ] | `CBehaviourMiniGameTimeAttackBetting` | `CBehaviourMiniGameBetting` | [src/b-witch/ActorMiniGameTimeAttack.h:17](../../src/b-witch/ActorMiniGameTimeAttack.h#L17) |
-| [ ] | `CBehaviourMiniGameTimeAttackMulti` | `CBehaviourMiniGameMulti` | [src/b-witch/ActorMiniGameTimeAttack.h:27](../../src/b-witch/ActorMiniGameTimeAttack.h#L27) |
+| [~] | `CBehaviourMiniGameTimeAttackTraining` | `CBehaviourMiniGameTraining` | [src/b-witch/ActorMiniGameTimeAttack.h:7](../../src/b-witch/ActorMiniGameTimeAttack.h#L7) |
+| [~] | `CBehaviourMiniGameTimeAttackBetting` | `CBehaviourMiniGameBetting` | [src/b-witch/ActorMiniGameTimeAttack.h:17](../../src/b-witch/ActorMiniGameTimeAttack.h#L17) |
+| [~] | `CBehaviourMiniGameTimeAttackMulti` | `CBehaviourMiniGameMulti` | [src/b-witch/ActorMiniGameTimeAttack.h:27](../../src/b-witch/ActorMiniGameTimeAttack.h#L27) |
 | [~] | `CBehaviourMoneyFlock` | `CBehaviour` | [src/b-witch/ActorMoney.h:46](../../src/b-witch/ActorMoney.h#L46) |
 | [~] | `CBehaviourMoneyAddOn` | `CBehaviourMoneyFlock` | [src/b-witch/ActorMoney.h:84](../../src/b-witch/ActorMoney.h#L84) |
 | [~] | `CBehaviourPlatform` | `CBehaviour` | [src/b-witch/ActorMovingPlatform.h:67](../../src/b-witch/ActorMovingPlatform.h#L67) |
@@ -2801,14 +3622,14 @@ status symbols when comparing or refreshing the generated inventory.
 | [~] | `CBehaviourNativSpeak` | `CBehaviourNativ` | [src/b-witch/ActorNativ.h:304](../../src/b-witch/ActorNativ.h#L304) |
 | [~] | `CBehaviourNativLive` | `CBehaviourNativ` | [src/b-witch/ActorNativ.h:333](../../src/b-witch/ActorNativ.h#L333) |
 | [~] | `CBehaviourNativCmdStand` | `CBehaviour` | [src/b-witch/ActorNativCmd.h:74](../../src/b-witch/ActorNativCmd.h#L74) |
-| [ ] | `CBehaviourNativShopSell` | `CBehaviour` | [src/b-witch/ActorNativShop.h:40](../../src/b-witch/ActorNativShop.h#L40) |
-| [ ] | `CBehaviourNoseMonster` | `CBehaviour` | [src/b-witch/ActorNoseMonster.h:24](../../src/b-witch/ActorNoseMonster.h#L24) |
-| [ ] | `CBehaviourNoseMonsterSleep` | `CBehaviourNoseMonster` | [src/b-witch/ActorNoseMonster.h:36](../../src/b-witch/ActorNoseMonster.h#L36) |
-| [ ] | `CBehaviourNoseMonsterAttack` | `CBehaviourNoseMonster` | [src/b-witch/ActorNoseMonster.h:43](../../src/b-witch/ActorNoseMonster.h#L43) |
-| [ ] | `CBehaviourNoseMonsterDeath` | `CBehaviourNoseMonster` | [src/b-witch/ActorNoseMonster.h:55](../../src/b-witch/ActorNoseMonster.h#L55) |
-| [ ] | `CBehaviourPattern` | `CBehaviour` | [src/b-witch/ActorPattern.h:32](../../src/b-witch/ActorPattern.h#L32) |
-| [ ] | `CBehaviourPatternAlone` | `CBehaviourPattern` | [src/b-witch/ActorPattern.h:43](../../src/b-witch/ActorPattern.h#L43) |
-| [ ] | `CBehaviourPatternMultiple` | `CBehaviourPattern` | [src/b-witch/ActorPattern.h:61](../../src/b-witch/ActorPattern.h#L61) |
+| [~] | `CBehaviourNativShopSell` | `CBehaviour` | [src/b-witch/ActorNativShop.h:40](../../src/b-witch/ActorNativShop.h#L40) |
+| [~] | `CBehaviourNoseMonster` | `CBehaviour` | [src/b-witch/ActorNoseMonster.h:24](../../src/b-witch/ActorNoseMonster.h#L24) |
+| [~] | `CBehaviourNoseMonsterSleep` | `CBehaviourNoseMonster` | [src/b-witch/ActorNoseMonster.h:36](../../src/b-witch/ActorNoseMonster.h#L36) |
+| [~] | `CBehaviourNoseMonsterAttack` | `CBehaviourNoseMonster` | [src/b-witch/ActorNoseMonster.h:43](../../src/b-witch/ActorNoseMonster.h#L43) |
+| [~] | `CBehaviourNoseMonsterDeath` | `CBehaviourNoseMonster` | [src/b-witch/ActorNoseMonster.h:55](../../src/b-witch/ActorNoseMonster.h#L55) |
+| [~] | `CBehaviourPattern` | `CBehaviour` | [src/b-witch/ActorPattern.h:32](../../src/b-witch/ActorPattern.h#L32) |
+| [~] | `CBehaviourPatternAlone` | `CBehaviourPattern` | [src/b-witch/ActorPattern.h:43](../../src/b-witch/ActorPattern.h#L43) |
+| [~] | `CBehaviourPatternMultiple` | `CBehaviourPattern` | [src/b-witch/ActorPattern.h:61](../../src/b-witch/ActorPattern.h#L61) |
 | [~] | `CBehaviourPatternCmd` | `CBehaviour` | [src/b-witch/ActorPatternCmd.h:19](../../src/b-witch/ActorPatternCmd.h#L19) |
 | [~] | `CBehaviourPatternCmdStand` | `CBehaviourPatternCmd` | [src/b-witch/ActorPatternCmd.h:30](../../src/b-witch/ActorPatternCmd.h#L30) |
 | [~] | `CBehaviourProjectile` | `CBehaviour` | [src/b-witch/ActorProjectile.h:32](../../src/b-witch/ActorProjectile.h#L32) |
@@ -2818,17 +3639,17 @@ status symbols when comparing or refreshing the generated inventory.
 | [~] | `CBehaviourProjectileExcuse` | `CBehaviourProjectile` | [src/b-witch/ActorProjectile.h:116](../../src/b-witch/ActorProjectile.h#L116) |
 | [~] | `CBehaviourProjectilePortable` | `CBehaviourProjectile` | [src/b-witch/ActorProjectile.h:128](../../src/b-witch/ActorProjectile.h#L128) |
 | [~] | `CBehaviourProjectileNew` | `CBehaviourProjectile` | [src/b-witch/ActorProjectile.h:144](../../src/b-witch/ActorProjectile.h#L144) |
-| [ ] | `CBehaviourPunchingBall` | `CBehaviour` | [src/b-witch/ActorPunchingBall.h:26](../../src/b-witch/ActorPunchingBall.h#L26) |
-| [ ] | `CBehaviourPunchingBallStand` | `CBehaviourPunchingBall` | [src/b-witch/ActorPunchingBall.h:37](../../src/b-witch/ActorPunchingBall.h#L37) |
-| [ ] | `CBehaviourPunchingBallSlave` | `CBehaviourFighterSlave` | [src/b-witch/ActorPunchingBall.h:48](../../src/b-witch/ActorPunchingBall.h#L48) |
-| [ ] | `CBehaviourPunchingBallRidden` | `CBehaviourFighterRidden` | [src/b-witch/ActorPunchingBall.h:56](../../src/b-witch/ActorPunchingBall.h#L56) |
-| [ ] | `CBehaviourPunchingBallDefault` | `CBehaviourFighter` | [src/b-witch/ActorPunchingBall.h:63](../../src/b-witch/ActorPunchingBall.h#L63) |
+| [~] | `CBehaviourPunchingBall` | `CBehaviour` | [src/b-witch/ActorPunchingBall.h:26](../../src/b-witch/ActorPunchingBall.h#L26) |
+| [~] | `CBehaviourPunchingBallStand` | `CBehaviourPunchingBall` | [src/b-witch/ActorPunchingBall.h:37](../../src/b-witch/ActorPunchingBall.h#L37) |
+| [~] | `CBehaviourPunchingBallSlave` | `CBehaviourFighterSlave` | [src/b-witch/ActorPunchingBall.h:48](../../src/b-witch/ActorPunchingBall.h#L48) |
+| [~] | `CBehaviourPunchingBallRidden` | `CBehaviourFighterRidden` | [src/b-witch/ActorPunchingBall.h:56](../../src/b-witch/ActorPunchingBall.h#L56) |
+| [~] | `CBehaviourPunchingBallDefault` | `CBehaviourFighter` | [src/b-witch/ActorPunchingBall.h:63](../../src/b-witch/ActorPunchingBall.h#L63) |
 | [~] | `CBehaviourRopeStand` | `CBehaviour` | [src/b-witch/ActorRope.h:15](../../src/b-witch/ActorRope.h#L15) |
 | [~] | `CBehaviourRune` | `CBehaviour` | [src/b-witch/ActorRune.h:17](../../src/b-witch/ActorRune.h#L17) |
-| [ ] | `CBehaviourShip` | `CBehaviour` | [src/b-witch/ActorShip.h:43](../../src/b-witch/ActorShip.h#L43) |
-| [ ] | `CBehaviourShipFLY` | `CBehaviourShip` | [src/b-witch/ActorShip.h:54](../../src/b-witch/ActorShip.h#L54) |
-| [ ] | `CBehaviourShocker` | `CBehaviour` | [src/b-witch/ActorShocker.h:33](../../src/b-witch/ActorShocker.h#L33) |
-| [ ] | `CBehaviourShockerFireWave` | `CBehaviourShocker` | [src/b-witch/ActorShocker.h:45](../../src/b-witch/ActorShocker.h#L45) |
+| [~] | `CBehaviourShip` | `CBehaviour` | [src/b-witch/ActorShip.h:43](../../src/b-witch/ActorShip.h#L43) |
+| [~] | `CBehaviourShipFLY` | `CBehaviourShip` | [src/b-witch/ActorShip.h:54](../../src/b-witch/ActorShip.h#L54) |
+| [~] | `CBehaviourShocker` | `CBehaviour` | [src/b-witch/ActorShocker.h:33](../../src/b-witch/ActorShocker.h#L33) |
+| [~] | `CBehaviourShockerFireWave` | `CBehaviourShocker` | [src/b-witch/ActorShocker.h:45](../../src/b-witch/ActorShocker.h#L45) |
 | [~] | `CBehaviourShockerCmd` | `CBehaviour` | [src/b-witch/ActorShockerCmd.h:20](../../src/b-witch/ActorShockerCmd.h#L20) |
 | [~] | `CBehaviourShockerCmdStand` | `CBehaviourShockerCmd` | [src/b-witch/ActorShockerCmd.h:31](../../src/b-witch/ActorShockerCmd.h#L31) |
 | [~] | `CBehaviourShoot` | `CBehaviour` | [src/b-witch/ActorShoot.h:17](../../src/b-witch/ActorShoot.h#L17) |
@@ -2858,10 +3679,10 @@ status symbols when comparing or refreshing the generated inventory.
 | [~] | `CBehaviourWolfen` | `CBehaviour` | [src/b-witch/ActorWolfen.h:461](../../src/b-witch/ActorWolfen.h#L461) |
 | [~] | `CBehaviourLost` | `CBehaviourWolfen` | [src/b-witch/ActorWolfen.h:517](../../src/b-witch/ActorWolfen.h#L517) |
 | [~] | `CBehaviourExorcism` | `CBehaviour` | [src/b-witch/ActorWolfen.h:536](../../src/b-witch/ActorWolfen.h#L536) |
-| [ ] | `CBehaviourTrackStand` | `CBehaviourWolfen` | [src/b-witch/ActorWolfen.h:576](../../src/b-witch/ActorWolfen.h#L576) |
+| [~] | `CBehaviourTrackStand` | `CBehaviourWolfen` | [src/b-witch/ActorWolfen.h:576](../../src/b-witch/ActorWolfen.h#L576) |
 | [~] | `CBehaviourTrack` | `CBehaviourTrackStand` | [src/b-witch/ActorWolfen.h:586](../../src/b-witch/ActorWolfen.h#L586) |
 | [~] | `CBehaviourWatchDog` | `CBehaviourWolfen` | [src/b-witch/ActorWolfen.h:597](../../src/b-witch/ActorWolfen.h#L597) |
-| [ ] | `CBehaviourSleep` | `CBehaviourWatchDog` | [src/b-witch/ActorWolfen.h:614](../../src/b-witch/ActorWolfen.h#L614) |
+| [~] | `CBehaviourSleep` | `CBehaviourWatchDog` | [src/b-witch/ActorWolfen.h:614](../../src/b-witch/ActorWolfen.h#L614) |
 | [~] | `CBehaviourEscape` | `CBehaviourWolfen` | [src/b-witch/ActorWolfen.h:620](../../src/b-witch/ActorWolfen.h#L620) |
 | [~] | `CBehaviourWolfenWeapon` | `CBehaviourWolfen` | [src/b-witch/ActorWolfen.h:649](../../src/b-witch/ActorWolfen.h#L649) |
 | [~] | `CBehaviourSnipe` | `CBehaviourWolfenWeapon` | [src/b-witch/ActorWolfen.h:689](../../src/b-witch/ActorWolfen.h#L689) |
@@ -2871,17 +3692,17 @@ status symbols when comparing or refreshing the generated inventory.
 | [~] | `CBehaviourAvoid` | `CBehaviourWolfen` | [src/b-witch/ActorWolfen.h:829](../../src/b-witch/ActorWolfen.h#L829) |
 | [~] | `CBehaviourGuardArea` | `CBehaviourWolfen` | [src/b-witch/ActorWolfen.h:846](../../src/b-witch/ActorWolfen.h#L846) |
 | [~] | `CBehaviourDCA` | `CBehaviourWolfen` | [src/b-witch/ActorWolfen.h:867](../../src/b-witch/ActorWolfen.h#L867) |
-| [ ] | `CBehaviourWolfenGrindDeath` | `CBehaviour` | [src/b-witch/ActorWolfen.h:899](../../src/b-witch/ActorWolfen.h#L899) |
-| [ ] | `CBehaviourFighterWolfen` | `CBehaviourFighter` | [src/b-witch/ActorWolfen.h:923](../../src/b-witch/ActorWolfen.h#L923) |
-| [ ] | `CBehaviourWolfenFighterRidden` | `CBehaviourFighterRidden` | [src/b-witch/ActorWolfen.h:1008](../../src/b-witch/ActorWolfen.h#L1008) |
-| [ ] | `CBehaviourWolfenFighterSlave` | `CBehaviourFighterSlave` | [src/b-witch/ActorWolfen.h:1016](../../src/b-witch/ActorWolfen.h#L1016) |
-| [ ] | `CBehaviourWolfenFighterProjected` | `CBehaviourFighterProjected` | [src/b-witch/ActorWolfen.h:1027](../../src/b-witch/ActorWolfen.h#L1027) |
+| [~] | `CBehaviourWolfenGrindDeath` | `CBehaviour` | [src/b-witch/ActorWolfen.h:899](../../src/b-witch/ActorWolfen.h#L899) |
+| [~] | `CBehaviourFighterWolfen` | `CBehaviourFighter` | [src/b-witch/ActorWolfen.h:923](../../src/b-witch/ActorWolfen.h#L923) |
+| [~] | `CBehaviourWolfenFighterRidden` | `CBehaviourFighterRidden` | [src/b-witch/ActorWolfen.h:1008](../../src/b-witch/ActorWolfen.h#L1008) |
+| [~] | `CBehaviourWolfenFighterSlave` | `CBehaviourFighterSlave` | [src/b-witch/ActorWolfen.h:1016](../../src/b-witch/ActorWolfen.h#L1016) |
+| [~] | `CBehaviourWolfenFighterProjected` | `CBehaviourFighterProjected` | [src/b-witch/ActorWolfen.h:1027](../../src/b-witch/ActorWolfen.h#L1027) |
 | [~] | `CBehaviourWoodMonster` | `CBehaviour` | [src/b-witch/ActorWoodMonster.h:20](../../src/b-witch/ActorWoodMonster.h#L20) |
 | [~] | `CBehaviourWoodMonsterGet` | `CBehaviourWoodMonster` | [src/b-witch/ActorWoodMonster.h:31](../../src/b-witch/ActorWoodMonster.h#L31) |
 | [~] | `CBehaviourWoof` | `CBehaviour` | [src/b-witch/ActorWoof.h:33](../../src/b-witch/ActorWoof.h#L33) |
 | [~] | `CBehaviourWoofGuard` | `CBehaviourWoof` | [src/b-witch/ActorWoof.h:44](../../src/b-witch/ActorWoof.h#L44) |
 | [~] | `CBehaviourWoofVerticalJump` | `CBehaviourWoof` | [src/b-witch/ActorWoof.h:56](../../src/b-witch/ActorWoof.h#L56) |
-| [ ] | `CBehaviourInventory` | `CBehaviour` | [src/b-witch/BehaviourInventory.h:10](../../src/b-witch/BehaviourInventory.h#L10) |
+| [~] | `CBehaviourInventory` | `CBehaviour` | [src/b-witch/BehaviourInventory.h:10](../../src/b-witch/BehaviourInventory.h#L10) |
 
 ## Inventory review
 

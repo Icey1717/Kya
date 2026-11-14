@@ -22,6 +22,17 @@
 #include "Misc/ScopedSlowTask.h"
 #include "Misc/App.h"
 #include "KyaCameraStream.h"
+#include "Actors/KyaEventGenerator.h"
+#include "Actors/KyaExplosiveDistributor.h"
+#include "Actors/KyaShocker.h"
+#include "Actors/KyaNativShop.h"
+#include "Actors/KyaPunchingBall.h"
+#include "Actors/KyaNoseMonster.h"
+#include "Actors/KyaPattern.h"
+#include "Actors/KyaShip.h"
+#include "Actors/KyaBunch.h"
+#include "Actors/KyaBrazul.h"
+#include "Actors/KyaMiniGame.h"
 #include "Actors/KyaHedgehog.h"
 #include "Actors/KyaProjectile.h"
 #include "Actors/KyaMovingPlatform.h"
@@ -567,6 +578,63 @@ UObject* UKyaLevelBankFactory::FactoryCreateBinary(UClass* InClass, UObject* InP
                                                         Actor.bHasBasicBoxData = KyaReadBasicBoxActor(Actor,
                                                             MakeArrayView(Data, int32(Entry.Size)), Offsets.ClassData, Offsets.ClassDataSize);
                                                     }
+                                                    if (Actor.ClassId == 0x3b)
+                                                    {
+                                                        Actor.bHasEventGeneratorData = KyaReadEventGeneratorActor(Actor,
+                                                            MakeArrayView(Data, int32(Entry.Size)), Offsets.ClassData, Offsets.ClassDataSize);
+                                                    }
+                                                    if (Actor.ClassId == 0x1d)
+                                                    {
+                                                        Actor.bHasExplosiveDistributorData = KyaReadExplosiveDistributorActor(Actor,
+                                                            MakeArrayView(Data, int32(Entry.Size)), Offsets.ClassData, Offsets.ClassDataSize);
+                                                    }
+                                                    if (Actor.ClassId == 0x4b)
+                                                    {
+                                                        Actor.bHasShockerData = KyaReadShockerActor(Actor,
+                                                            MakeArrayView(Data, int32(Entry.Size)), Offsets.ClassData, Offsets.ClassDataSize);
+                                                    }
+                                                    if (Actor.ClassId == 0x34)
+                                                    {
+                                                        Actor.bHasNativShopData = KyaReadNativShopActor(Actor,
+                                                            MakeArrayView(Data, int32(Entry.Size)), Offsets.ClassData, Offsets.ClassDataSize);
+                                                    }
+                                                    if (Actor.ClassId == 0x30)
+                                                    {
+                                                        Actor.bHasPunchingBallData = KyaReadPunchingBallActor(Actor,
+                                                            MakeArrayView(Data, int32(Entry.Size)), Offsets.ClassData, Offsets.ClassDataSize);
+                                                    }
+                                                    if (Actor.ClassId == 0x26)
+                                                    {
+                                                        Actor.bHasNoseMonsterData = KyaReadNoseMonsterActor(Actor,
+                                                            MakeArrayView(Data, int32(Entry.Size)), Offsets.ClassData, Offsets.ClassDataSize);
+                                                    }
+                                                    if (Actor.ClassId == 0x3f)
+                                                    {
+                                                        Actor.bHasPatternData = KyaReadPatternActor(Actor,
+                                                            MakeArrayView(Data, int32(Entry.Size)), Offsets.ClassData, Offsets.ClassDataSize);
+                                                    }
+                                                    if (Actor.ClassId == 0x36)
+                                                    {
+                                                        Actor.bHasShipData = KyaReadShipActor(Actor,
+                                                            MakeArrayView(Data, int32(Entry.Size)), Offsets.ClassData, Offsets.ClassDataSize);
+                                                    }
+                                                    if (Actor.ClassId == 0x4e)
+                                                    {
+                                                        Actor.bHasBunchData = KyaReadBunchActor(Actor,
+                                                            MakeArrayView(Data, int32(Entry.Size)), Offsets.ClassData, Offsets.ClassDataSize);
+                                                    }
+                                                    if (Actor.ClassId == 0x4f)
+                                                    {
+                                                        Actor.bHasBrazulData = KyaReadBrazulActor(Actor,
+                                                            MakeArrayView(Data, int32(Entry.Size)), Offsets.ClassData, Offsets.ClassDataSize);
+                                                    }
+                                                    if (Actor.ClassId == 0x44 || Actor.ClassId == 0x45 ||
+                                                        Actor.ClassId == 0x46 || Actor.ClassId == 0x47 ||
+                                                        Actor.ClassId == 0x55)
+                                                    {
+                                                        Actor.bHasMiniGameData = KyaReadMiniGameActor(Actor,
+                                                            MakeArrayView(Data, int32(Entry.Size)), Offsets.ClassData, Offsets.ClassDataSize);
+                                                    }
                                                     if (Actor.ClassId == 0x2e)
                                                     {
                                                         Actor.bHasFxData = KyaReadFxActor(Actor,
@@ -878,6 +946,50 @@ UObject* UKyaLevelBankFactory::FactoryCreateBinary(UClass* InClass, UObject* InP
                                                                 MakeArrayView(Data, int32(Entry.Size)),
                                                                 BehaviourOffset.Payload, BehaviourOffset.Size);
                                                         }
+                                                        if (Actor.ClassId == 0x3b && Behaviour.Id == 2)
+                                                        {
+                                                            KyaReadEventGeneratorBehaviour(Behaviour, Behaviour.Id,
+                                                                MakeArrayView(Data, int32(Entry.Size)),
+                                                                BehaviourOffset.Payload, BehaviourOffset.Size);
+                                                        }
+                                                        if (Actor.ClassId == 0x4b && Behaviour.Id == 3)
+                                                        {
+                                                            KyaReadShockerBehaviour(Behaviour, Behaviour.Id,
+                                                                MakeArrayView(Data, int32(Entry.Size)),
+                                                                BehaviourOffset.Payload, BehaviourOffset.Size);
+                                                        }
+                                                        if (Actor.ClassId == 0x34 && Behaviour.Id == 2)
+                                                        {
+                                                            KyaReadNativShopBehaviour(Behaviour, Behaviour.Id,
+                                                                MakeArrayView(Data, int32(Entry.Size)),
+                                                                BehaviourOffset.Payload, BehaviourOffset.Size);
+                                                        }
+                                                        if (Actor.ClassId == 0x4e && (Behaviour.Id == 26 || Behaviour.Id == 27))
+                                                        {
+                                                            KyaReadBunchBehaviour(Behaviour, Behaviour.Id,
+                                                                MakeArrayView(Data, int32(Entry.Size)),
+                                                                BehaviourOffset.Payload, BehaviourOffset.Size);
+                                                        }
+                                                        if (Actor.ClassId == 0x4f && (Behaviour.Id == 26 || Behaviour.Id == 27))
+                                                        {
+                                                            KyaReadBrazulBehaviour(Behaviour, Behaviour.Id,
+                                                                MakeArrayView(Data, int32(Entry.Size)),
+                                                                BehaviourOffset.Payload, BehaviourOffset.Size);
+                                                        }
+                                                        if ((Actor.ClassId == 0x44 || Actor.ClassId == 0x45 ||
+                                                            Actor.ClassId == 0x46 || Actor.ClassId == 0x47 ||
+                                                            Actor.ClassId == 0x55) && Behaviour.Id == 3)
+                                                        {
+                                                            KyaReadMiniGameBehaviour(Behaviour, Behaviour.Id,
+                                                                MakeArrayView(Data, int32(Entry.Size)),
+                                                                BehaviourOffset.Payload, BehaviourOffset.Size);
+                                                        }
+                                                        if (Actor.ClassId == 0x3f && Behaviour.Id == 3)
+                                                        {
+                                                            KyaReadPatternBehaviour(Behaviour, Behaviour.Id,
+                                                                MakeArrayView(Data, int32(Entry.Size)),
+                                                                BehaviourOffset.Payload, BehaviourOffset.Size);
+                                                        }
                                                         if (Actor.ClassId == 0x07 && Behaviour.Id == 4)
                                                         {
                                                             KyaReadMickenBehaviourValue(Behaviour, Behaviour.Id,
@@ -943,7 +1055,7 @@ UObject* UKyaLevelBankFactory::FactoryCreateBinary(UClass* InClass, UObject* InP
                                                                 MakeArrayView(Data, int32(Entry.Size)),
                                                                 BehaviourOffset.Payload, BehaviourOffset.Size);
                                                         }
-                                                        if (Actor.ClassId == 0x09 && (Behaviour.Id == 8 || Behaviour.Id == 10 ||
+                                                        if ((Actor.ClassId == 0x09 || Actor.ClassId == 0x4e || Actor.ClassId == 0x4f) && (Behaviour.Id == 8 || Behaviour.Id == 10 ||
                                                             Behaviour.Id == 13 || Behaviour.Id == 14 || Behaviour.Id == 15 ||
                                                             Behaviour.Id == 17 || Behaviour.Id == 18 || Behaviour.Id == 19 ||
                                                             Behaviour.Id == 21 || Behaviour.Id == 22 || Behaviour.Id == 23 ||
