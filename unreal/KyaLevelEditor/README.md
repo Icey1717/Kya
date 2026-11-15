@@ -1,5 +1,44 @@
 # Kya Level Editor
 
+Authoring previews show only the highest-detail scenery LOD, including hierarchy
+selection handles. **Authoring Show Culled Geometry** keeps that LOD visible at
+any distance; comparison/capture cameras retain native distance-based LOD selection.
+Mixed-alpha cluster scenery also draws its fully opaque regions through a masked
+material so they write scene depth; partially transparent regions retain blending.
+
+Authored scenery collision and event-zone wires are available in the level preview's
+**Kya > Diagnostics > Primitives** controls. See [primitive display and authoring
+architecture](PRIMITIVES.md) for picking, source identities, supported shapes and tests.
+
+**Export Kya Level** opens a modal showing the banks to be exported, including
+associated sector banks. Choose an output folder with the path field or Browse,
+use **Validate only** to inspect problems without writing files, then **Export**.
+Validation and per-file export results remain in the dialog and can be copied.
+Export uses current in-memory edits and replaces existing output bank files after
+validation. Optionally enable **Open output folder after successful export**.
+The default destination is `Saved/KyaExport`. Interactive `Kya.Export` opens the
+same dialog; its optional directory argument sets the initial destination.
+Unattended `Kya.Export` continues to export directly for automation.
+
+The Kya Level menu shows whether level actions target selected previews or all
+previews in the editor world. Actions that need bank assets or a suitable actor
+selection are disabled until that context is available. Actor creation and
+duplication select and frame the resulting record.
+
+**Refresh Sector Discovery** opens a read-only scan showing source folders,
+existing imports, ambiguous files and missing banks. Choose **Import missing
+banks**, then **Apply** to update associations. **Create / Update Kya Level Set**
+similarly previews asset destinations and offers **Browse to Asset** afterward.
+Save those descriptors in the Content Browser. Unattended commands continue to
+run directly.
+
+**Validate Kya Level** opens the **Kya Level** Message Log with severity filters,
+validation pages and clickable bank/actor links. **Save Kya Level Assets** saves
+Unreal bank assets; **Export Kya Level** writes game `.bnk` files. Routine success
+feedback uses brief notifications. Visibility, path and selection-lock controls
+show checked states; a mixed group is unchecked, and selection lock sets all
+targets to the same state.
+
 Scenario conditions show a readable expression, named AND/OR/XOR and comparison
 menus, and a variable picker with the recovered `SCN_*` names from
 `src/b-witch/LevelScheduler.h`. Raw integer fields remain available, including
@@ -593,8 +632,13 @@ status message.
 **Level settings.** `Edit Level Settings` in the Kya Level menu (or
 `Kya.LevelSettings`) opens a docked **Kya Level Settings** tab for the selected
 preview. It edits the bank's environment, main camera, fog and scene configuration
-as one authoring surface; applying writes the whole block through the shared edit
-service (one undo step) and refreshes every preview. Invalid values (non-finite
+as one authoring surface. Edits stay in a private proxy until **Save** writes the
+settings through the shared edit service (one undo step) and refreshes every
+preview. **Reload from Bank** discards the draft. External bank edits and undo do
+not overwrite an open draft; reload to view the bank's current values. The proxy
+excludes actor, waypoint and path arrays, and Save preserves their current bank
+records. Save commits to the in-memory asset; save the asset normally to persist
+it to disk. Invalid values (non-finite
 camera/fog data, FOV outside 0–180, flags outside the serialized 32-bit range) are
 rejected with the bank unchanged. Preview properties are categorised separately:
 `Kya|Authoring` holds the bank/level-set association, while render comparison,
@@ -648,12 +692,26 @@ independent background transform.
 `SetPreviewCamera` supplies an explicit camera for captures and prevents the
 editor viewport from overwriting it; spawn a new preview to resume viewport following.
 
-`Preview Base Sector` selects the sector's native clipping distance (or defaults
-to the first sector bank). Cluster objects and strips use native sphere tests,
+`Preview Base Sector` selects the sector's background and native clipping distance
+(or defaults to the first sector bank). Other loaded sectors still contribute
+actors and cluster geometry. Enable `Show All Sector Backgrounds` to inspect their
+background scenes together; overlapping alternative skies can cover each other.
+When the active sector has no background, the common background is used.
+Cluster objects and strips use native sphere tests,
 including the far-only parent intersection exception, and distance-based hierarchy
 LOD selection. This differs from setting an Unreal per-pixel far plane. Background
 geometry keeps its independent native range. Generated textures preserve the
 material's clamp/repeat addressing.
+
+First-layer UV scrolling reads the serialized layer flag and texture animation
+vector, including its initial offsets. **Animate Textures** pauses/resumes it;
+**Texture Animation Frame Rate** sets source steps per second (default 60), and
+**Reset Texture Animation** restores the stored phase. Enable viewport realtime
+to see motion. Generated opaque, masked, additive and translucent materials share
+the same UV offset path. Custom texture materials can use the `KyaUVOffset` vector
+parameter's RG channels. Rebuilding the preview resets the phase. Atlas-frame
+animation, actor-driven speed changes and the game's distance gating are not
+implemented.
 
 Additive and source-alpha meshes match encoded-colour blending against Unreal's opaque scene
 colour. Overlapping translucent surfaces still use Unreal's translucency ordering

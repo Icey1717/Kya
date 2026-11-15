@@ -1,97 +1,74 @@
 #include "KyaLevelSettings.h"
 
 #include "KyaActorEditService.h"
-#include "Containers/Ticker.h"
-#include "Misc/TransactionObjectEvent.h"
-#include "UObject/UObjectGlobals.h"
+#include "UObject/UnrealType.h"
 #if WITH_EDITOR
 #include "Editor.h"
 #include "ScopedTransaction.h"
 #endif
 
-void UKyaLevelSettings::RefreshFromBank()
+namespace
 {
-    if (!Bank) return;
-    Environment = Bank->SceneEnvironment;
-    SceneConfiguration = Bank->SceneConfiguration;
-}
-
-void UKyaLevelSettings::ScheduleRefresh()
+// Copy only settings properties. The proxy has no placement properties, so
+// loading never copies or exposes those large property trees.
+void CopyEnvironmentSettings(void* Destination, const void* Source, bool bToBank)
 {
-    if (bReloadScheduled) return;
-    bReloadScheduled = true;
-    // Undo/redo is notified while the transaction is still unwinding; refresh on the
-    // next tick so the copy sees the final restored state.
-    FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateWeakLambda(this, [this](float)
+    for (TFieldIterator<FProperty> It(FKyaLevelSettingsEnvironment::StaticStruct()); It; ++It)
     {
-        bReloadScheduled = false;
-        if (!bApplying) RefreshFromBank();
-        return false;
-    }), 0.0f);
+        const FProperty* ProxyProperty = *It;
+        const FProperty* BankProperty = FindFProperty<FProperty>(
+            FKyaSceneEnvironment::StaticStruct(), ProxyProperty->GetFName());
+        check(BankProperty && ProxyProperty->SameType(BankProperty));
+        const FProperty* DestinationProperty = bToBank ? BankProperty : ProxyProperty;
+        const FProperty* SourceProperty = bToBank ? ProxyProperty : BankProperty;
+        DestinationProperty->CopyCompleteValue(
+            DestinationProperty->ContainerPtrToValuePtr<void>(Destination),
+            SourceProperty->ContainerPtrToValuePtr<void>(Source));
+    }
+}
 }
 
 void UKyaLevelSettings::LoadFromBank()
 {
     if (!Bank) return;
-    RefreshFromBank();
-#if WITH_EDITOR
-    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
-    if (BankEditedHandle.IsValid()) Service.OnBankEdited.Remove(BankEditedHandle);
-    if (BankTransactedHandle.IsValid())
-        FCoreUObjectDelegates::OnObjectTransacted.Remove(BankTransactedHandle);
-    // External bank edits and reimports.
-    BankEditedHandle = Service.OnBankEdited.AddWeakLambda(this, [this](UKyaLevelBank* EditedBank)
-    {
-        if (bApplying || EditedBank != Bank) return;
-        RefreshFromBank();
-    });
-    // Undo/redo.
-    BankTransactedHandle = FCoreUObjectDelegates::OnObjectTransacted.AddWeakLambda(this,
-        [this](UObject* Object, const FTransactionObjectEvent& Event)
-        {
-            if (!bApplying && Object == Bank) ScheduleRefresh();
-        });
-#endif
+    CopyEnvironmentSettings(&Environment, &Bank->SceneEnvironment, false);
+    SceneConfiguration = Bank->SceneConfiguration;
+    ApplyStatus = TEXT("Edit settings, then Save to apply them to the bank.");
 }
 
 bool UKyaLevelSettings::ApplyToBank(FString& OutError)
 {
+    OutError.Reset();
     if (!Bank)
     {
-        OutError = TEXT("Select a bank before applying level settings.");
+        OutError = TEXT("Select a bank before saving level settings.");
+        ApplyStatus = OutError;
         return false;
     }
 #if WITH_EDITOR
+    // Preserve asset identity and current placements; the service merges them
+    // into this settings snapshot when committing.
+    FKyaSceneEnvironment NewEnvironment;
+    CopyEnvironmentSettings(&NewEnvironment, &Environment, true);
     FKyaLevelEditService& Service = FKyaLevelEditService::Get();
     TGuardValue<bool> Guard(bApplying, true);
     bool bApplied = false;
     if (GEditor && !GEditor->IsTransactionActive())
     {
         FScopedTransaction Transaction(NSLOCTEXT("KyaLevelEditor", "KyaLevelSettingsEdit", "Edit Kya Level Settings"));
-        bApplied = Service.ApplySceneSettings(Bank, Environment, SceneConfiguration, EKyaEditNotify::Notify,
-            &OutError);
+        bApplied = Service.ApplySceneSettings(Bank, NewEnvironment, SceneConfiguration, EKyaEditNotify::Notify, &OutError);
     }
     else
     {
-        bApplied = Service.ApplySceneSettings(Bank, Environment, SceneConfiguration, EKyaEditNotify::Notify,
-            &OutError);
+        bApplied = Service.ApplySceneSettings(Bank, NewEnvironment, SceneConfiguration, EKyaEditNotify::Notify, &OutError);
     }
-    ApplyStatus = bApplied ? TEXT("Applied to the bank.") : OutError;
+    ApplyStatus = bApplied ? TEXT("Saved to the bank. Save the asset to persist it to disk.") : OutError;
     return bApplied;
 #else
     OutError = TEXT("Editing level settings requires the editor.");
+    ApplyStatus = OutError;
     return false;
 #endif
-}
-
-void UKyaLevelSettings::BeginDestroy()
-{
-#if WITH_EDITOR
-    if (BankEditedHandle.IsValid()) FKyaLevelEditService::Get().OnBankEdited.Remove(BankEditedHandle);
-    if (BankTransactedHandle.IsValid())
-        FCoreUObjectDelegates::OnObjectTransacted.Remove(BankTransactedHandle);
-#endif
-    Super::BeginDestroy();
 }
 
 #if WITH_EDITOR
@@ -102,17 +79,11 @@ void UKyaLevelSettings::PostEditChangeProperty(FPropertyChangedEvent& PropertyCh
     const FName Name = PropertyChangedEvent.MemberProperty
         ? PropertyChangedEvent.MemberProperty->GetFName()
         : PropertyChangedEvent.Property ? PropertyChangedEvent.Property->GetFName() : NAME_None;
-    // Selecting another bank reloads this surface; it must never write the old
-    // bank's settings into the newly selected bank.
     if (Name == GET_MEMBER_NAME_CHECKED(UKyaLevelSettings, Bank))
     {
         LoadFromBank();
         return;
     }
-    if (!Bank) return;
-    FString Error;
-    if (!ApplyToBank(Error))
-        UE_LOG(LogTemp, Warning, TEXT("KYA_LEVEL_SETTINGS_APPLY_FAILED bank=%s reason=%s"),
-            *GetNameSafe(Bank), *Error);
+    ApplyStatus = TEXT("Unsaved settings. Save to apply, or Reload from Bank to discard.");
 }
 #endif

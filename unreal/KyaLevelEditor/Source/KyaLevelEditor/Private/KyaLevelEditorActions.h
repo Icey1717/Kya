@@ -65,10 +65,16 @@ void KyaSyncLevelSetFromPreview(UKyaLevelSet& LevelSet, AKyaLevelPreview& Previe
  * Discover sibling SECT<digits>.BNK files next to the preview's main bank, reuse
  * already-imported assets matched by source provenance and import the rest into a
  * level-specific folder. Existing preview associations and bank edits are kept.
+ * bPreviewOnly scans without importing, changing associations or rebuilding.
  */
-FKyaSectorDiscoveryResult KyaDiscoverSectors(AKyaLevelPreview* Preview, bool bImportMissing);
+FKyaSectorDiscoveryResult KyaDiscoverSectors(AKyaLevelPreview* Preview, bool bImportMissing, bool bPreviewOnly = false);
 
-/** Save the packages that contain the given banks (and their previews' maps). */
+/** Resolve the exact create/update destination without changing assets. */
+FString KyaGetLevelSetDestination(AKyaLevelPreview* Preview);
+bool KyaCanEditSelectedActor();
+FString KyaGetPreviewScopeText();
+
+/** Save the packages that contain the given banks. */
 bool KyaSaveLevelBanks(const TArray<UKyaLevelBank*>& Banks, FString& OutError);
 
 /**

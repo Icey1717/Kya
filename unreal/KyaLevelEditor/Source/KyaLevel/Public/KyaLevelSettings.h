@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "KyaLevelBank.h"
+#include "KyaLevelSettingsEnvironment.h"
 #include "KyaLevelSettings.generated.h"
 
 /**
@@ -9,8 +10,8 @@
  * configuration.
  *
  * The object is transient (created by the level preview or the Level Settings tab),
- * loads a copy from the bank and writes the whole settings block back through the
- * shared edit service, so one edit is one undo step and every preview refreshes.
+ * holds a settings draft until Save writes it through the shared edit service
+ * as one undo step. Placement arrays are excluded from the draft.
  * Render/capture toggles stay on the preview under Kya|Diagnostics and are not part
  * of this authoring surface.
  */
@@ -24,7 +25,7 @@ public:
     TObjectPtr<UKyaLevelBank> Bank;
 
     UPROPERTY(EditAnywhere, Category="Kya|Environment")
-    FKyaSceneEnvironment Environment;
+    FKyaLevelSettingsEnvironment Environment;
 
     UPROPERTY(EditAnywhere, Category="Kya|Scene configuration")
     FKyaSceneConfiguration SceneConfiguration;
@@ -34,7 +35,7 @@ public:
     void LoadFromBank();
 
     /** Write the edited settings back to the bank through the edit service. */
-    UFUNCTION(BlueprintCallable, CallInEditor, Category="Kya|Level")
+    UFUNCTION(BlueprintCallable, Category="Kya|Level")
     bool ApplyToBank(FString& OutError);
 
     /** Last apply result, shown in the settings Details panel. */
@@ -42,17 +43,10 @@ public:
     FString ApplyStatus;
 
 #if WITH_EDITOR
-    /** Auto-apply property edits as one undoable settings write. */
+    /** Edit only the draft; selecting a bank loads a new draft. */
     virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 
-    virtual void BeginDestroy() override;
-
 private:
-    FDelegateHandle BankEditedHandle;
-    FDelegateHandle BankTransactedHandle;
     bool bApplying = false;
-    bool bReloadScheduled = false;
-    void RefreshFromBank();
-    void ScheduleRefresh();
 };

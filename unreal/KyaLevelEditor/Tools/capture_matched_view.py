@@ -33,6 +33,13 @@ for old_preview in old_previews:
     actor_subsystem.destroy_actor(old_preview)
 unreal.log('KYA_CAPTURE_REMOVED_PREVIEWS %d' % len(old_previews))
 preview = unreal.EditorLevelLibrary.spawn_actor_from_class(preview_class, unreal.Vector(), unreal.Rotator())
+preview.set_editor_property('show_collision_primitives', os.environ.get('KYA_CAPTURE_COLLISION', '0') == '1')
+preview.set_editor_property('show_event_primitives', os.environ.get('KYA_CAPTURE_EVENTS', '0') == '1')
+primitive_modes = {'wireframe': unreal.KyaPrimitiveDisplayMode.WIREFRAME,
+                   'solid': unreal.KyaPrimitiveDisplayMode.SOLID,
+                   'both': unreal.KyaPrimitiveDisplayMode.SOLID_AND_WIREFRAME}
+preview.set_editor_property('collision_primitive_display', primitive_modes[os.environ.get('KYA_CAPTURE_COLLISION_MODE', 'wireframe')])
+preview.set_editor_property('event_primitive_display', primitive_modes[os.environ.get('KYA_CAPTURE_EVENT_MODE', 'wireframe')])
 raw_color = os.environ.get('KYA_CAPTURE_RAW_COLOR', '1') == '1'
 # Set every option before the bank so the first construction already uses them.
 preview.set_editor_property('raw_color_modulation', raw_color)

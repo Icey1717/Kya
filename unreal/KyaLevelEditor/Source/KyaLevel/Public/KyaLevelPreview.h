@@ -5,6 +5,8 @@
 #include "HAL/Event.h"
 #include "HAL/ThreadSafeCounter.h"
 #include "HAL/CriticalSection.h"
+#include "KyaG2D.h"
+#include "KyaPrimitiveComponent.h"
 #include "KyaLevelPreview.generated.h"
 
 class UKyaLevelBank;
@@ -24,6 +26,7 @@ class AKyaActorHandle;
 class AKyaActorGroup;
 class AKyaSpatialRecordHandle;
 class AKyaSceneVisualizer;
+class UKyaPrimitiveComponent;
 class AKyaHierarchyHandle;
 class UPostProcessComponent;
 class UMaterialInstanceDynamic;
@@ -132,9 +135,13 @@ public:
     bool IsSectorVisible(int32 SectorId) const;
     void SetSectorVisible(int32 SectorId, bool bVisible);
 
-    /** Native active sector for distance clipping; -1 uses the first sector bank. */
+    /** Native active sector for background selection and distance clipping; -1 uses the first sector bank. */
     UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Visibility")
     int32 PreviewBaseSector = -1;
+
+    /** Draw inactive sectors' backgrounds too. Their sky layers can overlap the active sky. */
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Visibility")
+    bool bShowAllSectorBackgrounds = false;
 
     /** Log per-sector entry, decoding, material and world-space bounds diagnostics on construction. */
     UPROPERTY(EditAnywhere, Category="Kya|Diagnostics")
@@ -169,9 +176,21 @@ public:
     int32 GetCachedGeometryDecodeCount() const { return CachedGeometryDecodes; }
 #endif
 
-    /** Optional override with a Texture2D parameter named KyaTexture. */
+    /** Optional override with KyaTexture and a float2 KyaUVOffset vector parameter. */
     UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Materials")
     TObjectPtr<UMaterialInterface> TextureMaterial;
+
+    /** Animate the source's first-layer scrolling parameters in realtime viewports. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Kya|Preview|Textures")
+    bool bAnimateTextures = true;
+
+    /** Source increments are per game frame. Set the preview's source frame rate here. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Kya|Preview|Textures", meta=(ClampMin="1", ClampMax="240"))
+    float TextureAnimationFrameRate = 60.0f;
+
+    /** Restore serialized initial UV offsets, including while animation is paused. */
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="Kya|Preview|Textures")
+    void ResetTextureAnimation();
 
     /**
      * Combine texture and vertex colours in the game's encoded colour space, then decode the
@@ -221,7 +240,7 @@ public:
     UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Visibility", meta=(EditCondition="bAuthoringVisibility"))
     bool bAuthoringShowUnloadedSectors = true;
 
-    /** Authoring only: draw cluster geometry regardless of native distance culling. */
+    /** Authoring only: draw the highest-detail cluster LOD regardless of native distance culling. */
     UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Visibility", meta=(EditCondition="bAuthoringVisibility"))
     bool bAuthoringShowCulledGeometry = true;
 
@@ -314,6 +333,36 @@ public:
     UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Visualizers")
     bool bSpawnTriggerVisualizers = false;
 
+    /** Authored scenery collision surfaces and referenced box/sphere primitives. */
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Primitives")
+    bool bShowCollisionPrimitives = false;
+
+    /** Authored event zone geometry; cyan inclusion groups, red exclusion group. */
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Primitives")
+    bool bShowEventPrimitives = false;
+
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Primitives")
+    EKyaPrimitiveDisplayMode CollisionPrimitiveDisplay = EKyaPrimitiveDisplayMode::Wireframe;
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Primitives")
+    EKyaPrimitiveDisplayMode EventPrimitiveDisplay = EKyaPrimitiveDisplayMode::Wireframe;
+    /** Translucent faces allow the textured level to remain visible beneath them. */
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Primitives", meta=(ClampMin="0.05", ClampMax="1"))
+    float PrimitiveSolidOpacity = 0.25f;
+    /** Constant screen-pixel width, including distant collision edges. */
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Primitives", meta=(ClampMin="0.5", ClampMax="6"))
+    float PrimitiveWireThickness = 1.5f;
+    /** Bring coplanar wires slightly forward to avoid fighting with level surfaces. */
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Primitives", meta=(ClampMin="0", ClampMax="10"))
+    float PrimitiveWireDepthBias = 0.1f;
+
+    UPROPERTY(VisibleAnywhere, Transient, Category="Kya|Diagnostics|Primitives")
+    TArray<TObjectPtr<UKyaPrimitiveComponent>> PrimitiveComponents;
+
+    UPROPERTY(VisibleAnywhere, Transient, Category="Kya|Diagnostics|Primitives")
+    TArray<FString> PrimitiveDiagnostics;
+
+    void RefreshPrimitives();
+
     /** Human-readable list of visualizer limitations (for example missing zone geometry). */
     UPROPERTY(VisibleAnywhere, Category="Kya|Diagnostics|Visualizers")
     FString VisualizerLimitations;
@@ -390,6 +439,7 @@ public:
     void ClearGeneratedActorIsolation();
     UFUNCTION(BlueprintCallable, Category="Kya|Diagnostics|Selection")
     bool IsGeneratedActorIsolated(const AActor* Actor) const;
+    bool HasGeneratedActorIsolation() const { return bIsolationActive; }
     /** Reapply temporary visibility and selection-lock state after a build. */
     void ApplyGeneratedActorPresentation();
 
@@ -495,6 +545,7 @@ private:
         int32 Section = 0;
         int32 Start = 0;
         int32 Count = 0;
+        int32 LodIndex = 0;
         FVector4f ObjectSphere = FVector4f(0, 0, 0, 0);
         FVector4f StripSphere = FVector4f(0, 0, 0, 0);
         FVector4f LodSphere = FVector4f(0, 0, 0, 0);
@@ -549,11 +600,23 @@ private:
     UPROPERTY(Transient)
     TArray<TObjectPtr<UTexture2D>> PreviewTextures;
 
+    struct FScrollingMaterial
+    {
+        TWeakObjectPtr<UMaterialInstanceDynamic> Material;
+        KyaG2D::FTextureScroll Scroll;
+        FVector2f InitialOffset = FVector2f::ZeroVector;
+    };
+    TArray<FScrollingMaterial> ScrollingMaterials;
+    double TextureAnimationRemainder = 0;
+
     UPROPERTY(Transient)
     TObjectPtr<UMaterial> GeneratedPreviewMaterial;
 
     UPROPERTY(Transient)
     TObjectPtr<UMaterial> GeneratedMaskedPreviewMaterial;
+
+    UPROPERTY(Transient)
+    TObjectPtr<UMaterial> GeneratedOpaqueCoreMaterial;
     UPROPERTY(Transient)
     TObjectPtr<UMaterial> GeneratedAdditivePreviewMaterial;
     UPROPERTY(Transient)

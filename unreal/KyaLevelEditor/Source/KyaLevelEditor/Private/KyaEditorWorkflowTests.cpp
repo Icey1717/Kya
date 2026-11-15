@@ -1965,7 +1965,12 @@ bool FKyaStructuralEditGateTest::RunTest(const FString& Parameters)
                     if (GEditor)
                     {
                         GEditor->SelectNone(false, true, false);
+                        TestFalse(TEXT("Structural actions are unavailable without a selected record"), KyaCanEditSelectedActor());
                         GEditor->SelectActor(Preview->GetActorHandle(0), true, true);
+                        TestTrue(TEXT("One owned record enables structural actions"), KyaCanEditSelectedActor());
+                        GEditor->SelectActor(Preview, true, true);
+                        TestFalse(TEXT("Mixed selection disables structural actions"), KyaCanEditSelectedActor());
+                        GEditor->SelectActor(Preview, false, true);
                     }
                     const FKyaStructuralActionResult Created = KyaDuplicateSelectedActor();
                     TestTrue(TEXT("The duplicate command succeeds"), Created.bSuccess);
@@ -3408,6 +3413,7 @@ bool FKyaMilestoneBGateTest::RunTest(const FString& Parameters)
 
     // Empty-project setup: create the descriptor, then discover every sibling sector.
     FString Error;
+    const FString ExpectedDestination = KyaGetLevelSetDestination(Preview);
     UKyaLevelSet* LevelSet = KyaCreateLevelSetFromPreview(Preview, Error);
     if (!TestNotNull(TEXT("Create level-set descriptor"), LevelSet))
     {
@@ -3416,8 +3422,18 @@ bool FKyaMilestoneBGateTest::RunTest(const FString& Parameters)
         return false;
     }
     Preview->LevelSet = LevelSet;
+    TestEqual(TEXT("Level-set preview predicts the actual create destination"), LevelSet->GetPathName(), ExpectedDestination);
+    TestEqual(TEXT("Level-set preview predicts the same destination for update"), KyaGetLevelSetDestination(Preview), ExpectedDestination);
     TestEqual(TEXT("A fresh descriptor has no sector associations"), LevelSet->Sectors.Num(), 0);
 
+    const int64 BuildsBeforePreview = Preview->BuildCount;
+    const int32 RevisionBeforePreview = LevelSet->ImportRevision;
+    const FKyaSectorDiscoveryResult Scan = KyaDiscoverSectors(Preview, true, true);
+    TestTrue(TEXT("Discovery preview identifies missing imports"), Scan.MissingIds.Num() > 0);
+    TestEqual(TEXT("Discovery preview imports no assets"), Scan.Imported, 0);
+    TestEqual(TEXT("Discovery preview leaves associations unchanged"), Preview->SectorBanks.Num(), 0);
+    TestEqual(TEXT("Discovery preview does not rebuild the scene"), Preview->BuildCount, BuildsBeforePreview);
+    TestEqual(TEXT("Discovery preview does not update the descriptor"), LevelSet->ImportRevision, RevisionBeforePreview);
     const FKyaSectorDiscoveryResult Discovery = KyaDiscoverSectors(Preview, true);
     TestEqual(TEXT("Discovery finds no missing sectors"), Discovery.MissingIds.Num(), 0);
     TestEqual(TEXT("Discovery finds no ambiguous sectors"), Discovery.Ambiguous, 0);
@@ -3902,6 +3918,21 @@ bool FKyaSelectionOrganisationTest::RunTest(const FString& Parameters)
     TestFalse(TEXT("Lock command blocks viewport picking"), First->IsSelectable());
     Preview->bLockGeneratedActorSelection = false;
     TestTrue(TEXT("Unlock command restores viewport picking"), First->IsSelectable());
+
+    if (GEditor)
+    {
+        AKyaLevelPreview* OtherPreview = World->SpawnActor<AKyaLevelPreview>();
+        GEditor->SelectNone(false, true, false);
+        GEditor->SelectActor(Preview, true, true);
+        TestEqual(TEXT("The displayed scope identifies one selected preview"), KyaGetPreviewScopeText(), FString(TEXT("Selected previews (1)")));
+        KyaSetGeneratedActorSelectionLocked(true);
+        TestTrue(TEXT("Selection lock affects the selected preview"), Preview->bLockGeneratedActorSelection);
+        if (OtherPreview) TestFalse(TEXT("Selection lock leaves unselected previews unchanged"), OtherPreview->bLockGeneratedActorSelection);
+        KyaSetGeneratedActorSelectionLocked(false);
+        GEditor->SelectNone(false, true, false);
+        TestTrue(TEXT("No selected previews explicitly displays the all-preview fallback"), KyaGetPreviewScopeText().StartsWith(TEXT("All previews (")));
+        if (OtherPreview) OtherPreview->Destroy();
+    }
 
     // --- unsupported structural operations keep map and bank consistent -----------
     FActorSpawnParameters Params;
@@ -6272,15 +6303,28 @@ bool FKyaLevelSettingsTest::RunTest(const FString& Parameters)
             FMath::IsNearlyEqual(Bank->SceneEnvironment.FogParameter, OriginalFog));
     }
 
-    // Property edits auto-apply through PostEditChangeProperty.
+    // Property edits remain on the proxy until explicitly saved.
+    const float BeforeDraftEdit = Bank->SceneEnvironment.FogParameter;
     Settings->Environment.FogParameter = 0.75f;
     if (FProperty* EnvironmentProperty = FindFProperty<FProperty>(UKyaLevelSettings::StaticClass(), TEXT("Environment")))
     {
         FPropertyChangedEvent Changed(EnvironmentProperty);
         Settings->PostEditChangeProperty(Changed);
-        TestTrue(TEXT("Settings property edits auto-apply"),
-            FMath::IsNearlyEqual(Bank->SceneEnvironment.FogParameter, 0.75f));
+        TestTrue(TEXT("Settings property edits leave the bank unchanged"),
+            FMath::IsNearlyEqual(Bank->SceneEnvironment.FogParameter, BeforeDraftEdit));
+        TestTrue(TEXT("Settings draft retains the edit"),
+            FMath::IsNearlyEqual(Settings->Environment.FogParameter, 0.75f));
     }
+    TestNull(TEXT("Proxy excludes actor property trees"), FindFProperty<FProperty>(FKyaLevelSettingsEnvironment::StaticStruct(), TEXT("Actors")));
+    TestNull(TEXT("Proxy excludes waypoint property trees"), FindFProperty<FProperty>(FKyaLevelSettingsEnvironment::StaticStruct(), TEXT("Waypoints")));
+    TestNull(TEXT("Proxy excludes path property trees"), FindFProperty<FProperty>(FKyaLevelSettingsEnvironment::StaticStruct(), TEXT("Paths")));
+    Service.OnBankEdited.Broadcast(Bank);
+    TestEqual(TEXT("External edits do not discard the draft"), Settings->Environment.FogParameter, 0.75f);
+    Settings->LoadFromBank();
+    TestEqual(TEXT("Reload discards the draft"), Settings->Environment.FogParameter, Bank->SceneEnvironment.FogParameter);
+    Settings->Environment.FogParameter = 0.75f;
+    TestTrue(TEXT("Save commits the draft"), Settings->ApplyToBank(Error));
+    TestEqual(TEXT("Saved draft reaches the bank"), Bank->SceneEnvironment.FogParameter, 0.75f);
 
     // Selecting another bank reloads the settings instead of applying the old ones.
     UKyaLevelBank* OtherBank = MakeKyaTestBank(GetTransientPackage());

@@ -1,5 +1,47 @@
 #include "KyaG2D.h"
 
+void KyaG2D::FTextureScroll::Advance()
+{
+    Offset += Step;
+    // Keep the source's signed offsets and single adjustment, including large steps.
+    if (Offset.X >= 1.0f) Offset.X -= 1.0f;
+    if (Offset.Y >= 1.0f) Offset.Y -= 1.0f;
+    if (Offset.X <= -1.0f) Offset.X += 1.0f;
+    if (Offset.Y <= -1.0f) Offset.Y += 1.0f;
+}
+
+bool KyaG2D::ReadMaterialScroll(TConstArrayView<uint8> Data, int32 MaterialOffset,
+    FTextureScroll& OutScroll)
+{
+    OutScroll = FTextureScroll{};
+    auto Fits = [&Data](uint32 Offset, uint32 Size) {
+        return Offset <= uint32(Data.Num()) && Size <= uint32(Data.Num()) - Offset;
+    };
+    auto U32 = [&Data](uint32 Offset) -> uint32 {
+        const uint8* P = Data.GetData() + Offset;
+        return uint32(P[0]) | (uint32(P[1]) << 8) | (uint32(P[2]) << 16) | (uint32(P[3]) << 24);
+    };
+    if (MaterialOffset < 0 || !Fits(MaterialOffset, 36) || U32(MaterialOffset) != 0x2e54414d ||
+        Data[MaterialOffset + 16] == 0) return false;
+    const uint32 Layer = U32(MaterialOffset + 32);
+    if (!Fits(Layer, 52) || U32(Layer) != 0x2e59414c ||
+        !(U32(Layer + 20) & 0x10) || (!Data[Layer + 44] && !Data[Layer + 45])) return false;
+    const uint32 Texture = U32(Layer + 48);
+    if (!Fits(Texture, 48) || U32(Texture) != 0x2e584554) return false;
+    const uint32 Vector = U32(Texture + 36);
+    if (!Vector || !Fits(Vector, 16)) return false;
+    float Values[4];
+    for (uint32 Index = 0; Index < 4; ++Index)
+    {
+        const uint32 Bits = U32(Vector + Index * 4);
+        FMemory::Memcpy(&Values[Index], &Bits, sizeof(float));
+        if (!FMath::IsFinite(Values[Index])) return false;
+    }
+    OutScroll.Step = FVector2f(Values[0], Values[1]);
+    OutScroll.Offset = FVector2f(Values[2], Values[3]);
+    return true;
+}
+
 uint64 KyaG2D::HashName(const FString& Name)
 {
     FTCHARToUTF8 Text(*Name);

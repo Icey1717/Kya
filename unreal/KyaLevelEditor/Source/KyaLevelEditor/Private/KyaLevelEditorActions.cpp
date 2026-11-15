@@ -27,6 +27,7 @@
 #include "KyaSpatialRecordHandle.h"
 #include "Logging/MessageLog.h"
 #include "Misc/FileHelper.h"
+#include "Misc/App.h"
 #include "Misc/MessageDialog.h"
 #include "Misc/PackageName.h"
 #include "Misc/Paths.h"
@@ -270,13 +271,11 @@ void KyaClearGeneratedActorIsolation()
 
 void KyaSetGeneratedActorSelectionLocked(bool bLocked)
 {
-    if (!GEditor) return;
-    UWorld* World = GEditor->GetEditorWorldContext().World();
-    if (!World) return;
-    for (TActorIterator<AKyaLevelPreview> It(World); It; ++It)
+    for (AKyaLevelPreview* Preview : KyaGetTargetPreviews())
     {
-        It->Modify();
-        It->bLockGeneratedActorSelection = bLocked;
+        if (!Preview) continue;
+        Preview->Modify();
+        Preview->bLockGeneratedActorSelection = bLocked;
     }
 }
 
@@ -293,6 +292,29 @@ TArray<UKyaLevelBank*> KyaCollectLevelBanks(const TArray<AKyaLevelPreview*>& Pre
     return Banks;
 }
 
+FString KyaGetPreviewScopeText()
+{
+    const TArray<AKyaLevelPreview*> Selected = KyaGetSelectedPreviews();
+    return FString::Printf(TEXT("%s (%d)"), Selected.IsEmpty() ? TEXT("All previews") : TEXT("Selected previews"),
+        Selected.IsEmpty() ? KyaGetTargetPreviews().Num() : Selected.Num());
+}
+
+FString KyaGetLevelSetDestination(AKyaLevelPreview* Preview)
+{
+    if (!Preview || !Preview->Bank) return FString();
+    UKyaLevelBank* MainBank = Preview->Bank;
+    const FString PackagePath = LevelAssetDirectory(*MainBank);
+    const FString BaseAssetName = MainBank->GetName() + TEXT("LevelSet");
+    for (int32 Suffix = 1; Suffix <= 32; ++Suffix)
+    {
+        const FString AssetName = Suffix == 1 ? BaseAssetName : FString::Printf(TEXT("%s%d"), *BaseAssetName, Suffix);
+        const FString ObjectPath = FString::Printf(TEXT("%s/%s.%s"), *PackagePath, *AssetName, *AssetName);
+        UKyaLevelSet* Existing = LoadObject<UKyaLevelSet>(nullptr, *ObjectPath);
+        if (!Existing || !Existing->MainBank || Existing->MainBank == MainBank) return ObjectPath;
+    }
+    return FString();
+}
+
 UKyaLevelSet* KyaCreateLevelSetFromPreview(AKyaLevelPreview* Preview, FString& OutError)
 {
     if (!Preview || !Preview->Bank)
@@ -301,24 +323,19 @@ UKyaLevelSet* KyaCreateLevelSetFromPreview(AKyaLevelPreview* Preview, FString& O
         return nullptr;
     }
     UKyaLevelBank* MainBank = Preview->Bank;
-    const FString PackagePath = LevelAssetDirectory(*MainBank);
-    const FString BaseAssetName = FString::Printf(TEXT("%sLevelSet"), *MainBank->GetName());
+    const FString ObjectPath = KyaGetLevelSetDestination(Preview);
     UKyaLevelSet* LevelSet = nullptr;
-    for (int32 Suffix = 1; Suffix <= 32 && !LevelSet; ++Suffix)
+    if (!ObjectPath.IsEmpty())
     {
-        const FString AssetName = Suffix == 1 ? BaseAssetName : FString::Printf(TEXT("%s%d"), *BaseAssetName, Suffix);
-        const FString ObjectPath = FString::Printf(TEXT("%s/%s.%s"), *PackagePath, *AssetName, *AssetName);
-        if (UKyaLevelSet* Existing = LoadObject<UKyaLevelSet>(nullptr, *ObjectPath))
+        LevelSet = LoadObject<UKyaLevelSet>(nullptr, *ObjectPath);
+        if (!LevelSet)
         {
-            // Two levels can have identically named main banks. Never adopt or
-            // overwrite a descriptor that belongs to another bank.
-            if (!Existing->MainBank || Existing->MainBank == MainBank) LevelSet = Existing;
-            continue;
+            UKyaLevelSetFactory* Factory = NewObject<UKyaLevelSetFactory>();
+            IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
+            LevelSet = Cast<UKyaLevelSet>(AssetTools.CreateAsset(FPackageName::ObjectPathToObjectName(ObjectPath),
+                FPackageName::GetLongPackagePath(FPackageName::ObjectPathToPackageName(ObjectPath)),
+                UKyaLevelSet::StaticClass(), Factory));
         }
-        UKyaLevelSetFactory* Factory = NewObject<UKyaLevelSetFactory>();
-        IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
-        LevelSet = Cast<UKyaLevelSet>(AssetTools.CreateAsset(AssetName, PackagePath,
-            UKyaLevelSet::StaticClass(), Factory));
     }
     if (!LevelSet)
     {
@@ -492,7 +509,7 @@ TArray<FKyaBankValidationReport> KyaValidateLevelBanks(const TArray<UKyaLevelBan
     return Reports;
 }
 
-FKyaSectorDiscoveryResult KyaDiscoverSectors(AKyaLevelPreview* Preview, bool bImportMissing)
+FKyaSectorDiscoveryResult KyaDiscoverSectors(AKyaLevelPreview* Preview, bool bImportMissing, bool bPreviewOnly)
 {
     FKyaSectorDiscoveryResult Result;
     if (!Preview || !Preview->Bank)
@@ -588,12 +605,15 @@ FKyaSectorDiscoveryResult KyaDiscoverSectors(AKyaLevelPreview* Preview, bool bIm
         if (Existing)
         {
             ++Result.Reused;
-            if (!Preview->SectorBanks.Contains(Existing)) Preview->SectorBanks.Add(Existing);
+            if (bPreviewOnly) Result.Messages.Add(FString::Printf(TEXT("%s: reuse %s"), *Filename, *Existing->GetPathName()));
+            else if (!Preview->SectorBanks.Contains(Existing)) Preview->SectorBanks.Add(Existing);
             continue;
         }
-        if (!bImportMissing)
+        if (!bImportMissing || bPreviewOnly)
         {
             Result.MissingIds.Add(SectorId);
+            Result.Messages.Add(FString::Printf(TEXT("%s: not imported; destination %s/%s"),
+                *Filename, *DestinationPath, *FPaths::GetBaseFilename(Filename).ToUpper()));
             continue;
         }
         const FString DestinationName = FPaths::GetBaseFilename(Filename).ToUpper();
@@ -652,6 +672,8 @@ FKyaSectorDiscoveryResult KyaDiscoverSectors(AKyaLevelPreview* Preview, bool bIm
             Result.Messages.Add(FString::Printf(
                 TEXT("Actor placements reference sector %d but no SECT%d.BNK exists."), Referenced, Referenced));
         }
+
+    if (bPreviewOnly) return Result;
 
     if (Preview->Bank) Preview->SectorBanks.RemoveAll([](const TObjectPtr<UKyaLevelBank>& Bank) { return !Bank; });
 
@@ -876,6 +898,7 @@ AKyaActorHandle* FindSelectedActorRecordHandle()
     if (!GEditor) return nullptr;
     TArray<AActor*> SelectedActors;
     GEditor->GetSelectedActors()->GetSelectedObjects(SelectedActors);
+    if (SelectedActors.Num() != 1) return nullptr;
     for (AActor* Actor : SelectedActors)
     {
         AKyaActorHandle* Handle = Cast<AKyaActorHandle>(Actor);
@@ -925,7 +948,10 @@ FKyaStructuralActionResult RunStructuralActorCommand(const FText& TransactionLab
     {
         GEditor->SelectNone(false, true, false);
         if (AActor* Actor = Preview->GetActorHandle(Write.ActorIndex))
+        {
             GEditor->SelectActor(Actor, true, true);
+            if (!FApp::IsUnattended()) GEditor->MoveViewportCamerasToActor(*Actor, false);
+        }
     }
     else if (!bSelectResult && GEditor)
     {
@@ -942,6 +968,13 @@ FKyaStructuralActionResult KyaDuplicateSelectedActor()
         {
             return KyaDuplicateActorRecord(Bank, SourceIndex);
         }, true);
+}
+
+bool KyaCanEditSelectedActor()
+{
+    AKyaActorHandle* Handle = FindSelectedActorRecordHandle();
+    FString Reason;
+    return Handle && KyaBankSupportsStructuralEdit(*Handle->Bank, Reason);
 }
 
 FKyaStructuralActionResult KyaCreateSelectedActor()

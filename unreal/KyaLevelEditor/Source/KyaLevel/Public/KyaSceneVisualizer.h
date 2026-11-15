@@ -26,8 +26,8 @@ enum class EKyaVisualizerKind : uint8
  * Lights and the main scene camera use verified serialized fields and are editable
  * through the shared edit service. Actor links and trigger bounds are derived from
  * resolved references/checkpoints and are read-only; their shapes are approximate
- * and the Details panel says so. Zone bounds are not visualized because this schema
- * stores zone references without geometry.
+ * and the Details panel says so. Authored collision and event primitives are decoded
+ * separately from retained bank entries by UKyaPrimitiveComponent.
  */
 UCLASS()
 class KYALEVEL_API AKyaSceneVisualizer : public AActor

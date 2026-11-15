@@ -3,6 +3,16 @@
 
 namespace KyaG2D
 {
+    struct FTextureScroll
+    {
+        FVector2f Step = FVector2f::ZeroVector;
+        FVector2f Offset = FVector2f::ZeroVector;
+        /** One ed3DFlushMaterialAnimST update, including its single wrap adjustment. */
+        KYALEVEL_API void Advance();
+    };
+    /** Read first-layer scrolling (flag 0x10), excluding atlas-only animation. */
+    KYALEVEL_API bool ReadMaterialScroll(TConstArrayView<uint8> Data, int32 MaterialOffset,
+        FTextureScroll& OutScroll);
     /** Eden's case-insensitive, eight-byte material-name hash. */
     KYALEVEL_API uint64 HashName(const FString& Name);
     struct FBitmapReference
