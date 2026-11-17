@@ -115,6 +115,10 @@ KYALEVEL_API bool BuildKyaActorFieldResetPatch(const UKyaLevelBank& Bank, int32 
 KYALEVEL_API bool CanCopyKyaActorField(const FKyaActorPlacement& Source, const FKyaActorPlacement& Dest,
     FName PropertyName, FString& OutError);
 
+/** Copy every editable exported property except Name, preserving identity and serialized layout. */
+KYALEVEL_API bool BuildKyaActorCopyPropertiesPatch(const FKyaActorPlacement& Source,
+    FKyaActorEditPatch& OutPatch);
+
 /**
  * Validate an Outliner rename before it becomes the serialized actor name.
  *

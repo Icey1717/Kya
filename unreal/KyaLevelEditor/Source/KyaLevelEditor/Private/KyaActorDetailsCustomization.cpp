@@ -803,6 +803,27 @@ void FKyaActorDetailsCustomization::CustomizeDetails(IDetailLayoutBuilder& Detai
                     return FReply::Handled();
                 })
             ]
+            + SHorizontalBox::Slot().AutoWidth().Padding(4.0f, 0.0f)
+            [
+                SNew(SButton)
+                .Text(FText::FromString(TEXT("Copy all except name")))
+                .ToolTipText(FText::FromString(TEXT("Copy all editable game properties from the source actor, including transforms and references. "
+                    "Preserves this actor's name and internal identity. Incompatible layouts are rejected without changing any properties. Undo restores the entire edit.")))
+                .OnClicked_Lambda([this, Actor, SourceIndex]()
+                {
+                    UKyaLevelBank* EditedBank = Actor->Bank;
+                    if (!EditedBank || !EditedBank->SceneEnvironment.Actors.IsValidIndex(*SourceIndex) ||
+                        !EditedBank->SceneEnvironment.Actors.IsValidIndex(Actor->ActorIndex))
+                    {
+                        InlineError = TEXT("Choose a valid source actor in this bank.");
+                        return FReply::Handled();
+                    }
+                    FKyaActorEditPatch Patch;
+                    BuildKyaActorCopyPropertiesPatch(EditedBank->SceneEnvironment.Actors[*SourceIndex], Patch);
+                    ApplyPreparedPatch(Patch, TEXT("Copy all actor properties except name"));
+                    return FReply::Handled();
+                })
+            ]
         ];
 }
 

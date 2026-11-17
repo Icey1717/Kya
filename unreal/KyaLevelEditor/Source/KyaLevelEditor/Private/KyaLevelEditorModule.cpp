@@ -1,4 +1,7 @@
 #include "Modules/ModuleManager.h"
+#include "KyaDisc.h"
+#include "KyaDiscDetails.h"
+#include "EngineUtils.h"
 #include "Editor.h"
 #include "UnrealEdGlobals.h"
 #include "Editor/UnrealEdEngine.h"
@@ -474,6 +477,16 @@ class FKyaLevelEditorModule : public IModuleInterface
 public:
     virtual void StartupModule() override
     {
+        DiscMapOpenedHandle = FEditorDelegates::OnMapOpened.AddLambda([](const FString&, bool)
+        {
+            UWorld* World = GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
+            if (!World) return;
+            for (TActorIterator<AKyaLevelPreview> It(World); It; ++It)
+            {
+                UKyaLevelBank* Bank = It->LevelSet ? It->LevelSet->MainBank.Get() : It->Bank.Get();
+                if (Bank && !Bank->SourceDisc.IsNull()) It->RebuildFromBank();
+            }
+        });
         if (GUnrealEd)
         {
             TSharedPtr<FComponentVisualizer> Visualizer = MakeShared<FKyaPrimitiveVisualizer>();
@@ -504,6 +517,8 @@ public:
             FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FKyaScenarioConditionCustomization::MakeInstance));
         PropertyModule.RegisterCustomPropertyTypeLayout("KyaActorBehaviour",
             FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FKyaActorBehaviourCustomization::MakeInstance));
+        PropertyModule.RegisterCustomClassLayout(UKyaDisc::StaticClass()->GetFName(),
+            FOnGetDetailCustomizationInstance::CreateStatic(&FKyaDiscDetails::MakeInstance));
         PropertyModule.RegisterCustomClassLayout(AKyaActorHandle::StaticClass()->GetFName(),
             FOnGetDetailCustomizationInstance::CreateStatic(&FKyaActorDetailsCustomization::MakeInstance));
         PropertyModule.RegisterCustomClassLayout(AKyaLevelPreview::StaticClass()->GetFName(),
@@ -550,6 +565,7 @@ public:
 
     virtual void ShutdownModule() override
     {
+        FEditorDelegates::OnMapOpened.Remove(DiscMapOpenedHandle);
         if (GUnrealEd) GUnrealEd->UnregisterComponentVisualizer(UKyaPrimitiveComponent::StaticClass()->GetFName());
         if (FMessageLogModule* MessageLog = FModuleManager::GetModulePtr<FMessageLogModule>("MessageLog"))
             MessageLog->UnregisterLogListing("KyaLevelEditor");
@@ -581,6 +597,7 @@ public:
         {
             PropertyModule->UnregisterCustomPropertyTypeLayout("KyaScenarioCondition");
             PropertyModule->UnregisterCustomPropertyTypeLayout("KyaActorBehaviour");
+            PropertyModule->UnregisterCustomClassLayout(UKyaDisc::StaticClass()->GetFName());
             PropertyModule->UnregisterCustomClassLayout(AKyaActorHandle::StaticClass()->GetFName());
             PropertyModule->UnregisterCustomClassLayout(AKyaLevelPreview::StaticClass()->GetFName());
             PropertyModule->UnregisterCustomClassLayout(AKyaSpatialRecordHandle::StaticClass()->GetFName());
@@ -638,6 +655,7 @@ private:
     TUniquePtr<FKyaLevelBankReimportHandler> ReimportHandler;
     bool bStructuralCommandHadGenerated = false;
     TArray<FDelegateHandle> StructuralBeginHandles;
+    FDelegateHandle DiscMapOpenedHandle;
     TArray<FDelegateHandle> StructuralEndHandles;
 };
 

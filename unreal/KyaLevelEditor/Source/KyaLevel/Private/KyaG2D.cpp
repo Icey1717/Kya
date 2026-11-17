@@ -65,11 +65,19 @@ bool KyaG2D::ReadMaterials(TConstArrayView<uint8> Data, TMap<uint64, int32>& Out
         const uint8* P = Data.GetData() + Offset;
         return uint32(P[0]) | (uint32(P[1]) << 8) | (uint32(P[2]) << 16) | (uint32(P[3]) << 24);
     };
-    if (U32(16) != 0x2a44322a) return false;
-    const uint32 RootSize = U32(24);
-    if (RootSize < 16 || RootSize > uint32(Data.Num() - 16)) return false;
-    const int32 RootEnd = 16 + int32(RootSize);
-    int32 Pos = 32;
+    // Animated banks can put ANMA before *2D* (LEVEL_6/SECT1).
+    // References remain file-relative regardless of the container's position.
+    int32 Root = 16;
+    while (Root <= Data.Num() - 16)
+    {
+        const uint32 Size = U32(Root + 8);
+        if (Size < 16 || Size > uint32(Data.Num() - Root)) return false;
+        if (U32(Root) == 0x2a44322a) break;
+        Root += int32(Size);
+    }
+    if (Root > Data.Num() - 16) return false;
+    const int32 RootEnd = Root + int32(U32(Root + 8));
+    int32 Pos = Root + 16;
     while (Pos < RootEnd)
     {
         if (RootEnd - Pos < 16) return false;

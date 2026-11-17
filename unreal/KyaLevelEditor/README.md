@@ -1,5 +1,51 @@
 # Kya Level Editor
 
+Import a Kya `.iso` into the Content Browser to create a **Kya Disc** asset.
+Open the asset and choose **Generate Levels**. Each directory containing a
+`LEVEL.BNK` receives its own content folder with the main bank, sibling
+`SECT<number>.BNK` banks, a `LevelSet`, and a `Preview` map. The source disc's
+directory hierarchy is preserved beneath the disc asset's folder. Use **Save All**
+to persist the assets and maps, then open a `Preview` map to build its geometry.
+Generation can resume after cancellation and preserves existing completed levels
+and edits. Loose `.bnk` import remains available.
+
+Choose **Export Changes to ISO** on the disc asset to export its changed banks.
+An output window shows elapsed time, bank checks and validation, ISO staging,
+verification and backup steps. It keeps the final result visible and provides
+**Copy Output** for sharing the transcript.
+If the disc was saved before generation but its generated banks were saved later,
+export recovers missing level-set links from their generated folders after checking
+disc provenance. Save All afterwards to retain the recovered links.
+The plugin tracks each bank's exact path inside the disc and its last imported or
+exported content hash. It validates changed banks with the existing bank exporter;
+untouched banks do not need to have an export-supported layout. An externally
+modified destination file blocks export until it is reconciled or reimported.
+Bank **Reimport** reads the corresponding file directly from the source ISO.
+
+ISO export stages and verifies a copy beside the source image, then publishes it
+at the source path and retains the original as `.kya-backup-<unique id>`. Allow
+space for one additional full image during each export, and retain or remove old
+backups as needed. Close other image writers before exporting. Use **Save All**
+after export to persist the updated source hashes. Restore a backup by replacing
+the edited ISO with that backup, then reimport affected banks to reconcile their
+source hashes.
+
+The native C++ reader supports contiguous ISO9660 files in 2048-byte-sector images.
+Resizing additionally requires the single-partition PS2 UDF bridge layout used by
+the supplied Kya disc. Larger replacements relocate into appended space and update
+both filesystems; unrelated file extents stay in place. Raw CD images, interleaved
+and multi-extent files, extra ISO volume views during resizing, and unsupported
+UDF layouts are rejected. This workflow replaces existing banks; it does not add
+or delete disc files. Existing bank-export limitations still apply to edited data.
+
+Disc automation tests are under `Kya.Disc`. Set `KYA_TEST_ISO` to a game image to
+exercise generation, edited-bank export, and UDF resizing on disposable copies.
+Set `KYA_TEST_SAVE_DISC=1` while running `Kya.Disc.RealImageGeneration` to save
+the generated fixture, then run `Kya.Disc.ReopenGenerated` in a fresh editor process
+with `KYA_TEST_REOPEN_DISC=1` to verify persisted references and automatic preview
+building. Saved fixtures use unique `/Game/KyaDiscTests_<id>` folders in the test
+project; the current fixture path is recorded in `Saved/KyaDiscTestAsset.txt`.
+
 Authoring previews show only the highest-detail scenery LOD, including hierarchy
 selection handles. **Authoring Show Culled Geometry** keeps that LOD visible at
 any distance; comparison/capture cameras retain native distance-based LOD selection.
@@ -548,6 +594,14 @@ Sector toggles reuse the published geometry, textures and generated handles; the
 update visibility without rebuilding or decoding the level. Native camera culling
 and sector visibility are applied together, so camera movement cannot reveal a
 sector that was unchecked.
+Sector visibility undo transactions record only the preview settings, avoiding
+serialization of the generated procedural mesh buffers when toggling a checkbox.
+Use **Solo** beside a sector to show just that sector, then tick any additional
+sectors you need. Switching Solo keeps the original visibility as the restore point.
+**Restore Previous Visibility** returns to that state, including sectors that were
+already hidden. The restore point lasts for the current editor session and supports
+undo/redo. The summary shows how many listed sectors are visible; global content
+stays visible during Solo.
 
 ### Manual viewport acceptance pass
 
@@ -692,8 +746,11 @@ independent background transform.
 `SetPreviewCamera` supplies an explicit camera for captures and prevents the
 editor viewport from overwriting it; spawn a new preview to resume viewport following.
 
-`Preview Base Sector` selects the sector's background and native clipping distance
-(or defaults to the first sector bank). Other loaded sectors still contribute
+`Preview Base Sector` selects the sector's background and native clipping distance.
+The default, -1, uses the common level background and clipping distance for a
+whole-level overview. Loading sector banks does not select an active sector:
+LEVEL_8's sector 1, for example, replaces the outdoor sky with an interior background.
+Other loaded sectors still contribute
 actors and cluster geometry. Enable `Show All Sector Backgrounds` to inspect their
 background scenes together; overlapping alternative skies can cover each other.
 When the active sector has no background, the common background is used.
@@ -722,6 +779,14 @@ depth projection; custom native near/far or depth-range settings are not importe
 resolution: 512 by 512 for PAL, or 512 by 448 for NTSC.
 
 ## Validation
+
+`Kya.Rendering.NoCommonBackground` uses `KYA_TEST_BANK` pointing to
+`LEVEL_11/LEVEL.BNK` to check actor meshes, authoring actor handles and sector
+scenery in a level without a common background mesh.
+
+`Kya.Rendering.CommonBackgroundOverview` uses `KYA_TEST_BANK` pointing to
+`LEVEL_8/LEVEL.BNK` to check that loading or reordering sector banks preserves the
+common background at base sector -1, while explicit sector selection still works.
 
 `Kya.Editor.MeshAssignment` assigns every actor mesh in `KYA_TEST_BANK` through
 the same property patch and preview notification as the mesh picker. It forces

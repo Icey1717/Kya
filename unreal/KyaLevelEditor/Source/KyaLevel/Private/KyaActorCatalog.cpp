@@ -386,6 +386,31 @@ bool PresenceSignatureMatches(const FKyaActorPlacement& Source, const FKyaActorP
 }
 }
 
+bool BuildKyaActorCopyPropertiesPatch(const FKyaActorPlacement& Source, FKyaActorEditPatch& OutPatch)
+{
+    OutPatch = FKyaActorEditPatch();
+    OutPatch.Custom = [Source](FKyaActorPlacement& Dest, FString& OutError)
+    {
+        TArray<FProperty*> Properties;
+        for (TFieldIterator<FProperty> It(FKyaActorPlacement::StaticStruct()); It; ++It)
+        {
+            const FName Name = It->GetFName();
+            if (Name == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Name) ||
+                GetKyaActorFieldCapability(Name).Kind != EKyaFieldCapability::EditableExportable) continue;
+            if (!CanCopyKyaActorField(Source, Dest, Name, OutError))
+            {
+                OutError = Name.ToString() + TEXT(": ") + OutError;
+                return false;
+            }
+            Properties.Add(*It);
+        }
+        for (FProperty* Property : Properties)
+            Property->CopyCompleteValue_InContainer(&Dest, &Source);
+        return true;
+    };
+    return true;
+}
+
 bool CanCopyKyaActorField(const FKyaActorPlacement& Source, const FKyaActorPlacement& Dest, FName PropertyName,
     FString& OutError)
 {

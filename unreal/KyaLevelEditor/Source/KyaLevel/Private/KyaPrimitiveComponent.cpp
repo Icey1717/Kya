@@ -5,6 +5,7 @@
 #include "DynamicMeshBuilder.h"
 #include "Materials/Material.h"
 #include "Materials/MaterialRenderProxy.h"
+#include "ProfilingDebugging/CpuProfilerTrace.h"
 #if WITH_EDITOR
 #include "Materials/MaterialExpressionVertexColor.h"
 #endif
@@ -187,6 +188,7 @@ UKyaPrimitiveComponent::UKyaPrimitiveComponent()
 
 void UKyaPrimitiveComponent::Rebuild(UKyaLevelBank* InBank, bool bCollision, bool bEvents)
 {
+    TRACE_CPUPROFILER_EVENT_SCOPE(Kya_PrimitiveComponent_Rebuild);
     SourceBank = InBank;
     ++RecordGeneration;
     Records.Reset(); Diagnostics.Reset();
@@ -211,6 +213,7 @@ void UKyaPrimitiveComponent::SelectRecord(int32 Index)
 
 FPrimitiveSceneProxy* UKyaPrimitiveComponent::CreateSceneProxy()
 {
+    TRACE_CPUPROFILER_EVENT_SCOPE(Kya_PrimitiveComponent_CreateSceneProxy);
     return Records.IsEmpty() ? nullptr : new FKyaPrimitiveProxy(this);
 }
 
@@ -221,6 +224,7 @@ void UKyaPrimitiveComponent::GetUsedMaterials(TArray<UMaterialInterface*>& OutMa
 
 FBoxSphereBounds UKyaPrimitiveComponent::CalcBounds(const FTransform& LocalToWorld) const
 {
+    TRACE_CPUPROFILER_EVENT_SCOPE(Kya_PrimitiveComponent_CalcBounds);
     FBox LocalBounds(ForceInit);
     for (const FKyaPrimitiveRecord& R : Records)
     {

@@ -3,6 +3,10 @@
 #include "EditorFramework/AssetImportData.h"
 #include "KyaActorEditService.h"
 #include "KyaLevelBank.h"
+#include "KyaDisc.h"
+#include "KyaIso.h"
+#include "KyaDiscWorkflow.h"
+#include "Misc/SecureHash.h"
 #include "KyaLevelBankFactory.h"
 #include "Misc/App.h"
 #include "Misc/FileHelper.h"
@@ -37,6 +41,13 @@ bool FKyaLevelBankReimportHandler::CanReimport(UObject* Obj, TArray<FString>& Ou
 {
     UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Obj);
     if (!Bank) return false;
+    if (!Bank->SourceDisc.IsNull())
+    {
+        UKyaDisc* Disc = Bank->SourceDisc.LoadSynchronous();
+        if (!Disc) return false;
+        OutFilenames.Add(Disc->SourceFilename);
+        return true;
+    }
     FString Filename;
     if (Bank->AssetImportData) Filename = Bank->AssetImportData->GetFirstFilename();
     if (Filename.IsEmpty()) Filename = Bank->SourceFilename;
@@ -49,6 +60,16 @@ void FKyaLevelBankReimportHandler::SetReimportPaths(UObject* Obj, const TArray<F
 {
     UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Obj);
     if (!Bank || NewReimportPaths.IsEmpty()) return;
+    if (!Bank->SourceDisc.IsNull())
+    {
+        if (UKyaDisc* Disc = Bank->SourceDisc.LoadSynchronous())
+        {
+            Disc->Modify();
+            Disc->SourceFilename = FPaths::ConvertRelativePathToFull(NewReimportPaths[0]);
+            Disc->MarkPackageDirty();
+        }
+        return;
+    }
     if (!Bank->AssetImportData) Bank->AssetImportData = NewObject<UAssetImportData>(Bank);
     Bank->AssetImportData->Update(NewReimportPaths[0]);
     Bank->SourceFilename = NewReimportPaths[0];
@@ -58,10 +79,13 @@ EReimportResult::Type FKyaLevelBankReimportHandler::Reimport(UObject* Obj)
 {
     UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Obj);
     if (!Bank) return EReimportResult::Failed;
+    UKyaDisc* Disc = Bank->SourceDisc.LoadSynchronous();
+    if (!Bank->SourceDisc.IsNull() && !Disc) return EReimportResult::Failed;
 
     FString Filename;
     if (Bank->AssetImportData) Filename = Bank->AssetImportData->GetFirstFilename();
     if (Filename.IsEmpty()) Filename = Bank->SourceFilename;
+    if (Disc) Filename = Disc->SourceFilename;
     if (Filename.IsEmpty() || !FPaths::FileExists(Filename))
     {
         UE_LOG(LogTemp, Error, TEXT("KYA_REIMPORT missing source file for %s"), *Bank->GetPathName());
@@ -87,7 +111,8 @@ EReimportResult::Type FKyaLevelBankReimportHandler::Reimport(UObject* Obj)
     }
 
     TArray<uint8> Bytes;
-    if (!FFileHelper::LoadFileToArray(Bytes, *Filename))
+    FString ReadError;
+    if (!(Disc ? KyaIso::Extract(Filename, Bank->SourceDiscPath, Bytes, ReadError) : FFileHelper::LoadFileToArray(Bytes, *Filename)))
     {
         UE_LOG(LogTemp, Error, TEXT("KYA_REIMPORT could not read %s"), *Filename);
         return EReimportResult::Failed;
@@ -107,7 +132,9 @@ EReimportResult::Type FKyaLevelBankReimportHandler::Reimport(UObject* Obj)
 
     Bank->Modify();
     CopyTypedData(*Bank, *Parsed);
-    Bank->SourceFilename = Filename;
+    Bank->SourceFilename = Disc ? Bank->SourceDiscPath : Filename;
+    if (Disc) Bank->SourceDiscHash = FMD5::HashBytes(Bytes.GetData(), Bytes.Num());
+    if (Disc) Bank->SourceDiscStateHash = KyaDiscBankStateHash(*Bank);
     if (!Bank->AssetImportData) Bank->AssetImportData = NewObject<UAssetImportData>(Bank);
     Bank->AssetImportData->Update(Filename);
     // Replacing the typed records invalidates every editor record key.

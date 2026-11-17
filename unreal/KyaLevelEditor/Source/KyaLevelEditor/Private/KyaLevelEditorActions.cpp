@@ -1,4 +1,5 @@
 #include "KyaLevelEditorActions.h"
+#include "KyaDisc.h"
 
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetToolsModule.h"
@@ -518,6 +519,27 @@ FKyaSectorDiscoveryResult KyaDiscoverSectors(AKyaLevelPreview* Preview, bool bIm
         return Result;
     }
     UKyaLevelBank* MainBank = Preview->Bank;
+    if (!MainBank->SourceDisc.IsNull())
+    {
+        UKyaDisc* Disc = MainBank->SourceDisc.LoadSynchronous();
+        const FKyaDiscLevel* Level = Disc ? Disc->Levels.FindByPredicate([&](const FKyaDiscLevel& Candidate)
+            { return Candidate.LevelSet && Candidate.LevelSet->MainBank == MainBank; }) : nullptr;
+        if (!Level)
+        {
+            Result.Messages.Add(TEXT("The bank's disc level is unavailable. Open the disc asset and generate its levels."));
+            return Result;
+        }
+        Result.Reused = Level->LevelSet->Sectors.Num();
+        Result.Messages.Add(FString::Printf(TEXT("%d sector banks are associated with %s in the source ISO."),
+            Result.Reused, *Level->SourceDirectory));
+        if (!bPreviewOnly)
+        {
+            Preview->Modify();
+            Preview->LevelSet = Level->LevelSet;
+            Preview->ApplyLevelSet();
+        }
+        return Result;
+    }
     if (MainBank->SourceFilename.IsEmpty())
     {
         Result.Messages.Add(FString::Printf(TEXT("%s has no source filename; import it from a .bnk file first."),

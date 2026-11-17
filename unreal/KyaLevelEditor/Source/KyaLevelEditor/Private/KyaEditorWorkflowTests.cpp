@@ -6063,6 +6063,11 @@ bool FKyaAuthoringVisibilityTest::RunTest(const FString& Parameters)
         TestTrue(TEXT("Authoring handle is selectable"), Authored->IsSelectable());
     }
 
+    // The mesh must stay out of the undo buffer: recording its generated arrays
+    // makes both transaction capture and finalization take seconds on real levels.
+    Preview->Mesh->SetFlags(RF_Transactional);
+    if (GEditor)
+        TestFalse(TEXT("Generated mesh starts outside the undo buffer"), GEditor->IsObjectInTransactionBuffer(Preview->Mesh));
     {
         const FScopedTransaction Transaction(FText::FromString(TEXT("Hide sector test")));
         Preview->SetSectorVisible(1, false);
@@ -6071,17 +6076,59 @@ bool FKyaAuthoringVisibilityTest::RunTest(const FString& Parameters)
     TestNotNull(TEXT("Global actor remains visible"), Preview->GetActorHandle(0));
     if (GEditor)
     {
+        TestTrue(TEXT("Sector visibility records preview settings for undo"), GEditor->IsObjectInTransactionBuffer(Preview));
+        TestFalse(TEXT("Sector visibility never records generated mesh arrays"), GEditor->IsObjectInTransactionBuffer(Preview->Mesh));
         TestTrue(TEXT("Sector visibility supports undo"), GEditor->UndoTransaction());
         TestTrue(TEXT("Undo restores checkbox state"), Preview->IsSectorVisible(1));
         TestNotNull(TEXT("Undo restores sector actor handles"), Preview->GetActorHandle(1));
+        TestFalse(TEXT("Undo shows the existing sector actor handle"), Preview->GetActorHandle(1)->IsTemporarilyHiddenInEditor());
         TestTrue(TEXT("Sector visibility supports redo"), GEditor->RedoTransaction());
         TestTrue(TEXT("Redo hides sector actor handles again"), Preview->GetActorHandle(1)->IsTemporarilyHiddenInEditor());
     }
+    const int64 BuildsBeforeVisibility = Preview->BuildCount;
+    const int32 DecodesBeforeVisibility = Preview->GetGeometryDecodeCount();
     Preview->SetSectorVisible(1, true);
     Preview->SetSectorVisible(2, false);
     TestTrue(TEXT("Explicit hide overrides unloaded-sector authoring visibility"), Preview->GetActorHandle(2)->IsTemporarilyHiddenInEditor());
     Preview->SetSectorVisible(2, true);
     TestEqual(TEXT("Visibility preserves sector associations"), Preview->SectorBanks.Num(), 1);
+    TestEqual(TEXT("Sector toggles never rebuild the preview"), Preview->BuildCount, BuildsBeforeVisibility);
+    TestEqual(TEXT("Sector toggles never decode geometry"), Preview->GetGeometryDecodeCount(), DecodesBeforeVisibility);
+
+    // Solo can be switched or expanded with checkboxes without replacing the
+    // original restore point, including visibility for currently unloaded sectors.
+    Preview->SetSectorVisible(1, false);
+    Preview->SetSectorVisible(999, false);
+    const TSet<int32> BeforeSolo = Preview->HiddenSectorIds;
+    Preview->SoloSector(1);
+    TestTrue(TEXT("Solo shows the chosen sector"), Preview->IsSectorVisible(1));
+    TestFalse(TEXT("Solo hides other sectors, including unloaded ones"), Preview->IsSectorVisible(2));
+    TestTrue(TEXT("Solo keeps global content visible"), Preview->IsSectorVisible(-1));
+    TestTrue(TEXT("Solo offers restore"), Preview->CanRestoreSectorVisibility());
+    Preview->SetSectorVisible(2, true);
+    Preview->SoloSector(2);
+    TestFalse(TEXT("Switching solo hides the previous sector"), Preview->IsSectorVisible(1));
+    TestTrue(TEXT("Switching solo shows the new sector"), Preview->IsSectorVisible(2));
+    {
+        const FScopedTransaction Transaction(FText::FromString(TEXT("Restore sector visibility test")));
+        Preview->RestoreSectorVisibility();
+    }
+    TestTrue(TEXT("Restore preserves the complete pre-solo hidden set"),
+        Preview->HiddenSectorIds.Num() == BeforeSolo.Num() &&
+        Preview->HiddenSectorIds.Contains(1) && Preview->HiddenSectorIds.Contains(999));
+    TestFalse(TEXT("Restore clears the restore point"), Preview->CanRestoreSectorVisibility());
+    TestEqual(TEXT("Solo and restore never rebuild the preview"), Preview->BuildCount, BuildsBeforeVisibility);
+    TestEqual(TEXT("Solo and restore never decode geometry"), Preview->GetGeometryDecodeCount(), DecodesBeforeVisibility);
+    if (GEditor)
+    {
+        TestFalse(TEXT("Solo and restore leave generated mesh out of undo"), GEditor->IsObjectInTransactionBuffer(Preview->Mesh));
+        TestTrue(TEXT("Restore supports undo"), GEditor->UndoTransaction());
+        TestTrue(TEXT("Undo restore reinstates the restore point"), Preview->CanRestoreSectorVisibility());
+        TestTrue(TEXT("Restore supports redo"), GEditor->RedoTransaction());
+        TestFalse(TEXT("Redo restore clears the restore point"), Preview->CanRestoreSectorVisibility());
+    }
+    Preview->SetSectorVisible(1, true);
+    Preview->SetSectorVisible(999, true);
 
     // A locked comparison/capture camera always uses native culling and refreshes
     // membership immediately (no extra rebuild required).

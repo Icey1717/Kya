@@ -134,8 +134,12 @@ public:
 
     bool IsSectorVisible(int32 SectorId) const;
     void SetSectorVisible(int32 SectorId, bool bVisible);
+    /** Show one sector, retaining the pre-solo visibility until restored. Global content stays visible. */
+    void SoloSector(int32 SectorId);
+    void RestoreSectorVisibility();
+    bool CanRestoreSectorVisibility() const { return bHasSavedSectorVisibility; }
 
-    /** Native active sector for background selection and distance clipping; -1 uses the first sector bank. */
+    /** Native active sector for background selection and distance clipping; -1 uses the common level background and clip distance. */
     UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Visibility")
     int32 PreviewBaseSector = -1;
 
@@ -536,6 +540,12 @@ public:
     TObjectPtr<UProceduralMeshComponent> Mesh;
 
 private:
+    // Session-only, but transactional so undo/redo also preserves the restore point.
+    UPROPERTY(Transient)
+    TSet<int32> SavedHiddenSectorIds;
+    UPROPERTY(Transient)
+    bool bHasSavedSectorVisibility = false;
+
     void UpdatePreviewCamera(const FVector& Position, const FVector& Forward, const FVector& Up,
         float HorizontalFovDegrees, int32 Width, int32 Height);
     void UpdateClusterVisibility(const FVector& Position, const FVector& Forward, const FVector& Right,
@@ -619,6 +629,9 @@ private:
     TObjectPtr<UMaterial> GeneratedOpaqueCoreMaterial;
     UPROPERTY(Transient)
     TObjectPtr<UMaterial> GeneratedAdditivePreviewMaterial;
+
+    UPROPERTY(Transient)
+    TObjectPtr<UMaterial> GeneratedSubtractivePreviewMaterial;
     UPROPERTY(Transient)
     TObjectPtr<UMaterial> GeneratedTranslucentPreviewMaterial;
 

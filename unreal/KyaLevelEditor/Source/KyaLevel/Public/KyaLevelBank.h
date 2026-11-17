@@ -5,6 +5,7 @@
 #include "KyaLevelBank.generated.h"
 
 class UAssetImportData;
+class UKyaDisc;
 
 USTRUCT(BlueprintType)
 struct FKyaBankEntry
@@ -2527,6 +2528,21 @@ public:
 
     UPROPERTY(VisibleAnywhere, Category="Kya")
     FString SourceFilename;
+
+    /** Disc provenance is independent of the local extraction cache filename. */
+    UPROPERTY(VisibleAnywhere, Category="Disc")
+    TSoftObjectPtr<UKyaDisc> SourceDisc;
+
+    UPROPERTY(VisibleAnywhere, Category="Disc")
+    FString SourceDiscPath;
+
+    /** Hash of the last imported/exported disc file, used to detect external edits. */
+    UPROPERTY(VisibleAnywhere, Category="Disc")
+    FString SourceDiscHash;
+
+    /** Authoring-state fingerprint at the last successful disc import/export. */
+    UPROPERTY()
+    FString SourceDiscStateHash;
 
     /**
      * Editor session generation of the typed data. Bumped whenever the typed

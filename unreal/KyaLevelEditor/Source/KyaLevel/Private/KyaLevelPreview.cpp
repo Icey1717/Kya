@@ -27,6 +27,7 @@
 #include "Async/Async.h"
 #include "HAL/CriticalSection.h"
 #include "HAL/PlatformProcess.h"
+#include "ProfilingDebugging/CpuProfilerTrace.h"
 
 #include "ProceduralMeshComponent.h"
 #include "Components/SplineComponent.h"
@@ -240,6 +241,7 @@ AKyaLevelPreview::AKyaLevelPreview()
 #if WITH_EDITOR
 void AKyaLevelPreview::PostEditUndo()
 {
+    TRACE_CPUPROFILER_EVENT_SCOPE(Kya_Preview_PostEditUndo);
     Super::PostEditUndo();
     bool bSectorVisibilityChanged = HiddenSectorIds.Num() != AppliedHiddenSectorIds.Num();
     for (int32 Id : HiddenSectorIds) bSectorVisibilityChanged |= !AppliedHiddenSectorIds.Contains(Id);
@@ -290,6 +292,7 @@ void AKyaLevelPreview::PostEditChangeProperty(FPropertyChangedEvent& PropertyCha
 
 void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
 {
+    TRACE_CPUPROFILER_EVENT_SCOPE(Kya_Preview_OnConstruction);
     Super::OnConstruction(Transform);
     ApplyLevelSet();
 #if WITH_EDITOR
@@ -559,7 +562,7 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
         ActorMarker->SetRelativeLocation(FVector(P.X, P.Z, P.Y) * 100.0);
     }
 #endif
-    if (!Bank || !Bank->Entries.IsValidIndex(Bank->BackgroundMeshEntry))
+    if (!Bank)
     {
         FinishBuildWithoutGeometry();
         return;
@@ -573,9 +576,9 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
             break;
         }
     ActiveClipDistance = Bank->SceneEnvironment.ClipDistance > 0 ? Bank->SceneEnvironment.ClipDistance : 500;
-    int32 BaseSector = PreviewBaseSector;
-    if (BaseSector < 0)
-        for (const auto& Sector : SectorBanks) if (Sector && Sector != Bank) { BaseSector = ResolveSectorId(*Sector); break; }
+    // An overview has no active streaming sector. Choosing the first loaded bank
+    // can hide the common sky (LEVEL_8's first sector is a separate interior).
+    const int32 BaseSector = PreviewBaseSector;
     if (const auto* Settings = SectorSettings.Find(BaseSector)) ActiveClipDistance = Settings->ClipDistance;
     if (bLogSectorDiagnostics)
         UE_LOG(LogTemp, Display, TEXT("KYA_NATIVE_CLIP sector=%d distance=%.3f"), BaseSector, ActiveClipDistance);
@@ -586,6 +589,7 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
         GeneratedMaskedPreviewMaterial = nullptr;
         GeneratedOpaqueCoreMaterial = nullptr;
         GeneratedAdditivePreviewMaterial = nullptr;
+        GeneratedSubtractivePreviewMaterial = nullptr;
         GeneratedTranslucentPreviewMaterial = nullptr;
         GeneratedUntexturedMaterial = nullptr;
         bGeneratedRawColorModulation = bRawColorModulation;
@@ -625,7 +629,7 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
         AddColorOutput(GeneratedUntexturedMaterial, Normalize);
         GeneratedUntexturedMaterial->PostEditChange();
     }
-    auto CreateTexturedMaterial = [this, &AddColorOutput](bool Masked, bool Additive = false, bool Translucent = false) -> UMaterial*
+    auto CreateTexturedMaterial = [this, &AddColorOutput](bool Masked, bool Additive = false, bool Translucent = false, bool Subtractive = false) -> UMaterial*
     {
         UMaterial* Material = NewObject<UMaterial>(this, NAME_None, RF_Transient);
         Material->SetShadingModel(MSM_Unlit);
@@ -633,6 +637,7 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
         if (Masked) { Material->BlendMode = BLEND_Masked; Material->OpacityMaskClipValue = 1.5f / 255.0f; }
         if (Additive) Material->BlendMode = BLEND_Additive;
         if (Translucent) Material->BlendMode = BLEND_AlphaComposite;
+        if (Subtractive) Material->BlendMode = BLEND_Modulate;
         UMaterialExpressionTextureSampleParameter2D* Sample = NewObject<UMaterialExpressionTextureSampleParameter2D>(Material);
         Sample->ParameterName = TEXT("KyaTexture");
         Sample->Texture = GEngine->DefaultTexture;
@@ -672,10 +677,10 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
         Modulate->B.Connect(0, VertexColor);
         Normalize->A.Connect(0, Modulate);
         Normalize->B.Connect(0, Scale);
-        if (Additive || Translucent)
+        if (Additive || Translucent || Subtractive)
         {
-            // GS adds encoded colour values. Emit the linear delta needed to get
-            // that result after Unreal's additive blend, rather than adding linear RGB.
+            // GS blends encoded colour values; convert the result back to linear
+            // for Unreal's framebuffer blend.
             auto* Scene = NewObject<UMaterialExpressionSceneColor>(Material);
             auto* Factor = NewObject<UMaterialExpressionScalarParameter>(Material);
             Factor->ParameterName = TEXT("BlendFactor");
@@ -710,6 +715,20 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
                 "clip(alpha * vertexAlpha * (255.0 / 128.0) - alphaClip);"
                 "float a = saturate(alpha * vertexAlpha * (255.0 / 128.0) * (255.0 / 128.0));"
                 "return encoded.rgb * a;");
+            if (Subtractive) Blend->Code = bRawColorModulation ? TEXT(
+                "clip(alpha * vertexAlpha * (255.0 / 128.0) - alphaClip);"
+                "float a = saturate(alpha * vertexAlpha * (255.0 / 128.0) * (255.0 / 128.0));"
+                "float3 d = max(scene.rgb, 0);"
+                "float3 e = lerp(d * 12.92, 1.055 * pow(d, 1.0 / 2.4) - 0.055, step(0.0031308, d));"
+                "float3 c = saturate(e - saturate(encoded.rgb) * a);"
+                "float3 result = lerp(c / 12.92, pow((c + 0.055) / 1.055, 2.4), step(0.04045, c));"
+                "return lerp(1, saturate(result / max(d, 0.000001)), step(0.000001, d));") : TEXT(
+                "clip(alpha * vertexAlpha * (255.0 / 128.0) - alphaClip);"
+                "float a = saturate(alpha * vertexAlpha * (255.0 / 128.0) * (255.0 / 128.0));"
+                "float3 d = max(scene.rgb, 0);"
+                "return lerp(1, saturate((d - encoded.rgb * a) / max(d, 0.000001)), step(0.000001, d));");
+            // Modulate applies the darkening ratio to the current framebuffer,
+            // preserving other translucent surfaces and making zero alpha neutral.
             auto Input = [Blend](const TCHAR* Name, UMaterialExpression* Expression, int32 Output = 0) {
                 FCustomInput I; I.InputName = Name; I.Input.Connect(Output, Expression); Blend->Inputs.Add(I);
             };
@@ -773,6 +792,7 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
         GeneratedOpaqueCoreMaterial->PostEditChange();
     }
     if (!TextureMaterial && !GeneratedAdditivePreviewMaterial) GeneratedAdditivePreviewMaterial = CreateTexturedMaterial(false, true);
+    if (!TextureMaterial && !GeneratedSubtractivePreviewMaterial) GeneratedSubtractivePreviewMaterial = CreateTexturedMaterial(false, false, false, true);
     if (!TextureMaterial && !GeneratedTranslucentPreviewMaterial) GeneratedTranslucentPreviewMaterial = CreateTexturedMaterial(false, false, true);
     if (!GeneratedFlareMaterial)
     {
@@ -828,20 +848,22 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
     }
 #endif
     UMaterialInterface* EffectiveMaterial = TextureMaterial ? TextureMaterial.Get() : GeneratedPreviewMaterial.Get();
-    const FKyaBankEntry& Entry = Bank->Entries[Bank->BackgroundMeshEntry];
-    if (Entry.Offset < 0 || Entry.Size < 0 || Entry.Offset > Bank->BankBytes.Num() ||
-        Entry.Size > Bank->BankBytes.Num() - Entry.Offset || Entry.Size > MAX_int32)
-    {
-        FinishBuildWithoutGeometry();
-        return;
-    }
+    // A common background is optional (LEVEL_11 has none). Actors and cluster
+    // geometry must still be built when there is no background to decode.
+    TConstArrayView<uint8> CommonBackgroundData;
     TArray<FKyaG3DDecodedStrip> CommonStripScratch;
-    const TArray<FKyaG3DDecodedStrip>* CommonStrips = nullptr;
-    if (!GetDecodedGeometry(Bank, 0, Bank->BackgroundMeshEntry,
-        MakeArrayView(Bank->BankBytes.GetData() + Entry.Offset, int32(Entry.Size)), CommonStripScratch, CommonStrips))
+    const TArray<FKyaG3DDecodedStrip>* CommonStrips = &CommonStripScratch;
+    if (Bank->Entries.IsValidIndex(Bank->BackgroundMeshEntry))
     {
-        FinishBuildWithoutGeometry();
-        return;
+        const FKyaBankEntry& Entry = Bank->Entries[Bank->BackgroundMeshEntry];
+        if (Entry.Offset >= 0 && Entry.Size >= 0 && Entry.Offset <= Bank->BankBytes.Num() &&
+            Entry.Size <= Bank->BankBytes.Num() - Entry.Offset && Entry.Size <= MAX_int32)
+        {
+            CommonBackgroundData = MakeArrayView(Bank->BankBytes.GetData() + Entry.Offset, int32(Entry.Size));
+            if (!GetDecodedGeometry(Bank, 0, Bank->BackgroundMeshEntry,
+                CommonBackgroundData, CommonStripScratch, CommonStrips))
+                CommonStrips = &CommonStripScratch;
+        }
     }
     const TArray<FKyaG3DDecodedStrip>& Strips = *CommonStrips;
     TArray<FVector> Positions;
@@ -921,6 +943,9 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
                     const bool Additive = !TextureMaterial && Key.bBlend &&
                         KyaG2D::ReadMaterialRegister(Source, *Offset, 0, 0x42, Alpha) &&
                         ((Alpha & 0xff) == 0x48 || (Alpha & 0xff) == 0x68); // (Cs - 0) * As/128 or FIX/128 + Cd.
+                    const bool Subtractive = !TextureMaterial && Key.bBlend &&
+                        KyaG2D::ReadMaterialRegister(Source, *Offset, 0, 0x42, Alpha) &&
+                        (Alpha & 0xff) == 0x42; // (0 - Cs) * As/128 + Cd (authored shadows).
                     // ABE enables the GS blend equation even for fully opaque terrain.
                     // Unreal translucency does not write depth, so keep replacement
                     // blends in the opaque/masked pass when every surviving texel
@@ -931,7 +956,7 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
                     });
                     const bool Translucent = !TextureMaterial && Key.bBlend && !OpaqueAlpha &&
                         KyaG2D::ReadMaterialRegister(Source, *Offset, 0, 0x42, Alpha) && (Alpha & 0xff) == 0x44;
-                    UMaterialInterface* Parent = Translucent ? GeneratedTranslucentPreviewMaterial.Get() : Additive ? GeneratedAdditivePreviewMaterial.Get() :
+                    UMaterialInterface* Parent = Subtractive ? GeneratedSubtractivePreviewMaterial.Get() : Translucent ? GeneratedTranslucentPreviewMaterial.Get() : Additive ? GeneratedAdditivePreviewMaterial.Get() :
                         (Masked ? GeneratedMaskedPreviewMaterial.Get() : EffectiveMaterial);
                     UMaterialInstanceDynamic* Material = UMaterialInstanceDynamic::Create(Parent, this);
                     if (Material)
@@ -959,7 +984,7 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
                                 BuiltScrollingMaterials.Add({Core, Scroll, Scroll.Offset});
                             }
                         }
-                        if (Additive || Translucent)
+                        if (Additive || Translucent || Subtractive)
                         {
                             const bool UsesSourceAlpha = ((Alpha >> 4) & 3) == 0;
                             Material->SetScalarParameterValue(TEXT("UseSourceAlpha"), UsesSourceAlpha ? 1.0f : 0.0f);
@@ -970,8 +995,8 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
                         BuiltSectionMaterials.Add(Section, Material);
                         BuiltPreviewTextures.Add(Texture);
                         if (bLogSectorDiagnostics)
-                            UE_LOG(LogTemp, Display, TEXT("KYA_TEXTURE_SECTION hash=%016llx source=%s width=%d height=%d section=%d masked=%d additive=%d translucent=%d min_vertex_alpha=%u opaque_alpha=%d"),
-                                Hash, SourceLabel, Width, Height, Section, Masked ? 1 : 0, Additive ? 1 : 0, Translucent ? 1 : 0, uint32(MinVertexAlpha), OpaqueAlpha ? 1 : 0);
+                            UE_LOG(LogTemp, Display, TEXT("KYA_TEXTURE_SECTION hash=%016llx source=%s width=%d height=%d section=%d masked=%d additive=%d translucent=%d subtractive=%d min_vertex_alpha=%u opaque_alpha=%d"),
+                                Hash, SourceLabel, Width, Height, Section, Masked ? 1 : 0, Additive ? 1 : 0, Translucent ? 1 : 0, Subtractive ? 1 : 0, uint32(MinVertexAlpha), OpaqueAlpha ? 1 : 0);
                     }
                 }
             }
@@ -1077,8 +1102,7 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
                     Flare.MaterialHash, *Item.Position.ToString(), Width, Height);
         }
     };
-    const auto CommonBackgroundData = MakeArrayView(Bank->BankBytes.GetData() + Entry.Offset, int32(Entry.Size));
-    if (!bHasSectorBackground) AddBackgroundFlares(CommonBackgroundData, TextureData, MaterialOffsets);
+    if (!bHasSectorBackground && !CommonBackgroundData.IsEmpty()) AddBackgroundFlares(CommonBackgroundData, TextureData, MaterialOffsets);
     TArray<int32> CommonCameraRelative;
     if ((Bank->SceneEnvironment.BackgroundFlags & 1) && !bHasSectorBackground)
         KyaG3D::ReadCameraRelativeBackgroundHierarchies(CommonBackgroundData, CommonCameraRelative);
@@ -2557,10 +2581,60 @@ bool AKyaLevelPreview::IsSectorVisible(int32 SectorId) const
 
 void AKyaLevelPreview::SetSectorVisible(int32 SectorId, bool bVisible)
 {
+    TRACE_CPUPROFILER_EVENT_SCOPE(Kya_SetSectorVisible);
     if (SectorId < 0 || IsSectorVisible(SectorId) == bVisible) return;
-    Modify();
+    {
+        // Only HiddenSectorIds changes. AActor::Modify also serializes the entire
+        // procedural mesh root at both ends of the transaction, taking seconds on
+        // real levels. PostEditUndo reapplies visibility to the resident geometry.
+        TRACE_CPUPROFILER_EVENT_SCOPE(Kya_SectorVisibility_Modify);
+        UObject::Modify();
+    }
     if (bVisible) HiddenSectorIds.Remove(SectorId);
     else HiddenSectorIds.Add(SectorId);
+    RefreshPrimitives();
+    RefreshSectorVisibility();
+}
+
+void AKyaLevelPreview::SoloSector(int32 SectorId)
+{
+    TRACE_CPUPROFILER_EVENT_SCOPE(Kya_SoloSector);
+    if (SectorId < 0) return;
+    TSet<int32> SectorIds;
+    for (const UKyaLevelBank* Sector : SectorBanks)
+        if (Sector && Sector != Bank)
+        {
+            const int32 Id = ResolveSectorId(*Sector);
+            if (Id >= 0) SectorIds.Add(Id);
+        }
+    if (Bank)
+        for (const FKyaActorPlacement& Actor : Bank->SceneEnvironment.Actors)
+            if (Actor.SectorId >= 0) SectorIds.Add(Actor.SectorId);
+    if (!SectorIds.Contains(SectorId)) return;
+
+    // Record settings only, just like the individual checkbox. Apply the combined
+    // visibility once rather than refreshing once for every other sector.
+    UObject::Modify();
+    if (!bHasSavedSectorVisibility)
+    {
+        SavedHiddenSectorIds = HiddenSectorIds;
+        bHasSavedSectorVisibility = true;
+    }
+    for (int32 Id : SectorIds)
+        if (Id != SectorId) HiddenSectorIds.Add(Id);
+    HiddenSectorIds.Remove(SectorId);
+    RefreshPrimitives();
+    RefreshSectorVisibility();
+}
+
+void AKyaLevelPreview::RestoreSectorVisibility()
+{
+    TRACE_CPUPROFILER_EVENT_SCOPE(Kya_RestoreSectorVisibility);
+    if (!bHasSavedSectorVisibility) return;
+    UObject::Modify();
+    HiddenSectorIds = MoveTemp(SavedHiddenSectorIds);
+    SavedHiddenSectorIds.Reset();
+    bHasSavedSectorVisibility = false;
     RefreshPrimitives();
     RefreshSectorVisibility();
 }
@@ -2863,6 +2937,7 @@ bool AKyaLevelPreview::IsGeneratedActorIsolated(const AActor* Actor) const
 
 void AKyaLevelPreview::ApplyGeneratedActorPresentation()
 {
+    TRACE_CPUPROFILER_EVENT_SCOPE(Kya_ApplyGeneratedActorPresentation);
     // Editor-only: SetIsTemporarilyHiddenInEditor never changes game visibility, and
     // the bank data is untouched. Isolation hides every representation except the
     // isolated set; explicit hiding applies when isolation is not active. Membership
@@ -2912,6 +2987,7 @@ void AKyaLevelPreview::SetGeneratedActorHighlighted(AKyaActorHandle* Handle, boo
 
 void AKyaLevelPreview::RefreshGeneratedActorHighlights()
 {
+    TRACE_CPUPROFILER_EVENT_SCOPE(Kya_RefreshGeneratedActorHighlights);
     for (const TPair<int32, TObjectPtr<AKyaActorHandle>>& Pair : ActorHandles)
         if (IsValid(Pair.Value)) Pair.Value->SetMeshHighlighted(Pair.Value->IsSelected());
 }
@@ -3312,8 +3388,12 @@ void AKyaLevelPreview::RefreshSceneVisualizers()
 
 void AKyaLevelPreview::RefreshPrimitives()
 {
-    for (UKyaPrimitiveComponent* Component : PrimitiveComponents)
-        if (IsValid(Component)) Component->DestroyComponent();
+    TRACE_CPUPROFILER_EVENT_SCOPE(Kya_RefreshPrimitives);
+    {
+        TRACE_CPUPROFILER_EVENT_SCOPE(Kya_Primitives_DestroyComponents);
+        for (UKyaPrimitiveComponent* Component : PrimitiveComponents)
+            if (IsValid(Component)) Component->DestroyComponent();
+    }
     PrimitiveComponents.Reset();
     PrimitiveDiagnostics.Reset();
     if ((!bShowCollisionPrimitives && !bShowEventPrimitives) || !GetWorld() || GetWorld()->IsGameWorld()) return;
@@ -3323,12 +3403,16 @@ void AKyaLevelPreview::RefreshPrimitives()
         if (Sector && IsSectorVisible(ResolveSectorId(*Sector))) Sources.AddUnique(Sector);
     for (UKyaLevelBank* Source : Sources)
     {
+        TRACE_CPUPROFILER_EVENT_SCOPE_TEXT(*FString::Printf(TEXT("Kya.Primitives.Build bank=%s"), *Source->GetName()));
         UKyaPrimitiveComponent* Component = NewObject<UKyaPrimitiveComponent>(this, NAME_None, RF_Transient);
         Component->SetupAttachment(GetRootComponent());
         Component->ConfigureDisplay(CollisionPrimitiveDisplay, EventPrimitiveDisplay, PrimitiveSolidOpacity,
             PrimitiveWireThickness, PrimitiveWireDepthBias);
         Component->Rebuild(Source, bShowCollisionPrimitives, bShowEventPrimitives);
-        Component->RegisterComponent();
+        {
+            TRACE_CPUPROFILER_EVENT_SCOPE(Kya_Primitives_RegisterComponent);
+            Component->RegisterComponent();
+        }
         PrimitiveDiagnostics.Append(Component->Diagnostics);
         PrimitiveComponents.Add(Component);
     }
@@ -3500,6 +3584,7 @@ void AKyaLevelPreview::UpdateClusterVisibility(const FVector& Position, const FV
 
 void AKyaLevelPreview::RefreshSectorVisibility()
 {
+    TRACE_CPUPROFILER_EVENT_SCOPE(Kya_RefreshSectorVisibility);
     TSet<int32> Changed;
     for (const FSectorGeometryRange& Range : SectorGeometryRanges)
         if (AppliedHiddenSectorIds.Contains(Range.SectorId) != HiddenSectorIds.Contains(Range.SectorId) ||
@@ -3511,14 +3596,20 @@ void AKyaLevelPreview::RefreshSectorVisibility()
     ApplyGeneratedActorPresentation();
     if (ActorMarker && Bank && Bank->SceneEnvironment.Actors.IsValidIndex(PreviewActorIndex))
         ActorMarker->SetVisibility(IsSectorVisible(Bank->SceneEnvironment.Actors[PreviewActorIndex].SectorId));
-    if (GEditor) GEditor->RedrawLevelEditingViewports();
+    if (GEditor)
+    {
+        TRACE_CPUPROFILER_EVENT_SCOPE(Kya_SectorVisibility_RedrawViewports);
+        GEditor->RedrawLevelEditingViewports();
+    }
 #endif
 }
 
 void AKyaLevelPreview::ApplyMeshVisibility(const TSet<int32>& Sections)
 {
+    TRACE_CPUPROFILER_EVENT_SCOPE(Kya_ApplyMeshVisibility);
     for (int32 SectionIndex : Sections)
     {
+        TRACE_CPUPROFILER_EVENT_SCOPE_TEXT(*FString::Printf(TEXT("Kya.MeshVisibility section=%d"), SectionIndex));
         const TArray<uint32>* Base = ClusterBaseIndices.Find(SectionIndex);
         const FProcMeshSection* Original = Mesh->GetProcMeshSection(SectionIndex);
         if (!Base || !Original) continue;
@@ -3529,27 +3620,39 @@ void AKyaLevelPreview::ApplyMeshVisibility(const TSet<int32>& Sections)
         // directly, leaving both vertex and index buffers resident and unchanged.
         if (HiddenIndices > 0 && HiddenIndices == Base->Num())
         {
+            TRACE_CPUPROFILER_EVENT_SCOPE(Kya_MeshVisibility_HideSection);
             Mesh->SetMeshSectionVisible(SectionIndex, false);
             continue;
         }
         Mesh->SetMeshSectionVisible(SectionIndex, true);
-        FProcMeshSection Updated = *Original;
-        Updated.ProcIndexBuffer = *Base;
-        for (const FClusterVisibilityRange& Range : ClusterVisibilityRanges)
-            if (Range.Section == SectionIndex && !Range.bVisible && Range.Count > 0 &&
-                Range.Start >= 0 && Range.Start + Range.Count <= Updated.ProcIndexBuffer.Num())
-            {
-                const uint32 Anchor = (*Base)[Range.Start];
-                for (int32 I = Range.Start; I < Range.Start + Range.Count; ++I) Updated.ProcIndexBuffer[I] = Anchor;
-            }
-        for (const FSectorGeometryRange& Range : SectorGeometryRanges)
-            if (Range.Section == SectionIndex && !IsSectorVisible(Range.SectorId) && Range.Count > 0 &&
-                Range.Start >= 0 && Range.Start + Range.Count <= Updated.ProcIndexBuffer.Num())
-            {
-                const uint32 Anchor = (*Base)[Range.Start];
-                for (int32 I = Range.Start; I < Range.Start + Range.Count; ++I) Updated.ProcIndexBuffer[I] = Anchor;
-            }
-        Mesh->SetProcMeshSection(SectionIndex, Updated);
+        FProcMeshSection Updated;
+        {
+            TRACE_CPUPROFILER_EVENT_SCOPE(Kya_MeshVisibility_CopySection);
+            Updated = *Original;
+        }
+        {
+            TRACE_CPUPROFILER_EVENT_SCOPE(Kya_MeshVisibility_RewriteIndices);
+            Updated.ProcIndexBuffer = *Base;
+            for (const FClusterVisibilityRange& Range : ClusterVisibilityRanges)
+                if (Range.Section == SectionIndex && !Range.bVisible && Range.Count > 0 &&
+                    Range.Start >= 0 && Range.Start + Range.Count <= Updated.ProcIndexBuffer.Num())
+                {
+                    const uint32 Anchor = (*Base)[Range.Start];
+                    for (int32 I = Range.Start; I < Range.Start + Range.Count; ++I) Updated.ProcIndexBuffer[I] = Anchor;
+                }
+            for (const FSectorGeometryRange& Range : SectorGeometryRanges)
+                if (Range.Section == SectionIndex && !IsSectorVisible(Range.SectorId) && Range.Count > 0 &&
+                    Range.Start >= 0 && Range.Start + Range.Count <= Updated.ProcIndexBuffer.Num())
+                {
+                    const uint32 Anchor = (*Base)[Range.Start];
+                    for (int32 I = Range.Start; I < Range.Start + Range.Count; ++I) Updated.ProcIndexBuffer[I] = Anchor;
+                }
+        }
+        {
+            // Includes bounds/collision updates and marking the scene proxy dirty.
+            TRACE_CPUPROFILER_EVENT_SCOPE(Kya_MeshVisibility_SetProcMeshSection);
+            Mesh->SetProcMeshSection(SectionIndex, Updated);
+        }
     }
 }
 

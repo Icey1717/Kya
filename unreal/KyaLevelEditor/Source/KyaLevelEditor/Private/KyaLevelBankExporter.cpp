@@ -870,10 +870,14 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
                 if (CheckpointValidation.Records[Checkpoint].ActorWaypointCount != Actor.Checkpoints[Checkpoint].ActorWaypoints.Num() ||
                     Actor.Checkpoints[Checkpoint].Flags < 0 || Actor.Checkpoints[Checkpoint].Flags > MAX_uint32) return false;
         }
-        for (TCHAR Char : Actor.Name) if (Char < 1 || Char > 127)
+        const FString OriginalName = ANSI_TO_TCHAR(reinterpret_cast<const char*>(Bytes.GetData() + Offsets.Name));
+        // Original names can contain extended ANSI characters. The writer keeps
+        // their original bytes; restrict only newly authored names to ASCII.
+        for (TCHAR Char : Actor.Name) if (Actor.Name != OriginalName && (Char < 1 || Char > 127))
         {
             Diagnostics.FailedActorIndex = Index;
             Diagnostics.FailedProperty = TEXT("Name");
+            Diagnostics.Errors.Add(FString::Printf(TEXT("Actor %d: edited names must use ASCII characters."), Index));
             return false;
         }
         if (Align(Actor.Name.Len() + 1, 4) != Offsets.NameCapacity)

@@ -75,12 +75,79 @@ bool FKyaBackgroundSelectionTest::RunTest(const FString& Parameters)
     Preview->PreviewBaseSector = 7;
     Preview->SectorBanks = {Seven, One};
     TestEqual(TEXT("Sector without a background uses common even with other backgrounds loaded"), Build(), Common);
+    Preview->PreviewBaseSector = -1;
+    Preview->SectorBanks = {One, Two, Seven, Twelve};
+    TestEqual(TEXT("Whole-level overview keeps common background with sector banks loaded"), Build(), Common);
+    Preview->SectorBanks = {Twelve, Seven, Two, One};
+    TestEqual(TEXT("Overview background is independent of sector bank order"), Build(), Common);
     Preview->PreviewBaseSector = 1;
     Preview->bShowClusterMeshes = true;
     Preview->SectorBanks = {One};
     const int64 OneClusters = Build();
     Preview->SectorBanks = {One, Two};
     TestTrue(TEXT("Inactive sector cluster geometry is still submitted"), Build() > OneClusters);
+    Preview->Destroy();
+    World->DestroyWorld(false);
+    return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaBackgroundOverviewTest, "Kya.Rendering.CommonBackgroundOverview",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaBackgroundOverviewTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddError(TEXT("Set KYA_TEST_BANK to LEVEL_8/LEVEL.BNK for the overview regression."));
+        return false;
+    }
+    auto Import = [this](const FString& Path) -> UKyaLevelBank* {
+        TArray<uint8> Bytes;
+        if (!TestTrue(TEXT("Read overview bank"), FFileHelper::LoadFileToArray(Bytes, *Path))) return nullptr;
+        const uint8* Cursor = Bytes.GetData();
+        auto* Factory = NewObject<UKyaLevelBankFactory>();
+        auto* Result = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+            GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+            Bytes.GetData() + Bytes.Num(), GWarn));
+        if (Result) Result->SourceFilename = Path;
+        return Result;
+    };
+    UKyaLevelBank* Main = Import(Filename);
+    UKyaLevelBank* One = Import(FPaths::GetPath(Filename) / TEXT("SECT1.BNK"));
+    UKyaLevelBank* Two = Import(FPaths::GetPath(Filename) / TEXT("SECT2.BNK"));
+    if (!Main || !One || !Two) return false;
+    UWorld* World = UWorld::CreateWorld(EWorldType::EditorPreview, false);
+    if (!TestNotNull(TEXT("Create overview world"), World)) return false;
+    auto* Preview = World->SpawnActor<AKyaLevelPreview>();
+    if (!TestNotNull(TEXT("Create overview"), Preview)) { World->DestroyWorld(false); return false; }
+    Preview->Bank = Main;
+    Preview->bShowRebuildProgress = false;
+    Preview->bSpawnActorHandles = false;
+    Preview->bSpawnHierarchyHandles = false;
+    Preview->bShowAllActorMeshes = false;
+    Preview->bShowActorMesh = false;
+    Preview->bShowClusterMeshes = false;
+    Preview->bShowSprites = false;
+    auto Build = [Preview]() -> int64 {
+        Preview->OnConstruction(FTransform::Identity);
+        int64 Triangles = 0;
+        for (int32 Index = 0; Index < Preview->Mesh->GetNumSections(); ++Index)
+            if (const auto* Section = Preview->Mesh->GetProcMeshSection(Index))
+                Triangles += Section->ProcIndexBuffer.Num() / 3;
+        return Triangles;
+    };
+    TestEqual(TEXT("Overview is the default"), Preview->PreviewBaseSector, -1);
+    const int64 Common = Build();
+    TestTrue(TEXT("Common overview contains geometry"), Common > 0);
+    Preview->SectorBanks = {One, Two};
+    TestEqual(TEXT("Loading interior sectors preserves common overview"), Build(), Common);
+    Preview->SectorBanks = {Two, One};
+    TestEqual(TEXT("Reordering sectors preserves common overview"), Build(), Common);
+    Preview->PreviewBaseSector = 1;
+    const int64 Interior = Build();
+    TestTrue(TEXT("Explicit sector selects a different background"), Interior > 0 && Interior != Common);
+    Preview->PreviewBaseSector = -1;
+    TestEqual(TEXT("Returning to overview restores common geometry"), Build(), Common);
     Preview->Destroy();
     World->DestroyWorld(false);
     return true;
