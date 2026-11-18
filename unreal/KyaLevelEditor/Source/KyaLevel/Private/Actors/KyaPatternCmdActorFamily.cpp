@@ -7,6 +7,6 @@ const FKyaActorFamilyBehaviour Behaviours[] = {
 }
 extern const FKyaActorFamily GKyaPatternCmdActorFamily = {
     0x40, TEXT("CActorPatternCmd"), TEXT("Pattern command"),
-    TEXT("Two unsigned fields, actor-reference list, two floats and versioned CPatternPart; behaviour 2 is empty"),
+    TEXT("Two unsigned fields, actor-reference list (rebuilt on export), two floats and versioned CPatternPart; behaviour 2 is empty"),
     MakeArrayView(Behaviours), {},
 };

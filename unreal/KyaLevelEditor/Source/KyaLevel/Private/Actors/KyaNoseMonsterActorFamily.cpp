@@ -20,7 +20,7 @@ const FKyaActorFamilyBehaviour NoseMonsterBehaviours[] = {
 
 extern const FKyaActorFamily GKyaNoseMonsterActorFamily = {
     0x26, TEXT("CActorNoseMonster"), TEXT("Nose monster"),
-    TEXT("autonomous tuning, zone paths, fire-shot list and switch"),
+    TEXT("autonomous tuning, zone paths and fire-shot list (both rebuilt on export), and switch"),
     MakeArrayView(NoseMonsterBehaviours),
     TConstArrayView<FKyaActorFamilyReference>(),
 };

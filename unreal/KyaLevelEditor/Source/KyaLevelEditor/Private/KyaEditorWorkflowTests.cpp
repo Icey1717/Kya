@@ -270,7 +270,7 @@ bool FKyaActorEditServiceTest::RunTest(const FString& Parameters)
         // A nested array element change is carried by the containing property.
         Presentation.Conditions[0].Value = 123;
         FKyaActorEditPatch NestedPatch;
-        TestTrue(TEXT("Details patch builds for a fixed-size array"),
+        TestTrue(TEXT("Details patch builds for an array"),
             KyaMakePlacementPropertyPatch(Presentation, GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Conditions), NestedPatch));
         TestTrue(TEXT("Nested details patch applies"),
             Service.Apply(CurrentKey, NestedPatch, EKyaEditNotify::Silent, &Error));
@@ -293,8 +293,277 @@ bool FKyaActorEditServiceTest::RunTest(const FString& Parameters)
             EKyaFieldCapability::EditableExportable);
         TestTrue(TEXT("Actor name explains the fixed name slot"),
             GetKyaActorFieldCapability(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Name)).Reason.Contains(TEXT("slot")));
+        TestTrue(TEXT("Resizable arrays explain their count support"),
+            GetKyaActorFieldCapability(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Conditions)).Reason.Contains(TEXT("rebuilt")));
         TestTrue(TEXT("Fixed-size arrays explain their restriction"),
-            GetKyaActorFieldCapability(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Conditions)).Reason.Contains(TEXT("Fixed-size")));
+            GetKyaActorFieldCapability(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, FighterField51C)).Reason.Contains(TEXT("Fixed-size")));
+        const FProperty* MacroProperty = FKyaActorPlacement::StaticStruct()->FindPropertyByName(
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, MacroAnimations));
+        TestTrue(TEXT("Macro animation array is exposed for resizing"),
+            MacroProperty && !MacroProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FProperty* PlatformProperty = FKyaActorPlacement::StaticStruct()->FindPropertyByName(
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, PlatformActors));
+        TestTrue(TEXT("Class-specific platform array is exposed for resizing"),
+            PlatformProperty && !PlatformProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FProperty* TrapStreamProperty = FKyaActorPlacement::StaticStruct()->FindPropertyByName(
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, TrapStreamEntries));
+        TestTrue(TEXT("Class-specific trap stream is exposed for resizing"),
+            TrapStreamProperty && !TrapStreamProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        TestTrue(TEXT("Trap stream explains its count support"),
+            GetKyaActorFieldCapability(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement,
+            TrapStreamEntries)).Reason.Contains(TEXT("rebuilt")));
+        const FProperty* FighterProperty = FKyaActorPlacement::StaticStruct()->FindPropertyByName(
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, FighterBlows));
+        TestTrue(TEXT("Class-specific fighter array is exposed for resizing"),
+            FighterProperty && !FighterProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        TestTrue(TEXT("Fighter array explains its count support"),
+            GetKyaActorFieldCapability(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement,
+            FighterBlows)).Reason.Contains(TEXT("rebuilt")));
+        const FProperty* FixedFighterProperty = FKyaActorPlacement::StaticStruct()->FindPropertyByName(
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, FighterField51C));
+        TestTrue(TEXT("Unsupported array keeps the fixed-size UI"),
+            FixedFighterProperty && FixedFighterProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FProperty* WolfenComboProperty = FKyaWolfenFightParam::StaticStruct()->FindPropertyByName(
+            TEXT("ComboList1"));
+        TestTrue(TEXT("Wolfen fight combo list is exposed for resizing"),
+            WolfenComboProperty && !WolfenComboProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FProperty* WolfenFixedProperty = FKyaWolfenFightParam::StaticStruct()->FindPropertyByName(
+            TEXT("Capability0Fields"));
+        TestTrue(TEXT("Fixed Wolfen fight array keeps the fixed-size UI"),
+            WolfenFixedProperty && WolfenFixedProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FProperty* ShockerCmdProperty = FKyaActorPlacement::StaticStruct()->FindPropertyByName(
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, ShockerCmdSequences));
+        TestTrue(TEXT("Shocker command sequence list is exposed for resizing"),
+            ShockerCmdProperty && !ShockerCmdProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FArrayProperty* ShockerValuesProperty = CastField<FArrayProperty>(
+            FKyaShockerCmdSequence::StaticStruct()->FindPropertyByName(TEXT("Values")));
+        TestTrue(TEXT("Shocker command value list is exposed for resizing"),
+            ShockerValuesProperty && !ShockerValuesProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FProperty* BasicBoxActorRefsProperty = FKyaActorPlacement::StaticStruct()->FindPropertyByName(
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, BasicBoxActorRefs));
+        TestTrue(TEXT("Basic-box actor stream is exposed for resizing"),
+            BasicBoxActorRefsProperty && !BasicBoxActorRefsProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FProperty* BoxActorRefsProperty = FKyaActorPlacement::StaticStruct()->FindPropertyByName(
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, BoxActorRefs));
+        TestTrue(TEXT("Box actor stream is exposed for resizing"),
+            BoxActorRefsProperty && !BoxActorRefsProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FProperty* KimZoneStreamProperty = FKyaActorPlacement::StaticStruct()->FindPropertyByName(
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, KimZoneStream));
+        TestTrue(TEXT("Kim zone stream is exposed for resizing"),
+            KimZoneStreamProperty && !KimZoneStreamProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FProperty* KimTutorialProperty = FKyaActorPlacement::StaticStruct()->FindPropertyByName(
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, KimTutorialZones));
+        TestTrue(TEXT("Kim tutorial-zone list is exposed for resizing"),
+            KimTutorialProperty && !KimTutorialProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FProperty* KimProjectileProperty = FKyaActorPlacement::StaticStruct()->FindPropertyByName(
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, KimProjectileZones));
+        TestTrue(TEXT("Kim projectile-zone list is exposed for resizing"),
+            KimProjectileProperty && !KimProjectileProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FProperty* KimCameraProperty = FKyaActorPlacement::StaticStruct()->FindPropertyByName(
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, KimCameras));
+        TestTrue(TEXT("Kim camera list is exposed for resizing"),
+            KimCameraProperty && !KimCameraProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FProperty* PatternCmdProperty = FKyaActorPlacement::StaticStruct()->FindPropertyByName(
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, PatternCmdActorRefs));
+        TestTrue(TEXT("Pattern-command actor-ref list is exposed for resizing"),
+            PatternCmdProperty && !PatternCmdProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FArrayProperty* ShootFireProperty = CastField<FArrayProperty>(
+            FKyaActorBehaviour::StaticStruct()->FindPropertyByName(TEXT("ShootFireActorRefs")));
+        TestTrue(TEXT("Shoot fire-ref list is exposed for resizing"),
+            ShootFireProperty && !ShootFireProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FArrayProperty* ClusterZonesProperty = CastField<FArrayProperty>(
+            FKyaActorBehaviour::StaticStruct()->FindPropertyByName(TEXT("ClusterZones")));
+        TestTrue(TEXT("Cluster zone list is exposed for resizing"),
+            ClusterZonesProperty && !ClusterZonesProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FArrayProperty* ClusterActorsProperty = CastField<FArrayProperty>(
+            FKyaClusterZone::StaticStruct()->FindPropertyByName(TEXT("Actors")));
+        TestTrue(TEXT("Cluster zone actor list is exposed for resizing"),
+            ClusterActorsProperty && !ClusterActorsProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FArrayProperty* FogZonesProperty = CastField<FArrayProperty>(
+            FKyaActorBehaviour::StaticStruct()->FindPropertyByName(TEXT("FogZones")));
+        TestTrue(TEXT("Fog zone list is exposed for resizing"),
+            FogZonesProperty && !FogZonesProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FArrayProperty* BrazulSubObjsProperty = CastField<FArrayProperty>(
+            FKyaActorBehaviour::StaticStruct()->FindPropertyByName(TEXT("BrazulSubObjs")));
+        TestTrue(TEXT("Brazul A sub-object list is exposed for resizing"),
+            BrazulSubObjsProperty && !BrazulSubObjsProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FArrayProperty* BrazulPathsProperty = CastField<FArrayProperty>(
+            FKyaBrazulSubObj::StaticStruct()->FindPropertyByName(TEXT("PathIndices")));
+        TestTrue(TEXT("Brazul A path list is exposed for resizing"),
+            BrazulPathsProperty && !BrazulPathsProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FArrayProperty* SwitchTargetsProperty = CastField<FArrayProperty>(
+            FKyaSwitch::StaticStruct()->FindPropertyByName(TEXT("Targets")));
+        TestTrue(TEXT("Switch target list is exposed for resizing"),
+            SwitchTargetsProperty && !SwitchTargetsProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FProperty* FogHierarchyProperty = FKyaActorPlacement::StaticStruct()->FindPropertyByName(
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, FogHierarchies));
+        TestTrue(TEXT("Fog hierarchy list is exposed for resizing"),
+            FogHierarchyProperty && !FogHierarchyProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FArrayProperty* FxListProperty = CastField<FArrayProperty>(
+            FKyaActorBehaviour::StaticStruct()->FindPropertyByName(TEXT("FxUnknownValues")));
+        TestTrue(TEXT("FX list is exposed for resizing"),
+            FxListProperty && !FxListProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FArrayProperty* RpgRefsProperty = CastField<FArrayProperty>(
+            FKyaActorBehaviour::StaticStruct()->FindPropertyByName(TEXT("WeaponRpgActorRefs")));
+        TestTrue(TEXT("Weapon RPG actor stream is exposed for resizing"),
+            RpgRefsProperty && !RpgRefsProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FArrayProperty* CompanionAlertsProperty = CastField<FArrayProperty>(
+            FKyaActorBehaviour::StaticStruct()->FindPropertyByName(TEXT("CompanionAlerts")));
+        TestTrue(TEXT("Companion alert list is exposed for resizing"),
+            CompanionAlertsProperty && !CompanionAlertsProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FArrayProperty* FenceGroupsProperty = CastField<FArrayProperty>(
+            FKyaActorBehaviour::StaticStruct()->FindPropertyByName(TEXT("BunchFenceGroups")));
+        TestTrue(TEXT("Bunch fence group list is exposed for resizing"),
+            FenceGroupsProperty && !FenceGroupsProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FArrayProperty* FenceWayPointsProperty = CastField<FArrayProperty>(
+            FKyaActorBehaviour::StaticStruct()->FindPropertyByName(TEXT("BunchFenceWayPoints")));
+        TestTrue(TEXT("Bunch fence waypoint list is exposed for resizing"),
+            FenceWayPointsProperty && !FenceWayPointsProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FArrayProperty* RepelIndicesProperty = CastField<FArrayProperty>(
+            FKyaActorBehaviour::StaticStruct()->FindPropertyByName(TEXT("BunchRepelIndices")));
+        TestTrue(TEXT("Bunch repel index list is exposed for resizing"),
+            RepelIndicesProperty && !RepelIndicesProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FProperty* BunchStreamProperty = FKyaActorPlacement::StaticStruct()->FindPropertyByName(
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, BunchStreamEntries));
+        TestTrue(TEXT("Bunch stream-entry list is exposed for resizing"),
+            BunchStreamProperty && !BunchStreamProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FProperty* WindActorsProperty = FKyaActorPlacement::StaticStruct()->FindPropertyByName(
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, WindActorRefs));
+        TestTrue(TEXT("Wind actor list is exposed for resizing"),
+            WindActorsProperty && !WindActorsProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FProperty* StillerActorsProperty = FKyaActorPlacement::StaticStruct()->FindPropertyByName(
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, StillerActorRefs));
+        TestTrue(TEXT("Stiller actor list is exposed for resizing"),
+            StillerActorsProperty && !StillerActorsProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FProperty* ShipCareBoysProperty = FKyaActorPlacement::StaticStruct()->FindPropertyByName(
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, ShipCareBoyActorRefs));
+        TestTrue(TEXT("Ship care-boy list is exposed for resizing"),
+            ShipCareBoysProperty && !ShipCareBoysProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FProperty* ShipFxProperty = FKyaActorPlacement::StaticStruct()->FindPropertyByName(
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, ShipFxIntValues));
+        TestTrue(TEXT("Ship FX integer list is exposed for resizing"),
+            ShipFxProperty && !ShipFxProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FProperty* ShipWordsProperty = FKyaActorPlacement::StaticStruct()->FindPropertyByName(
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, ShipWords18C));
+        TestTrue(TEXT("Ship four-word block keeps the fixed-size UI"),
+            ShipWordsProperty && ShipWordsProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FProperty* PunchingBallTrapsProperty = FKyaActorPlacement::StaticStruct()->FindPropertyByName(
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, PunchingBallTrapEntries));
+        TestTrue(TEXT("Punching ball trap list is exposed for resizing"),
+            PunchingBallTrapsProperty && !PunchingBallTrapsProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FProperty* PunchingBallFloatsProperty = FKyaActorPlacement::StaticStruct()->FindPropertyByName(
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, PunchingBallCamFigFloats));
+        TestTrue(TEXT("Punching ball camera-fight float block keeps the fixed-size UI"),
+            PunchingBallFloatsProperty &&
+            PunchingBallFloatsProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FProperty* AmortosCmdProperty = FKyaActorPlacement::StaticStruct()->FindPropertyByName(
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, AmortosCmdActorRefs));
+        TestTrue(TEXT("Amortos command actor list is exposed for resizing"),
+            AmortosCmdProperty && !AmortosCmdProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FProperty* NoseMonsterPathsProperty = FKyaActorPlacement::StaticStruct()->FindPropertyByName(
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, NoseMonsterZonePathEntries));
+        TestTrue(TEXT("Nose monster zone-path list is exposed for resizing"),
+            NoseMonsterPathsProperty && !NoseMonsterPathsProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FProperty* NoseMonsterShotsProperty = FKyaActorPlacement::StaticStruct()->FindPropertyByName(
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, NoseMonsterFireShotActorRefs));
+        TestTrue(TEXT("Nose monster fire-shot list is exposed for resizing"),
+            NoseMonsterShotsProperty && !NoseMonsterShotsProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FArrayProperty* WoofActorsProperty = CastField<FArrayProperty>(
+            FKyaWoofData::StaticStruct()->FindPropertyByName(TEXT("ActorRefs")));
+        TestTrue(TEXT("Woof actor list is exposed for resizing"),
+            WoofActorsProperty && !WoofActorsProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FArrayProperty* BlazerActorsProperty = CastField<FArrayProperty>(
+            FKyaBlazerData::StaticStruct()->FindPropertyByName(TEXT("ActorRefs")));
+        TestTrue(TEXT("Blazer actor list is exposed for resizing"),
+            BlazerActorsProperty && !BlazerActorsProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FProperty* EggPathsProperty = FKyaActorPlacement::StaticStruct()->FindPropertyByName(
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, EggPathIndices));
+        TestTrue(TEXT("Egg path-plane list is exposed for resizing"),
+            EggPathsProperty && !EggPathsProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FProperty* DcaShotsProperty = FKyaActorPlacement::StaticStruct()->FindPropertyByName(
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, DcaShotActorRefs));
+        TestTrue(TEXT("DCA shot list is exposed for resizing"),
+            DcaShotsProperty && !DcaShotsProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FProperty* TeleporterDestinationsProperty = FKyaActorPlacement::StaticStruct()->FindPropertyByName(
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, TeleporterDestinations));
+        TestTrue(TEXT("Teleporter destination list is exposed for resizing"),
+            TeleporterDestinationsProperty &&
+            !TeleporterDestinationsProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FProperty* TeleporterWaypointsProperty = FKyaActorPlacement::StaticStruct()->FindPropertyByName(
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, TeleporterWaypoints));
+        TestTrue(TEXT("Teleporter waypoint list is exposed for resizing"),
+            TeleporterWaypointsProperty &&
+            !TeleporterWaypointsProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FProperty* TeleporterBlocksProperty = FKyaActorPlacement::StaticStruct()->FindPropertyByName(
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, TeleporterConditionedOperations));
+        TestTrue(TEXT("Teleporter conditioned-block list is exposed for resizing"),
+            TeleporterBlocksProperty &&
+            !TeleporterBlocksProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FArrayProperty* TeleporterOpsProperty = CastField<FArrayProperty>(
+            FKyaTeleporterBlock::StaticStruct()->FindPropertyByName(TEXT("Operations")));
+        TestTrue(TEXT("Teleporter block operation list is exposed for resizing"),
+            TeleporterOpsProperty && !TeleporterOpsProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FArrayProperty* TeleporterCondsProperty = CastField<FArrayProperty>(
+            FKyaTeleporterBlock::StaticStruct()->FindPropertyByName(TEXT("Conditions")));
+        TestTrue(TEXT("Teleporter block condition list is exposed for resizing"),
+            TeleporterCondsProperty && !TeleporterCondsProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FProperty* AtonPathsProperty = FKyaActorPlacement::StaticStruct()->FindPropertyByName(
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, AtonPathIndices));
+        TestTrue(TEXT("Aton path list is exposed for resizing"),
+            AtonPathsProperty && !AtonPathsProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FProperty* AtonSubObjsProperty = FKyaActorPlacement::StaticStruct()->FindPropertyByName(
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, AtonSubObjs));
+        TestTrue(TEXT("Aton sub-object list is exposed for resizing"),
+            AtonSubObjsProperty && !AtonSubObjsProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FArrayProperty* AtonCinematicsProperty = CastField<FArrayProperty>(
+            FKyaAtonSubObj::StaticStruct()->FindPropertyByName(TEXT("CinematicIds")));
+        TestTrue(TEXT("Aton cinematic list is exposed for resizing"),
+            AtonCinematicsProperty && !AtonCinematicsProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FArrayProperty* NativTrajectoriesProperty = CastField<FArrayProperty>(
+            FKyaActorBehaviour::StaticStruct()->FindPropertyByName(TEXT("NativTrajectories")));
+        TestTrue(TEXT("Nativ trajectory list is exposed for resizing"),
+            NativTrajectoriesProperty &&
+            !NativTrajectoriesProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FArrayProperty* NativSpeakProperty = CastField<FArrayProperty>(
+            FKyaActorBehaviour::StaticStruct()->FindPropertyByName(TEXT("NativSpeakValues")));
+        TestTrue(TEXT("Nativ speak list is exposed for resizing"),
+            NativSpeakProperty && !NativSpeakProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FArrayProperty* NativSellerProperty = CastField<FArrayProperty>(
+            FKyaActorBehaviour::StaticStruct()->FindPropertyByName(TEXT("NativSellerSubObjs")));
+        TestTrue(TEXT("Nativ seller list is exposed for resizing"),
+            NativSellerProperty && !NativSellerProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FArrayProperty* AddOnCinematicsProperty = CastField<FArrayProperty>(
+            FKyaAddOnSubObj::StaticStruct()->FindPropertyByName(TEXT("CinematicIds")));
+        TestTrue(TEXT("Seller cinematic list is exposed for resizing"),
+            AddOnCinematicsProperty && !AddOnCinematicsProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FArrayProperty* AkasaTutorialsProperty = CastField<FArrayProperty>(
+            FKyaAkasaBehaviour::StaticStruct()->FindPropertyByName(TEXT("Tutorials")));
+        TestTrue(TEXT("Akasa tutorial list is exposed for resizing"),
+            AkasaTutorialsProperty && !AkasaTutorialsProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FArrayProperty* AkasaStepsProperty = CastField<FArrayProperty>(
+            FKyaAkasaTutorial::StaticStruct()->FindPropertyByName(TEXT("Steps")));
+        TestTrue(TEXT("Akasa step list is exposed for resizing"),
+            AkasaStepsProperty && !AkasaStepsProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FArrayProperty* AkasaCombosProperty = CastField<FArrayProperty>(
+            FKyaAkasaStep::StaticStruct()->FindPropertyByName(TEXT("ComboNames")));
+        TestTrue(TEXT("Akasa combo-name list is exposed for resizing"),
+            AkasaCombosProperty && !AkasaCombosProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FArrayProperty* AkasaAddOnsProperty = CastField<FArrayProperty>(
+            FKyaAkasaBehaviour::StaticStruct()->FindPropertyByName(TEXT("AddOnSubObjs")));
+        TestTrue(TEXT("Akasa add-on list is exposed for resizing"),
+            AkasaAddOnsProperty && !AkasaAddOnsProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FArrayProperty* AkasaSwitchesProperty = CastField<FArrayProperty>(
+            FKyaAkasaBehaviour::StaticStruct()->FindPropertyByName(TEXT("Switches")));
+        TestTrue(TEXT("Akasa four-switch block keeps the fixed-size UI"),
+            AkasaSwitchesProperty && AkasaSwitchesProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FProperty* OtherBoxActorRefsProperty = FKyaActorPlacement::StaticStruct()->FindPropertyByName(
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, BrazulFxHandles));
+        TestTrue(TEXT("Unsupported class array keeps the fixed-size UI"),
+            OtherBoxActorRefsProperty && OtherBoxActorRefsProperty->HasAnyPropertyFlags(CPF_EditFixedSize));
+        const FArrayProperty* BehaviourData = CastField<FArrayProperty>(
+            FKyaActorBehaviour::StaticStruct()->FindPropertyByName(TEXT("Data")));
+        TestTrue(TEXT("Behaviour payload array is exposed for resizing"),
+            BehaviourData && !BehaviourData->HasAnyPropertyFlags(CPF_EditFixedSize));
         TestTrue(TEXT("Presence flags are inspect-only"),
             GetKyaActorFieldCapability(TEXT("bHasPlatformPrefix")).Kind == EKyaFieldCapability::InspectOnly);
         TestTrue(TEXT("Serialized record index is inspect-only"),
@@ -1232,8 +1501,11 @@ bool FKyaActorCatalogTest::RunTest(const FString& Parameters)
     Behaviour.Id = 3;
     const TArray<FKyaBehaviourOption> BehaviourOptions = GetKyaBehaviourOptions(Placement);
     if (TestEqual(TEXT("Behaviour option count"), BehaviourOptions.Num(), 1))
+    {
         TestEqual(TEXT("Behaviour option label"), BehaviourOptions[0].Label,
             FString(TEXT("Behaviour 0: Bridge wind (3)")));
+        TestEqual(TEXT("Behaviour options carry record ids, not positions"), BehaviourOptions[0].Id, 3);
+    }
 
     // Reference scope validation: mesh/texture/sector are blocking, behaviour is a
     // warning shown inline in Details.
@@ -1253,6 +1525,22 @@ bool FKyaActorCatalogTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Unresolved texture is blocking"), FindIssue(TEXT("TextureIndex"), true));
     TestTrue(TEXT("Invalid sector id is blocking"), FindIssue(TEXT("SectorId"), true));
     TestTrue(TEXT("Out-of-range default behaviour is a warning"), FindIssue(TEXT("DefaultBehaviourId"), false));
+
+    // The serialized default is a behaviour id: sparse ids (Bridge wind is id 3 in
+    // the single record) and -1 (no behaviour) both resolve.
+    const auto HasDefaultBehaviourIssue = [&Bank](const FKyaActorPlacement& Candidate)
+    {
+        return ValidateKyaActorReferences(*Bank, Candidate).ContainsByPredicate(
+            [](const FKyaActorReferenceIssue& Issue)
+            {
+                return Issue.Field == TEXT("DefaultBehaviourId") && !Issue.bBlocking;
+            });
+    };
+    Placement.DefaultBehaviourId = 3;
+    TestFalse(TEXT("Sparse behaviour id resolves"), HasDefaultBehaviourIssue(Placement));
+    Placement.DefaultBehaviourId = -1;
+    TestFalse(TEXT("No default behaviour is valid"), HasDefaultBehaviourIssue(Placement));
+    Placement.DefaultBehaviourId = 4;
 
     // Scalar reference fields are class-gated and resolve inside the bank.
     EKyaReferenceKind Kind = EKyaReferenceKind::Sector;
@@ -1305,6 +1593,21 @@ bool FKyaActorCatalogTest::RunTest(const FString& Parameters)
     BadBehaviour.DefaultBehaviourId = 4;
     TestFalse(TEXT("Service rejects an out-of-range default behaviour"),
         Service.Apply(Key, BadBehaviour, EKyaEditNotify::Silent, &Error));
+
+    // CActor::GetBehaviour matches record ids, so a sparse id (or -1) is valid even
+    // when it is not an index into Behaviours.
+    const TArray<FKyaActorBehaviour> SavedBehaviours = Bank->SceneEnvironment.Actors[0].Behaviours;
+    Bank->SceneEnvironment.Actors[0].Behaviours.Reset();
+    Bank->SceneEnvironment.Actors[0].Behaviours.AddDefaulted_GetRef().Id = 3;
+    FKyaActorEditPatch SparseBehaviour;
+    SparseBehaviour.DefaultBehaviourId = 3;
+    TestTrue(TEXT("Service accepts a sparse behaviour id"),
+        Service.Apply(Key, SparseBehaviour, EKyaEditNotify::Silent, &Error));
+    FKyaActorEditPatch NoBehaviour;
+    NoBehaviour.DefaultBehaviourId = -1;
+    TestTrue(TEXT("Service accepts no default behaviour"),
+        Service.Apply(Key, NoBehaviour, EKyaEditNotify::Silent, &Error));
+    Bank->SceneEnvironment.Actors[0].Behaviours = SavedBehaviours;
 
     // Details edits arrive as Custom patches; changed references are still validated.
     Bank->SceneEnvironment.Actors[0].MeshIndex = -1;
@@ -1888,9 +2191,573 @@ bool FKyaStructuralEditGateTest::RunTest(const FString& Parameters)
 
     Candidate = Bank->SceneEnvironment.Actors[0];
     Candidate.Behaviours.AddDefaulted();
-    TestFalse(TEXT("Array resizing is rejected"),
+    Error.Reset();
+    TestTrue(TEXT("Resizable array count is accepted"),
         ValidateKyaActorStructuralEdit(Bank->SceneEnvironment.Actors[0], Candidate, Error));
-    TestTrue(TEXT("Array rejection explains resizing"), Error.Contains(TEXT("Resizing")));
+    TestTrue(TEXT("Accepted resize leaves no error"), Error.IsEmpty());
+
+    Candidate = Bank->SceneEnvironment.Actors[0];
+    Candidate.PlatformActors.AddDefaulted();
+    TestFalse(TEXT("Unsupported array resizing is rejected"),
+        ValidateKyaActorStructuralEdit(Bank->SceneEnvironment.Actors[0], Candidate, Error));
+    TestTrue(TEXT("Unsupported array rejection names the field"), Error.Contains(TEXT("PlatformActors")));
+
+    // Moving-platform streams are supported for class 0x0d.
+    FKyaActorPlacement PlatformCurrent = Bank->SceneEnvironment.Actors[0];
+    PlatformCurrent.ClassId = 0x0d;
+    FKyaActorPlacement PlatformCandidate = PlatformCurrent;
+    PlatformCandidate.PlatformActors.AddDefaulted();
+    Error.Reset();
+    TestTrue(TEXT("Class-specific platform array resizing is accepted"),
+        ValidateKyaActorStructuralEdit(PlatformCurrent, PlatformCandidate, Error));
+    TestTrue(TEXT("Class-specific platform resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement FighterCurrent = Bank->SceneEnvironment.Actors[0];
+    FighterCurrent.ClassId = 0x09;
+    FKyaActorPlacement FighterCandidate = FighterCurrent;
+    FighterCandidate.FighterBlows.AddDefaulted();
+    FighterCandidate.FighterCombos.AddDefaulted();
+    FighterCandidate.WolfenFightParamData.ComboList1.Add(1);
+    Error.Reset();
+    TestTrue(TEXT("Fighter database resizing is accepted"),
+        ValidateKyaActorStructuralEdit(FighterCurrent, FighterCandidate, Error));
+    TestTrue(TEXT("Fighter resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement FixedWolfenCurrent = Bank->SceneEnvironment.Actors[0];
+    FixedWolfenCurrent.ClassId = 0x09;
+    FKyaActorPlacement FixedWolfenCandidate = FixedWolfenCurrent;
+    FixedWolfenCandidate.WolfenFightParamData.Capability0Fields.Add(1);
+    TestFalse(TEXT("Fixed Wolfen fight array remains blocked"),
+        ValidateKyaActorStructuralEdit(FixedWolfenCurrent, FixedWolfenCandidate, Error));
+    TestTrue(TEXT("Fixed Wolfen fight rejection names the field"),
+        Error.Contains(TEXT("Capability0Fields")));
+
+    FKyaActorPlacement CmdCurrent = Bank->SceneEnvironment.Actors[0];
+    CmdCurrent.ClassId = 0x50;
+    CmdCurrent.bHasShockerCmdData = true;
+    FKyaActorPlacement CmdCandidate = CmdCurrent;
+    CmdCandidate.ShockerCmdSequences.AddDefaulted();
+    Error.Reset();
+    TestTrue(TEXT("Shocker command sequence resizing is accepted"),
+        ValidateKyaActorStructuralEdit(CmdCurrent, CmdCandidate, Error));
+    TestTrue(TEXT("Shocker command resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement WrongClassCurrent = Bank->SceneEnvironment.Actors[0];
+    WrongClassCurrent.ClassId = 0x4b;
+    FKyaActorPlacement WrongClassCandidate = WrongClassCurrent;
+    WrongClassCandidate.ShockerCmdSequences.AddDefaulted();
+    TestFalse(TEXT("Shocker command arrays stay class-gated"),
+        ValidateKyaActorStructuralEdit(WrongClassCurrent, WrongClassCandidate, Error));
+    TestTrue(TEXT("Shocker command class rejection names the field"),
+        Error.Contains(TEXT("ShockerCmdSequences")));
+
+    FKyaActorPlacement BoxCurrent = Bank->SceneEnvironment.Actors[0];
+    BoxCurrent.ClassId = 0x35;
+    BoxCurrent.bHasBoxData = true;
+    FKyaActorPlacement BoxCandidate = BoxCurrent;
+    BoxCandidate.BoxActorRefs.Add(5);
+    Error.Reset();
+    TestTrue(TEXT("Box actor stream resizing is accepted"),
+        ValidateKyaActorStructuralEdit(BoxCurrent, BoxCandidate, Error));
+    TestTrue(TEXT("Box resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement KimCurrent = Bank->SceneEnvironment.Actors[0];
+    KimCurrent.ClassId = 0x06;
+    KimCurrent.bHasKimData = true;
+    FKyaActorPlacement KimCandidate = KimCurrent;
+    KimCandidate.KimClimbZones.Add(5);
+    KimCandidate.KimZoneStream.Add(6);
+    KimCandidate.KimTutorialZones.AddDefaulted();
+    KimCandidate.KimTutorialZones[0].Targets.AddDefaulted();
+    Error.Reset();
+    TestTrue(TEXT("Kim stream resizing is accepted"),
+        ValidateKyaActorStructuralEdit(KimCurrent, KimCandidate, Error));
+    TestTrue(TEXT("Kim stream resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement KimProjectileCurrent = KimCurrent;
+    FKyaActorPlacement KimProjectileCandidate = KimProjectileCurrent;
+    KimProjectileCandidate.KimProjectileZones.AddDefaulted();
+    Error.Reset();
+    TestTrue(TEXT("Kim projectile-zone resizing is accepted"),
+        ValidateKyaActorStructuralEdit(KimProjectileCurrent, KimProjectileCandidate, Error));
+    TestTrue(TEXT("Kim projectile resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement KimCameraCurrent = KimCurrent;
+    FKyaActorPlacement KimCameraCandidate = KimCameraCurrent;
+    KimCameraCandidate.KimCameras.AddDefaulted();
+    KimCameraCandidate.KimCameras.AddDefaulted();
+    Error.Reset();
+    TestTrue(TEXT("Kim camera list resizing is accepted"),
+        ValidateKyaActorStructuralEdit(KimCameraCurrent, KimCameraCandidate, Error));
+    TestTrue(TEXT("Kim camera resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement PatternCmdCurrent = Bank->SceneEnvironment.Actors[0];
+    PatternCmdCurrent.ClassId = 0x40;
+    PatternCmdCurrent.bHasPatternCmdData = true;
+    FKyaActorPlacement PatternCmdCandidate = PatternCmdCurrent;
+    PatternCmdCandidate.PatternCmdActorRefs.Add(5);
+    Error.Reset();
+    TestTrue(TEXT("Pattern-command actor-ref resizing is accepted"),
+        ValidateKyaActorStructuralEdit(PatternCmdCurrent, PatternCmdCandidate, Error));
+    TestTrue(TEXT("Pattern-command resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement ShootCurrent = Bank->SceneEnvironment.Actors[0];
+    ShootCurrent.ClassId = 0x3e;
+    ShootCurrent.Behaviours.Reset();
+    FKyaActorBehaviour& Fire = ShootCurrent.Behaviours.AddDefaulted_GetRef();
+    Fire.Id = 3;
+    Fire.bHasTypedShootFireBehaviour = true;
+    Fire.ShootFireActorRefs.Add(1);
+    FKyaActorPlacement ShootCandidate = ShootCurrent;
+    ShootCandidate.Behaviours[0].ShootFireActorRefs.Add(2);
+    Error.Reset();
+    TestTrue(TEXT("Shoot fire-ref resizing is accepted"),
+        ValidateKyaActorStructuralEdit(ShootCurrent, ShootCandidate, Error));
+    TestTrue(TEXT("Shoot fire-ref resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement ClusterCurrent = Bank->SceneEnvironment.Actors[0];
+    ClusterCurrent.ClassId = 0x18;
+    ClusterCurrent.Behaviours.Reset();
+    FKyaActorBehaviour& ClusterBehaviour = ClusterCurrent.Behaviours.AddDefaulted_GetRef();
+    ClusterBehaviour.Id = 2;
+    ClusterBehaviour.bHasTypedClusterZones = true;
+    FKyaClusterZone& ClusterZone = ClusterBehaviour.ClusterZones.AddDefaulted_GetRef();
+    ClusterZone.Actors.Add(1);
+    FKyaActorPlacement ClusterCandidate = ClusterCurrent;
+    ClusterCandidate.Behaviours[0].ClusterZones[0].Actors.Add(2);
+    FKyaActorPlacement ClusterNewZoneCandidate = ClusterCurrent;
+    ClusterNewZoneCandidate.Behaviours[0].ClusterZones.AddDefaulted();
+    Error.Reset();
+    TestTrue(TEXT("Cluster zone list and nested actor resizing are accepted"),
+        ValidateKyaActorStructuralEdit(ClusterCurrent, ClusterCandidate, Error) &&
+        ValidateKyaActorStructuralEdit(ClusterCurrent, ClusterNewZoneCandidate, Error));
+    TestTrue(TEXT("Cluster resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement FogCurrent = Bank->SceneEnvironment.Actors[0];
+    FogCurrent.ClassId = 0x3d;
+    FogCurrent.Behaviours.Reset();
+    FKyaActorBehaviour& FogBehaviour = FogCurrent.Behaviours.AddDefaulted_GetRef();
+    FogBehaviour.Id = 2;
+    FogBehaviour.bHasTypedFogBehaviour = true;
+    FogBehaviour.FogZones.AddDefaulted();
+    FKyaActorPlacement FogCandidate = FogCurrent;
+    FogCandidate.Behaviours[0].FogZones.AddDefaulted();
+    Error.Reset();
+    TestTrue(TEXT("Fog-zone resizing is accepted"),
+        ValidateKyaActorStructuralEdit(FogCurrent, FogCandidate, Error));
+    TestTrue(TEXT("Fog-zone resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement BrazulACurrent = Bank->SceneEnvironment.Actors[0];
+    BrazulACurrent.ClassId = 0x4f;
+    BrazulACurrent.Behaviours.Reset();
+    FKyaActorBehaviour& BrazulABehaviour = BrazulACurrent.Behaviours.AddDefaulted_GetRef();
+    BrazulABehaviour.Id = 26;
+    BrazulABehaviour.bHasTypedBrazulA = true;
+    FKyaBrazulSubObj& BrazulASub = BrazulABehaviour.BrazulSubObjs.AddDefaulted_GetRef();
+    BrazulASub.PathIndices.Add(1);
+    FKyaActorPlacement BrazulACandidate = BrazulACurrent;
+    BrazulACandidate.Behaviours[0].BrazulSubObjs.AddDefaulted();
+    BrazulACandidate.Behaviours[0].BrazulSubObjs[0].PathIndices.Add(2);
+    Error.Reset();
+    TestTrue(TEXT("Brazul A sub-object and path resizing are accepted"),
+        ValidateKyaActorStructuralEdit(BrazulACurrent, BrazulACandidate, Error));
+    TestTrue(TEXT("Brazul A resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement BrazulBCurrent = Bank->SceneEnvironment.Actors[0];
+    BrazulBCurrent.ClassId = 0x4f;
+    BrazulBCurrent.Behaviours.Reset();
+    FKyaActorBehaviour& BrazulBBehaviour = BrazulBCurrent.Behaviours.AddDefaulted_GetRef();
+    BrazulBBehaviour.Id = 27;
+    BrazulBBehaviour.bHasTypedBrazulB = true;
+    BrazulBBehaviour.BrazulBSwitch.Targets.AddDefaulted();
+    FKyaActorPlacement BrazulBCandidate = BrazulBCurrent;
+    BrazulBCandidate.Behaviours[0].BrazulBSwitch.Targets.AddDefaulted();
+    Error.Reset();
+    TestTrue(TEXT("Brazul B switch-target resizing is accepted"),
+        ValidateKyaActorStructuralEdit(BrazulBCurrent, BrazulBCandidate, Error));
+    TestTrue(TEXT("Brazul B resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement ShockerCurrent = Bank->SceneEnvironment.Actors[0];
+    ShockerCurrent.ClassId = 0x4b;
+    ShockerCurrent.bHasShockerData = true;
+    ShockerCurrent.ShockerSwitch.Targets.AddDefaulted();
+    FKyaActorPlacement ShockerCandidate = ShockerCurrent;
+    ShockerCandidate.ShockerSwitch.Targets.AddDefaulted();
+    Error.Reset();
+    TestTrue(TEXT("Shocker switch-target resizing is accepted"),
+        ValidateKyaActorStructuralEdit(ShockerCurrent, ShockerCandidate, Error));
+    TestTrue(TEXT("Shocker switch resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement WindCurrent = Bank->SceneEnvironment.Actors[0];
+    WindCurrent.ClassId = 0x12;
+    WindCurrent.bHasWindData = true;
+    WindCurrent.WindActorRefs.Add(1);
+    FKyaActorPlacement WindCandidate = WindCurrent;
+    WindCandidate.WindActorRefs.Add(2);
+    Error.Reset();
+    TestTrue(TEXT("Wind actor-ref resizing is accepted"),
+        ValidateKyaActorStructuralEdit(WindCurrent, WindCandidate, Error));
+    TestTrue(TEXT("Wind actor-ref resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement WindSwitchCurrent = WindCurrent;
+    WindSwitchCurrent.WindSwitch1D8.Targets.AddDefaulted();
+    FKyaActorPlacement WindSwitchCandidate = WindSwitchCurrent;
+    WindSwitchCandidate.WindSwitch1D8.Targets.AddDefaulted();
+    Error.Reset();
+    TestTrue(TEXT("Wind switch-target resizing is accepted"),
+        ValidateKyaActorStructuralEdit(WindSwitchCurrent, WindSwitchCandidate, Error));
+    TestTrue(TEXT("Wind switch-target resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement NativCurrent = Bank->SceneEnvironment.Actors[0];
+    NativCurrent.ClassId = 0x0a;
+    NativCurrent.Behaviours.Reset();
+    FKyaActorBehaviour& NativBehaviour = NativCurrent.Behaviours.AddDefaulted_GetRef();
+    NativBehaviour.Id = 6;
+    NativBehaviour.bHasTypedNativBehaviour = true;
+    NativBehaviour.NativTrajectories.AddDefaulted();
+    FKyaActorPlacement NativCandidate = NativCurrent;
+    NativCandidate.Behaviours[0].NativTrajectories.AddDefaulted();
+    Error.Reset();
+    TestTrue(TEXT("Nativ trajectory list resizing is accepted"),
+        ValidateKyaActorStructuralEdit(NativCurrent, NativCandidate, Error));
+    TestTrue(TEXT("Nativ trajectory resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement NativSpeakCurrent = Bank->SceneEnvironment.Actors[0];
+    NativSpeakCurrent.ClassId = 0x0a;
+    NativSpeakCurrent.Behaviours.Reset();
+    FKyaActorBehaviour& SpeakBehaviour = NativSpeakCurrent.Behaviours.AddDefaulted_GetRef();
+    SpeakBehaviour.Id = 3;
+    SpeakBehaviour.bHasTypedNativBehaviour = true;
+    SpeakBehaviour.NativSpeakValues.Add(FVector2D(1.0, 2.0));
+    FKyaActorPlacement NativSpeakCandidate = NativSpeakCurrent;
+    NativSpeakCandidate.Behaviours[0].NativSpeakValues.Add(FVector2D(3.0, 4.0));
+    Error.Reset();
+    TestTrue(TEXT("Nativ speak list resizing is accepted"),
+        ValidateKyaActorStructuralEdit(NativSpeakCurrent, NativSpeakCandidate, Error));
+    TestTrue(TEXT("Nativ speak resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement NativSellerCurrent = NativSpeakCurrent;
+    NativSellerCurrent.Behaviours[0].Id = 7;
+    NativSellerCurrent.Behaviours[0].NativSellerSubObjs.AddDefaulted();
+    FKyaActorPlacement NativSellerCandidate = NativSellerCurrent;
+    NativSellerCandidate.Behaviours[0].NativSellerSubObjs.AddDefaulted();
+    NativSellerCandidate.Behaviours[0].NativSellerSubObjs[0].CinematicIds.Add(5);
+    Error.Reset();
+    TestTrue(TEXT("Nativ seller list and nested cinematic resizing are accepted"),
+        ValidateKyaActorStructuralEdit(NativSellerCurrent, NativSellerCandidate, Error));
+    TestTrue(TEXT("Nativ seller resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement AkasaCurrent = Bank->SceneEnvironment.Actors[0];
+    AkasaCurrent.ClassId = 0x0a;
+    AkasaCurrent.Behaviours.Reset();
+    FKyaActorBehaviour& AkasaBehaviour = AkasaCurrent.Behaviours.AddDefaulted_GetRef();
+    AkasaBehaviour.Id = 8;
+    AkasaBehaviour.bHasTypedNativBehaviour = true;
+    AkasaBehaviour.AkasaBehaviour.bHasMaterial = true;
+    AkasaBehaviour.AkasaBehaviour.Tutorials.AddDefaulted();
+    AkasaBehaviour.AkasaBehaviour.Tutorials[0].Steps.AddDefaulted();
+    AkasaBehaviour.AkasaBehaviour.Tutorials[0].Steps[0].ComboNames.Add(TEXT("A"));
+    AkasaBehaviour.AkasaBehaviour.AddOnSubObjs.AddDefaulted();
+    AkasaBehaviour.AkasaBehaviour.Switches.SetNum(4);
+    FKyaActorPlacement AkasaCandidate = AkasaCurrent;
+    AkasaCandidate.Behaviours[0].AkasaBehaviour.Tutorials.AddDefaulted();
+    AkasaCandidate.Behaviours[0].AkasaBehaviour.Tutorials[0].Steps.AddDefaulted();
+    AkasaCandidate.Behaviours[0].AkasaBehaviour.Tutorials[0].Steps[0].ComboNames.Add(TEXT("B"));
+    AkasaCandidate.Behaviours[0].AkasaBehaviour.AddOnSubObjs.AddDefaulted();
+    AkasaCandidate.Behaviours[0].AkasaBehaviour.AddOnSubObjs[0].CinematicIds.Add(9);
+    Error.Reset();
+    TestTrue(TEXT("Akasa tutorial, step, combo and add-on resizing is accepted"),
+        ValidateKyaActorStructuralEdit(AkasaCurrent, AkasaCandidate, Error));
+    TestTrue(TEXT("Akasa resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement StillerCurrent = Bank->SceneEnvironment.Actors[0];
+    StillerCurrent.ClassId = 0x4c;
+    StillerCurrent.bHasStillerData = true;
+    StillerCurrent.StillerActorRefs.Add(1);
+    FKyaActorPlacement StillerCandidate = StillerCurrent;
+    StillerCandidate.StillerActorRefs.Add(2);
+    Error.Reset();
+    TestTrue(TEXT("Stiller actor-list resizing is accepted"),
+        ValidateKyaActorStructuralEdit(StillerCurrent, StillerCandidate, Error));
+    TestTrue(TEXT("Stiller actor-list resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement ShipCurrent = Bank->SceneEnvironment.Actors[0];
+    ShipCurrent.ClassId = 0x36;
+    ShipCurrent.bHasShipData = true;
+    ShipCurrent.ShipCareBoyActorRefs.Add(1);
+    ShipCurrent.ShipFxIntValues.Add(2);
+    FKyaActorPlacement ShipCandidate = ShipCurrent;
+    ShipCandidate.ShipCareBoyActorRefs.Add(3);
+    ShipCandidate.ShipFxIntValues.Add(4);
+    Error.Reset();
+    TestTrue(TEXT("Ship care-boy and FX list resizing is accepted"),
+        ValidateKyaActorStructuralEdit(ShipCurrent, ShipCandidate, Error));
+    TestTrue(TEXT("Ship list resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement PunchingBallCurrent = Bank->SceneEnvironment.Actors[0];
+    PunchingBallCurrent.ClassId = 0x30;
+    PunchingBallCurrent.bHasPunchingBallData = true;
+    PunchingBallCurrent.PunchingBallTrapEntries.AddDefaulted();
+    FKyaActorPlacement PunchingBallCandidate = PunchingBallCurrent;
+    PunchingBallCandidate.PunchingBallTrapEntries.AddDefaulted();
+    Error.Reset();
+    TestTrue(TEXT("Punching ball trap-list resizing is accepted"),
+        ValidateKyaActorStructuralEdit(PunchingBallCurrent, PunchingBallCandidate, Error));
+    TestTrue(TEXT("Punching ball trap-list resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement PunchingBallFloatsCurrent = PunchingBallCurrent;
+    FKyaActorPlacement PunchingBallFloatsCandidate = PunchingBallFloatsCurrent;
+    PunchingBallFloatsCandidate.PunchingBallCamFigFloats.Add(1.0f);
+    TestFalse(TEXT("Punching ball camera-fight float block remains blocked"),
+        ValidateKyaActorStructuralEdit(PunchingBallFloatsCurrent, PunchingBallFloatsCandidate, Error));
+    TestTrue(TEXT("Punching ball float rejection names the field"),
+        Error.Contains(TEXT("PunchingBallCamFigFloats")));
+
+    FKyaActorPlacement AmortosCmdCurrent = Bank->SceneEnvironment.Actors[0];
+    AmortosCmdCurrent.ClassId = 0x31;
+    AmortosCmdCurrent.bHasAmortosCmdData = true;
+    AmortosCmdCurrent.AmortosCmdActorRefs.Add(1);
+    FKyaActorPlacement AmortosCmdCandidate = AmortosCmdCurrent;
+    AmortosCmdCandidate.AmortosCmdActorRefs.Add(2);
+    Error.Reset();
+    TestTrue(TEXT("Amortos command actor-list resizing is accepted"),
+        ValidateKyaActorStructuralEdit(AmortosCmdCurrent, AmortosCmdCandidate, Error));
+    TestTrue(TEXT("Amortos command actor-list resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement NoseMonsterCurrent = Bank->SceneEnvironment.Actors[0];
+    NoseMonsterCurrent.ClassId = 0x26;
+    NoseMonsterCurrent.bHasNoseMonsterData = true;
+    NoseMonsterCurrent.NoseMonsterZonePathEntries.AddDefaulted();
+    NoseMonsterCurrent.NoseMonsterFireShotActorRefs.Add(1);
+    FKyaActorPlacement NoseMonsterCandidate = NoseMonsterCurrent;
+    NoseMonsterCandidate.NoseMonsterZonePathEntries.AddDefaulted();
+    NoseMonsterCandidate.NoseMonsterFireShotActorRefs.Add(2);
+    Error.Reset();
+    TestTrue(TEXT("Nose monster zone-path and fire-shot resizing is accepted"),
+        ValidateKyaActorStructuralEdit(NoseMonsterCurrent, NoseMonsterCandidate, Error));
+    TestTrue(TEXT("Nose monster resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement WoofCurrent = Bank->SceneEnvironment.Actors[0];
+    WoofCurrent.ClassId = 0x2a;
+    WoofCurrent.bHasWoofData = true;
+    WoofCurrent.WoofData.ActorRefs.Add(1);
+    FKyaActorPlacement WoofCandidate = WoofCurrent;
+    WoofCandidate.WoofData.ActorRefs.Add(2);
+    Error.Reset();
+    TestTrue(TEXT("Woof actor-list resizing is accepted"),
+        ValidateKyaActorStructuralEdit(WoofCurrent, WoofCandidate, Error));
+    TestTrue(TEXT("Woof actor-list resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement BlazerCurrent = Bank->SceneEnvironment.Actors[0];
+    BlazerCurrent.ClassId = 0x4d;
+    BlazerCurrent.bHasBlazerData = true;
+    BlazerCurrent.BlazerData.ActorRefs.Add(1);
+    FKyaActorPlacement BlazerCandidate = BlazerCurrent;
+    BlazerCandidate.BlazerData.ActorRefs.Add(2);
+    Error.Reset();
+    TestTrue(TEXT("Blazer actor-list resizing is accepted"),
+        ValidateKyaActorStructuralEdit(BlazerCurrent, BlazerCandidate, Error));
+    TestTrue(TEXT("Blazer actor-list resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement EggCurrent = Bank->SceneEnvironment.Actors[0];
+    EggCurrent.ClassId = 0x2f;
+    EggCurrent.bHasEggData = true;
+    EggCurrent.EggPathIndices.Add(1);
+    FKyaActorPlacement EggCandidate = EggCurrent;
+    EggCandidate.EggPathIndices.Add(2);
+    Error.Reset();
+    TestTrue(TEXT("Egg path-plane resizing is accepted"),
+        ValidateKyaActorStructuralEdit(EggCurrent, EggCandidate, Error));
+    TestTrue(TEXT("Egg path-plane resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement DcaCurrent = Bank->SceneEnvironment.Actors[0];
+    DcaCurrent.ClassId = 0x1b;
+    DcaCurrent.bHasDcaData = true;
+    DcaCurrent.DcaShotActorRefs.Add(1);
+    FKyaActorPlacement DcaCandidate = DcaCurrent;
+    DcaCandidate.DcaShotActorRefs.Add(2);
+    Error.Reset();
+    TestTrue(TEXT("DCA shot-list resizing is accepted"),
+        ValidateKyaActorStructuralEdit(DcaCurrent, DcaCandidate, Error));
+    TestTrue(TEXT("DCA shot-list resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement TeleporterCurrent = Bank->SceneEnvironment.Actors[0];
+    TeleporterCurrent.ClassId = 0x24;
+    TeleporterCurrent.bHasTeleporterData = true;
+    TeleporterCurrent.TeleporterDestinations.AddDefaulted();
+    FKyaActorPlacement TeleporterCandidate = TeleporterCurrent;
+    TeleporterCandidate.TeleporterDestinations.AddDefaulted();
+    Error.Reset();
+    TestTrue(TEXT("Teleporter destination-list resizing is accepted"),
+        ValidateKyaActorStructuralEdit(TeleporterCurrent, TeleporterCandidate, Error));
+    TestTrue(TEXT("Teleporter destination resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement TeleporterWaypointCurrent = TeleporterCurrent;
+    TeleporterWaypointCurrent.TeleporterWaypoints.AddDefaulted();
+    TeleporterWaypointCurrent.TeleporterConditionedOperations.AddDefaulted();
+    FKyaActorPlacement TeleporterWaypointCandidate = TeleporterWaypointCurrent;
+    TeleporterWaypointCandidate.TeleporterWaypoints.AddDefaulted();
+    TeleporterWaypointCandidate.TeleporterConditionedOperations.AddDefaulted();
+    Error.Reset();
+    TestTrue(TEXT("Teleporter waypoint and block resizing is accepted"),
+        ValidateKyaActorStructuralEdit(TeleporterWaypointCurrent, TeleporterWaypointCandidate, Error));
+    TestTrue(TEXT("Teleporter waypoint/block resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement TeleporterNestedCurrent = TeleporterWaypointCurrent;
+    TeleporterNestedCurrent.TeleporterConditionedOperations[0].Operations.AddDefaulted();
+    TeleporterNestedCurrent.TeleporterConditionedOperations[0].Conditions.AddDefaulted();
+    FKyaActorPlacement TeleporterNestedCandidate = TeleporterNestedCurrent;
+    TeleporterNestedCandidate.TeleporterConditionedOperations[0].Operations.AddDefaulted();
+    TeleporterNestedCandidate.TeleporterConditionedOperations[0].Conditions.AddDefaulted();
+    Error.Reset();
+    TestTrue(TEXT("Teleporter nested operation and condition resizing is accepted"),
+        ValidateKyaActorStructuralEdit(TeleporterNestedCurrent, TeleporterNestedCandidate, Error));
+    TestTrue(TEXT("Teleporter nested resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement AtonCurrent = Bank->SceneEnvironment.Actors[0];
+    AtonCurrent.ClassId = 0x38;
+    AtonCurrent.bHasAtonData = true;
+    AtonCurrent.AtonPathIndices.Add(1);
+    AtonCurrent.AtonOtherSubObjs.AddDefaulted();
+    AtonCurrent.AtonSubObjs.AddDefaulted();
+    AtonCurrent.AtonSubObjs[0].CinematicIds.Add(2);
+    FKyaActorPlacement AtonCandidate = AtonCurrent;
+    AtonCandidate.AtonPathIndices.Add(3);
+    AtonCandidate.AtonOtherSubObjs.AddDefaulted();
+    AtonCandidate.AtonOtherSubObjs[0].CinematicIds.Add(4);
+    AtonCandidate.AtonSubObjs.AddDefaulted();
+    AtonCandidate.AtonSubObjs[0].CinematicIds.Add(5);
+    Error.Reset();
+    TestTrue(TEXT("Aton path and sub-object list resizing is accepted"),
+        ValidateKyaActorStructuralEdit(AtonCurrent, AtonCandidate, Error));
+    TestTrue(TEXT("Aton resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement ShipWordsCurrent = ShipCurrent;
+    ShipWordsCurrent.ShipWords18C.Add(5);
+    FKyaActorPlacement ShipWordsCandidate = ShipWordsCurrent;
+    ShipWordsCandidate.ShipWords18C.Add(6);
+    TestFalse(TEXT("Ship four-word block remains blocked"),
+        ValidateKyaActorStructuralEdit(ShipWordsCurrent, ShipWordsCandidate, Error));
+    TestTrue(TEXT("Ship word-block rejection names the field"),
+        Error.Contains(TEXT("ShipWords18C")));
+
+    FKyaActorPlacement FogHierarchyCurrent = FogCurrent;
+    FogHierarchyCurrent.bHasFogData = true;
+    FKyaActorPlacement FogHierarchyCandidate = FogHierarchyCurrent;
+    FogHierarchyCandidate.FogHierarchies.AddDefaulted();
+    Error.Reset();
+    TestTrue(TEXT("Fog hierarchy resizing is accepted"),
+        ValidateKyaActorStructuralEdit(FogHierarchyCurrent, FogHierarchyCandidate, Error));
+    TestTrue(TEXT("Fog hierarchy resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement FxCurrent = Bank->SceneEnvironment.Actors[0];
+    FxCurrent.ClassId = 0x2e;
+    FxCurrent.Behaviours.Reset();
+    FKyaActorBehaviour& FxBehaviour = FxCurrent.Behaviours.AddDefaulted_GetRef();
+    FxBehaviour.Id = 4;
+    FxBehaviour.bHasTypedFxBehaviour = true;
+    FxBehaviour.FxUnknownValues.Add(1);
+    FKyaActorPlacement FxCandidate = FxCurrent;
+    FxCandidate.Behaviours[0].FxUnknownValues.Add(2);
+    Error.Reset();
+    TestTrue(TEXT("FX list resizing is accepted"),
+        ValidateKyaActorStructuralEdit(FxCurrent, FxCandidate, Error));
+    TestTrue(TEXT("FX list resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement WeaponCurrent = Bank->SceneEnvironment.Actors[0];
+    WeaponCurrent.ClassId = 0x20;
+    WeaponCurrent.Behaviours.Reset();
+    FKyaActorBehaviour& RpgBehaviour = WeaponCurrent.Behaviours.AddDefaulted_GetRef();
+    RpgBehaviour.Id = 6;
+    RpgBehaviour.bHasTypedWeaponBehaviour = true;
+    RpgBehaviour.WeaponRpgActorRefs.Add(1);
+    FKyaActorPlacement WeaponCandidate = WeaponCurrent;
+    WeaponCandidate.Behaviours[0].WeaponRpgActorRefs.Add(2);
+    Error.Reset();
+    TestTrue(TEXT("Weapon RPG actor-stream resizing is accepted"),
+        ValidateKyaActorStructuralEdit(WeaponCurrent, WeaponCandidate, Error));
+    TestTrue(TEXT("Weapon RPG resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement CompanionCurrent = Bank->SceneEnvironment.Actors[0];
+    CompanionCurrent.ClassId = 0x19;
+    CompanionCurrent.Behaviours.Reset();
+    FKyaActorBehaviour& CompanionBehaviour = CompanionCurrent.Behaviours.AddDefaulted_GetRef();
+    CompanionBehaviour.Id = 3;
+    CompanionBehaviour.bHasTypedCompanionBehaviour = true;
+    CompanionBehaviour.CompanionAlerts.AddDefaulted();
+    FKyaActorPlacement CompanionCandidate = CompanionCurrent;
+    CompanionCandidate.Behaviours[0].CompanionAlerts.AddDefaulted();
+    Error.Reset();
+    TestTrue(TEXT("Companion alert list resizing is accepted"),
+        ValidateKyaActorStructuralEdit(CompanionCurrent, CompanionCandidate, Error));
+    TestTrue(TEXT("Companion alert resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement BunchCurrent = Bank->SceneEnvironment.Actors[0];
+    BunchCurrent.ClassId = 0x4e;
+    BunchCurrent.Behaviours.Reset();
+    FKyaActorBehaviour& FenceBehaviour = BunchCurrent.Behaviours.AddDefaulted_GetRef();
+    FenceBehaviour.Id = 27;
+    FenceBehaviour.bHasTypedBunchFence = true;
+    FenceBehaviour.BunchFenceWayPoints.Add(1);
+    FenceBehaviour.BunchFenceGroups.AddDefaulted();
+    FKyaActorPlacement BunchCandidate = BunchCurrent;
+    BunchCandidate.Behaviours[0].BunchFenceWayPoints.Add(2);
+    BunchCandidate.Behaviours[0].BunchFenceGroups.AddDefaulted();
+    Error.Reset();
+    TestTrue(TEXT("Bunch fence list resizing is accepted"),
+        ValidateKyaActorStructuralEdit(BunchCurrent, BunchCandidate, Error));
+    TestTrue(TEXT("Bunch fence resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement RepelCurrent = BunchCurrent;
+    RepelCurrent.Behaviours[0].Id = 26;
+    RepelCurrent.Behaviours[0].bHasTypedBunchRepel = true;
+    RepelCurrent.Behaviours[0].BunchRepelIndices.Add(1);
+    FKyaActorPlacement RepelCandidate = RepelCurrent;
+    RepelCandidate.Behaviours[0].BunchRepelIndices.Add(2);
+    Error.Reset();
+    TestTrue(TEXT("Bunch repel index resizing is accepted"),
+        ValidateKyaActorStructuralEdit(RepelCurrent, RepelCandidate, Error));
+    TestTrue(TEXT("Bunch repel resize leaves no error"), Error.IsEmpty());
+
+    FKyaActorPlacement BunchStreamCurrent = BunchCurrent;
+    BunchStreamCurrent.bHasBunchData = true;
+    BunchStreamCurrent.BunchStreamEntries.AddDefaulted();
+    FKyaActorPlacement BunchStreamCandidate = BunchStreamCurrent;
+    BunchStreamCandidate.BunchStreamEntries.AddDefaulted();
+    Error.Reset();
+    TestTrue(TEXT("Bunch stream-entry resizing is accepted"),
+        ValidateKyaActorStructuralEdit(BunchStreamCurrent, BunchStreamCandidate, Error));
+    TestTrue(TEXT("Bunch stream-entry resize leaves no error"), Error.IsEmpty());
+
+    // Brazul FX handles have no rebuilder yet.
+    FKyaActorPlacement BrazulCurrent = Bank->SceneEnvironment.Actors[0];
+    BrazulCurrent.ClassId = 0x4f;
+    BrazulCurrent.bHasBrazulData = true;
+    FKyaActorPlacement BrazulCandidate = BrazulCurrent;
+    BrazulCandidate.BrazulFxHandles.Add(5);
+    TestFalse(TEXT("Brazul FX-handle list remains blocked"),
+        ValidateKyaActorStructuralEdit(BrazulCurrent, BrazulCandidate, Error));
+    TestTrue(TEXT("Brazul rejection names the field"),
+        Error.Contains(TEXT("BrazulFxHandles")));
+
+    FKyaActorPlacement UnsupportedCurrent = Bank->SceneEnvironment.Actors[0];
+    UnsupportedCurrent.ClassId = 0x09;
+    FKyaActorPlacement UnsupportedCandidate = UnsupportedCurrent;
+    UnsupportedCandidate.PlatformActors.AddDefaulted();
+    TestFalse(TEXT("Unsupported class array remains blocked"),
+        ValidateKyaActorStructuralEdit(UnsupportedCurrent, UnsupportedCandidate, Error));
+    TestTrue(TEXT("Unsupported class array rejection names the field"),
+        Error.Contains(TEXT("PlatformActors")));
+
+    FKyaActorPlacement TrapCurrent = Bank->SceneEnvironment.Actors[0];
+    TrapCurrent.ClassId = 0x2c;
+    TrapCurrent.bHasTrapData = true;
+    FKyaActorPlacement TrapCandidate = TrapCurrent;
+    TrapCandidate.TrapStreamEntries.AddDefaulted();
+    Error.Reset();
+    TestTrue(TEXT("Trap stream resizing is accepted"),
+        ValidateKyaActorStructuralEdit(TrapCurrent, TrapCandidate, Error));
+    TestTrue(TEXT("Trap stream resize leaves no error"), Error.IsEmpty());
 
     // Nested arrays are validated recursively, including struct arrays inside the
     // class-specific records.
@@ -1916,16 +2783,16 @@ bool FKyaStructuralEditGateTest::RunTest(const FString& Parameters)
     FKyaActorEditPatch BulkResize;
     BulkResize.Custom = [](FKyaActorPlacement& Placement, FString& OutError)
     {
-        Placement.Behaviours.AddDefaulted();
+        Placement.PlatformActors.AddDefaulted();
         return true;
     };
     FKyaLevelEditService& BulkService = FKyaLevelEditService::Get();
     BulkService.Reset();
-    const int32 BehavioursBeforeBulk = Bank->SceneEnvironment.Actors[0].Behaviours.Num();
-    TestFalse(TEXT("Bulk edit cannot resize a fixed array"),
+    const int32 PlatformActorsBeforeBulk = Bank->SceneEnvironment.Actors[0].PlatformActors.Num();
+    TestFalse(TEXT("Bulk edit cannot resize an unsupported array"),
         BulkService.ApplyBulk({ BulkService.MakeKey(Bank, 0) }, BulkResize, EKyaEditNotify::Silent, &Error));
     TestEqual(TEXT("Rejected bulk resize leaves the bank untouched"),
-        Bank->SceneEnvironment.Actors[0].Behaviours.Num(), BehavioursBeforeBulk);
+        Bank->SceneEnvironment.Actors[0].PlatformActors.Num(), PlatformActorsBeforeBulk);
     BulkService.Reset();
 
     // Writer preflight rejects actor-count changes before any output is staged.
@@ -6484,7 +7351,7 @@ bool FKyaSceneVisualizersTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Two lights, one camera, one link and one trigger are visualized"),
         Preview->GetSceneVisualizerCount(), 5);
     TestTrue(TEXT("Unsupported zone geometry is stated explicitly"),
-        Preview->VisualizerLimitations.Contains(TEXT("Zones are not visualized")));
+        Preview->VisualizerLimitations.Contains(TEXT("authored zone geometry")));
     AKyaSceneVisualizer* Light = Preview->GetSceneVisualizer(
         FString::Printf(TEXT("light:%s:0"), *Bank->GetName()));
     AKyaSceneVisualizer* Camera = Preview->GetSceneVisualizer(
@@ -7371,10 +8238,9 @@ bool FKyaMultiEditBaselineTest::RunTest(const FString& Parameters)
     Bank->SceneEnvironment.Actors[0].Models[0].MeshName = TEXT("MESH");
     Bank->SceneEnvironment.Actors[1].Models.Reset();
     FString CopyError;
-    TestFalse(TEXT("Copy rejects different fixed array counts"), CanCopyKyaActorField(
+    TestTrue(TEXT("Copy accepts different resizable array counts"), CanCopyKyaActorField(
         Bank->SceneEnvironment.Actors[0], Bank->SceneEnvironment.Actors[1],
         GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Models), CopyError));
-    TestTrue(TEXT("Copy count rejection explains the layout"), CopyError.Contains(TEXT("fixed")));
     TestTrue(TEXT("Copy accepts a compatible record"),
         CanCopyKyaActorField(Bank->SceneEnvironment.Actors[0], Bank->SceneEnvironment.Actors[0],
             GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Models), CopyError));
@@ -7389,7 +8255,8 @@ bool FKyaMultiEditBaselineTest::RunTest(const FString& Parameters)
     Bank->SceneEnvironment.Actors[0].ClassId = 0;
     Bank->SceneEnvironment.Actors[1].ClassId = SavedSecondClass;
 
-    // Behaviour copies require identical ids, nested presence flags and class.
+    // Resizable behaviour records follow the source list; only the class boundary
+    // still rejects a cross-class copy.
     Bank->SceneEnvironment.Actors[0].Behaviours.Reset();
     Bank->SceneEnvironment.Actors[1].Behaviours.Reset();
     Bank->SceneEnvironment.Actors[0].Behaviours.AddDefaulted();
@@ -7397,13 +8264,13 @@ bool FKyaMultiEditBaselineTest::RunTest(const FString& Parameters)
     Bank->SceneEnvironment.Actors[0].Behaviours[0].Id = 3;
     Bank->SceneEnvironment.Actors[1].Behaviours[0].Id = 4;
     Bank->SceneEnvironment.Actors[1].ClassId = Bank->SceneEnvironment.Actors[0].ClassId;
-    TestFalse(TEXT("Copy rejects different behaviour ids"), CanCopyKyaActorField(
+    TestTrue(TEXT("Copy accepts different resizable behaviour ids"), CanCopyKyaActorField(
         Bank->SceneEnvironment.Actors[0], Bank->SceneEnvironment.Actors[1],
         GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Behaviours), CopyError));
     Bank->SceneEnvironment.Actors[1].Behaviours[0].Id = 3;
     Bank->SceneEnvironment.Actors[0].Behaviours[0].bHasTypedFxBehaviour = true;
     Bank->SceneEnvironment.Actors[1].Behaviours[0].bHasTypedFxBehaviour = false;
-    TestFalse(TEXT("Copy rejects different nested presence flags"), CanCopyKyaActorField(
+    TestTrue(TEXT("Copy accepts different resizable nested presence flags"), CanCopyKyaActorField(
         Bank->SceneEnvironment.Actors[0], Bank->SceneEnvironment.Actors[1],
         GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Behaviours), CopyError));
     Bank->SceneEnvironment.Actors[1].Behaviours[0].bHasTypedFxBehaviour = true;

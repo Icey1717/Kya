@@ -112,6 +112,7 @@ bool ApplyPatchToRecord(FKyaActorPlacement& Placement, const FKyaActorEditPatch&
     if (Patch.LightingValue.IsSet()) Placement.LightingValue = Patch.LightingValue.GetValue();
     if (Patch.LightingFlags.IsSet()) Placement.LightingFlags = Patch.LightingFlags.GetValue();
     if (Patch.Custom && !Patch.Custom(Placement, OutError)) return false;
+    KyaEnsureFighterArrayShapes(Placement);
     return true;
 }
 
@@ -286,7 +287,27 @@ FKyaFieldCapability GetKyaActorFieldCapability(FName PropertyName)
     if (const FArrayProperty* Array = CastField<FArrayProperty>(Property))
     {
         Result.Kind = EKyaFieldCapability::EditableExportable;
-        Result.Reason = TEXT("Fixed-size array: element edits are exported; the count and serialized sizes are preserved.");
+        Result.Reason = (IsKyaActorArrayResizable(0x0d, PropertyName) ||
+            IsKyaActorArrayResizable(0x2c, PropertyName) ||
+            IsKyaActorArrayResizable(0x09, PropertyName) ||
+            IsKyaActorArrayResizable(0x50, PropertyName) ||
+            IsKyaActorArrayResizable(0x39, PropertyName) ||
+            IsKyaActorArrayResizable(0x35, PropertyName) ||
+            IsKyaActorArrayResizable(0x3d, PropertyName) ||
+            IsKyaActorArrayResizable(0x4e, PropertyName) ||
+            IsKyaActorArrayResizable(0x4c, PropertyName) ||
+            IsKyaActorArrayResizable(0x36, PropertyName) ||
+            IsKyaActorArrayResizable(0x30, PropertyName) ||
+            IsKyaActorArrayResizable(0x31, PropertyName) ||
+            IsKyaActorArrayResizable(0x26, PropertyName) ||
+            IsKyaActorArrayResizable(0x1b, PropertyName) ||
+            IsKyaActorArrayResizable(0x24, PropertyName) ||
+            IsKyaActorArrayResizable(0x38, PropertyName) ||
+            IsKyaActorArrayResizable(0x2f, PropertyName) ||
+            IsKyaActorArrayResizable(0x12, PropertyName) ||
+            IsKyaActorArrayResizable(0x06, PropertyName))
+            ? TEXT("Array entries and counts are exported; the actor chunk is rebuilt when the count changes.")
+            : TEXT("Fixed-size array: element edits are exported; the count and serialized sizes are preserved.");
         return Result;
     }
     Result.Kind = EKyaFieldCapability::EditableExportable;
@@ -431,10 +452,10 @@ bool ValidateChangedReferences(const UKyaLevelBank& Bank, const FKyaActorPlaceme
         return false;
     }
     if (Candidate.DefaultBehaviourId != Original.DefaultBehaviourId &&
-        (Candidate.DefaultBehaviourId < -1 || Candidate.DefaultBehaviourId >= Candidate.Behaviours.Num()))
+        !DoesKyaBehaviourIdExist(Candidate.Behaviours, Candidate.DefaultBehaviourId))
     {
         OutError = FString::Printf(
-            TEXT("Default behaviour %d does not exist in this actor's %d behaviour record(s)."),
+            TEXT("Default behaviour %d does not match any of this actor's %d behaviour record(s)."),
             Candidate.DefaultBehaviourId, Candidate.Behaviours.Num());
         return false;
     }

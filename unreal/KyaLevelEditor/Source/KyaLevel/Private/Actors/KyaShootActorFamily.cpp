@@ -20,7 +20,7 @@ const FKyaActorFamilyBehaviour ShootBehaviours[] = {
 
 extern const FKyaActorFamily GKyaShootActorFamily = {
     0x3e, TEXT("CActorShoot"), TEXT("Shoot"),
-    TEXT("autonomous tuning, mesh/effect ids, add-on and fire/wave behaviours"),
+    TEXT("autonomous tuning, mesh/effect ids, add-on and fire/wave behaviours; the fire actor-ref list is rebuilt on export"),
     MakeArrayView(ShootBehaviours),
     TConstArrayView<FKyaActorFamilyReference>(),
 };

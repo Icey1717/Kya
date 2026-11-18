@@ -21,7 +21,7 @@ const FKyaActorFamilyBehaviour DcaBehaviours[] = {
 
 extern const FKyaActorFamily GKyaDcaActorFamily = {
     0x1b, TEXT("CActorDCA"), TEXT("DCA"),
-    TEXT("aim/shot tuning and controlled/trajectory behaviours"),
+    TEXT("aim/shot tuning, shot actor stream (rebuilt on export) and controlled/trajectory behaviours"),
     MakeArrayView(DcaBehaviours),
     TConstArrayView<FKyaActorFamilyReference>(),
 };

@@ -129,15 +129,131 @@ FString GetKyaSectorLabel(const TMap<int32, FString>& LoadedSectors, int32 Secto
 
 TArray<FKyaBehaviourOption> GetKyaBehaviourOptions(const FKyaActorPlacement& Placement)
 {
+    // The serialized default is a behaviour id, not an array position. CActor::
+    // GetBehaviour matches BehaviourEntry::id, and the ids are sparse per class
+    // (Wolfen, for example, uses 0..6, 8, 10, 12, ...), so the picker must offer
+    // the record ids rather than their indices.
     TArray<FKyaBehaviourOption> Options;
     for (int32 Index = 0; Index < Placement.Behaviours.Num(); ++Index)
     {
         FKyaBehaviourOption& Option = Options.AddDefaulted_GetRef();
-        Option.Id = Index;
+        Option.Id = Placement.Behaviours[Index].Id;
         Option.Label = FString::Printf(TEXT("Behaviour %d: %s"), Index,
             *GetKyaBehaviourLabel(Placement.ClassId, Placement.Behaviours[Index].Id));
     }
     return Options;
+}
+
+bool DoesKyaBehaviourIdExist(const TArray<FKyaActorBehaviour>& Behaviours, int32 BehaviourId)
+{
+    // The serialized default is a behaviour id, not an array position: CActor::
+    // GetBehaviour matches BehaviourEntry::id and the ids are sparse per class.
+    return BehaviourId == -1 ||
+        (BehaviourId >= 0 && Behaviours.ContainsByPredicate(
+            [BehaviourId](const FKyaActorBehaviour& Behaviour) { return Behaviour.Id == BehaviourId; }));
+}
+
+bool IsKyaActorArrayResizable(FName PropertyName)
+{
+    return PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Conditions) ||
+        PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, MacroAnimations) ||
+        PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Behaviours) ||
+        PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Models);
+}
+
+bool IsKyaActorArrayResizable(int64 ClassId, FName PropertyName)
+{
+    if (IsKyaActorArrayResizable(PropertyName)) return true;
+    if (ClassId == 0x0d)
+        return PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, PlatformActors) ||
+            PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, PlatformZones) ||
+            PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, PlatformNoFrictionZones) ||
+            PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, PlatformCameras) ||
+            PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, PlatformSoundsA) ||
+            PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, PlatformSoundsB);
+    if (ClassId == 0x2c)
+        return PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, TrapActorRefs) ||
+            PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, TrapStreamEntries);
+    if (ClassId == 0x09 || ClassId == 0x06)
+    {
+        if (PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, FighterBlows) ||
+            PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, FighterGrabs) ||
+            PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, FighterGrabReacts) ||
+            PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, FighterCombos))
+            return true;
+    }
+    if (ClassId == 0x06)
+        return PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, KimClimbZones) ||
+            PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, KimTutorialZones) ||
+            PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, KimProjectileZones) ||
+            PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, KimBoomyZonePairs) ||
+            PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, KimZoneStream) ||
+            PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, KimCameras);
+    if (ClassId == 0x50)
+        return PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, ShockerCmdSequences);
+    if (ClassId == 0x39)
+        return PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, BasicBoxActorRefs);
+    if (ClassId == 0x35)
+        return PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, BoxActorRefs);
+    if (ClassId == 0x3d)
+        return PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, FogHierarchies);
+    if (ClassId == 0x4e)
+        return PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, BunchStreamEntries);
+    if (ClassId == 0x12)
+        return PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, WindActorRefs);
+    if (ClassId == 0x4c)
+        return PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, StillerActorRefs);
+    if (ClassId == 0x36)
+        return PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, ShipCareBoyActorRefs) ||
+            PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, ShipFxIntValues);
+    if (ClassId == 0x30)
+        return PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, PunchingBallTrapEntries);
+    if (ClassId == 0x31)
+        return PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, AmortosCmdActorRefs);
+    if (ClassId == 0x26)
+        return PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, NoseMonsterZonePathEntries) ||
+            PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, NoseMonsterFireShotActorRefs);
+    if (ClassId == 0x1b)
+        return PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, DcaShotActorRefs);
+    if (ClassId == 0x24)
+        return PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, TeleporterDestinations) ||
+            PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, TeleporterWaypoints) ||
+            PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, TeleporterConditionedOperations);
+    if (ClassId == 0x38)
+        return PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, AtonPathIndices) ||
+            PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, AtonOtherSubObjs) ||
+            PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, AtonSubObjs);
+    if (ClassId == 0x2f)
+        return PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, EggPathIndices);
+    if (ClassId == 0x40)
+        return PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, PatternCmdActorRefs);
+    return false;
+}
+
+void KyaEnsureFighterArrayShapes(FKyaActorPlacement& Placement)
+{
+    if (Placement.ClassId != 0x09 && Placement.ClassId != 0x06) return;
+    const auto Align = [](int32 Value) { return (Value + 3) & ~3; };
+    for (FKyaFighterBlow& Blow : Placement.FighterBlows)
+    {
+        Blow.Stages.SetNum(3);
+        Blow.NameCapacity = Align(Blow.Name.Len() + 1);
+    }
+    for (FKyaFighterGrab& Grab : Placement.FighterGrabs)
+    {
+        Grab.Stages.SetNum(5);
+        Grab.NameCapacity = Align(Grab.Name.Len() + 1);
+    }
+    for (FKyaFighterGrabReact& React : Placement.FighterGrabReacts)
+        React.NameCapacity = Align(React.Name.Len() + 1);
+    for (FKyaFighterCombo& Combo : Placement.FighterCombos)
+    {
+        Combo.NameCapacity = Align(Combo.Name.Len() + 1);
+        Combo.ActionCapacity = Align(Combo.Action.Len() + 1);
+        Combo.BranchCapacities.SetNum(Combo.Branches.Num());
+        for (int32 Branch = 0; Branch < Combo.Branches.Num(); ++Branch)
+            Combo.BranchCapacities[Branch] = Align(Combo.Branches[Branch].Len() + 1);
+    }
 }
 
 bool FindKyaReferenceField(FName PropertyName, EKyaReferenceKind& OutKind)
@@ -384,6 +500,22 @@ bool PresenceSignatureMatches(const FKyaActorPlacement& Source, const FKyaActorP
     }
     return true;
 }
+
+/**
+ * Type-specific data must stay with the destination actor: its class id is not
+ * editable, so its serialized Create payload has a fixed layout and meaning.
+ * Behaviours and the default behaviour id travel together, and ClassData is
+ * the raw remainder of the destination's own class payload.
+ */
+bool IsKyaClassScopedField(const FProperty* Property, FName PropertyName)
+{
+    if (PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Behaviours) ||
+        PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, DefaultBehaviourId) ||
+        PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, ClassData))
+        return true;
+    const FString* Condition = Property->FindMetaData(TEXT("EditCondition"));
+    return Condition && Condition->Contains(TEXT("bHas"));
+}
 }
 
 bool BuildKyaActorCopyPropertiesPatch(const FKyaActorPlacement& Source, FKyaActorEditPatch& OutPatch)
@@ -391,19 +523,74 @@ bool BuildKyaActorCopyPropertiesPatch(const FKyaActorPlacement& Source, FKyaActo
     OutPatch = FKyaActorEditPatch();
     OutPatch.Custom = [Source](FKyaActorPlacement& Dest, FString& OutError)
     {
+        const bool bSameClass = Source.ClassId == Dest.ClassId;
         TArray<FProperty*> Properties;
+        TArray<FString> Skipped;
+        FProperty* DefaultBehaviourProperty = nullptr;
         for (TFieldIterator<FProperty> It(FKyaActorPlacement::StaticStruct()); It; ++It)
         {
             const FName Name = It->GetFName();
             if (Name == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Name) ||
                 GetKyaActorFieldCapability(Name).Kind != EKyaFieldCapability::EditableExportable) continue;
-            if (!CanCopyKyaActorField(Source, Dest, Name, OutError))
+            if (!bSameClass && IsKyaClassScopedField(*It, Name))
             {
-                OutError = Name.ToString() + TEXT(": ") + OutError;
-                return false;
+                Skipped.Add(Name.ToString());
+                continue;
+            }
+            FString FieldError;
+            if (!CanCopyKyaActorField(Source, Dest, Name, FieldError))
+            {
+                // Keep the destination's serialized layout: a field that cannot
+                // be represented there (for example an unsupported class-specific
+                // array or a nested record whose shape differs) is left alone.
+                Skipped.Add(Name.ToString());
+                continue;
             }
             Properties.Add(*It);
+            if (Name == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, DefaultBehaviourId))
+                DefaultBehaviourProperty = *It;
         }
+        // The default behaviour id must resolve in the behaviour array that will
+        // exist after this patch. When the behaviour list is kept because its
+        // layout differs, an id from the source may not be present.
+        if (DefaultBehaviourProperty && Properties.Contains(DefaultBehaviourProperty))
+        {
+            const bool bCopyBehaviours = Properties.ContainsByPredicate([](const FProperty* Property)
+            {
+                return Property->GetFName() ==
+                    GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Behaviours);
+            });
+            const TArray<FKyaActorBehaviour>& ProspectiveBehaviours =
+                bCopyBehaviours ? Source.Behaviours : Dest.Behaviours;
+            if (!DoesKyaBehaviourIdExist(ProspectiveBehaviours, Source.DefaultBehaviourId))
+            {
+                Properties.Remove(DefaultBehaviourProperty);
+                Skipped.Add(DefaultBehaviourProperty->GetName());
+            }
+        }
+        if (Properties.IsEmpty())
+        {
+            OutError = FString::Printf(TEXT("No properties can be copied from class %lld to class %lld "
+                "without changing the destination's serialized layout."), Source.ClassId, Dest.ClassId);
+            return false;
+        }
+        if (!Skipped.IsEmpty())
+        {
+            FString Preview;
+            const int32 PreviewCount = FMath::Min(Skipped.Num(), 12);
+            for (int32 Index = 0; Index < PreviewCount; ++Index)
+            {
+                if (!Preview.IsEmpty()) Preview += TEXT(",");
+                Preview += Skipped[Index];
+            }
+            UE_LOG(LogTemp, Log, TEXT("KYA_ACTOR_COPY_SKIPPED_FIELDS from=%lld to=%lld count=%d fields=%s%s"),
+                Source.ClassId, Dest.ClassId, Skipped.Num(), *Preview,
+                Skipped.Num() > PreviewCount ? TEXT(",...") : TEXT(""));
+            UE_LOG(LogTemp, Verbose, TEXT("KYA_ACTOR_COPY_SKIPPED_FIELDS_ALL from=%lld to=%lld fields=%s"),
+                Source.ClassId, Dest.ClassId, *FString::Join(Skipped, TEXT(",")));
+        }
+        // The patch owns its source snapshot and only mutates the destination
+        // after every property has been accepted.
         for (FProperty* Property : Properties)
             Property->CopyCompleteValue_InContainer(&Dest, &Source);
         return true;
@@ -449,6 +636,9 @@ bool CanCopyKyaActorField(const FKyaActorPlacement& Source, const FKyaActorPlace
             return false;
         }
     }
+    // These arrays are rebuilt by the exporter, so a count or model-string slot
+    // change is a supported structural edit rather than a layout mismatch.
+    if (IsKyaActorArrayResizable(Source.ClassId, PropertyName)) return true;
     return LayoutCompatible(Property, Property->ContainerPtrToValuePtr<void>(&Source),
         Property->ContainerPtrToValuePtr<void>(&Dest), OutError);
 }
@@ -465,9 +655,9 @@ TArray<FKyaActorReferenceIssue> ValidateKyaActorReferences(const UKyaLevelBank& 
         Issues.Add({TEXT("TextureIndex"), Texture.Warning, true});
     if (Placement.SectorId < -1)
         Issues.Add({TEXT("SectorId"), TEXT("Sector id must be -1 (global) or a non-negative sector id."), true});
-    if (Placement.DefaultBehaviourId < 0 || Placement.DefaultBehaviourId >= Placement.Behaviours.Num())
+    if (!DoesKyaBehaviourIdExist(Placement.Behaviours, Placement.DefaultBehaviourId))
         Issues.Add({TEXT("DefaultBehaviourId"), FString::Printf(
-            TEXT("Default behaviour %d does not exist in this actor's %d behaviour record(s)."),
+            TEXT("Default behaviour %d does not match any of this actor's %d behaviour record(s)."),
             Placement.DefaultBehaviourId, Placement.Behaviours.Num()), false});
 
     // Actor/waypoint/path index references must resolve inside this bank. Class-

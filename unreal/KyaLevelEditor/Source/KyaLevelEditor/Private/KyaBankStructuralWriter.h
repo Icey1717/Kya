@@ -4,6 +4,7 @@
 
 class UKyaLevelBank;
 struct FKyaActorPlacement;
+struct FKyaActorOffsets;
 
 /** Result of one structural actor operation. */
 struct KYALEVELEDITOR_API FKyaStructuralWriteResult
@@ -22,6 +23,26 @@ KYALEVELEDITOR_API bool KyaBankSupportsStructuralEdit(const UKyaLevelBank& Bank,
 
 /** Rebuild actor chunks when their scenario condition counts have changed. */
 KYALEVELEDITOR_API bool KyaResizeActorConditions(UKyaLevelBank& Bank, bool& bChanged, FString& OutError);
+
+/** Rebuild actor chunks whose resizable arrays (Conditions, MacroAnimations,
+ * Behaviours, Models, supported moving-platform/trap/fighter/Shocker-command
+ * streams, the box/basic-box actor streams, Kim climb/tutorial/projectile/pair/zone/
+ * camera streams, the pattern-command actor-ref list, the shoot fire-ref behaviour list,
+ * the clusteriser zone tree, the fog-zone list, the Brazul A sub-object/path lists, the
+ * fog-hierarchy list, the FX integer list, the weapon RPG actor stream, the companion alert list,
+ * the Bunch stream-entry/fence/repel lists, the Brazul A/B lists, the Shocker switch list, the Wind
+ * carried-actor/switch lists, the Nativ speak/trajectory/seller lists, the Stiller actor list, the
+ * Ship care-boy/FX lists, the Punching ball trap list, the Amortos command actor list, the Nose
+ * monster zone-path/fire-shot lists, the Woof carried-actor list, the DCA shot list, the Teleporter
+ * destination/waypoint/conditioned-operation lists, the Aton path/sub-object lists, the Blazer actor
+ * list, the Egg path-plane list or Wolfen fight-parameter lists) no longer match
+ * the serialized sizes. Other arrays and class payloads are preserved.
+ */
+KYALEVELEDITOR_API bool KyaRebuildActorChunks(UKyaLevelBank& Bank, bool& bChanged, FString& OutError);
+
+/** True when one actor's resizable arrays no longer match its serialized chunk. */
+KYALEVELEDITOR_API bool KyaActorChunkNeedsRebuild(const FKyaActorPlacement& Actor,
+    const FKyaActorOffsets& Offsets, TConstArrayView<uint8> ClassData);
 
 /** Append a copy of SourceActorIndex and rebuild the bank's actor stream. */
 KYALEVELEDITOR_API FKyaStructuralWriteResult KyaDuplicateActorRecord(UKyaLevelBank& Bank, int32 SourceActorIndex);

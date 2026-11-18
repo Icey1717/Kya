@@ -22,7 +22,7 @@ const FKyaActorFamilyReference WindReferences[] = {
 
 extern const FKyaActorFamily GKyaWindActorFamily = {
     0x12, TEXT("CActorWind"), TEXT("Wind"),
-    TEXT("tuning, zones, actor/material references, sector hierarchy and version-gated switch records"),
+    TEXT("tuning, zones, actor/material references (carried-actor and switch lists rebuilt on export), sector hierarchy and version-gated switch records"),
     MakeArrayView(WindBehaviours),
     MakeArrayView(WindReferences),
 };

@@ -19,7 +19,7 @@ const FKyaActorFamilyBehaviour CompanionBehaviours[] = {
 
 extern const FKyaActorFamily GKyaCompanionActorFamily = {
     0x19, TEXT("CActorCompanion"), TEXT("Companion"),
-    TEXT("autonomous tuning plus alert conditions, switches and conditioned operations"),
+    TEXT("autonomous tuning plus alert conditions, switches and conditioned operations (alert list rebuilt on export)"),
     MakeArrayView(CompanionBehaviours),
     TConstArrayView<FKyaActorFamilyReference>(),
 };

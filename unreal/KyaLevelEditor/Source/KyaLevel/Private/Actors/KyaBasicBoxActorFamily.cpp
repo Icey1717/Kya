@@ -17,7 +17,7 @@ const FKyaActorFamilyBehaviour BasicBoxBehaviours[] = {
 
 extern const FKyaActorFamily GKyaBasicBoxActorFamily = {
     0x39, TEXT("CActorBasicBox"), TEXT("Basic box"),
-    TEXT("life, vibration, actor list, switch record and add-on generator"),
+    TEXT("life, vibration, actor list, switch record and add-on generator; the actor list is rebuilt on export"),
     MakeArrayView(BasicBoxBehaviours),
     TConstArrayView<FKyaActorFamilyReference>(),
 };

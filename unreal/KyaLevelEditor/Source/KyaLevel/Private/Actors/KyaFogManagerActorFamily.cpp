@@ -17,7 +17,7 @@ const FKyaActorFamilyBehaviour FogManagerBehaviours[] = {
 
 extern const FKyaActorFamily GKyaFogManagerActorFamily = {
     0x3d, TEXT("CActorFogManager"), TEXT("Fog manager"),
-    TEXT("fog-hierarchy hashes/radii and streamed fog-zone records"),
+    TEXT("fog-hierarchy hashes/radii and streamed fog-zone records (hierarchies and zones rebuilt on export)"),
     MakeArrayView(FogManagerBehaviours),
     TConstArrayView<FKyaActorFamilyReference>(),
 };

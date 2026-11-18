@@ -8,6 +8,6 @@ const FKyaActorFamilyBehaviour Behaviours[] = {
 }
 extern const FKyaActorFamily GKyaWoofActorFamily = {
     0x2a, TEXT("CActorWoof"), TEXT("Woof"),
-    TEXT("Autonomous fields, actor stream, path/waypoint and authored vision values; Guard and VerticalJump have no payload"),
+    TEXT("Autonomous fields, actor stream (rebuilt on export), path/waypoint and authored vision values; Guard and VerticalJump have no payload"),
     MakeArrayView(Behaviours), {},
 };

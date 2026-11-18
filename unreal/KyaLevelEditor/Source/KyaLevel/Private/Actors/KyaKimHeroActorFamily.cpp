@@ -28,7 +28,7 @@ const FKyaActorFamilyReference KimHeroReferences[] = {
 
 extern const FKyaActorFamily GKyaKimHeroActorFamily = {
     0x06, TEXT("CActorHeroPrivate"), TEXT("Kim / hero"),
-    TEXT("shared CActorFighter prefix, bone keys, tutorial/projectile zones, cameras and FX handles"),
+    TEXT("shared CActorFighter prefix, bone keys, climb/pair/zone streams, tutorial/projectile zones and camera records (all rebuilt on export), plus FX handles"),
     MakeArrayView(KimHeroBehaviours),
     MakeArrayView(KimHeroReferences),
 };

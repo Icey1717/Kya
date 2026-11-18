@@ -21,7 +21,7 @@ const FKyaActorFamilyBehaviour WeaponBehaviours[] = {
 
 extern const FKyaActorFamily GKyaWeaponActorFamily = {
     0x20, TEXT("CActorWeapon"), TEXT("Weapon"),
-    TEXT("class tuning and pistol/sniper/RPG burst payloads"),
+    TEXT("class tuning and pistol/sniper/RPG burst payloads (RPG actor stream rebuilt on export)"),
     MakeArrayView(WeaponBehaviours),
     TConstArrayView<FKyaActorFamilyReference>(),
 };

@@ -7,6 +7,6 @@ const FKyaActorFamilyBehaviour Behaviours[] = {
 }
 extern const FKyaActorFamily GKyaBlazerActorFamily = {
     0x4d, TEXT("CActorBlazer"), TEXT("Blazer"),
-    TEXT("Autonomous prefix, versioned waypoint refs, fire-shot actor list and tilt/push configuration"),
+    TEXT("Autonomous prefix, versioned waypoint refs, fire-shot actor list (rebuilt on export) and tilt/push configuration"),
     MakeArrayView(Behaviours), {},
 };

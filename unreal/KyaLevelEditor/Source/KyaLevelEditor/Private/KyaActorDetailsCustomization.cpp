@@ -459,14 +459,20 @@ void FKyaActorDetailsCustomization::CustomizeDetails(IDetailLayoutBuilder& Detai
         GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, TextureIndex),
         [](FKyaActorPlacement& Placement, int32 Value) { Placement.TextureIndex = Value; });
 
-    // Default behaviour picker: recovered behaviour names.
+    // Default behaviour picker: recovered behaviour names. The serialized value is
+    // a behaviour id, not an array position, so the options carry the record ids.
     TArray<TSharedPtr<FKyaPickerOption>> BehaviourOptions;
+    BehaviourOptions.Add(MakePickerOption(-1, TEXT("None"), TEXT("No default behaviour.")));
     for (const FKyaBehaviourOption& Option : GetKyaBehaviourOptions(Record))
         BehaviourOptions.Add(MakePickerOption(Option.Id, Option.Label));
+    const FKyaActorBehaviour* DefaultBehaviour = Record.Behaviours.FindByPredicate(
+        [&Record](const FKyaActorBehaviour& Behaviour) { return Behaviour.Id == Record.DefaultBehaviourId; });
     AddPickerRow(TEXT("Default behaviour"), BehaviourOptions, Record.DefaultBehaviourId,
-        Record.Behaviours.IsValidIndex(Record.DefaultBehaviourId)
-            ? GetKyaBehaviourLabel(Record.ClassId, Record.Behaviours[Record.DefaultBehaviourId].Id)
-            : TEXT("The default behaviour index does not resolve to a behaviour record."),
+        Record.DefaultBehaviourId == -1
+            ? TEXT("No default behaviour.")
+            : DefaultBehaviour
+                ? GetKyaBehaviourLabel(Record.ClassId, DefaultBehaviour->Id)
+                : TEXT("The default behaviour id does not match any behaviour record."),
         GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, DefaultBehaviourId),
         [](FKyaActorPlacement& Placement, int32 Value) { Placement.DefaultBehaviourId = Value; });
 
@@ -808,7 +814,9 @@ void FKyaActorDetailsCustomization::CustomizeDetails(IDetailLayoutBuilder& Detai
                 SNew(SButton)
                 .Text(FText::FromString(TEXT("Copy all except name")))
                 .ToolTipText(FText::FromString(TEXT("Copy all editable game properties from the source actor, including transforms and references. "
-                    "Preserves this actor's name and internal identity. Incompatible layouts are rejected without changing any properties. Undo restores the entire edit.")))
+                    "Preserves this actor's name, class and internal identity. Conditions, macro animations, behaviours and models follow the source count; "
+                    "other fields that do not fit this actor's serialized layout are left unchanged. "
+                    "Type-specific data is copied only between actors of the same class. Undo restores the entire edit.")))
                 .OnClicked_Lambda([this, Actor, SourceIndex]()
                 {
                     UKyaLevelBank* EditedBank = Actor->Bank;

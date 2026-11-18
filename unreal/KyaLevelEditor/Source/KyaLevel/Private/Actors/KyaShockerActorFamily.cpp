@@ -19,7 +19,7 @@ const FKyaActorFamilyBehaviour ShockerBehaviours[] = {
 
 extern const FKyaActorFamily GKyaShockerActorFamily = {
     0x4b, TEXT("CActorShocker"), TEXT("Shocker"),
-    TEXT("autonomous tuning, zone/switch record, add-on and fire-wave behaviour"),
+    TEXT("autonomous tuning, zone/switch record, add-on and fire-wave behaviour (switch list rebuilt on export)"),
     MakeArrayView(ShockerBehaviours),
     TConstArrayView<FKyaActorFamilyReference>(),
 };

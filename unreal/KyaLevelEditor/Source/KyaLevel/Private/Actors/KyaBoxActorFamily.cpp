@@ -18,7 +18,7 @@ const FKyaActorFamilyBehaviour BoxBehaviours[] = {
 
 extern const FKyaActorFamily GKyaBoxActorFamily = {
     0x35, TEXT("CActorBox"), TEXT("Box"),
-    TEXT("autonomous tuning, actor list, switch record and add-on generator"),
+    TEXT("autonomous tuning, actor list, switch record and add-on generator; the actor list is rebuilt on export"),
     MakeArrayView(BoxBehaviours),
     TConstArrayView<FKyaActorFamilyReference>(),
 };

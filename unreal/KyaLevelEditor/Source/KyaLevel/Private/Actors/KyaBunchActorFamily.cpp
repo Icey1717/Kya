@@ -35,7 +35,7 @@ const FKyaActorFamilyBehaviour BunchBehaviours[] = {
 
 extern const FKyaActorFamily GKyaBunchActorFamily = {
     0x4e, TEXT("CActorBunch"), TEXT("Bunch"),
-    TEXT("Wolfen prefix, bunch stream entries, repel and fence behaviours"),
+    TEXT("Wolfen prefix, bunch stream entries, repel indices and fence behaviours (stream/repel/fence lists rebuilt on export)"),
     MakeArrayView(BunchBehaviours),
     TConstArrayView<FKyaActorFamilyReference>(),
 };

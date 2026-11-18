@@ -19,7 +19,7 @@ const FKyaActorFamilyBehaviour AtonBehaviours[] = {
 
 extern const FKyaActorFamily GKyaAtonActorFamily = {
     0x38, TEXT("CActorAton"), TEXT("Aton"),
-    TEXT("autonomous values, effect/mesh/material ids, path list and add-on sub-objects"),
+    TEXT("autonomous values, effect/mesh/material ids, path list and add-on sub-objects (both rebuilt on export)"),
     MakeArrayView(AtonBehaviours),
     TConstArrayView<FKyaActorFamilyReference>(),
 };

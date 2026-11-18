@@ -21,8 +21,19 @@ FString GetKyaStructuralEditBlocker(EKyaStructuralEditKind Kind)
         return TEXT("Variable-length names require rebuilding the record's name slot and relocating the "
             "serialized stream; only same-slot renames are supported.");
     case EKyaStructuralEditKind::ResizeArray:
-        return TEXT("Resizing fixed-size arrays requires relocating the record payload and updating the "
-            "stored counts; array resizing is not supported by the writer.");
+        return TEXT("This fixed-size array cannot be resized. Conditions, macro animations, behaviours, "
+            "models, supported moving-platform/trap/fighter streams, Wolfen fight-param lists, Shocker "
+            "command sequences, box/basic-box actor streams, Kim climb/tutorial/projectile/pair/zone/"
+            "camera streams, the pattern-command actor-ref list, the shoot fire-ref list, the "
+            "clusteriser zone tree, the fog-zone list, the Brazul A sub-object/path lists, the "
+            "fog-hierarchy list, the FX integer list, the weapon RPG actor stream, the companion alert list, "
+            "the Bunch stream-entry/fence/repel lists, the Brazul B switch list, the Shocker switch list, "
+            "the Wind carried-actor and switch lists, the Nativ trajectory list, the Stiller actor list, the "
+            "Ship care-boy/FX integer lists, the Punching ball trap list and the Amortos command actor list and "
+            "the Nose monster zone-path/fire-shot lists, the Woof actor list and the DCA shot actor list and "
+            "the Teleporter destination/waypoint/conditioned-operation lists and the Aton path/sub-object "
+            "lists and the Blazer actor list and the Egg path-plane list are rebuilt by the writer; "
+            "other arrays keep their serialized counts.");
     case EKyaStructuralEditKind::ChangeClass:
         return TEXT("Class replacement changes the record layout and class allocation counts; it requires "
             "a rebuilt actor stream and is not supported by the writer.");
@@ -96,7 +107,7 @@ bool AnalyzeKyaStructuralEdit(const UKyaLevelBank& Bank, EKyaStructuralEditKind 
     const bool bSceneStream = Bank.BankBytes.Num() > 0;
     OutAnalysis.bWriterSupported = bSceneStream &&
         (Kind == EKyaStructuralEditKind::CreateActor || Kind == EKyaStructuralEditKind::DuplicateActor ||
-         Kind == EKyaStructuralEditKind::DeleteActor);
+         Kind == EKyaStructuralEditKind::DeleteActor || Kind == EKyaStructuralEditKind::ResizeArray);
     if (bSceneStream && (Kind == EKyaStructuralEditKind::CreateActor ||
         Kind == EKyaStructuralEditKind::DuplicateActor))
     {
@@ -131,8 +142,90 @@ bool ValidateStringSlot(const FString& Current, const FString& Candidate, const 
     return false;
 }
 
+bool IsKyaNestedArrayResizable(int64 ClassId, const FString& Path)
+{
+    // Shoot actors own a fire-wave behaviour with a variable actor-reference list,
+    // and clusterisers own a variable cluster-zone tree.
+    if (ClassId == 0x3e && Path.StartsWith(TEXT("Behaviours[")) &&
+        Path.EndsWith(TEXT(".ShootFireActorRefs"))) return true;
+    if (ClassId == 0x18 && Path.StartsWith(TEXT("Behaviours[")))
+    {
+        if (Path.EndsWith(TEXT(".ClusterZones"))) return true;
+        if (Path.Contains(TEXT(".ClusterZones[")) &&
+            (Path.EndsWith(TEXT(".Actors")) || Path.EndsWith(TEXT(".OtherActors")) ||
+             Path.EndsWith(TEXT(".Cameras")) || Path.EndsWith(TEXT(".Lights")) ||
+             Path.EndsWith(TEXT(".Hashes")))) return true;
+    }
+    if (ClassId == 0x3d && Path.StartsWith(TEXT("Behaviours[")) &&
+        Path.EndsWith(TEXT(".FogZones"))) return true;
+    if (ClassId == 0x2e && Path.StartsWith(TEXT("Behaviours[")) &&
+        Path.EndsWith(TEXT(".FxUnknownValues"))) return true;
+    if (ClassId == 0x20 && Path.StartsWith(TEXT("Behaviours[")) &&
+        Path.EndsWith(TEXT(".WeaponRpgActorRefs"))) return true;
+    if (ClassId == 0x19 && Path.StartsWith(TEXT("Behaviours[")) &&
+        Path.EndsWith(TEXT(".CompanionAlerts"))) return true;
+    if (ClassId == 0x4e && Path.StartsWith(TEXT("Behaviours[")))
+    {
+        if (Path.EndsWith(TEXT(".BunchFenceWayPoints")) ||
+            Path.EndsWith(TEXT(".BunchFenceGroups")) ||
+            Path.EndsWith(TEXT(".BunchRepelIndices"))) return true;
+    }
+    if (ClassId == 0x4b && Path == TEXT("ShockerSwitch.Targets")) return true;
+    if (ClassId == 0x2a && Path == TEXT("WoofData.ActorRefs")) return true;
+    if (ClassId == 0x4d && Path == TEXT("BlazerData.ActorRefs")) return true;
+    if (ClassId == 0x38)
+    {
+        if (Path.StartsWith(TEXT("AtonOtherSubObjs[")) && Path.EndsWith(TEXT(".CinematicIds")))
+            return true;
+        if (Path.StartsWith(TEXT("AtonSubObjs[")) && Path.EndsWith(TEXT(".CinematicIds")))
+            return true;
+    }
+    if (ClassId == 0x24 && Path.StartsWith(TEXT("TeleporterConditionedOperations[")))
+    {
+        if (Path.EndsWith(TEXT(".Operations")) || Path.EndsWith(TEXT(".Conditions")))
+            return true;
+    }
+    if (ClassId == 0x12 && (Path == TEXT("WindSwitch1D0.Targets") ||
+        Path == TEXT("WindSwitch1D8.Targets") || Path == TEXT("WindSwitch1E0.Targets"))) return true;
+    if (ClassId == 0x0a && Path.StartsWith(TEXT("Behaviours[")))
+    {
+        if (Path.EndsWith(TEXT(".NativSpeakValues")) ||
+            Path.EndsWith(TEXT(".NativTrajectories")) ||
+            Path.EndsWith(TEXT(".NativSellerSubObjs"))) return true;
+        if (Path.Contains(TEXT(".NativSellerSubObjs[")) &&
+            Path.EndsWith(TEXT(".CinematicIds"))) return true;
+        if (Path.Contains(TEXT(".AkasaBehaviour.")))
+        {
+            if (Path.EndsWith(TEXT(".Tutorials")) ||
+                Path.EndsWith(TEXT(".AddOnSubObjs")) ||
+                Path.EndsWith(TEXT(".Steps")) ||
+                Path.EndsWith(TEXT(".ComboNames"))) return true;
+            if (Path.Contains(TEXT(".AddOnSubObjs[")) &&
+                Path.EndsWith(TEXT(".CinematicIds"))) return true;
+        }
+    }
+    if (ClassId == 0x4f && Path.StartsWith(TEXT("Behaviours[")))
+    {
+        if (Path.EndsWith(TEXT(".BrazulSubObjs"))) return true;
+        if (Path.Contains(TEXT(".BrazulSubObjs[")) && Path.EndsWith(TEXT(".PathIndices")))
+            return true;
+        if (Path.EndsWith(TEXT(".BrazulBSwitch.Targets"))) return true;
+    }
+    // Kim tutorial zones own a per-zone switch-target list.
+    if (ClassId == 0x06 && Path.StartsWith(TEXT("KimTutorialZones[")) &&
+        Path.EndsWith(TEXT(".Targets"))) return true;
+    // Wolfen fight parameters own combo lists and capability item/chain lists.
+    if (ClassId != 0x09) return false;
+    if (Path == TEXT("WolfenFightParamData.ComboList1") ||
+        Path == TEXT("WolfenFightParamData.ComboList2")) return true;
+    if (Path.StartsWith(TEXT("WolfenFightParamData.Capabilities[")) &&
+        Path.EndsWith(TEXT(".Items"))) return true;
+    return Path.StartsWith(TEXT("WolfenFightParamData.Capabilities[")) &&
+        Path.Contains(TEXT(".Items[")) && Path.EndsWith(TEXT(".Chains"));
+}
+
 bool ValidateKyaStructLayout(const UScriptStruct* Struct, const void* Current, const void* Candidate,
-    const FString& Path, FString& OutError)
+    int64 ClassId, const FString& Path, FString& OutError)
 {
     for (TFieldIterator<FProperty> It(Struct); It; ++It)
     {
@@ -147,7 +240,8 @@ bool ValidateKyaStructLayout(const UScriptStruct* Struct, const void* Current, c
             FScriptArrayHelper CurrentArray(Array, CurrentValue);
             FScriptArrayHelper CandidateArray(Array, CandidateValue);
             if (Struct == FKyaActorPlacement::StaticStruct() &&
-                Property->GetFName() == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Conditions)) continue;
+                IsKyaActorArrayResizable(ClassId, Property->GetFName())) continue;
+            if (IsKyaNestedArrayResizable(ClassId, PropertyPath)) continue;
             if (CurrentArray.Num() != CandidateArray.Num())
             {
                 OutError = FString::Printf(TEXT("%s count changed (%d -> %d). %s"), *PropertyPath,
@@ -159,8 +253,8 @@ bool ValidateKyaStructLayout(const UScriptStruct* Struct, const void* Current, c
             {
                 for (int32 Index = 0; Index < CurrentArray.Num(); ++Index)
                     if (!ValidateKyaStructLayout(InnerStruct->Struct, CurrentArray.GetRawPtr(Index),
-                        CandidateArray.GetRawPtr(Index), FString::Printf(TEXT("%s[%d]"), *PropertyPath, Index),
-                        OutError)) return false;
+                        CandidateArray.GetRawPtr(Index), ClassId,
+                        FString::Printf(TEXT("%s[%d]"), *PropertyPath, Index), OutError)) return false;
             }
             else if (const FStrProperty* InnerString = CastField<FStrProperty>(Array->Inner))
             {
@@ -172,8 +266,8 @@ bool ValidateKyaStructLayout(const UScriptStruct* Struct, const void* Current, c
         }
         else if (const FStructProperty* StructProperty = CastField<FStructProperty>(Property))
         {
-            if (!ValidateKyaStructLayout(StructProperty->Struct, CurrentValue, CandidateValue, PropertyPath, OutError))
-                return false;
+            if (!ValidateKyaStructLayout(StructProperty->Struct, CurrentValue, CandidateValue, ClassId,
+                PropertyPath, OutError)) return false;
         }
         else if (const FStrProperty* StringProperty = CastField<FStrProperty>(Property))
         {
@@ -226,5 +320,6 @@ bool ValidateKyaActorStructuralEdit(const FKyaActorPlacement& Current,
             return false;
         }
     }
-    return ValidateKyaStructLayout(FKyaActorPlacement::StaticStruct(), &Current, &Candidate, FString(), OutError);
+    return ValidateKyaStructLayout(FKyaActorPlacement::StaticStruct(), &Current, &Candidate, Current.ClassId,
+        FString(), OutError);
 }

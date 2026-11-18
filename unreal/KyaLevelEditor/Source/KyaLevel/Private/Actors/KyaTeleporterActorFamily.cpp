@@ -18,7 +18,7 @@ const FKyaActorFamilyBehaviour TeleporterBehaviours[] = {
 
 extern const FKyaActorFamily GKyaTeleporterActorFamily = {
     0x24, TEXT("CActorTeleporter"), TEXT("Teleporter"),
-    TEXT("destinations, three switch/camera records, zones, waypoints and conditioned operation blocks"),
+    TEXT("destinations, waypoints and conditioned-operation blocks (all rebuilt on export), three switch/camera records and zone/material fields"),
     MakeArrayView(TeleporterBehaviours),
     TConstArrayView<FKyaActorFamilyReference>(),
 };

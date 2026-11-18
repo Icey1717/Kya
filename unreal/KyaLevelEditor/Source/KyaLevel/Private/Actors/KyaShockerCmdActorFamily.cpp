@@ -7,6 +7,6 @@ const FKyaActorFamilyBehaviour Behaviours[] = {
 }
 extern const FKyaActorFamily GKyaShockerCmdActorFamily = {
     0x50, TEXT("CActorShockerCmd"), TEXT("Shocker command"),
-    TEXT("Field 168 and actor sequences with float lists; sequence counts are fixed on export"),
+    TEXT("Field 168 and actor sequences with float lists; sequence and value counts are rebuilt on export"),
     MakeArrayView(Behaviours), {},
 };

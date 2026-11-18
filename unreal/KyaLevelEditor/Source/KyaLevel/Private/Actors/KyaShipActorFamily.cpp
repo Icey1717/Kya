@@ -19,7 +19,7 @@ const FKyaActorFamilyBehaviour ShipBehaviours[] = {
 
 extern const FKyaActorFamily GKyaShipActorFamily = {
     0x36, TEXT("CActorShip"), TEXT("Ship"),
-    TEXT("care-boy/fx lists, actor refs, tuning, vision and switch"),
+    TEXT("care-boy/fx lists (rebuilt on export), actor refs, tuning, vision and switch"),
     MakeArrayView(ShipBehaviours),
     TConstArrayView<FKyaActorFamilyReference>(),
 };

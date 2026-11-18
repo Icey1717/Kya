@@ -36,7 +36,7 @@ const FKyaActorFamilyBehaviour BrazulBehaviours[] = {
 
 extern const FKyaActorFamily GKyaBrazulActorFamily = {
     0x4f, TEXT("CActorBrazul"), TEXT("Brazul"),
-    TEXT("Wolfen prefix, sparks/fx handles, BrazulA sub-objects and BrazulB switch"),
+    TEXT("Wolfen prefix, sparks/fx handles, BrazulA sub-objects and BrazulB switch (both rebuilt on export)"),
     MakeArrayView(BrazulBehaviours),
     TConstArrayView<FKyaActorFamilyReference>(),
 };

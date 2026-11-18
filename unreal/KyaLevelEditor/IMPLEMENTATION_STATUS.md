@@ -118,10 +118,49 @@ scanned. EventGenerator (0x3B) has a typed header plus raw manager tail; every o
   flags) and rejects a delete that would leave a reference to the removed actor.
   `Kya.CreateActor`/`Kya.DuplicateActor`/`Kya.DeleteActor` and the Kya Level menu
   expose it through a transaction and preview refresh. Unknown raw payload bytes are
-  preserved unchanged; class replacement, array resizing and variable-length renames
-  remain blocked. `Kya.Editor.StructuralWriter` covers duplicate/append,
-  export/reimport, middle-reference remapping and last-record deletion; the gate
-  exercises the commands and the preflight rejection for an unapplied count change.
+  preserved unchanged; class replacement and variable-length renames remain blocked.
+  Conditions, macro animations, behaviours, model references, the moving-platform
+  carried-actor/zone/no-friction/camera/sound streams, the trap actor/stream lists,
+  the Wolfen/Kim fighter blow/grab/react/combo databases, the Wolfen fight-param
+  combo/capability lists, the Shocker command sequence/value lists, the box/basic-box
+  actor streams, Kim's climb/tutorial/projectile/pair/zone/camera streams, the
+  pattern-command actor-ref list, the shoot fire-ref behaviour list, the clusteriser zone
+  tree, the fog-zone list, the Brazul A sub-object/path lists, the fog-hierarchy list, the FX
+  integer list, the weapon RPG actor stream, the companion alert list, the Bunch
+  stream-entry/fence/repel lists, the Brazul A/B lists, the Shocker switch list, the Wind
+  carried-actor and switch lists, the Nativ speak/trajectory/seller lists, the Stiller actor list,
+  the Ship care-boy/FX lists, the Punching ball trap list, the Amortos command actor list, the
+  Nose monster zone-path/fire-shot lists, the Woof carried-actor list, the DCA shot list, the
+  Teleporter destination/waypoint/conditioned-operation lists, the Aton path/sub-object lists, the
+  Blazer actor list and the Egg path-plane list can
+  change count (or model string slot);
+  export rebuilds their actor chunks and relocates later data. Other
+  fixed-size arrays remain blocked.
+  `Kya.Editor.StructuralWriter` covers duplicate/append, export/reimport,
+  middle-reference remapping and last-record deletion; `Kya.Bank.ResizeActorArrays`,
+  `Kya.Bank.ResizeRealActorArrays`, `Kya.Bank.ResizeRealPlatformArray`,
+  `Kya.Bank.ResizeRealTrapArray`, `Kya.Bank.ResizeRealFighterArray`,
+  `Kya.Bank.ResizeRealWolfenFightArray`, `Kya.Bank.ResizeRealShockerCmdArray`,
+  `Kya.Bank.ResizeRealBoxArray`, `Kya.Bank.ResizeRealBasicBoxArray`,
+  `Kya.Bank.ResizeRealKimZoneStream`, `Kya.Bank.ResizeRealKimTutorialZone`,
+  `Kya.Bank.ResizeRealKimProjectileZone`, `Kya.Bank.ResizeRealKimCamera` and
+  `Kya.Bank.ResizeRealPatternCmdArray`, `Kya.Bank.ResizeRealShootFireBehaviour` and
+  `Kya.Bank.ResizeRealClusterZone`, `Kya.Bank.ResizeRealFogZone` and
+  `Kya.Bank.ResizeRealBrazulSubObj`, `Kya.Bank.ResizeRealFogHierarchy`,
+  `Kya.Bank.ResizeFxLists`, `Kya.Bank.ResizeRealWeaponRpgRef` and
+  `Kya.Bank.ResizeRealCompanionAlert`, `Kya.Bank.ResizeRealBunchFence` and
+  `Kya.Bank.ResizeRealBunchRepel`, `Kya.Bank.ResizeRealBunchStreamEntries` and
+  `Kya.Bank.ResizeRealBrazulBSwitch`, `Kya.Bank.ResizeRealShockerSwitch`,
+  `Kya.Bank.ResizeRealWindActors`, `Kya.Bank.ResizeRealWindSwitch`,
+  `Kya.Bank.ResizeRealNativTrajectory`, `Kya.Bank.ResizeRealStillerActors`,
+  `Kya.Bank.ResizeRealShipLists`, `Kya.Bank.ResizeRealPunchingBallTraps`,
+  `Kya.Bank.ResizeRealAmortosCmdActors`, `Kya.Bank.ResizeRealNoseMonsterShots`,
+  `Kya.Bank.ResizeRealNativSpeak`, `Kya.Bank.ResizeRealWoofActors`,
+  `Kya.Bank.ResizeRealDcaShots`, `Kya.Bank.ResizeRealTeleporterLists`,
+  `Kya.Bank.ResizeRealAtonLists`, `Kya.Bank.ResizeRealBlazerActors` and
+  `Kya.Bank.ResizeRealEggPaths` cover growing and shrinking
+  the supported arrays through export/reimport. The gate exercises the commands and the preflight
+  rejection for an unapplied count change.
 - Export acceptance (`Kya.Editor.ExportAcceptance`): the exporter reports its
   supported edit scope (record counts, changed actors vs the imported baseline and
   the in-place/structural-rejection policy) through `FKyaBankExportOutcome`, the
@@ -275,9 +314,11 @@ scanned. EventGenerator (0x3B) has a typed header plus raw manager tail; every o
   references (`KyaExportedActorFields.h`), so an editable field the exporter never
   encodes is inspect-only instead of claiming round-trip support. The table also
   encodes the writer's fixed-layout constraints: the actor-name slot must keep
-  `Align(length + 1, 4) == original capacity`, fixed-size arrays keep their counts
-  and element sizes, raw class payload bytes keep their size, and `VisibleAnywhere`
-  record data plus the layout-controlling `bHas*` presence flags are inspect-only.
+  `Align(length + 1, 4) == original capacity`, conditions/macro animations/behaviours/
+  models are rebuilt when their counts or model string slots change, other fixed-size
+  arrays keep their counts and element sizes, raw class payload bytes keep their size,
+  and `VisibleAnywhere` record data plus the layout-controlling `bHas*` presence flags
+  are inspect-only.
   `GetKyaNestedFieldCapability("TopLevel.Field")` applies the same rules to nested
   records (for example `Models.MeshName` and `FighterBlows.NameCapacity`). Details
   only offers editable rows and shows the capability description and reason as the
@@ -388,6 +429,24 @@ scanned. EventGenerator (0x3B) has a typed header plus raw manager tail; every o
   imported`, per-field reset, and `Copy` from another actor. Copy validates class,
   optional-record presence, array counts, nested record ids/presence flags and
   string-slot capacity before applying, so it cannot change the destination layout.
+  `Copy all except name` copies every field that fits the destination's serialized
+  layout; conditions, macro animations, behaviours, model references, supported
+  moving-platform/trap/fighter/Wolfen-fight streams, Shocker command sequences, the
+  box/basic-box actor streams, Kim's climb/tutorial/projectile/pair/zone/camera streams,
+  the pattern-command actor-ref list, the shoot fire-ref behaviour list, the clusteriser
+  zone tree, the fog-zone list, the Brazul A sub-object/path lists, the fog-hierarchy list, the
+  FX integer list, the weapon RPG actor stream, the companion alert list, the Bunch
+  stream-entry/fence/repel lists, the Brazul A/B lists, the Shocker switch list, the Wind
+  carried-actor and switch lists, the Nativ speak/trajectory/seller lists, the Stiller actor list,
+  the Ship care-boy/FX lists, the Punching ball trap list, the Amortos command actor list, the
+  Nose monster zone-path/fire-shot lists, the Woof carried-actor list, the DCA shot list, the
+  Teleporter destination/waypoint/conditioned-operation lists, the Aton path/sub-object lists, the
+  Blazer actor list and the Egg path-plane list follow
+  the
+  source count/string slot and are rebuilt at export, while other incompatible arrays are left
+  unchanged. Between different
+  classes it keeps the destination's class payload, behaviours and behaviour index,
+  so the bank writer can still export it.
 - Generated representations validate their lifetime: handles, spatial handles,
   grouping actors and hierarchy handles are `RF_Transient | RF_Transactional` and
   editor-only; a game world creates none; destroying a preview cleans them up; a

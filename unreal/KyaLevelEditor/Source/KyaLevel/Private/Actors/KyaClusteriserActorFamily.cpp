@@ -18,7 +18,7 @@ const FKyaActorFamilyBehaviour ClusteriserBehaviours[] = {
 
 extern const FKyaActorFamily GKyaClusteriserActorFamily = {
     0x18, TEXT("CActorClusteriser"), TEXT("Clusteriser"),
-    TEXT("behaviour 2 zone lists with actor, camera, light and hierarchy-hash references"),
+    TEXT("behaviour 2 zone lists with actor, camera, light and hierarchy-hash references, rebuilt on export"),
     MakeArrayView(ClusteriserBehaviours),
     TConstArrayView<FKyaActorFamilyReference>(),
 };

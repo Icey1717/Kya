@@ -19,7 +19,7 @@ const FKyaActorFamilyBehaviour FxBehaviours[] = {
 
 extern const FKyaActorFamily GKyaFxActorFamily = {
     0x2e, TEXT("CActorFx"), TEXT("FX"),
-    TEXT("effect timing floats and single/path/unknown behaviour payloads"),
+    TEXT("effect timing floats and single/path/unknown behaviour payloads (unknown list rebuilt on export)"),
     MakeArrayView(FxBehaviours),
     TConstArrayView<FKyaActorFamilyReference>(),
 };

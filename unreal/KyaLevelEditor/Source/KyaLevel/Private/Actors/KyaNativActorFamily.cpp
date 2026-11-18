@@ -23,7 +23,7 @@ const FKyaActorFamilyBehaviour NativBehaviours[] = {
 
 extern const FKyaActorFamily GKyaNativActorFamily = {
     0x0a, TEXT("CActorNativ"), TEXT("Nativ"),
-    TEXT("autonomous/movement fields and take-and-put trajectories"),
+    TEXT("autonomous/movement fields, speak values, trajectories and seller sub-objects (behaviour lists rebuilt on export)"),
     MakeArrayView(NativBehaviours),
     TConstArrayView<FKyaActorFamilyReference>(),
 };

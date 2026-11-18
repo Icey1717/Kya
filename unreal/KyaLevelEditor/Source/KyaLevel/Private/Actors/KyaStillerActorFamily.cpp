@@ -21,7 +21,7 @@ const FKyaActorFamilyReference StillerReferences[] = {
 
 extern const FKyaActorFamily GKyaStillerActorFamily = {
     0x4c, TEXT("CActorStiller"), TEXT("Stiller"),
-    TEXT("vision, path, life, actor list, two switch records and add-on generator"),
+    TEXT("vision, path, life, actor list (rebuilt on export), two switch records and add-on generator"),
     MakeArrayView(StillerBehaviours),
     MakeArrayView(StillerReferences),
 };

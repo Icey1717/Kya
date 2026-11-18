@@ -165,11 +165,11 @@ struct FKyaClusterZone
     GENERATED_BODY()
     UPROPERTY(EditAnywhere, Category="Cluster zone") int64 Flags = 0;
     UPROPERTY(EditAnywhere, Category="Cluster zone") int32 ZoneRef = 0;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Cluster zone") TArray<int32> Actors;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Cluster zone") TArray<int32> OtherActors;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Cluster zone") TArray<int32> Cameras;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Cluster zone") TArray<int32> Lights;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Cluster zone") TArray<int64> Hashes;
+    UPROPERTY(EditAnywhere, Category="Cluster zone") TArray<int32> Actors;
+    UPROPERTY(EditAnywhere, Category="Cluster zone") TArray<int32> OtherActors;
+    UPROPERTY(EditAnywhere, Category="Cluster zone") TArray<int32> Cameras;
+    UPROPERTY(EditAnywhere, Category="Cluster zone") TArray<int32> Lights;
+    UPROPERTY(EditAnywhere, Category="Cluster zone") TArray<int64> Hashes;
     UPROPERTY(EditAnywhere, Category="Cluster zone") int32 OtherZoneRef = 0;
 };
 
@@ -223,7 +223,7 @@ struct FKyaAddOnSubObj
 {
     GENERATED_BODY()
     UPROPERTY(EditAnywhere, Category="Add-on") int32 Field0 = 0;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Add-on") TArray<int32> CinematicIds;
+    UPROPERTY(EditAnywhere, Category="Add-on") TArray<int32> CinematicIds;
 };
 
 USTRUCT(BlueprintType)
@@ -239,7 +239,7 @@ struct FKyaAtonSubObj
     GENERATED_BODY()
     UPROPERTY(EditAnywhere, Category="Aton") int32 Field18 = 0;
     UPROPERTY(EditAnywhere, Category="Aton") int32 Field0 = 0;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Aton") TArray<int32> CinematicIds;
+    UPROPERTY(EditAnywhere, Category="Aton") TArray<int32> CinematicIds;
 };
 
 USTRUCT(BlueprintType)
@@ -325,8 +325,8 @@ USTRUCT(BlueprintType)
 struct FKyaTeleporterBlock
 {
     GENERATED_BODY()
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Teleporter condition") TArray<FKyaTeleporterOperation> Operations;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Teleporter condition") TArray<FKyaTeleporterCondition> Conditions;
+    UPROPERTY(EditAnywhere, Category="Teleporter condition") TArray<FKyaTeleporterOperation> Operations;
+    UPROPERTY(EditAnywhere, Category="Teleporter condition") TArray<FKyaTeleporterCondition> Conditions;
 };
 
 USTRUCT(BlueprintType)
@@ -378,7 +378,7 @@ struct FKyaFighterBlow
     UPROPERTY(EditAnywhere, Category="Fighter blow") FVector Field20 = FVector::ZeroVector;
     UPROPERTY(EditAnywhere, Category="Fighter blow") FVector Field30 = FVector::ZeroVector;
     UPROPERTY(EditAnywhere, Category="Fighter blow") int32 Field40 = 0;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Fighter blow") TArray<FKyaFighterBlowSubObj> SubObjs;
+    UPROPERTY(EditAnywhere, Category="Fighter blow") TArray<FKyaFighterBlowSubObj> SubObjs;
     UPROPERTY(EditAnywhere, Category="Fighter blow") int32 BoneRefA = 0;
     UPROPERTY(EditAnywhere, Category="Fighter blow") int32 BoneRefB = 0;
     UPROPERTY(EditAnywhere, Category="Fighter blow") float CanActivateRange = 0;
@@ -432,7 +432,7 @@ struct FKyaFighterCombo
     UPROPERTY(EditAnywhere, Category="Fighter combo") int32 Field4A = 0;
     UPROPERTY(EditAnywhere, Category="Fighter combo") int32 Field4B = 0;
     UPROPERTY(EditAnywhere, Category="Fighter combo") float Field8 = 0;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Fighter combo") TArray<int32> Inputs;
+    UPROPERTY(EditAnywhere, Category="Fighter combo") TArray<int32> Inputs;
     UPROPERTY(EditAnywhere, Category="Fighter combo") int32 Field2 = 0;
     UPROPERTY(EditAnywhere, Category="Fighter combo") int32 Field3 = 0;
     UPROPERTY(EditAnywhere, Category="Fighter combo") float FieldC = 0;
@@ -446,7 +446,7 @@ USTRUCT(BlueprintType)
 struct FKyaWolfenCapabilityItem
 {
     GENERATED_BODY()
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Wolfen fight") TArray<int32> Chains;
+    UPROPERTY(EditAnywhere, Category="Wolfen fight") TArray<int32> Chains;
     UPROPERTY(EditAnywhere, Category="Wolfen fight") float Field0 = 0;
     UPROPERTY(EditAnywhere, Category="Wolfen fight") float Field4 = 0;
 };
@@ -455,7 +455,7 @@ USTRUCT(BlueprintType)
 struct FKyaWolfenCapability
 {
     GENERATED_BODY()
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Wolfen fight") TArray<FKyaWolfenCapabilityItem> Items;
+    UPROPERTY(EditAnywhere, Category="Wolfen fight") TArray<FKyaWolfenCapabilityItem> Items;
 };
 
 USTRUCT(BlueprintType)
@@ -466,8 +466,8 @@ struct FKyaWolfenFightParam
     UPROPERTY(EditAnywhere, EditFixedSize, Category="Wolfen fight") TArray<int32> Capability2Fields;
     UPROPERTY(EditAnywhere, EditFixedSize, Category="Wolfen fight") TArray<float> ConfigurationValues;
     UPROPERTY(EditAnywhere, EditFixedSize, Category="Wolfen fight") TArray<FKyaWolfenCapability> Capabilities;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Wolfen fight") TArray<int32> ComboList1;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Wolfen fight") TArray<int32> ComboList2;
+    UPROPERTY(EditAnywhere, Category="Wolfen fight") TArray<int32> ComboList1;
+    UPROPERTY(EditAnywhere, Category="Wolfen fight") TArray<int32> ComboList2;
     UPROPERTY(EditAnywhere, Category="Wolfen fight") int32 FieldAfterLists = 0;
     UPROPERTY(EditAnywhere, Category="Wolfen fight") int32 FieldB44 = 0;
     UPROPERTY(EditAnywhere, EditFixedSize, Category="Wolfen fight") TArray<float> TuningValues;
@@ -511,7 +511,7 @@ struct FKyaBrazulSubObj
     UPROPERTY(EditAnywhere, Category="Brazul") float Field8 = 0;
     UPROPERTY(EditAnywhere, Category="Brazul") int32 FieldC = 0;
     UPROPERTY(EditAnywhere, Category="Brazul") int32 Field10 = 0;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Brazul") TArray<int32> PathIndices;
+    UPROPERTY(EditAnywhere, Category="Brazul") TArray<int32> PathIndices;
 };
 
 /** One S_BUNCH_STREAM_ENTRY serialized by CActorBunch. */
@@ -598,7 +598,7 @@ USTRUCT(BlueprintType)
 struct FKyaSwitch
 {
     GENERATED_BODY()
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Switch") TArray<FKyaSwitchTarget> Targets;
+    UPROPERTY(EditAnywhere, Category="Switch") TArray<FKyaSwitchTarget> Targets;
     UPROPERTY(EditAnywhere, Category="Switch") FKyaStreamEventCamera Camera;
 };
 
@@ -952,7 +952,7 @@ struct FKyaHeroTutorialZone
     UPROPERTY(EditAnywhere, Category="Hero tutorial") int32 Flags = 0;
     UPROPERTY(EditAnywhere, Category="Hero tutorial") int32 Action = 0;
     UPROPERTY(EditAnywhere, Category="Hero tutorial") float Duration = 0;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Hero tutorial") TArray<FKyaSwitchTarget> Targets;
+    UPROPERTY(EditAnywhere, Category="Hero tutorial") TArray<FKyaSwitchTarget> Targets;
     UPROPERTY(EditAnywhere, Category="Hero tutorial") FKyaStreamEventCamera Camera;
 };
 
@@ -982,21 +982,22 @@ struct FKyaShockerCmdSequence
 {
     GENERATED_BODY()
     UPROPERTY(EditAnywhere, Category="Shocker command sequence") int32 ActorRef = -1;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Shocker command sequence") TArray<float> Values;
+    UPROPERTY(EditAnywhere, Category="Shocker command sequence") TArray<float> Values;
 };
 
 USTRUCT(BlueprintType)
 struct FKyaAkasaStep
 {
     GENERATED_BODY()
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Akasa tutorial") TArray<FString> ComboNames;
+    /** Fixed at no more than two combos per step by the runtime layout. */
+    UPROPERTY(EditAnywhere, Category="Akasa tutorial") TArray<FString> ComboNames;
 };
 
 USTRUCT(BlueprintType)
 struct FKyaAkasaTutorial
 {
     GENERATED_BODY()
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Akasa tutorial") TArray<FKyaAkasaStep> Steps;
+    UPROPERTY(EditAnywhere, Category="Akasa tutorial") TArray<FKyaAkasaStep> Steps;
 };
 
 USTRUCT(BlueprintType)
@@ -1006,8 +1007,9 @@ struct FKyaAkasaBehaviour
     UPROPERTY(VisibleAnywhere, Category="Akasa") bool bHasMaterial = false;
     UPROPERTY(EditAnywhere, Category="Akasa", meta=(EditCondition="bHasMaterial", EditConditionHides)) int32 MaterialId = -1;
     UPROPERTY(EditAnywhere, Category="Akasa", meta=(ClampMin="0", ClampMax="4294967295")) int64 Field8 = 0;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Akasa") TArray<FKyaAkasaTutorial> Tutorials;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Akasa") TArray<FKyaAddOnSubObj> AddOnSubObjs;
+    UPROPERTY(EditAnywhere, Category="Akasa") TArray<FKyaAkasaTutorial> Tutorials;
+    UPROPERTY(EditAnywhere, Category="Akasa") TArray<FKyaAddOnSubObj> AddOnSubObjs;
+    /** Exactly four switch records in the serialized layout. */
     UPROPERTY(EditAnywhere, EditFixedSize, Category="Akasa") TArray<FKyaSwitch> Switches;
 };
 
@@ -1062,7 +1064,7 @@ struct FKyaActorBehaviour
     UPROPERTY(VisibleAnywhere, Category="Behaviour") bool bHasTypedInventoryBehaviour = false;
     UPROPERTY(EditAnywhere, Category="Inventory", meta=(EditCondition="bHasTypedInventoryBehaviour")) FKyaInventoryInfo InventoryInfo;
     UPROPERTY(EditAnywhere, Category="Wolfen behaviour", meta=(EditCondition="bHasTypedWolfenBehaviour")) FKyaWolfenBehaviour WolfenBehaviour;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Companion alert", meta=(EditCondition="bHasTypedCompanionBehaviour")) TArray<FKyaCompanionAlert> CompanionAlerts;
+    UPROPERTY(EditAnywhere, Category="Companion alert", meta=(EditCondition="bHasTypedCompanionBehaviour")) TArray<FKyaCompanionAlert> CompanionAlerts;
     UPROPERTY(VisibleAnywhere, Category="Behaviour") bool bHasTypedBridgeBasicBehaviour = false;
     UPROPERTY(VisibleAnywhere, Category="Behaviour") bool bHasTypedBridgeWindBehaviour = false;
     UPROPERTY(VisibleAnywhere, Category="Behaviour") bool bHasTypedHedgehogBehaviour = false;
@@ -1114,7 +1116,7 @@ struct FKyaActorBehaviour
     UPROPERTY(EditAnywhere, Category="Bunch repel", meta=(EditCondition="bHasTypedBunchRepel")) float BunchRepelField14 = 0;
     UPROPERTY(EditAnywhere, Category="Bunch repel", meta=(EditCondition="bHasTypedBunchRepel")) float BunchRepelShockWaveField10 = 0;
     UPROPERTY(EditAnywhere, Category="Bunch repel", meta=(EditCondition="bHasTypedBunchRepel")) float BunchRepelShockWaveField14 = 0;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Bunch repel", meta=(EditCondition="bHasTypedBunchRepel")) TArray<int32> BunchRepelIndices;
+    UPROPERTY(EditAnywhere, Category="Bunch repel", meta=(EditCondition="bHasTypedBunchRepel")) TArray<int32> BunchRepelIndices;
     UPROPERTY(EditAnywhere, Category="Bunch repel", meta=(EditCondition="bHasTypedBunchRepel")) float BunchRepelDamage = 0;
     UPROPERTY(EditAnywhere, Category="Bunch repel", meta=(EditCondition="bHasTypedBunchRepel")) float BunchRepelMsgHitField30 = 0;
     UPROPERTY(EditAnywhere, Category="Bunch repel", meta=(EditCondition="bHasTypedBunchRepel")) float BunchRepelMsgHitField70 = 0;
@@ -1129,8 +1131,8 @@ struct FKyaActorBehaviour
     UPROPERTY(VisibleAnywhere, Category="Behaviour") bool bHasTypedBunchFence = false;
     UPROPERTY(EditAnywhere, Category="Bunch fence", meta=(EditCondition="bHasTypedBunchFence")) int32 BunchFenceActorRef = -1;
     UPROPERTY(EditAnywhere, Category="Bunch fence", meta=(EditCondition="bHasTypedBunchFence")) int32 BunchFenceWayPointRef = -1;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Bunch fence", meta=(EditCondition="bHasTypedBunchFence")) TArray<int32> BunchFenceWayPoints;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Bunch fence", meta=(EditCondition="bHasTypedBunchFence")) TArray<FKyaBunchFenceGroup> BunchFenceGroups;
+    UPROPERTY(EditAnywhere, Category="Bunch fence", meta=(EditCondition="bHasTypedBunchFence")) TArray<int32> BunchFenceWayPoints;
+    UPROPERTY(EditAnywhere, Category="Bunch fence", meta=(EditCondition="bHasTypedBunchFence")) TArray<FKyaBunchFenceGroup> BunchFenceGroups;
     UPROPERTY(EditAnywhere, Category="Bunch fence", meta=(EditCondition="bHasTypedBunchFence")) int32 BunchFenceMeshF0Texture = 0;
     UPROPERTY(EditAnywhere, Category="Bunch fence", meta=(EditCondition="bHasTypedBunchFence")) int32 BunchFenceMeshF0Mesh = 0;
     UPROPERTY(EditAnywhere, Category="Bunch fence", meta=(EditCondition="bHasTypedBunchFence")) int32 BunchFenceMesh70Texture = 0;
@@ -1138,7 +1140,7 @@ struct FKyaActorBehaviour
     UPROPERTY(EditAnywhere, EditFixedSize, Category="Bunch fence", meta=(EditCondition="bHasTypedBunchFence")) TArray<int32> BunchFenceFxTypes;
     /** CBehaviourBrazulA (id 26). */
     UPROPERTY(VisibleAnywhere, Category="Behaviour") bool bHasTypedBrazulA = false;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Brazul behaviour", meta=(EditCondition="bHasTypedBrazulA")) TArray<FKyaBrazulSubObj> BrazulSubObjs;
+    UPROPERTY(EditAnywhere, Category="Brazul behaviour", meta=(EditCondition="bHasTypedBrazulA")) TArray<FKyaBrazulSubObj> BrazulSubObjs;
     /** CBehaviourBrazulB (id 27). */
     UPROPERTY(VisibleAnywhere, Category="Behaviour") bool bHasTypedBrazulB = false;
     UPROPERTY(EditAnywhere, Category="Brazul behaviour", meta=(EditCondition="bHasTypedBrazulB")) int32 BrazulBWayPointRef = -1;
@@ -1146,13 +1148,13 @@ struct FKyaActorBehaviour
     /** CBehaviourMiniGameBetting (id 3) shared by all minigame classes. */
     UPROPERTY(VisibleAnywhere, Category="Behaviour") bool bHasTypedMiniGameBetting = false;
     UPROPERTY(EditAnywhere, EditFixedSize, Category="Minigame behaviour", meta=(EditCondition="bHasTypedMiniGameBetting")) TArray<FKyaMiniGameBet> MiniGameBets;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Behaviour", meta=(EditCondition="!bHasTypedJamGutBehaviour && !bHasTypedEmptyBehaviour && !bHasTypedWoodMonsterBehaviour && !bHasTypedHelperSignBehaviour && !bHasTypedClusterZones && !bHasTypedFxBehaviour && !bHasTypedTrapBehaviour && !bHasTypedWeaponBehaviour && !bHasTypedBonusBehaviour && !bHasTypedMickenBehaviour && !bHasTypedFruitBehaviour && !bHasTypedCommanderBehaviour && !bHasTypedNativBehaviour && !bHasTypedCinematicBehaviour && !bHasTypedDcaControlledBehaviour && !bHasTypedDcaTrajectoryBehaviour && !bHasTypedFogBehaviour && !bHasTypedShootFireBehaviour && !bHasTypedShootWaveBehaviour && !bHasTypedGravityFallBehaviour && !bHasTypedGravityBellBehaviour && !bHasTypedBridgeBasicBehaviour && !bHasTypedBridgeWindBehaviour && !bHasTypedCompanionBehaviour && !bHasTypedPlatformBehaviour && !bHasTypedProjectileBehaviour && !bHasTypedSwitchBehaviour && !bHasTypedWolfenBehaviour && !bHasTypedCatchByTrapBehaviour && !bHasTypedHeroUnknownBehaviour && !bHasTypedInventoryBehaviour && !bHasTypedHedgehogBehaviour && !bHasTypedMoneyFlockBehaviour")) TArray<uint8> Data;
+    UPROPERTY(EditAnywhere, Category="Behaviour", meta=(EditCondition="!bHasTypedJamGutBehaviour && !bHasTypedEmptyBehaviour && !bHasTypedWoodMonsterBehaviour && !bHasTypedHelperSignBehaviour && !bHasTypedClusterZones && !bHasTypedFxBehaviour && !bHasTypedTrapBehaviour && !bHasTypedWeaponBehaviour && !bHasTypedBonusBehaviour && !bHasTypedMickenBehaviour && !bHasTypedFruitBehaviour && !bHasTypedCommanderBehaviour && !bHasTypedNativBehaviour && !bHasTypedCinematicBehaviour && !bHasTypedDcaControlledBehaviour && !bHasTypedDcaTrajectoryBehaviour && !bHasTypedFogBehaviour && !bHasTypedShootFireBehaviour && !bHasTypedShootWaveBehaviour && !bHasTypedGravityFallBehaviour && !bHasTypedGravityBellBehaviour && !bHasTypedBridgeBasicBehaviour && !bHasTypedBridgeWindBehaviour && !bHasTypedCompanionBehaviour && !bHasTypedPlatformBehaviour && !bHasTypedProjectileBehaviour && !bHasTypedSwitchBehaviour && !bHasTypedWolfenBehaviour && !bHasTypedCatchByTrapBehaviour && !bHasTypedHeroUnknownBehaviour && !bHasTypedInventoryBehaviour && !bHasTypedHedgehogBehaviour && !bHasTypedMoneyFlockBehaviour")) TArray<uint8> Data;
     /** Decoded for clusteriser class 0x18, behaviour 2. */
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Cluster zones", meta=(EditCondition="bHasTypedClusterZones")) TArray<FKyaClusterZone> ClusterZones;
+    UPROPERTY(EditAnywhere, Category="Cluster zones", meta=(EditCondition="bHasTypedClusterZones")) TArray<FKyaClusterZone> ClusterZones;
     /** Decoded for FX class 0x2e behaviours 2 and 3 (and 4 as a generic integer list). */
     UPROPERTY(EditAnywhere, Category="FX behaviour", meta=(EditCondition="bHasTypedFxBehaviour")) int32 FxBehaviourValue = 0;
     UPROPERTY(EditAnywhere, Category="FX behaviour", meta=(EditCondition="bHasTypedFxBehaviour && Id == 3")) int32 FxPathFollowIndex = -1;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="FX behaviour", meta=(EditCondition="bHasTypedFxBehaviour && Id == 4")) TArray<int32> FxUnknownValues;
+    UPROPERTY(EditAnywhere, Category="FX behaviour", meta=(EditCondition="bHasTypedFxBehaviour && Id == 4")) TArray<int32> FxUnknownValues;
     /** Trap behaviour 2: flags/default behaviour/catch effect; behaviour 3: message/flags/active behaviour. */
     UPROPERTY(EditAnywhere, Category="Trap behaviour", meta=(EditCondition="bHasTypedTrapBehaviour")) int32 TrapBehaviourField0 = 0;
     UPROPERTY(EditAnywhere, Category="Trap behaviour", meta=(EditCondition="bHasTypedTrapBehaviour")) int32 TrapBehaviourField4 = 0;
@@ -1166,7 +1168,7 @@ struct FKyaActorBehaviour
     UPROPERTY(EditAnywhere, Category="Weapon behaviour", meta=(EditCondition="bHasTypedWeaponBehaviour")) int32 WeaponSniperTextureIndex = 0;
     UPROPERTY(EditAnywhere, Category="Weapon behaviour", meta=(EditCondition="bHasTypedWeaponBehaviour")) int32 WeaponSniperMeshIndex = 0;
     UPROPERTY(EditAnywhere, Category="Weapon behaviour", meta=(EditCondition="bHasTypedWeaponBehaviour")) int32 WeaponSniperMaterialId = -1;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Weapon behaviour", meta=(EditCondition="bHasTypedWeaponBehaviour")) TArray<int32> WeaponRpgActorRefs;
+    UPROPERTY(EditAnywhere, Category="Weapon behaviour", meta=(EditCondition="bHasTypedWeaponBehaviour")) TArray<int32> WeaponRpgActorRefs;
     UPROPERTY(EditAnywhere, Category="Bonus behaviour", meta=(EditCondition="bHasTypedBonusBehaviour")) float BonusField14 = 0;
     UPROPERTY(EditAnywhere, Category="Bonus behaviour", meta=(EditCondition="bHasTypedBonusBehaviour")) float BonusField1B8 = 0;
     UPROPERTY(EditAnywhere, Category="Bonus behaviour", meta=(EditCondition="bHasTypedBonusBehaviour")) float BonusField1B4 = 0;
@@ -1204,12 +1206,12 @@ struct FKyaActorBehaviour
     UPROPERTY(EditAnywhere, Category="Fruit behaviour", meta=(EditCondition="bHasTypedFruitBehaviour")) int32 FruitInventoryInitialBehaviour = 0;
     UPROPERTY(EditAnywhere, EditFixedSize, Category="Commander behaviour", meta=(EditCondition="bHasTypedCommanderBehaviour")) TArray<int32> CommanderSquadConfig;
     UPROPERTY(EditAnywhere, Category="Commander behaviour", meta=(EditCondition="bHasTypedCommanderBehaviour")) FKyaSwitch CommanderSwitch;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Nativ behaviour", meta=(EditCondition="bHasTypedNativBehaviour && Id == 6", EditConditionHides)) TArray<FKyaNativTrajectory> NativTrajectories;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Nativ behaviour", meta=(EditCondition="bHasTypedNativBehaviour && Id == 3", EditConditionHides)) TArray<FVector2D> NativSpeakValues;
+    UPROPERTY(EditAnywhere, Category="Nativ behaviour", meta=(EditCondition="bHasTypedNativBehaviour && Id == 6", EditConditionHides)) TArray<FKyaNativTrajectory> NativTrajectories;
+    UPROPERTY(EditAnywhere, Category="Nativ behaviour", meta=(EditCondition="bHasTypedNativBehaviour && Id == 3", EditConditionHides)) TArray<FVector2D> NativSpeakValues;
     UPROPERTY(EditAnywhere, Category="Nativ behaviour", meta=(EditCondition="bHasTypedNativBehaviour && Id == 5", EditConditionHides)) float NativLiveField8 = 0;
     UPROPERTY(EditAnywhere, Category="Nativ behaviour", meta=(EditCondition="bHasTypedNativBehaviour && Id == 5", EditConditionHides)) float NativLiveFieldC = 0;
     UPROPERTY(EditAnywhere, Category="Nativ behaviour", meta=(EditCondition="bHasTypedNativBehaviour && Id == 7", EditConditionHides)) float NativSellerField8 = 0;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Nativ behaviour", meta=(EditCondition="bHasTypedNativBehaviour && Id == 7", EditConditionHides)) TArray<FKyaAddOnSubObj> NativSellerSubObjs;
+    UPROPERTY(EditAnywhere, Category="Nativ behaviour", meta=(EditCondition="bHasTypedNativBehaviour && Id == 7", EditConditionHides)) TArray<FKyaAddOnSubObj> NativSellerSubObjs;
     /** CBehaviourCinematic serialized leave-behaviour id. */
     UPROPERTY(EditAnywhere, Category="Cinematic behaviour", meta=(EditCondition="bHasTypedCinematicBehaviour")) int32 CinematicLeaveBehaviourId = -1;
     /** CActorDCA::CBhvControlled tuning. */
@@ -1224,11 +1226,11 @@ struct FKyaActorBehaviour
     UPROPERTY(EditAnywhere, Category="DCA behaviour", meta=(EditCondition="bHasTypedDcaTrajectoryBehaviour")) float DcaTrajectoryField18 = 0;
     UPROPERTY(EditAnywhere, Category="DCA behaviour", meta=(EditCondition="bHasTypedDcaTrajectoryBehaviour")) int32 DcaTrajectoryField8 = 0;
     /** Fog-manager behaviour 2 streamed fog zones. */
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Fog behaviour", meta=(EditCondition="bHasTypedFogBehaviour")) TArray<FKyaFogZone> FogZones;
+    UPROPERTY(EditAnywhere, Category="Fog behaviour", meta=(EditCondition="bHasTypedFogBehaviour")) TArray<FKyaFogZone> FogZones;
     UPROPERTY(EditAnywhere, Category="Shoot behaviour", meta=(EditCondition="bHasTypedShootFireBehaviour")) int32 ShootFireField2B0 = 0;
     UPROPERTY(EditAnywhere, Category="Shoot behaviour", meta=(EditCondition="bHasTypedShootFireBehaviour")) float ShootFireField8 = 0;
     UPROPERTY(EditAnywhere, Category="Shoot behaviour", meta=(EditCondition="bHasTypedShootFireBehaviour")) float ShootFireField2B4 = 0;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Shoot behaviour", meta=(EditCondition="bHasTypedShootFireBehaviour")) TArray<int32> ShootFireActorRefs;
+    UPROPERTY(EditAnywhere, Category="Shoot behaviour", meta=(EditCondition="bHasTypedShootFireBehaviour")) TArray<int32> ShootFireActorRefs;
     UPROPERTY(EditAnywhere, EditFixedSize, Category="Shoot behaviour", meta=(EditCondition="bHasTypedShootWaveBehaviour")) TArray<float> ShootWaveValues;
     UPROPERTY(EditAnywhere, Category="Gravity behaviour", meta=(EditCondition="bHasTypedGravityFallBehaviour")) int32 GravityFallSoundRef = -1;
     UPROPERTY(EditAnywhere, Category="Gravity behaviour", meta=(EditCondition="bHasTypedGravityBellBehaviour")) int32 GravityBellSoundRef = -1;
@@ -1284,7 +1286,7 @@ struct FKyaPlatformNoFrictionZone
 {
     GENERATED_BODY()
     UPROPERTY(EditAnywhere, Category="Moving platform") int32 ZoneRef = 0;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Moving platform") TArray<int32> Actors;
+    UPROPERTY(EditAnywhere, Category="Moving platform") TArray<int32> Actors;
 };
 
 USTRUCT(BlueprintType)
@@ -1462,7 +1464,7 @@ struct FKyaBlazerData
     UPROPERTY(EditAnywhere, Category="Blazer") float PushValue = 0;
     UPROPERTY(EditAnywhere, Category="Blazer") float PushSpringStrength = 0;
     UPROPERTY(EditAnywhere, Category="Blazer") float PushDamping = 0;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Blazer") TArray<int32> ActorRefs;
+    UPROPERTY(EditAnywhere, Category="Blazer") TArray<int32> ActorRefs;
 };
 
 USTRUCT(BlueprintType)
@@ -1492,7 +1494,7 @@ struct FKyaWoofData
     UPROPERTY(EditAnywhere, Category="Woof") float VisionExtent38 = 0;
     UPROPERTY(EditAnywhere, Category="Woof") float VisionExtent3C = 0;
     UPROPERTY(EditAnywhere, Category="Woof", meta=(ClampMin="0", ClampMax="4294967295")) int64 VisionFlags = 0;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Woof") TArray<int32> ActorRefs;
+    UPROPERTY(EditAnywhere, Category="Woof") TArray<int32> ActorRefs;
 };
 
 USTRUCT(BlueprintType)
@@ -1613,9 +1615,9 @@ struct FKyaActorPlacement
     UPROPERTY(EditAnywhere, Category="Actor") FVector Position = FVector::ZeroVector;
     UPROPERTY(EditAnywhere, Category="Actor") FVector Rotation = FVector::ZeroVector;
     UPROPERTY(EditAnywhere, Category="Actor") FVector Scale = FVector::OneVector;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Animation") TArray<FKyaActorMacroAnimation> MacroAnimations;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Behaviour") TArray<FKyaActorBehaviour> Behaviours;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Model") TArray<FKyaActorModelReference> Models;
+    UPROPERTY(EditAnywhere, Category="Animation") TArray<FKyaActorMacroAnimation> MacroAnimations;
+    UPROPERTY(EditAnywhere, Category="Behaviour") TArray<FKyaActorBehaviour> Behaviours;
+    UPROPERTY(EditAnywhere, Category="Model") TArray<FKyaActorModelReference> Models;
     UPROPERTY(EditAnywhere, Category="Actor settings") int32 DefaultBehaviourId = 0;
     UPROPERTY(EditAnywhere, Category="Actor settings") FVector4 BoundingSphere = FVector4(0, 0, 0, 0);
     UPROPERTY(EditAnywhere, Category="Actor settings") float Clipping = 0;
@@ -1637,19 +1639,19 @@ struct FKyaActorPlacement
     UPROPERTY(VisibleAnywhere, Category="Moving platform") bool bHasPlatformPrefix = false;
     /** CActorMovable weightB read before the moving-platform prefix. */
     UPROPERTY(EditAnywhere, Category="Moving platform", meta=(EditCondition="bHasPlatformPrefix")) float PlatformWeight = 0;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Moving platform", meta=(EditCondition="bHasPlatformPrefix")) TArray<FKyaPlatformActor> PlatformActors;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Moving platform", meta=(EditCondition="bHasPlatformPrefix")) TArray<int32> PlatformZones;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Moving platform", meta=(EditCondition="bHasPlatformPrefix")) TArray<FKyaPlatformNoFrictionZone> PlatformNoFrictionZones;
+    UPROPERTY(EditAnywhere, Category="Moving platform", meta=(EditCondition="bHasPlatformPrefix")) TArray<FKyaPlatformActor> PlatformActors;
+    UPROPERTY(EditAnywhere, Category="Moving platform", meta=(EditCondition="bHasPlatformPrefix")) TArray<int32> PlatformZones;
+    UPROPERTY(EditAnywhere, Category="Moving platform", meta=(EditCondition="bHasPlatformPrefix")) TArray<FKyaPlatformNoFrictionZone> PlatformNoFrictionZones;
     UPROPERTY(VisibleAnywhere, Category="Moving platform") bool bHasPlatformDetails = false;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Moving platform", meta=(EditCondition="bHasPlatformDetails")) TArray<FKyaPlatformCamera> PlatformCameras;
+    UPROPERTY(EditAnywhere, Category="Moving platform", meta=(EditCondition="bHasPlatformDetails")) TArray<FKyaPlatformCamera> PlatformCameras;
     UPROPERTY(EditAnywhere, Category="Moving platform", meta=(EditCondition="bHasPlatformDetails")) FKyaPlatformProperties PlatformProperties;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Moving platform", meta=(EditCondition="bHasPlatformDetails")) TArray<FKyaPlatformSound> PlatformSoundsA;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Moving platform", meta=(EditCondition="bHasPlatformDetails")) TArray<FKyaPlatformSound> PlatformSoundsB;
+    UPROPERTY(EditAnywhere, Category="Moving platform", meta=(EditCondition="bHasPlatformDetails")) TArray<FKyaPlatformSound> PlatformSoundsA;
+    UPROPERTY(EditAnywhere, Category="Moving platform", meta=(EditCondition="bHasPlatformDetails")) TArray<FKyaPlatformSound> PlatformSoundsB;
     UPROPERTY(VisibleAnywhere, Category="Basic box") bool bHasBasicBoxData = false;
     UPROPERTY(EditAnywhere, Category="Basic box", meta=(EditCondition="bHasBasicBoxData")) int32 BasicBoxField160 = 0;
     /** Serialized as an integer; the game converts it to the starting life value. */
     UPROPERTY(EditAnywhere, Category="Basic box", meta=(EditCondition="bHasBasicBoxData")) int64 BasicBoxLifeMax = 0;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Basic box", meta=(EditCondition="bHasBasicBoxData")) TArray<int32> BasicBoxActorRefs;
+    UPROPERTY(EditAnywhere, Category="Basic box", meta=(EditCondition="bHasBasicBoxData")) TArray<int32> BasicBoxActorRefs;
     UPROPERTY(EditAnywhere, Category="Basic box", meta=(EditCondition="bHasBasicBoxData")) float BasicBoxVibration0 = 0;
     UPROPERTY(EditAnywhere, Category="Basic box", meta=(EditCondition="bHasBasicBoxData")) float BasicBoxVibration1 = 0;
     UPROPERTY(EditAnywhere, Category="Basic box", meta=(EditCondition="bHasBasicBoxData")) float BasicBoxVibration2 = 0;
@@ -1721,7 +1723,7 @@ struct FKyaActorPlacement
     UPROPERTY(EditAnywhere, Category="Wind", meta=(EditCondition="bHasWindData")) int32 WindField190 = 0;
     UPROPERTY(EditAnywhere, Category="Wind", meta=(EditCondition="bHasWindData")) int32 WindSoundRef = 0;
     UPROPERTY(EditAnywhere, Category="Wind", meta=(EditCondition="bHasWindData")) int32 WindActivationZoneIndex = -1;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Wind", meta=(EditCondition="bHasWindData")) TArray<int32> WindActorRefs;
+    UPROPERTY(EditAnywhere, Category="Wind", meta=(EditCondition="bHasWindData")) TArray<int32> WindActorRefs;
     UPROPERTY(EditAnywhere, Category="Wind", meta=(EditCondition="bHasWindData")) int32 WindMaterialId = 0;
     UPROPERTY(EditAnywhere, Category="Wind", meta=(EditCondition="bHasWindData")) int32 WindZoneRef1C4 = -1;
     UPROPERTY(EditAnywhere, Category="Wind", meta=(EditCondition="bHasWindData")) int32 WindColor1C8 = 0;
@@ -1741,7 +1743,7 @@ struct FKyaActorPlacement
     UPROPERTY(VisibleAnywhere, Category="Trap") bool bHasTrapData = false;
     /** CActorMovable weightB read before the trap payload. */
     UPROPERTY(EditAnywhere, Category="Trap", meta=(EditCondition="bHasTrapData")) float TrapWeightB = 0;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Trap", meta=(EditCondition="bHasTrapData")) TArray<int32> TrapActorRefs;
+    UPROPERTY(EditAnywhere, Category="Trap", meta=(EditCondition="bHasTrapData")) TArray<int32> TrapActorRefs;
     UPROPERTY(EditAnywhere, Category="Trap", meta=(EditCondition="bHasTrapData")) int32 TrapField14 = 0;
     UPROPERTY(EditAnywhere, Category="Trap", meta=(EditCondition="bHasTrapData")) int32 TrapField18 = 0;
     UPROPERTY(EditAnywhere, Category="Trap", meta=(EditCondition="bHasTrapData")) int32 TrapField1C = 0;
@@ -1754,7 +1756,7 @@ struct FKyaActorPlacement
     UPROPERTY(EditAnywhere, Category="Trap", meta=(EditCondition="bHasTrapData")) int32 TrapPathFollowIndex = -1;
     UPROPERTY(EditAnywhere, Category="Trap", meta=(EditCondition="bHasTrapData")) float TrapField4C = 0;
     UPROPERTY(EditAnywhere, Category="Trap", meta=(EditCondition="bHasTrapData")) int32 TrapRequiredEscapeAttempts = 0;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Trap", meta=(EditCondition="bHasTrapData")) TArray<FKyaTrapStreamEntry> TrapStreamEntries;
+    UPROPERTY(EditAnywhere, Category="Trap", meta=(EditCondition="bHasTrapData")) TArray<FKyaTrapStreamEntry> TrapStreamEntries;
     UPROPERTY(VisibleAnywhere, Category="Weapon") bool bHasWeaponData = false;
     /** CActorMovable weightB read before the weapon payload. */
     UPROPERTY(EditAnywhere, Category="Weapon", meta=(EditCondition="bHasWeaponData")) float WeaponWeightB = 0;
@@ -1838,7 +1840,7 @@ struct FKyaActorPlacement
     UPROPERTY(EditAnywhere, Category="Teleporter", meta=(EditCondition="bHasTeleporterData")) int32 TeleporterSubsectorMaterialId = 0;
     UPROPERTY(EditAnywhere, Category="Teleporter", meta=(EditCondition="bHasTeleporterData")) int64 TeleporterHash = 0;
     UPROPERTY(EditAnywhere, Category="Teleporter", meta=(EditCondition="bHasTeleporterData")) int32 TeleporterField16C = 0;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Teleporter", meta=(EditCondition="bHasTeleporterData")) TArray<FKyaTeleporterDestination> TeleporterDestinations;
+    UPROPERTY(EditAnywhere, Category="Teleporter", meta=(EditCondition="bHasTeleporterData")) TArray<FKyaTeleporterDestination> TeleporterDestinations;
     UPROPERTY(EditAnywhere, Category="Teleporter", meta=(EditCondition="bHasTeleporterData")) FKyaSwitch TeleporterSwitch170;
     UPROPERTY(EditAnywhere, Category="Teleporter", meta=(EditCondition="bHasTeleporterData")) FKyaSwitch TeleporterSwitch178;
     UPROPERTY(EditAnywhere, Category="Teleporter", meta=(EditCondition="bHasTeleporterData")) FKyaSwitch TeleporterSwitch180;
@@ -1851,8 +1853,8 @@ struct FKyaActorPlacement
     UPROPERTY(EditAnywhere, Category="Teleporter", meta=(EditCondition="bHasTeleporterData")) int32 TeleporterField1D8 = -1;
     UPROPERTY(EditAnywhere, Category="Teleporter", meta=(EditCondition="bHasTeleporterData")) int32 TeleporterMaterialId3 = 0;
     UPROPERTY(EditAnywhere, Category="Teleporter", meta=(EditCondition="bHasTeleporterData")) int32 TeleporterField1E0 = -1;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Teleporter", meta=(EditCondition="bHasTeleporterData")) TArray<FKyaTeleporterWaypoint> TeleporterWaypoints;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Teleporter condition", meta=(EditCondition="bHasTeleporterData")) TArray<FKyaTeleporterBlock> TeleporterConditionedOperations;
+    UPROPERTY(EditAnywhere, Category="Teleporter", meta=(EditCondition="bHasTeleporterData")) TArray<FKyaTeleporterWaypoint> TeleporterWaypoints;
+    UPROPERTY(EditAnywhere, Category="Teleporter condition", meta=(EditCondition="bHasTeleporterData")) TArray<FKyaTeleporterBlock> TeleporterConditionedOperations;
     UPROPERTY(VisibleAnywhere, Category="DCA") bool bHasDcaData = false;
     UPROPERTY(EditAnywhere, Category="DCA", meta=(EditCondition="bHasDcaData")) int32 DcaField504 = -1;
     UPROPERTY(EditAnywhere, Category="DCA", meta=(EditCondition="bHasDcaData")) int32 DcaField500 = -1;
@@ -1861,7 +1863,7 @@ struct FKyaActorPlacement
     UPROPERTY(EditAnywhere, Category="DCA", meta=(EditCondition="bHasDcaData")) int32 DcaField50C = -1;
     /** Serialized in degrees; the game converts it to radians when created. */
     UPROPERTY(EditAnywhere, Category="DCA", meta=(EditCondition="bHasDcaData")) float DcaAimAdjustDegrees = 0;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="DCA", meta=(EditCondition="bHasDcaData")) TArray<int32> DcaShotActorRefs;
+    UPROPERTY(EditAnywhere, Category="DCA", meta=(EditCondition="bHasDcaData")) TArray<int32> DcaShotActorRefs;
     UPROPERTY(EditAnywhere, Category="DCA", meta=(EditCondition="bHasDcaData")) int32 DcaField450 = 0;
     UPROPERTY(EditAnywhere, Category="DCA", meta=(EditCondition="bHasDcaData")) int32 DcaField454 = 0;
     UPROPERTY(VisibleAnywhere, Category="Box") bool bHasBoxData = false;
@@ -1871,7 +1873,7 @@ struct FKyaActorPlacement
     UPROPERTY(EditAnywhere, Category="Box", meta=(EditCondition="bHasBoxData")) float BoxDynamicExtField4 = 0;
     UPROPERTY(EditAnywhere, Category="Box", meta=(EditCondition="bHasBoxData")) float BoxDynamicExtField8 = 0;
     UPROPERTY(EditAnywhere, Category="Box", meta=(EditCondition="bHasBoxData")) int32 BoxField350 = 0;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Box", meta=(EditCondition="bHasBoxData")) TArray<int32> BoxActorRefs;
+    UPROPERTY(EditAnywhere, Category="Box", meta=(EditCondition="bHasBoxData")) TArray<int32> BoxActorRefs;
     UPROPERTY(EditAnywhere, Category="Box", meta=(EditCondition="bHasBoxData")) float BoxField354 = 0;
     UPROPERTY(EditAnywhere, Category="Box", meta=(EditCondition="bHasBoxData")) float BoxField358 = 0;
     UPROPERTY(EditAnywhere, Category="Box", meta=(EditCondition="bHasBoxData")) float BoxField35C = 0;
@@ -1890,7 +1892,7 @@ struct FKyaActorPlacement
     UPROPERTY(EditAnywhere, Category="Money", meta=(EditCondition="bHasMoneyData")) int32 MoneySoundRef = -1;
     UPROPERTY(EditAnywhere, Category="Money", meta=(EditCondition="bHasMoneyData")) int32 MoneyMaterialId = -1;
     UPROPERTY(VisibleAnywhere, Category="Fog") bool bHasFogData = false;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Fog", meta=(EditCondition="bHasFogData")) TArray<FKyaFogHierarchy> FogHierarchies;
+    UPROPERTY(EditAnywhere, Category="Fog", meta=(EditCondition="bHasFogData")) TArray<FKyaFogHierarchy> FogHierarchies;
     UPROPERTY(VisibleAnywhere, Category="Shoot") bool bHasShootData = false;
     UPROPERTY(EditAnywhere, Category="Shoot", meta=(EditCondition="bHasShootData")) float ShootWeightB = 0;
     UPROPERTY(EditAnywhere, Category="Shoot", meta=(EditCondition="bHasShootData")) int64 ShootLifeMax = 0;
@@ -1966,16 +1968,16 @@ struct FKyaActorPlacement
     UPROPERTY(EditAnywhere, Category="Care boy", meta=(EditCondition="bHasCareBoyData", EditConditionHides)) int32 CareBoyField1E0 = 0;
     UPROPERTY(EditAnywhere, Category="Egg", meta=(EditCondition="bHasEggData", EditConditionHides)) float EggWeightB = 0;
     UPROPERTY(EditAnywhere, Category="Egg", meta=(EditCondition="bHasEggData", EditConditionHides)) float EggField1D8 = 0;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Egg", meta=(EditCondition="bHasEggData", EditConditionHides)) TArray<int32> EggPathIndices;
+    UPROPERTY(EditAnywhere, Category="Egg", meta=(EditCondition="bHasEggData", EditConditionHides)) TArray<int32> EggPathIndices;
     UPROPERTY(EditAnywhere, Category="Egg", meta=(EditCondition="bHasEggData", EditConditionHides, ClampMin="0", ClampMax="4294967295")) int64 EggField1DC = 0;
     UPROPERTY(EditAnywhere, Category="Egg", meta=(EditCondition="bHasEggData", EditConditionHides, ClampMin="0", ClampMax="4294967295")) int64 EggField1E0 = 0;
     UPROPERTY(EditAnywhere, Category="Pattern command", meta=(EditCondition="bHasPatternCmdData", EditConditionHides, ClampMin="0", ClampMax="4294967295")) int64 PatternCmdField164 = 0;
     UPROPERTY(EditAnywhere, Category="Pattern command", meta=(EditCondition="bHasPatternCmdData", EditConditionHides, ClampMin="0", ClampMax="4294967295")) int64 PatternCmdField160 = 0;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Pattern command", meta=(EditCondition="bHasPatternCmdData", EditConditionHides)) TArray<int32> PatternCmdActorRefs;
+    UPROPERTY(EditAnywhere, Category="Pattern command", meta=(EditCondition="bHasPatternCmdData", EditConditionHides)) TArray<int32> PatternCmdActorRefs;
     UPROPERTY(EditAnywhere, Category="Pattern command", meta=(EditCondition="bHasPatternCmdData", EditConditionHides)) float PatternCmdField1F0 = 0;
     UPROPERTY(EditAnywhere, Category="Pattern command", meta=(EditCondition="bHasPatternCmdData", EditConditionHides)) float PatternCmdField1F4 = 0;
     UPROPERTY(EditAnywhere, Category="Pattern command", meta=(EditCondition="bHasPatternCmdData", EditConditionHides)) FKyaPatternPart PatternCmdPattern;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Amortos command", meta=(EditCondition="bHasAmortosCmdData", EditConditionHides)) TArray<int32> AmortosCmdActorRefs;
+    UPROPERTY(EditAnywhere, Category="Amortos command", meta=(EditCondition="bHasAmortosCmdData", EditConditionHides)) TArray<int32> AmortosCmdActorRefs;
     UPROPERTY(EditAnywhere, Category="Add-on purchase", meta=(EditCondition="bHasAddOnPurchaseData", EditConditionHides)) FKyaPurchaseInventory AddOnPurchaseInventory;
     UPROPERTY(EditAnywhere, Category="Acceleratos", meta=(EditCondition="bHasAcceleratosData", EditConditionHides)) float AcceleratosField0 = 0;
     UPROPERTY(EditAnywhere, Category="Acceleratos", meta=(EditCondition="bHasAcceleratosData", EditConditionHides)) float AcceleratosField4 = 0;
@@ -1983,7 +1985,7 @@ struct FKyaActorPlacement
     UPROPERTY(EditAnywhere, Category="Acceleratos", meta=(EditCondition="bHasAcceleratosData", EditConditionHides)) int32 AcceleratosSoundC = -1;
     UPROPERTY(EditAnywhere, Category="Acceleratos", meta=(EditCondition="bHasAcceleratosData", EditConditionHides)) int32 AcceleratosSound10 = -1;
     UPROPERTY(EditAnywhere, Category="Shocker command", meta=(EditCondition="bHasShockerCmdData", EditConditionHides, ClampMin="0", ClampMax="4294967295")) int64 ShockerCmdField168 = 0;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Shocker command", meta=(EditCondition="bHasShockerCmdData", EditConditionHides)) TArray<FKyaShockerCmdSequence> ShockerCmdSequences;
+    UPROPERTY(EditAnywhere, Category="Shocker command", meta=(EditCondition="bHasShockerCmdData", EditConditionHides)) TArray<FKyaShockerCmdSequence> ShockerCmdSequences;
     UPROPERTY(EditAnywhere, Category="Wood monster", meta=(EditCondition="bHasWoodMonsterData", EditConditionHides)) FVector4 WoodMonsterField160 = FVector4(0, 0, 0, 0);
     UPROPERTY(EditAnywhere, Category="Helper sign", meta=(EditCondition="bHasHelperSignData", EditConditionHides)) int32 HelperSignField168 = 0;
     /** Signed container retains all 64 serialized bits, including high-bit hashes. */
@@ -2015,7 +2017,7 @@ struct FKyaActorPlacement
     UPROPERTY(EditAnywhere, Category="Stiller", meta=(EditCondition="bHasStillerData")) float StillerField1F0 = 0;
     UPROPERTY(EditAnywhere, Category="Stiller", meta=(EditCondition="bHasStillerData")) float StillerField1F4 = 0;
     UPROPERTY(EditAnywhere, Category="Stiller", meta=(EditCondition="bHasStillerData")) int32 StillerField1F8 = 0;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Stiller", meta=(EditCondition="bHasStillerData")) TArray<int32> StillerActorRefs;
+    UPROPERTY(EditAnywhere, Category="Stiller", meta=(EditCondition="bHasStillerData")) TArray<int32> StillerActorRefs;
     UPROPERTY(EditAnywhere, Category="Stiller", meta=(EditCondition="bHasStillerData")) int32 StillerField200 = 0;
     UPROPERTY(EditAnywhere, Category="Stiller", meta=(EditCondition="bHasStillerData")) FKyaSwitch StillerSwitch208;
     UPROPERTY(EditAnywhere, Category="Stiller", meta=(EditCondition="bHasStillerData")) FKyaSwitch StillerSwitch210;
@@ -2097,7 +2099,7 @@ struct FKyaActorPlacement
     UPROPERTY(EditAnywhere, Category="Punching ball", meta=(EditCondition="bHasPunchingBallData")) float PunchingBallFieldA84 = 0;
     UPROPERTY(EditAnywhere, Category="Punching ball", meta=(EditCondition="bHasPunchingBallData")) float PunchingBallFieldA88 = 0;
     UPROPERTY(EditAnywhere, Category="Punching ball", meta=(EditCondition="bHasPunchingBallData")) float PunchingBallFieldA8C = 0;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Punching ball", meta=(EditCondition="bHasPunchingBallData")) TArray<FKyaPunchingBallTrapEntry> PunchingBallTrapEntries;
+    UPROPERTY(EditAnywhere, Category="Punching ball", meta=(EditCondition="bHasPunchingBallData")) TArray<FKyaPunchingBallTrapEntry> PunchingBallTrapEntries;
     UPROPERTY(EditAnywhere, Category="Punching ball", meta=(EditCondition="bHasPunchingBallData")) int32 PunchingBallActorRefA94 = -1;
     UPROPERTY(EditAnywhere, Category="Punching ball", meta=(EditCondition="bHasPunchingBallData")) int32 PunchingBallActorRefA98 = -1;
     /** CCamFigData::Create: exactly fourteen floats. */
@@ -2116,9 +2118,9 @@ struct FKyaActorPlacement
     UPROPERTY(EditAnywhere, Category="Nose monster", meta=(EditCondition="bHasNoseMonsterData")) int32 NoseMonsterField364 = 0;
     UPROPERTY(EditAnywhere, Category="Nose monster", meta=(EditCondition="bHasNoseMonsterData")) float NoseMonsterField370 = 0;
     UPROPERTY(EditAnywhere, Category="Nose monster", meta=(EditCondition="bHasNoseMonsterData")) float NoseMonsterField374 = 0;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Nose monster", meta=(EditCondition="bHasNoseMonsterData")) TArray<FKyaNoseMonsterZonePath> NoseMonsterZonePathEntries;
+    UPROPERTY(EditAnywhere, Category="Nose monster", meta=(EditCondition="bHasNoseMonsterData")) TArray<FKyaNoseMonsterZonePath> NoseMonsterZonePathEntries;
     UPROPERTY(EditAnywhere, Category="Nose monster", meta=(EditCondition="bHasNoseMonsterData")) int32 NoseMonsterField36C = 0;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Nose monster", meta=(EditCondition="bHasNoseMonsterData")) TArray<int32> NoseMonsterFireShotActorRefs;
+    UPROPERTY(EditAnywhere, Category="Nose monster", meta=(EditCondition="bHasNoseMonsterData")) TArray<int32> NoseMonsterFireShotActorRefs;
     UPROPERTY(EditAnywhere, Category="Nose monster", meta=(EditCondition="bHasNoseMonsterData")) int32 NoseMonsterField630 = -1;
     UPROPERTY(EditAnywhere, Category="Nose monster", meta=(EditCondition="bHasNoseMonsterData")) int32 NoseMonsterField380 = 0;
     UPROPERTY(EditAnywhere, Category="Nose monster", meta=(EditCondition="bHasNoseMonsterData")) float NoseMonsterField690 = 0;
@@ -2142,8 +2144,8 @@ struct FKyaActorPlacement
     UPROPERTY(EditAnywhere, Category="Pattern controller", meta=(EditCondition="bHasPatternData")) int32 PatternBoneId = 0;
     UPROPERTY(EditAnywhere, Category="Pattern controller", meta=(EditCondition="bHasPatternData")) FKyaAddOnGenerator PatternAddOn;
     UPROPERTY(VisibleAnywhere, Category="Ship") bool bHasShipData = false;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Ship", meta=(EditCondition="bHasShipData")) TArray<int32> ShipCareBoyActorRefs;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Ship", meta=(EditCondition="bHasShipData")) TArray<int32> ShipFxIntValues;
+    UPROPERTY(EditAnywhere, Category="Ship", meta=(EditCondition="bHasShipData")) TArray<int32> ShipCareBoyActorRefs;
+    UPROPERTY(EditAnywhere, Category="Ship", meta=(EditCondition="bHasShipData")) TArray<int32> ShipFxIntValues;
     UPROPERTY(EditAnywhere, Category="Ship", meta=(EditCondition="bHasShipData")) int32 ShipJawCareBoyRef = -1;
     UPROPERTY(EditAnywhere, Category="Ship", meta=(EditCondition="bHasShipData")) int32 ShipAirCannonRef = -1;
     UPROPERTY(EditAnywhere, Category="Ship", meta=(EditCondition="bHasShipData")) int32 ShipHunterRef = -1;
@@ -2173,7 +2175,7 @@ struct FKyaActorPlacement
     UPROPERTY(EditAnywhere, Category="Ship", meta=(EditCondition="bHasShipData")) FKyaSwitch ShipSwitch;
     UPROPERTY(VisibleAnywhere, Category="Bunch") bool bHasBunchData = false;
     UPROPERTY(EditAnywhere, Category="Bunch", meta=(EditCondition="bHasBunchData")) float BunchFieldFC8 = 0;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Bunch", meta=(EditCondition="bHasBunchData")) TArray<FKyaBunchStreamEntry> BunchStreamEntries;
+    UPROPERTY(EditAnywhere, Category="Bunch", meta=(EditCondition="bHasBunchData")) TArray<FKyaBunchStreamEntry> BunchStreamEntries;
     UPROPERTY(EditAnywhere, Category="Bunch", meta=(EditCondition="bHasBunchData")) int32 BunchMeshComponentId = 0;
     UPROPERTY(EditAnywhere, Category="Bunch", meta=(EditCondition="bHasBunchData")) int32 BunchMeshIndex = 0;
     UPROPERTY(VisibleAnywhere, Category="Brazul") bool bHasBrazulData = false;
@@ -2255,10 +2257,10 @@ struct FKyaActorPlacement
     UPROPERTY(EditAnywhere, Category="Aton", meta=(EditCondition="bHasAtonData")) int32 AtonMeshIndex = -1;
     UPROPERTY(EditAnywhere, Category="Aton", meta=(EditCondition="bHasAtonData")) int32 AtonTrailMaterialId = -1;
     UPROPERTY(EditAnywhere, Category="Aton", meta=(EditCondition="bHasAtonData")) float AtonPathDefaultDelay = 0;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Aton", meta=(EditCondition="bHasAtonData")) TArray<int32> AtonPathIndices;
+    UPROPERTY(EditAnywhere, Category="Aton", meta=(EditCondition="bHasAtonData")) TArray<int32> AtonPathIndices;
     UPROPERTY(EditAnywhere, Category="Aton", meta=(EditCondition="bHasAtonData")) int32 AtonAddOnField18 = 0;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Aton", meta=(EditCondition="bHasAtonData")) TArray<FKyaAddOnSubObj> AtonOtherSubObjs;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Aton", meta=(EditCondition="bHasAtonData")) TArray<FKyaAtonSubObj> AtonSubObjs;
+    UPROPERTY(EditAnywhere, Category="Aton", meta=(EditCondition="bHasAtonData")) TArray<FKyaAddOnSubObj> AtonOtherSubObjs;
+    UPROPERTY(EditAnywhere, Category="Aton", meta=(EditCondition="bHasAtonData")) TArray<FKyaAtonSubObj> AtonSubObjs;
     UPROPERTY(EditAnywhere, Category="Aton", meta=(EditCondition="bHasAtonData")) float AtonAddOnField24 = 0;
     UPROPERTY(VisibleAnywhere, Category="Boomy") bool bHasBoomyData = false;
     UPROPERTY(EditAnywhere, Category="Boomy", meta=(EditCondition="bHasBoomyData")) float BoomyWeight = 0;
@@ -2283,15 +2285,15 @@ struct FKyaActorPlacement
     UPROPERTY(EditAnywhere, EditFixedSize, Category="Boomy", meta=(EditCondition="bHasBoomyData")) TArray<FKyaBoomyType> BoomyTypes;
     UPROPERTY(VisibleAnywhere, Category="Hero") bool bHasKimData = false;
     UPROPERTY(EditAnywhere, EditFixedSize, Category="Hero", meta=(EditCondition="bHasKimData")) TArray<int32> KimBoneKeys;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Hero", meta=(EditCondition="bHasKimData")) TArray<int32> KimClimbZones;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Hero", meta=(EditCondition="bHasKimData")) TArray<FKyaHeroTutorialZone> KimTutorialZones;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Hero", meta=(EditCondition="bHasKimData")) TArray<FKyaHeroProjectileZone> KimProjectileZones;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Hero", meta=(EditCondition="bHasKimData")) TArray<FKyaHeroZonePair> KimBoomyZonePairs;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Hero", meta=(EditCondition="bHasKimData")) TArray<int32> KimZoneStream;
+    UPROPERTY(EditAnywhere, Category="Hero", meta=(EditCondition="bHasKimData")) TArray<int32> KimClimbZones;
+    UPROPERTY(EditAnywhere, Category="Hero", meta=(EditCondition="bHasKimData")) TArray<FKyaHeroTutorialZone> KimTutorialZones;
+    UPROPERTY(EditAnywhere, Category="Hero", meta=(EditCondition="bHasKimData")) TArray<FKyaHeroProjectileZone> KimProjectileZones;
+    UPROPERTY(EditAnywhere, Category="Hero", meta=(EditCondition="bHasKimData")) TArray<FKyaHeroZonePair> KimBoomyZonePairs;
+    UPROPERTY(EditAnywhere, Category="Hero", meta=(EditCondition="bHasKimData")) TArray<int32> KimZoneStream;
     UPROPERTY(EditAnywhere, Category="Hero", meta=(EditCondition="bHasKimData")) int32 KimMaterialId = -1;
     UPROPERTY(EditAnywhere, Category="Hero", meta=(EditCondition="bHasKimData")) int32 KimFxType = 0;
     UPROPERTY(EditAnywhere, Category="Hero", meta=(EditCondition="bHasKimData")) float KimJokeWarnRadius = 0;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Hero", meta=(EditCondition="bHasKimData")) TArray<FKyaActorCamera> KimCameras;
+    UPROPERTY(EditAnywhere, Category="Hero", meta=(EditCondition="bHasKimData")) TArray<FKyaActorCamera> KimCameras;
     UPROPERTY(EditAnywhere, Category="Hero", meta=(EditCondition="bHasKimData")) int32 KimField15D4 = 0;
     UPROPERTY(EditAnywhere, Category="Hero", meta=(EditCondition="bHasKimData")) int32 KimFxInitType = 0;
     UPROPERTY(EditAnywhere, EditFixedSize, Category="Hero", meta=(EditCondition="bHasKimData")) TArray<int32> KimFxHandleTypes;
@@ -2302,9 +2304,10 @@ struct FKyaActorPlacement
     UPROPERTY(EditAnywhere, Category="Fighter", meta=(EditCondition="bHasWolfenData || bHasKimData")) float FighterGravityScale = 0;
     UPROPERTY(EditAnywhere, Category="Fighter", meta=(EditCondition="bHasWolfenData || bHasKimData")) float FighterDynamicExtField4 = 0;
     UPROPERTY(EditAnywhere, Category="Fighter", meta=(EditCondition="bHasWolfenData || bHasKimData")) float FighterDynamicExtField8 = 0;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Fighter blows", meta=(EditCondition="bHasWolfenData || bHasKimData")) TArray<FKyaFighterBlow> FighterBlows;    UPROPERTY(EditAnywhere, EditFixedSize, Category="Fighter grabs", meta=(EditCondition="bHasWolfenData || bHasKimData")) TArray<FKyaFighterGrab> FighterGrabs;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Fighter grabs", meta=(EditCondition="bHasWolfenData || bHasKimData")) TArray<FKyaFighterGrabReact> FighterGrabReacts;
-    UPROPERTY(EditAnywhere, EditFixedSize, Category="Fighter combos", meta=(EditCondition="bHasWolfenData || bHasKimData")) TArray<FKyaFighterCombo> FighterCombos;
+    UPROPERTY(EditAnywhere, Category="Fighter blows", meta=(EditCondition="bHasWolfenData || bHasKimData")) TArray<FKyaFighterBlow> FighterBlows;
+    UPROPERTY(EditAnywhere, Category="Fighter grabs", meta=(EditCondition="bHasWolfenData || bHasKimData")) TArray<FKyaFighterGrab> FighterGrabs;
+    UPROPERTY(EditAnywhere, Category="Fighter grabs", meta=(EditCondition="bHasWolfenData || bHasKimData")) TArray<FKyaFighterGrabReact> FighterGrabReacts;
+    UPROPERTY(EditAnywhere, Category="Fighter combos", meta=(EditCondition="bHasWolfenData || bHasKimData")) TArray<FKyaFighterCombo> FighterCombos;
     /** Raw bytes between the typed databases (should be empty for LEVEL_1). */
     UPROPERTY(EditAnywhere, Category="Fighter", meta=(EditCondition="bHasWolfenData || bHasKimData")) TArray<uint8> FighterPrefixRaw;
     UPROPERTY(EditAnywhere, Category="Fighter", meta=(EditCondition="bHasWolfenData || bHasKimData")) int32 FighterInputAnalyserFlag = 0;

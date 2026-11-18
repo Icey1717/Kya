@@ -102,13 +102,27 @@ This plugin is under development. A `.bnk` file can be imported as an asset;
 the original bytes are retained. The initial scene configuration, collision bank
 values, animation allocation count, actor class allocations, and the scene's
 initial fog, clipping, mipmap settings and basic main camera fields can be edited on
-the asset and exported to an uncompressed bank. Actor conditions support adding and
-removing entries; export rebuilds their actor chunks and relocates subsequent bank data.
-Other array sizes are fixed. The export path is
-experimental; a fixed-size actor scale edit has been verified in the running game,
-while count- or size-changing edits are rejected. Assets imported before
-the scene and actor Create fields were expanded must be reimported to populate
-the new fixed-size arrays before export. Moving-platform actors expose typed
+the asset and exported to an uncompressed bank. Actor conditions, macro animations,
+behaviours, model references, the moving-platform carried-actor/zone/no-friction/
+camera/sound streams, the trap actor/stream lists, the Wolfen/Kim fighter
+blow/grab/react/combo databases, the Wolfen fight-parameter combo/capability lists,
+the Shocker command sequence/value lists, the box/basic-box actor streams, Kim's
+climb/tutorial/projectile/pair/zone/camera streams, the pattern-command actor-ref list,
+the shoot fire-ref behaviour list, the clusteriser zone tree, the fog-zone list, the Brazul A
+sub-object/path lists, the fog-hierarchy list, the FX integer list, the weapon RPG actor stream and
+the companion alert list, the Bunch stream-entry/fence/repel lists, the Brazul A sub-object/path and
+B switch lists, the Shocker switch list, the Wind carried-actor and switch lists, the Nativ
+speak/trajectory/seller lists, the Stiller actor list, the Ship care-boy/FX lists, the Punching
+ball trap list, the Amortos command actor list, the Nose monster zone-path/fire-shot lists, the Woof
+carried-actor list, the DCA shot list, the Teleporter destination/waypoint/conditioned-operation lists, the Aton path/sub-object lists, the Blazer actor list and the Egg path-plane list support
+adding and removing
+entries; export rebuilds
+their actor chunks and relocates subsequent bank data. Other
+class-specific array sizes remain fixed. The export path
+is experimental; a fixed-size actor scale edit has been verified in the running game,
+while count- or size-changing edits to unsupported arrays are rejected. Assets
+imported before the scene and actor Create fields were expanded must be reimported to
+populate the new arrays before export. Moving-platform actors expose typed
 weight, carried-actor, zone, no-friction, camera/notification, sound and
 configuration fields. Basic-box actors expose typed life, vibration, switch and
 add-on generators. FX actors expose their two Create-stage floats and their
@@ -390,8 +404,9 @@ property as editable-exportable, editable-presentation-only, inspect-only or
 unsupported, with a reason. Export support comes from the writer's own field
 references (`KyaExportedActorFields.h`), so a field the exporter does not encode is
 inspect-only even when it is `EditAnywhere`. The table handles the serialized name
-slot (`Align(length + 1, 4)` must match the original capacity), fixed-size arrays,
-raw class-payload size, `VisibleAnywhere` record data and the layout-controlling
+slot (`Align(length + 1, 4)` must match the original capacity), resizable actor
+arrays (`Conditions`, `MacroAnimations`, `Behaviours`, `Models`), other fixed-size
+arrays, raw class-payload size, `VisibleAnywhere` record data and the layout-controlling
 `bHas*` presence flags; `GetKyaNestedFieldCapability` applies the same rules to
 nested records such as `Models.MeshName`. The panel only offers editable fields and
 shows the capability reason as the row tooltip. The old hand-written mirror fields
@@ -436,7 +451,26 @@ whether the selected actor still matches the imported bank and offers `Reset to
 imported` for the whole record, `Reset field` for one property, and `Copy` to copy a
 chosen field from another actor in the same bank. `Reset all to imported` restores a
 whole multi-selection in one transaction. Reset and copy preserve identity and
-fixed layout; the baseline is separate from Unreal class defaults.
+fixed layout; the baseline is separate from Unreal class defaults. `Copy all except
+name` copies every field that fits the destination's serialized layout; conditions,
+macro animations, behaviours, model references, supported moving-platform/trap/
+fighter/Wolfen-fight streams, Shocker command sequences, the box/basic-box actor
+streams, Kim's climb/tutorial/projectile/pair/zone/camera streams, the pattern-command
+actor-ref list, the shoot fire-ref behaviour list, the clusteriser zone tree, the fog-zone
+list, the Brazul A sub-object/path lists, the fog-hierarchy list, the FX integer list, the weapon
+RPG actor stream, the companion alert list, the Bunch stream-entry/fence/repel lists, the Brazul
+A/B lists, the Shocker switch list, the Wind carried-actor and switch lists, the Nativ
+speak/trajectory/seller lists, the Stiller actor list, the Ship care-boy/FX lists, the Punching
+ball trap list, the Amortos command actor list, the Nose monster zone-path/fire-shot lists, the Woof
+carried-actor list, the DCA shot list, the Teleporter destination/waypoint/conditioned-operation lists, the Aton path/sub-object lists, the Blazer actor list and the Egg path-plane list follow
+the source
+count/string
+slot and are rebuilt at
+export, while other
+incompatible arrays are left unchanged.
+Between different actor classes it keeps the
+destination's class payload, behaviours and behaviour index, so the destination actor
+still exports through its own class schema.
 
 Generated representations are editor-only and transient, so they are never saved
 into a map or cooked into a packaged game, and opening the level in PIE or a game
@@ -807,6 +841,9 @@ $env:KYA_TEST_BANK = 'G:\repos\Kya\assets\CDEURO\LEVEL\LEVEL_1\LEVEL.BNK'
 
 `Kya.Bank.SectorRoundTrip` covers sectors with and without collision/background/
 animation entries, opaque unknown entries and padding, plus fixed-size light edits.
+`Kya.Bank.ResizeActorArrays`, `Kya.Bank.ResizeTrapArrays`, `Kya.Bank.ResizeRealActorArrays`,
+`Kya.Bank.ResizeRealPlatformArray` and `Kya.Bank.ResizeRealTrapArray` cover growing and
+shrinking the supported common and class-specific arrays through export/reimport.
 `Kya.Bank.SectorExportValidation` checks malformed tables, stale schema, unsupported
 scene edits and publication cancellation when any bank fails validation.
 `Kya.Bank.ActorMeshLevelExport` uses `KYA_TEST_BANK` to load the main BNK and all
@@ -839,8 +876,8 @@ configuration entry. The actor carries a full class-0x0d prefix with one
 two-actor no-friction zone plus a platform details block, so optional layouts can
 be exercised without LEVEL_1. The test checks that the unedited export is
 byte-identical, that no-friction ref/actor, weight and flag edits reimport with
-exactly those bytes changed, and that the exporter rejects a changed no-friction
-zone count. The test also writes the constructed asset to
+exactly those bytes changed, and that a changed no-friction zone count rebuilds
+and reimports. The test also writes the constructed asset to
 `<project>/Saved/KyaSmallBank.BNK` (864 bytes) so it can be imported for manual
 inspection; importing it yields four entries and one class-0x0d actor named
 `PLATFORM` with the no-friction zone and full typed class data. Run it with

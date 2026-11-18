@@ -7,6 +7,6 @@ const FKyaActorFamilyBehaviour Behaviours[] = {
 }
 extern const FKyaActorFamily GKyaAmortosCmdActorFamily = {
     0x31, TEXT("CActorAmortosCmd"), TEXT("Amortos command"),
-    TEXT("Actor-reference stream; list length is fixed on export and behaviour 2 has no payload"),
+    TEXT("Actor-reference stream (rebuilt on export); behaviour 2 has no payload"),
     MakeArrayView(Behaviours), {},
 };

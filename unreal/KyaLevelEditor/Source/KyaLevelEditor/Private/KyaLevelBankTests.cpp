@@ -58,6 +58,7 @@
 #include "Actors/KyaCatchByTrap.h"
 #include "Actors/KyaHeroUnknown.h"
 #include "KyaActorEditService.h"
+#include "KyaActorCatalog.h"
 #include "KyaLevelPreview.h"
 #include "KyaWaypointComponent.h"
 #include "KyaPathPointComponent.h"
@@ -101,11 +102,18 @@ namespace
         {
             for (int32 Index = 0; Text[Index]; ++Index) Out.Add(uint8(Text[Index]));
         }
+        static void Name(TArray<uint8>& Out, const char* Text)
+        {
+            Tag(Out, Text);
+            Out.Add(0);
+            while (Out.Num() % 4) Out.Add(0);
+        }
 
         TArray<uint8> Build(int64 ClassId = 0x0d, bool bTeleportBehaviour = false,
             bool bSwitchBehaviours = false, bool bWindSwitches = false, bool bTrapBehaviours = false,
             bool bWeaponBehaviours = false, bool bAraignosBehaviour = false,
-            bool bBonusBehaviours = false)
+            bool bBonusBehaviours = false, bool bNativExtraBehaviours = false,
+            bool bNativAkasaBehaviour = false)
         {
             const bool bHedgehog = ClassId == 0x22;
             const bool bProjectile = ClassId == 0x1c;
@@ -147,6 +155,12 @@ namespace
             const bool bEventGenerator = ClassId == 0x3b;
             const bool bExplosiveDistributor = ClassId == 0x1d;
             const bool bShocker = ClassId == 0x4b;
+            const bool bShockerCmd = ClassId == 0x50;
+            const bool bPatternCmd = ClassId == 0x40;
+            const bool bAmortosCmd = ClassId == 0x31;
+            const bool bWoof = ClassId == 0x2a;
+            const bool bBlazer = ClassId == 0x4d;
+            const bool bEgg = ClassId == 0x2f;
             const bool bNativShop = ClassId == 0x34;
             const bool bPunchingBall = ClassId == 0x30;
             const bool bNoseMonster = ClassId == 0x26;
@@ -219,7 +233,7 @@ namespace
             U32(Actor, 0);        // size placeholder
             U32(Actor, 0);        // actor index
             U32(Actor, uint32(ClassId));     // class id
-            Tag(Actor, bHedgehog ? "HEDGEHOG" : (bProjectile ? "PROJECTILE" : (bSwitch ? "SWITCH" : (bWind ? "WIND" : (bTrap ? "TRAP" : (bWeapon ? "WEAPON" : (bAraignos ? "ARAIGNOS" : (bBonus ? "BONUS" : (bTeleporter ? "TELEPORTER" : (bAmortos ? "AMORTOS" : (bDca ? "DCA" : (bFruit ? "FRUIT" : (bNativ ? "NATIV" : (bWolfen ? "WOLFEN" : (bCommander ? "COMMANDER" : (bKim ? "KIM" : (bBoomy ? "BOOMY" : (bAton ? "ATON" : (bRope ? "ROPE" : (bStiller ? "STILLER" : (bAmbre ? "AMBRE" : (bFountain ? "FOUNTAIN" : (bCheckpoints ? "CHECKPOINTS" : (bBridge ? "BRIDGE" : (bFog ? "FOGMANAGER" : (bShoot ? "SHOOT" : (bMoney ? "MONEY" : (bBoxClass ? "BOX" : (bFx ? "ACTORFX" : (bCluster ? "CLUSTERISER" : (bCompanion ? "COMPANION" : (bGravity ? "BELL" : (bRune ? "RUNE" : (bMicken ? "MICKEN" : (bBasicBox ? "BASICBOX" : (bNativCmd ? "NATIVCMD" : (bEventGenerator ? "EVENTGENERATOR" : (bExplosiveDistributor ? "EXPLOSIVEDIST" : (bShocker ? "SHOCKER" : (bNativShop ? "NATIV_SHOP" : (bPunchingBall ? "PUNCHINGBALL" : (bNoseMonster ? "NOZEMONSTER" : (bPattern ? "LINER" : (bShip ? "HUNTERSHIP" : (bBunch ? "KRONOS_BUNCH" : (bBrazul ? "BRAZUL" : (bMiniGameBase ? "MINIGAME" : (bMiniGameTA ? "MINIGAMESTIMEATTACK" : (bMiniGameBox ? "MINIGAMEBOXCOUNTER" : (bMiniGameBoomy ? "MINIGAMEBOOMY" : "PLATFORM"))))))))))))))))))))))))))))))))))))))))))))))))));
+            Tag(Actor, bHedgehog ? "HEDGEHOG" : (bProjectile ? "PROJECTILE" : (bSwitch ? "SWITCH" : (bWind ? "WIND" : (bTrap ? "TRAP" : (bWeapon ? "WEAPON" : (bAraignos ? "ARAIGNOS" : (bBonus ? "BONUS" : (bTeleporter ? "TELEPORTER" : (bAmortos ? "AMORTOS" : (bDca ? "DCA" : (bFruit ? "FRUIT" : (bNativ ? "NATIV" : (bWolfen ? "WOLFEN" : (bCommander ? "COMMANDER" : (bKim ? "KIM" : (bBoomy ? "BOOMY" : (bAton ? "ATON" : (bRope ? "ROPE" : (bStiller ? "STILLER" : (bAmbre ? "AMBRE" : (bFountain ? "FOUNTAIN" : (bCheckpoints ? "CHECKPOINTS" : (bBridge ? "BRIDGE" : (bFog ? "FOGMANAGER" : (bShoot ? "SHOOT" : (bMoney ? "MONEY" : (bBoxClass ? "BOX" : (bFx ? "ACTORFX" : (bCluster ? "CLUSTERISER" : (bCompanion ? "COMPANION" : (bGravity ? "BELL" : (bRune ? "RUNE" : (bMicken ? "MICKEN" : (bBasicBox ? "BASICBOX" : (bNativCmd ? "NATIVCMD" : (bEventGenerator ? "EVENTGENERATOR" : (bExplosiveDistributor ? "EXPLOSIVEDIST" : (bShocker ? "SHOCKER" : (bNativShop ? "NATIV_SHOP" : (bPunchingBall ? "PUNCHINGBALL" : (bNoseMonster ? "NOZEMONSTER" : (bPattern ? "LINER" : (bShip ? "HUNTERSHIP" : (bBunch ? "KRONOS_BUNCH" : (bBrazul ? "BRAZUL" : (bMiniGameBase ? "MINIGAME" : (bMiniGameTA ? "MINIGAMESTIMEATTACK" : (bMiniGameBox ? "MINIGAMEBOXCOUNTER" : (bMiniGameBoomy ? "MINIGAMEBOOMY" : (bAmortosCmd ? "AMORTOSCMD" : (bWoof ? "WOOF" : (bBlazer ? "BLAZER" : (bEgg ? "BIRDEGG" : "PLATFORM"))))))))))))))))))))))))))))))))))))))))))))))))))))));
             Actor.Add(0);
             const int32 AbsoluteNameEnd = Scene.Num() + Actor.Num();
             if (AbsoluteNameEnd % 4) Actor.AddZeroed(4 - AbsoluteNameEnd % 4);
@@ -425,12 +439,57 @@ namespace
             }
             else if (bNativ)
             {
-                // Exorcism (empty) and take-and-put (one 16-byte trajectory).
-                U32(Actor, 2);
-                U32(Actor, 4); U32(Actor, 0);
-                U32(Actor, 6); U32(Actor, 20);
-                U32(Actor, 1);   // one trajectory
-                F32(Actor, 3.5f); I32(Actor, 21); I32(Actor, 22); F32(Actor, 23.5f);
+                if (bNativAkasaBehaviour)
+                {
+                    // Exorcism (empty) and a modern-layout Akasa behaviour with
+                    // two tutorials, two add-ons and four switch records.
+                    U32(Actor, 2);
+                    U32(Actor, 4); U32(Actor, 0);
+                    U32(Actor, 8); U32(Actor, 248);
+                    U32(Actor, 9);                   // material id
+                    U32(Actor, 700);                 // field 8
+                    U32(Actor, 2);                   // tutorials
+                    U32(Actor, 2);                   // tutorial 0 steps
+                    U32(Actor, 1); Name(Actor, "AB");
+                    U32(Actor, 2); Name(Actor, "CD"); Name(Actor, "EFGHI");
+                    U32(Actor, 1);                   // tutorial 1 steps
+                    U32(Actor, 0);                   // no combo names
+                    U32(Actor, 2);                   // add-on sub-objects
+                    I32(Actor, 71); U32(Actor, 2); I32(Actor, 72); I32(Actor, 73);
+                    I32(Actor, 74); U32(Actor, 0);
+                    U32(Actor, 1);                   // switch 0: one target
+                    for (int32 Item = 0; Item < 7; ++Item) U32(Actor, uint32(81 + Item));
+                    for (int32 Item = 0; Item < 8; ++Item) U32(Actor, uint32(91 + Item));
+                    U32(Actor, 0);
+                    for (int32 Item = 0; Item < 8; ++Item) U32(Actor, uint32(101 + Item));
+                    U32(Actor, 0);
+                    for (int32 Item = 0; Item < 8; ++Item) U32(Actor, uint32(111 + Item));
+                    U32(Actor, 0);
+                    for (int32 Item = 0; Item < 8; ++Item) U32(Actor, uint32(121 + Item));
+                }
+                else if (bNativExtraBehaviours)
+                {
+                    // Speak (two pairs), exorcism (empty), take-and-put (one
+                    // trajectory) and seller (one sub-object, two cinematics).
+                    U32(Actor, 4);
+                    U32(Actor, 3); U32(Actor, 20);
+                    U32(Actor, 4); U32(Actor, 0);
+                    U32(Actor, 6); U32(Actor, 20);
+                    U32(Actor, 7); U32(Actor, 24);
+                    U32(Actor, 2); F32(Actor, 1.5f); F32(Actor, 2.5f); F32(Actor, 3.5f); F32(Actor, 4.5f);
+                    U32(Actor, 1); F32(Actor, 3.5f); I32(Actor, 21); I32(Actor, 22); F32(Actor, 23.5f);
+                    F32(Actor, 5.5f);
+                    U32(Actor, 1); I32(Actor, 61); U32(Actor, 2); I32(Actor, 62); I32(Actor, 63);
+                }
+                else
+                {
+                    // Exorcism (empty) and take-and-put (one 16-byte trajectory).
+                    U32(Actor, 2);
+                    U32(Actor, 4); U32(Actor, 0);
+                    U32(Actor, 6); U32(Actor, 20);
+                    U32(Actor, 1);   // one trajectory
+                    F32(Actor, 3.5f); I32(Actor, 21); I32(Actor, 22); F32(Actor, 23.5f);
+                }
             }
             else if (bWolfen)
             {
@@ -480,6 +539,30 @@ namespace
             else if (bStiller)
             {
                 // CBehaviourStillerStand::Create is empty; the record exists.
+                U32(Actor, 1);
+                U32(Actor, 2); U32(Actor, 0);
+            }
+            else if (bAmortosCmd)
+            {
+                // CBehaviourAmortosCmdStand::Create is empty; the record exists.
+                U32(Actor, 1);
+                U32(Actor, 2); U32(Actor, 0);
+            }
+            else if (bWoof)
+            {
+                // Id 0 (Stand) is the inherited empty record.
+                U32(Actor, 1);
+                U32(Actor, 0); U32(Actor, 0);
+            }
+            else if (bBlazer)
+            {
+                // Id 3 (Blazer stand) has an empty Create body.
+                U32(Actor, 1);
+                U32(Actor, 3); U32(Actor, 0);
+            }
+            else if (bEgg)
+            {
+                // Id 2 (Egg move) has an empty Create body.
                 U32(Actor, 1);
                 U32(Actor, 2); U32(Actor, 0);
             }
@@ -1574,6 +1657,75 @@ namespace
                 F32(Actor, 0.25f); F32(Actor, 0.5f); F32(Actor, 0.75f);
                 F32(Actor, 1.25f); F32(Actor, 1.5f);
             }
+            else if (bShockerCmd)
+            {
+                U32(Actor, 0x1234);              // field 168
+                U32(Actor, 1);                   // one sequence
+                I32(Actor, 9);                   // actor ref
+                U32(Actor, 2);                   // two values
+                F32(Actor, 1.5f); F32(Actor, 2.5f);
+            }
+            else if (bPatternCmd)
+            {
+                U32(Actor, 0x164);               // field 164
+                U32(Actor, 0x160);               // field 160
+                U32(Actor, 2);                   // two actor refs
+                I32(Actor, 41); I32(Actor, 42);
+                F32(Actor, 1.5f); F32(Actor, 2.5f);   // fields 1f0 / 1f4
+                // CPatternPart without the version-2.24 field: 40 bytes.
+                F32(Actor, 3.5f); F32(Actor, 4.5f); F32(Actor, 5.5f);
+                F32(Actor, 6.5f); F32(Actor, 7.5f); F32(Actor, 8.5f);
+                I32(Actor, 9); F32(Actor, 10.0f); F32(Actor, 11.5f); I32(Actor, 12);
+            }
+            else if (bAmortosCmd)
+            {
+                U32(Actor, 2);                   // two actor refs
+                I32(Actor, 41); I32(Actor, 42);
+            }
+            else if (bWoof)
+            {
+                F32(Actor, 1.0f);                // weight
+                U32(Actor, 100);                 // life max
+                F32(Actor, 0.5f); F32(Actor, 0.25f); F32(Actor, 0.75f);
+                U32(Actor, 11); U32(Actor, 12); U32(Actor, 13);
+                F32(Actor, 3.5f); F32(Actor, 4.5f);
+                U32(Actor, 21); U32(Actor, 22);
+                I32(Actor, 23); I32(Actor, 24);
+                U32(Actor, 2); I32(Actor, 31); I32(Actor, 32);   // actor stream
+                F32(Actor, 5.5f); U32(Actor, 41); U32(Actor, 42); I32(Actor, 43);
+                F32(Actor, 6.5f); F32(Actor, 7.5f); F32(Actor, 8.5f); F32(Actor, 9.5f);
+                U32(Actor, 44);
+            }
+            else if (bBlazer)
+            {
+                // Modern (2.24) layout with waypoint refs.
+                F32(Actor, 1.0f);                // weight
+                U32(Actor, 100);                 // life max
+                F32(Actor, 0.5f); F32(Actor, 0.25f); F32(Actor, 0.75f);
+                U32(Actor, 11); U32(Actor, 12);
+                F32(Actor, 3.5f); F32(Actor, 4.5f); F32(Actor, 5.5f);
+                U32(Actor, 13);
+                F32(Actor, 6.5f); F32(Actor, 7.5f); F32(Actor, 8.5f);
+                F32(Actor, 9.5f); F32(Actor, 10.5f); F32(Actor, 11.5f);
+                I32(Actor, 61); I32(Actor, 62);  // waypoint refs
+                U32(Actor, 21); U32(Actor, 22);  // fields 398 / 394
+                I32(Actor, 23);                  // path index
+                F32(Actor, 12.5f); F32(Actor, 13.5f);
+                U32(Actor, 0);                   // field 3b4 (keeps legacy ambiguous-free)
+                F32(Actor, 14.5f);
+                U32(Actor, 2); I32(Actor, 31); I32(Actor, 32);   // actor stream
+                F32(Actor, 15.5f); I32(Actor, 3); F32(Actor, 16.5f);
+                F32(Actor, 17.5f); F32(Actor, 18.5f); F32(Actor, 19.5f);
+                F32(Actor, 20.5f); F32(Actor, 21.5f);
+            }
+            else if (bEgg)
+            {
+                F32(Actor, 1.0f);                // weight
+                F32(Actor, 2.0f);                // field 1d8
+                U32(Actor, 2); I32(Actor, 41); I32(Actor, 42);   // path planes
+                U32(Actor, 11);                  // field 1dc
+                U32(Actor, 12);                  // field 1e0
+            }
             else
             {
             // Class 0x0d payload: weight, empty carried/zone lists, one no-friction
@@ -1783,10 +1935,7835 @@ bool FKyaSmallBankRoundTripTest::RunTest(const FString& Parameters)
     FKyaPlatformNoFrictionZone ExtraZone;
     ExtraZone.ZoneRef = 5;
     Actor.PlatformNoFrictionZones.Add(ExtraZone);
-    TArray<uint8> Rejected;
-    FMemoryWriter RejectedWriter(Rejected);
-    TestFalse(TEXT("Exporter rejects a changed no-friction zone count"),
-        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    TArray<uint8> ResizedZones;
+    FMemoryWriter ResizedZonesWriter(ResizedZones);
+    if (!TestTrue(TEXT("Exporter rebuilds a changed no-friction zone count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), ResizedZonesWriter, GWarn))) return false;
+    const uint8* ResizedZonesCursor = ResizedZones.GetData();
+    UKyaLevelBank* ResizedZonesBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(
+        UKyaLevelBank::StaticClass(), GetTransientPackage(), NAME_None, RF_Transient, nullptr,
+        TEXT("bnk"), ResizedZonesCursor, ResizedZones.GetData() + ResizedZones.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the changed no-friction zone count"), ResizedZonesBank)) return false;
+    TestEqual(TEXT("Reimported no-friction zone count"),
+        ResizedZonesBank->SceneEnvironment.Actors[0].PlatformNoFrictionZones.Num(), 2);
+    TestEqual(TEXT("Reimported extra no-friction zone ref"),
+        ResizedZonesBank->SceneEnvironment.Actors[0].PlatformNoFrictionZones.Last().ZoneRef, 5);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaActorCopyPropertiesAcrossClassesTest,
+    "Kya.Editor.ActorCopyPropertiesAcrossClasses",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaActorCopyPropertiesAcrossClassesTest::RunTest(const FString& Parameters)
+{
+    // Destination: a moving platform (class 0x0d) with decoded platform records.
+    // Source: a switch (class 0x11) with its own switch payload. The copy button
+    // must move the shared CActor data without touching either class payload.
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> DestinationInput = Builder.Build(0x0d);
+    const TArray<uint8> SourceInput = Builder.Build(0x11);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const auto Import = [Factory](const TArray<uint8>& Bytes) -> UKyaLevelBank*
+    {
+        const uint8* Cursor = Bytes.GetData();
+        return Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+            GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+            Bytes.GetData() + Bytes.Num(), GWarn));
+    };
+    UKyaLevelBank* Destination = Import(DestinationInput);
+    UKyaLevelBank* Source = Import(SourceInput);
+    if (!TestNotNull(TEXT("Import the destination actor bank"), Destination) ||
+        !TestNotNull(TEXT("Import the source actor bank"), Source)) return false;
+    if (!TestEqual(TEXT("Destination bank has one actor"), Destination->SceneEnvironment.Actors.Num(), 1) ||
+        !TestEqual(TEXT("Source bank has one actor"), Source->SceneEnvironment.Actors.Num(), 1)) return false;
+
+    FKyaActorPlacement& DestinationActor = Destination->SceneEnvironment.Actors[0];
+    FKyaActorPlacement& SourceActor = Source->SceneEnvironment.Actors[0];
+    TestTrue(TEXT("The two actors have different classes"), SourceActor.ClassId != DestinationActor.ClassId);
+    TestTrue(TEXT("Destination has moving-platform class data"),
+        DestinationActor.bHasPlatformPrefix && DestinationActor.bHasPlatformDetails);
+    TestTrue(TEXT("Source has switch class data"), SourceActor.bHasSwitchData);
+
+    const FString DestinationName = DestinationActor.Name;
+    const int64 DestinationClassId = DestinationActor.ClassId;
+    const int32 DestinationIndex = DestinationActor.Index;
+    const float DestinationPlatformWeight = DestinationActor.PlatformWeight;
+    const int64 DestinationPlatformFlags = DestinationActor.PlatformProperties.PlatformFlags;
+    const int32 DestinationZoneRef = DestinationActor.PlatformNoFrictionZones[0].ZoneRef;
+    const int32 DestinationDefaultBehaviour = DestinationActor.DefaultBehaviourId;
+
+    SourceActor.Position = FVector(11.0, 22.0, 33.0);
+    SourceActor.Rotation = FVector(4.0, 5.0, 6.0);
+    SourceActor.Scale = FVector(2.0, 3.0, 4.0);
+    SourceActor.Clipping = 42.5f;
+    SourceActor.VisibilityDistance = 777.0f;
+    SourceActor.CullingDistance = 88.0f;
+    SourceActor.Field20 = 9.5f;
+    SourceActor.BoundingSphere = FVector4(10.0f, 20.0f, 30.0f, 40.0f);
+    SourceActor.SectorId = 3;
+    SourceActor.HashCode = 0x12345678;
+    SourceActor.LodBiases = FVector2D(0.25, 0.5);
+    SourceActor.ActorFlags = 3;
+    SourceActor.AnimationLayers = 2;
+    SourceActor.LightingFlags = 0x55;
+    SourceActor.LightingValue = 0.75f;
+    // Class-scoped values that must not cross the class boundary.
+    SourceActor.DefaultBehaviourId = -1;
+    SourceActor.PlatformWeight = 999.0f;
+
+    FKyaActorEditPatch Patch;
+    if (!TestTrue(TEXT("Build the cross-class copy patch"),
+        BuildKyaActorCopyPropertiesPatch(SourceActor, Patch))) return false;
+    // The patch owns its source snapshot, so later source edits cannot leak in.
+    SourceActor.Position = FVector::ZeroVector;
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    FString Error;
+    if (!TestTrue(TEXT("Apply the cross-class copy through the edit service"),
+        Service.Apply(Service.MakeKey(Destination, 0), Patch, EKyaEditNotify::Silent, &Error)))
+    {
+        AddError(Error);
+        return false;
+    }
+
+    TestEqual(TEXT("Cross-class copy preserves the name"), DestinationActor.Name, DestinationName);
+    TestEqual(TEXT("Cross-class copy preserves the class"), DestinationActor.ClassId, DestinationClassId);
+    TestEqual(TEXT("Cross-class copy preserves the index"), DestinationActor.Index, DestinationIndex);
+    TestTrue(TEXT("Common transform is copied"), DestinationActor.Position.Equals(FVector(11.0, 22.0, 33.0)));
+    TestTrue(TEXT("Common rotation is copied"), DestinationActor.Rotation.Equals(FVector(4.0, 5.0, 6.0)));
+    TestTrue(TEXT("Common scale is copied"), DestinationActor.Scale.Equals(FVector(2.0, 3.0, 4.0)));
+    TestEqual(TEXT("Common clipping is copied"), DestinationActor.Clipping, 42.5f);
+    TestEqual(TEXT("Common visibility distance is copied"), DestinationActor.VisibilityDistance, 777.0f);
+    TestEqual(TEXT("Common culling distance is copied"), DestinationActor.CullingDistance, 88.0f);
+    TestEqual(TEXT("Common field 20 is copied"), DestinationActor.Field20, 9.5f);
+    TestTrue(TEXT("Common bounding sphere is copied"),
+        DestinationActor.BoundingSphere.Equals(FVector4(10.0f, 20.0f, 30.0f, 40.0f)));
+    TestEqual(TEXT("Common sector is copied"), DestinationActor.SectorId, 3);
+    TestEqual(TEXT("Common hash is copied"), DestinationActor.HashCode, int64(0x12345678));
+    TestTrue(TEXT("Common LOD biases are copied"), DestinationActor.LodBiases.Equals(FVector2D(0.25, 0.5)));
+    TestEqual(TEXT("Common actor flags are copied"), DestinationActor.ActorFlags, 3);
+    TestEqual(TEXT("Common animation layers are copied"), DestinationActor.AnimationLayers, 2);
+    TestEqual(TEXT("Common lighting flags are copied"), DestinationActor.LightingFlags, int64(0x55));
+    TestEqual(TEXT("Common lighting value is copied"), DestinationActor.LightingValue, 0.75f);
+    TestEqual(TEXT("Destination keeps its behaviour index"), DestinationActor.DefaultBehaviourId,
+        DestinationDefaultBehaviour);
+    TestEqual(TEXT("Destination keeps its platform weight"), DestinationActor.PlatformWeight,
+        DestinationPlatformWeight);
+    TestEqual(TEXT("Destination keeps its platform flags"), DestinationActor.PlatformProperties.PlatformFlags,
+        DestinationPlatformFlags);
+    TestEqual(TEXT("Destination keeps its no-friction zone"), DestinationActor.PlatformNoFrictionZones[0].ZoneRef,
+        DestinationZoneRef);
+    TestTrue(TEXT("Destination does not gain switch data"), !DestinationActor.bHasSwitchData);
+
+    // The whole point of keeping the destination class payload is that the bank
+    // writer can still encode it unchanged.
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the cross-class-copied bank"),
+        Exporter->ExportBinary(Destination, TEXT("bnk"), Writer, GWarn))) return false;
+    TestEqual(TEXT("Cross-class copy keeps the bank size"), Exported.Num(), DestinationInput.Num());
+
+    UKyaLevelBank* RoundTrip = Import(Exported);
+    if (!TestNotNull(TEXT("Reimport the cross-class-copied bank"), RoundTrip)) return false;
+    if (!TestEqual(TEXT("Reimported bank has one actor"), RoundTrip->SceneEnvironment.Actors.Num(), 1))
+        return false;
+    const FKyaActorPlacement& RoundTripActor = RoundTrip->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Reimport preserves the name"), RoundTripActor.Name, DestinationName);
+    TestEqual(TEXT("Reimport preserves the class"), RoundTripActor.ClassId, DestinationClassId);
+    TestEqual(TEXT("Reimport preserves the index"), RoundTripActor.Index, DestinationIndex);
+    TestTrue(TEXT("Reimport preserves the copied transform"),
+        RoundTripActor.Position.Equals(FVector(11.0, 22.0, 33.0)));
+    TestTrue(TEXT("Reimport preserves the copied rotation"),
+        RoundTripActor.Rotation.Equals(FVector(4.0, 5.0, 6.0)));
+    TestTrue(TEXT("Reimport preserves the copied scale"),
+        RoundTripActor.Scale.Equals(FVector(2.0, 3.0, 4.0)));
+    TestEqual(TEXT("Reimport preserves the copied clipping"), RoundTripActor.Clipping, 42.5f);
+    TestEqual(TEXT("Reimport preserves the copied visibility distance"),
+        RoundTripActor.VisibilityDistance, 777.0f);
+    TestEqual(TEXT("Reimport preserves the copied culling distance"), RoundTripActor.CullingDistance, 88.0f);
+    TestEqual(TEXT("Reimport preserves the copied field 20"), RoundTripActor.Field20, 9.5f);
+    TestTrue(TEXT("Reimport preserves the copied bounding sphere"),
+        RoundTripActor.BoundingSphere.Equals(FVector4(10.0f, 20.0f, 30.0f, 40.0f)));
+    TestEqual(TEXT("Reimport preserves the copied sector"), RoundTripActor.SectorId, 3);
+    TestEqual(TEXT("Reimport preserves the copied hash"), RoundTripActor.HashCode, int64(0x12345678));
+    TestTrue(TEXT("Reimport preserves the copied LOD biases"),
+        RoundTripActor.LodBiases.Equals(FVector2D(0.25, 0.5)));
+    TestEqual(TEXT("Reimport preserves the copied actor flags"), RoundTripActor.ActorFlags, 3);
+    TestEqual(TEXT("Reimport preserves the copied animation layers"), RoundTripActor.AnimationLayers, 2);
+    TestEqual(TEXT("Reimport preserves the copied lighting flags"), RoundTripActor.LightingFlags, int64(0x55));
+    TestEqual(TEXT("Reimport preserves the copied lighting value"), RoundTripActor.LightingValue, 0.75f);
+    TestEqual(TEXT("Reimport preserves the destination behaviour index"), RoundTripActor.DefaultBehaviourId,
+        DestinationDefaultBehaviour);
+    TestTrue(TEXT("Reimport keeps the platform class data"),
+        RoundTripActor.bHasPlatformPrefix && RoundTripActor.bHasPlatformDetails);
+    TestEqual(TEXT("Reimport keeps the platform weight"), RoundTripActor.PlatformWeight,
+        DestinationPlatformWeight);
+    TestEqual(TEXT("Reimport keeps the platform flags"), RoundTripActor.PlatformProperties.PlatformFlags,
+        DestinationPlatformFlags);
+    TestEqual(TEXT("Reimport keeps the no-friction zone"), RoundTripActor.PlatformNoFrictionZones[0].ZoneRef,
+        DestinationZoneRef);
+    TestTrue(TEXT("Reimport keeps the destination free of switch data"), !RoundTripActor.bHasSwitchData);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaActorCopyPropertiesDifferentMacroCountsTest,
+    "Kya.Editor.ActorCopyPropertiesDifferentMacroCounts",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaActorCopyPropertiesDifferentMacroCountsTest::RunTest(const FString& Parameters)
+{
+    // Both actors are class 9, like GRUNT_02_BASIC and
+    // SCRAWNY_01_FIRE_WEAPON_01_L9, but their actor chunks carry different
+    // macro-animation lists. The copy now takes the source list and the export
+    // rebuilds the destination chunk.
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> DestinationInput = Builder.Build(0x09);
+    const TArray<uint8> SourceInput = Builder.Build(0x09);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const auto Import = [Factory](const TArray<uint8>& Bytes) -> UKyaLevelBank*
+    {
+        const uint8* Cursor = Bytes.GetData();
+        return Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+            GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+            Bytes.GetData() + Bytes.Num(), GWarn));
+    };
+    UKyaLevelBank* Destination = Import(DestinationInput);
+    UKyaLevelBank* Source = Import(SourceInput);
+    if (!TestNotNull(TEXT("Import the destination actor bank"), Destination) ||
+        !TestNotNull(TEXT("Import the source actor bank"), Source)) return false;
+    if (!TestEqual(TEXT("Destination bank has one actor"), Destination->SceneEnvironment.Actors.Num(), 1) ||
+        !TestEqual(TEXT("Source bank has one actor"), Source->SceneEnvironment.Actors.Num(), 1)) return false;
+
+    FKyaActorPlacement& DestinationActor = Destination->SceneEnvironment.Actors[0];
+    FKyaActorPlacement& SourceActor = Source->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Both actors have the same class"), SourceActor.ClassId, DestinationActor.ClassId);
+    TestEqual(TEXT("Destination starts with no macro animations"), DestinationActor.MacroAnimations.Num(), 0);
+
+    const FString DestinationName = DestinationActor.Name;
+    const int64 DestinationClassId = DestinationActor.ClassId;
+    SourceActor.MacroAnimations.AddDefaulted(5);
+    SourceActor.MacroAnimations[0].AnimationType = 0x11;
+    SourceActor.MacroAnimations[0].MacroAnimationId = 0x22;
+    SourceActor.Position = FVector(31.0, 32.0, 33.0);
+    SourceActor.Rotation = FVector(1.0, 2.0, 3.0);
+    SourceActor.Scale = FVector(1.5, 1.5, 1.5);
+    SourceActor.VisibilityDistance = 321.0f;
+    SourceActor.Clipping = 12.5f;
+    SourceActor.CullingDistance = 22.0f;
+    SourceActor.HashCode = 0x0BADF00D;
+
+    FKyaActorEditPatch Patch;
+    if (!TestTrue(TEXT("Build the same-class copy patch"),
+        BuildKyaActorCopyPropertiesPatch(SourceActor, Patch))) return false;
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    FString Error;
+    if (!TestTrue(TEXT("Apply the same-class copy with different macro counts"),
+        Service.Apply(Service.MakeKey(Destination, 0), Patch, EKyaEditNotify::Silent, &Error)))
+    {
+        AddError(Error);
+        return false;
+    }
+
+    TestEqual(TEXT("Copy preserves the name"), DestinationActor.Name, DestinationName);
+    TestEqual(TEXT("Copy preserves the class"), DestinationActor.ClassId, DestinationClassId);
+    TestEqual(TEXT("Copy takes the source macro count"), DestinationActor.MacroAnimations.Num(), 5);
+    TestEqual(TEXT("Copy takes the source macro type"),
+        DestinationActor.MacroAnimations[0].AnimationType, 0x11);
+    TestEqual(TEXT("Copy takes the source macro id"),
+        DestinationActor.MacroAnimations[0].MacroAnimationId, 0x22);
+    TestTrue(TEXT("Copy transfers the common transform"),
+        DestinationActor.Position.Equals(FVector(31.0, 32.0, 33.0)));
+    TestTrue(TEXT("Copy transfers the common rotation"),
+        DestinationActor.Rotation.Equals(FVector(1.0, 2.0, 3.0)));
+    TestTrue(TEXT("Copy transfers the common scale"), DestinationActor.Scale.Equals(FVector(1.5, 1.5, 1.5)));
+    TestEqual(TEXT("Copy transfers the common visibility distance"), DestinationActor.VisibilityDistance, 321.0f);
+    TestEqual(TEXT("Copy transfers the common clipping"), DestinationActor.Clipping, 12.5f);
+    TestEqual(TEXT("Copy transfers the common culling distance"), DestinationActor.CullingDistance, 22.0f);
+    TestEqual(TEXT("Copy transfers the common hash"), DestinationActor.HashCode, int64(0x0BADF00D));
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export after copying between same-class actor types"),
+        Exporter->ExportBinary(Destination, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Copy changes the bank size"), Exported.Num() != DestinationInput.Num());
+
+    UKyaLevelBank* RoundTrip = Import(Exported);
+    if (!TestNotNull(TEXT("Reimport the edited bank"), RoundTrip)) return false;
+    if (!TestEqual(TEXT("Reimported bank has one actor"), RoundTrip->SceneEnvironment.Actors.Num(), 1))
+        return false;
+    const FKyaActorPlacement& RoundTripActor = RoundTrip->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Reimport preserves the name"), RoundTripActor.Name, DestinationName);
+    TestEqual(TEXT("Reimport preserves the class"), RoundTripActor.ClassId, DestinationClassId);
+    TestEqual(TEXT("Reimport keeps the source macro count"), RoundTripActor.MacroAnimations.Num(), 5);
+    TestEqual(TEXT("Reimport keeps the source macro type"),
+        RoundTripActor.MacroAnimations[0].AnimationType, 0x11);
+    TestEqual(TEXT("Reimport keeps the source macro id"),
+        RoundTripActor.MacroAnimations[0].MacroAnimationId, 0x22);
+    TestTrue(TEXT("Reimport preserves the copied transform"),
+        RoundTripActor.Position.Equals(FVector(31.0, 32.0, 33.0)));
+    TestTrue(TEXT("Reimport preserves the copied rotation"),
+        RoundTripActor.Rotation.Equals(FVector(1.0, 2.0, 3.0)));
+    TestTrue(TEXT("Reimport preserves the copied scale"), RoundTripActor.Scale.Equals(FVector(1.5, 1.5, 1.5)));
+    TestEqual(TEXT("Reimport preserves the copied visibility distance"),
+        RoundTripActor.VisibilityDistance, 321.0f);
+    TestEqual(TEXT("Reimport preserves the copied clipping"), RoundTripActor.Clipping, 12.5f);
+    TestEqual(TEXT("Reimport preserves the copied culling distance"), RoundTripActor.CullingDistance, 22.0f);
+    TestEqual(TEXT("Reimport preserves the copied hash"), RoundTripActor.HashCode, int64(0x0BADF00D));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeActorArraysTest, "Kya.Bank.ResizeActorArrays",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeActorArraysTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x0d);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import resize fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Resize fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Fixture starts without macro animations"), Actor.MacroAnimations.Num(), 0);
+    TestEqual(TEXT("Fixture starts without models"), Actor.Models.Num(), 0);
+    TestEqual(TEXT("Fixture starts without behaviours"), Actor.Behaviours.Num(), 0);
+    TestEqual(TEXT("Fixture starts without conditions"), Actor.Conditions.Num(), 0);
+
+    // Drive the resize through the same property-patch path the Details panel uses.
+    FKyaActorPlacement Presentation = Actor;
+    FKyaActorMacroAnimation& FirstMacro = Presentation.MacroAnimations.AddDefaulted_GetRef();
+    FirstMacro.AnimationType = 3;
+    FirstMacro.MacroAnimationId = 4;
+    FKyaActorMacroAnimation& SecondMacro = Presentation.MacroAnimations.AddDefaulted_GetRef();
+    SecondMacro.AnimationType = 5;
+    SecondMacro.MacroAnimationId = 6;
+    FKyaActorModelReference& Model = Presentation.Models.AddDefaulted_GetRef();
+    Model.MeshName = TEXT("MESH_A");
+    Model.TextureName = TEXT("TEX_A");
+    FKyaActorBehaviour& Behaviour = Presentation.Behaviours.AddDefaulted_GetRef();
+    Behaviour.Id = 3;
+    Behaviour.Data.AddZeroed(4);
+    Behaviour.Data[0] = 0x11;
+    Behaviour.Data[1] = 0x22;
+    Behaviour.Data[2] = 0x33;
+    Behaviour.Data[3] = 0x44;
+    FKyaScenarioCondition& Condition = Presentation.Conditions.AddDefaulted_GetRef();
+    Condition.Combiner = 1;
+    Condition.Variable = 2;
+    Condition.Comparison = 3;
+    Condition.Value = 4;
+    Presentation.Position = FVector(4.0, 5.0, 6.0);
+
+    // Class-specific moving-platform streams are rebuilt as well.
+    FKyaPlatformActor& Carried = Presentation.PlatformActors.AddDefaulted_GetRef();
+    Carried.ActorRef = 3;
+    Carried.CarryMethod = 2;
+    Presentation.PlatformZones.Add(7);
+    Presentation.PlatformNoFrictionZones[0].Actors.Add(6);
+    FKyaPlatformNoFrictionZone& NewZone = Presentation.PlatformNoFrictionZones.AddDefaulted_GetRef();
+    NewZone.ZoneRef = 9;
+    NewZone.Actors.Add(4);
+    NewZone.Actors.Add(5);
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    const auto ApplyPresentationField = [&](FName PropertyName)
+    {
+        FKyaActorEditPatch FieldPatch;
+        FString FieldError;
+        if (!TestTrue(TEXT("Details array patch builds"),
+            KyaMakePlacementPropertyPatch(Presentation, PropertyName, FieldPatch))) return;
+        TestTrue(TEXT("Details array patch applies"),
+            Service.Apply(Service.MakeKey(Bank, 0), FieldPatch, EKyaEditNotify::Silent, &FieldError));
+    };
+    ApplyPresentationField(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, MacroAnimations));
+    ApplyPresentationField(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Models));
+    ApplyPresentationField(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Behaviours));
+    ApplyPresentationField(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Conditions));
+    ApplyPresentationField(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, PlatformActors));
+    ApplyPresentationField(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, PlatformZones));
+    ApplyPresentationField(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, PlatformNoFrictionZones));
+    ApplyPresentationField(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Position));
+    Service.Reset();
+    TestEqual(TEXT("Details macro resize applies"), Actor.MacroAnimations.Num(), 2);
+    TestEqual(TEXT("Details model resize applies"), Actor.Models.Num(), 1);
+    TestEqual(TEXT("Details behaviour resize applies"), Actor.Behaviours.Num(), 1);
+    TestEqual(TEXT("Details condition resize applies"), Actor.Conditions.Num(), 1);
+    TestEqual(TEXT("Details platform actor resize applies"), Actor.PlatformActors.Num(), 1);
+    TestEqual(TEXT("Details platform zone resize applies"), Actor.PlatformZones.Num(), 1);
+    TestEqual(TEXT("Details no-friction stream resize applies"), Actor.PlatformNoFrictionZones.Num(), 2);
+    TestEqual(TEXT("Details nested no-friction actor resize applies"),
+        Actor.PlatformNoFrictionZones[0].Actors.Num(), 3);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Grown;
+    FMemoryWriter GrownWriter(Grown);
+    if (!TestTrue(TEXT("Export grown actor arrays"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), GrownWriter, GWarn))) return false;
+    TestTrue(TEXT("Growing arrays changes the bank size"), Grown.Num() != Input.Num());
+    TestTrue(TEXT("Export does not mutate the source bank bytes"), Bank->BankBytes == Input);
+
+    const uint8* GrownCursor = Grown.GetData();
+    UKyaLevelBank* GrownBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), GrownCursor,
+        Grown.GetData() + Grown.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport grown actor arrays"), GrownBank)) return false;
+    if (!TestEqual(TEXT("Grown bank actor count"), GrownBank->SceneEnvironment.Actors.Num(), 1)) return false;
+    const FKyaActorPlacement& GrownActor = GrownBank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Grown macro count round trips"), GrownActor.MacroAnimations.Num(), 2);
+    TestEqual(TEXT("Grown macro type round trips"), GrownActor.MacroAnimations[0].AnimationType, 3);
+    TestEqual(TEXT("Grown macro id round trips"), GrownActor.MacroAnimations[1].MacroAnimationId, 6);
+    TestEqual(TEXT("Grown model count round trips"), GrownActor.Models.Num(), 1);
+    TestEqual(TEXT("Grown model mesh round trips"), GrownActor.Models[0].MeshName, FString(TEXT("MESH_A")));
+    TestEqual(TEXT("Grown model texture round trips"), GrownActor.Models[0].TextureName, FString(TEXT("TEX_A")));
+    TestEqual(TEXT("Grown behaviour count round trips"), GrownActor.Behaviours.Num(), 1);
+    TestEqual(TEXT("Grown behaviour id round trips"), GrownActor.Behaviours[0].Id, 3);
+    if (TestEqual(TEXT("Grown behaviour payload size round trips"), GrownActor.Behaviours[0].Data.Num(), 4))
+    {
+        TestEqual(TEXT("Grown behaviour payload byte 0"), GrownActor.Behaviours[0].Data[0], uint8(0x11));
+        TestEqual(TEXT("Grown behaviour payload byte 3"), GrownActor.Behaviours[0].Data[3], uint8(0x44));
+    }
+    TestEqual(TEXT("Grown condition count round trips"), GrownActor.Conditions.Num(), 1);
+    TestEqual(TEXT("Grown condition value round trips"), GrownActor.Conditions[0].Value, 4);
+    TestTrue(TEXT("Grown transform round trips"), GrownActor.Position.Equals(FVector(4.0, 5.0, 6.0)));
+    TestEqual(TEXT("Grown class payload round trips"), GrownActor.PlatformWeight, 1.0f);
+    TestTrue(TEXT("Grown platform details survive"), GrownActor.bHasPlatformDetails);
+    TestEqual(TEXT("Grown platform flags round trip"), GrownActor.PlatformProperties.PlatformFlags, int64(14));
+    TestEqual(TEXT("Grown platform camera count round trips"), GrownActor.PlatformCameras.Num(), 0);
+    TestEqual(TEXT("Grown platform sound count A round trips"), GrownActor.PlatformSoundsA.Num(), 0);
+    TestEqual(TEXT("Grown platform actor count round trips"), GrownActor.PlatformActors.Num(), 1);
+    TestEqual(TEXT("Grown platform actor ref round trips"), GrownActor.PlatformActors[0].ActorRef, 3);
+    TestEqual(TEXT("Grown platform carry method round trips"), GrownActor.PlatformActors[0].CarryMethod, 2);
+    TestEqual(TEXT("Grown platform zone count round trips"), GrownActor.PlatformZones.Num(), 1);
+    TestEqual(TEXT("Grown platform zone value round trips"), GrownActor.PlatformZones[0], 7);
+    TestEqual(TEXT("Grown no-friction zone count round trips"), GrownActor.PlatformNoFrictionZones.Num(), 2);
+    TestEqual(TEXT("Grown nested no-friction actors round trips"),
+        GrownActor.PlatformNoFrictionZones[0].Actors.Num(), 3);
+    TestEqual(TEXT("Grown new no-friction zone ref round trips"),
+        GrownActor.PlatformNoFrictionZones[1].ZoneRef, 9);
+    TestEqual(TEXT("Grown new no-friction zone actor count round trips"),
+        GrownActor.PlatformNoFrictionZones[1].Actors.Num(), 2);
+
+    // A model-name length change keeps the model count but relocates its string slot.
+    GrownBank->SceneEnvironment.Actors[0].Models[0].MeshName = TEXT("A_LONGER_MESH_NAME");
+    TArray<uint8> Renamed;
+    FMemoryWriter RenamedWriter(Renamed);
+    if (!TestTrue(TEXT("Export a resized model string slot"),
+        Exporter->ExportBinary(GrownBank, TEXT("bnk"), RenamedWriter, GWarn))) return false;
+    const uint8* RenamedCursor = Renamed.GetData();
+    UKyaLevelBank* RenamedBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), RenamedCursor,
+        Renamed.GetData() + Renamed.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the resized model string slot"), RenamedBank)) return false;
+    if (!TestEqual(TEXT("Renamed bank keeps one model"), RenamedBank->SceneEnvironment.Actors[0].Models.Num(), 1))
+        return false;
+    TestEqual(TEXT("Resized model name round trips"),
+        RenamedBank->SceneEnvironment.Actors[0].Models[0].MeshName, FString(TEXT("A_LONGER_MESH_NAME")));
+    TestEqual(TEXT("Resized model texture round trips"),
+        RenamedBank->SceneEnvironment.Actors[0].Models[0].TextureName, FString(TEXT("TEX_A")));
+
+    // Shrink every supported array in the reimported bank and export again.
+    FKyaActorPlacement& ShrinkSource = RenamedBank->SceneEnvironment.Actors[0];
+    ShrinkSource.MacroAnimations.Reset();
+    ShrinkSource.Models.Reset();
+    ShrinkSource.Behaviours.Reset();
+    ShrinkSource.Conditions.Reset();
+    ShrinkSource.PlatformActors.Reset();
+    ShrinkSource.PlatformZones.Reset();
+    ShrinkSource.PlatformNoFrictionZones.SetNum(1);
+    ShrinkSource.PlatformNoFrictionZones[0].Actors.SetNum(2);
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk actor arrays"),
+        Exporter->ExportBinary(RenamedBank, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk actor arrays"), ShrunkBank)) return false;
+    const FKyaActorPlacement& ShrunkActor = ShrunkBank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Shrunk macro count round trips"), ShrunkActor.MacroAnimations.Num(), 0);
+    TestEqual(TEXT("Shrunk model count round trips"), ShrunkActor.Models.Num(), 0);
+    TestEqual(TEXT("Shrunk behaviour count round trips"), ShrunkActor.Behaviours.Num(), 0);
+    TestEqual(TEXT("Shrunk condition count round trips"), ShrunkActor.Conditions.Num(), 0);
+    TestEqual(TEXT("Shrunk platform actor count round trips"), ShrunkActor.PlatformActors.Num(), 0);
+    TestEqual(TEXT("Shrunk platform zone count round trips"), ShrunkActor.PlatformZones.Num(), 0);
+    TestEqual(TEXT("Shrunk no-friction zone count round trips"),
+        ShrunkActor.PlatformNoFrictionZones.Num(), 1);
+    TestEqual(TEXT("Shrunk nested no-friction actors round trips"),
+        ShrunkActor.PlatformNoFrictionZones[0].Actors.Num(), 2);
+    TestTrue(TEXT("Shrunk transform round trips"), ShrunkActor.Position.Equals(FVector(4.0, 5.0, 6.0)));
+    TestEqual(TEXT("Shrunk class payload round trips"), ShrunkActor.PlatformWeight, 1.0f);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeTrapArraysTest, "Kya.Bank.ResizeTrapArrays",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeTrapArraysTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x2c);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import trap resize fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Trap resize fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Trap class id"), Actor.ClassId, int64(0x2c));
+    TestTrue(TEXT("Trap data parses"), Actor.bHasTrapData);
+    TestTrue(TEXT("Trap field 24 parses"), Actor.bHasTrapField24);
+    TestEqual(TEXT("Trap starts without actor references"), Actor.TrapActorRefs.Num(), 0);
+    TestEqual(TEXT("Trap starts with one stream entry"), Actor.TrapStreamEntries.Num(), 1);
+
+    FKyaActorPlacement Presentation = Actor;
+    Presentation.TrapActorRefs.Add(21);
+    Presentation.TrapActorRefs.Add(22);
+    FKyaTrapStreamEntry& AddedEntry = Presentation.TrapStreamEntries.AddDefaulted_GetRef();
+    AddedEntry.Target.TargetRef = 31;
+    AddedEntry.Camera.CameraIndex = 32;
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    const auto ApplyField = [&](FName PropertyName)
+    {
+        FKyaActorEditPatch Patch;
+        FString Error;
+        if (!TestTrue(TEXT("Trap array Details patch builds"),
+            KyaMakePlacementPropertyPatch(Presentation, PropertyName, Patch))) return;
+        TestTrue(TEXT("Trap array Details patch applies"),
+            Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    };
+    ApplyField(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, TrapActorRefs));
+    ApplyField(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, TrapStreamEntries));
+    Service.Reset();
+    TestEqual(TEXT("Details trap actor ref resize applies"), Actor.TrapActorRefs.Num(), 2);
+    TestEqual(TEXT("Details trap stream resize applies"), Actor.TrapStreamEntries.Num(), 2);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized trap arrays"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Trap resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized trap arrays"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Trap actor reference count round trips"), Result.TrapActorRefs.Num(), 2);
+    TestEqual(TEXT("Trap actor reference value round trips"), Result.TrapActorRefs[1], 22);
+    TestEqual(TEXT("Trap stream count round trips"), Result.TrapStreamEntries.Num(), 2);
+    TestEqual(TEXT("Trap added target ref round trips"), Result.TrapStreamEntries.Last().Target.TargetRef, 31);
+    TestEqual(TEXT("Trap added camera index round trips"),
+        Result.TrapStreamEntries.Last().Camera.CameraIndex, 32);
+    TestEqual(TEXT("Trap weight round trips"), Result.TrapWeightB, 1.5f);
+    TestEqual(TEXT("Trap field 24 round trips"), Result.TrapField24, 15);
+    TestEqual(TEXT("Trap required escapes round trips"), Result.TrapRequiredEscapeAttempts, 5);
+
+    // Shrink both trap lists back to empty.
+    RoundTrip->SceneEnvironment.Actors[0].TrapActorRefs.Reset();
+    RoundTrip->SceneEnvironment.Actors[0].TrapStreamEntries.Reset();
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk trap arrays"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk trap arrays"), ShrunkBank)) return false;
+    const FKyaActorPlacement& ShrunkResult = ShrunkBank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Shrunk trap actor refs round trip"), ShrunkResult.TrapActorRefs.Num(), 0);
+    TestEqual(TEXT("Shrunk trap stream round trips"), ShrunkResult.TrapStreamEntries.Num(), 0);
+    TestEqual(TEXT("Shrunk trap weight round trips"), ShrunkResult.TrapWeightB, 1.5f);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeBunchStreamEntriesTest, "Kya.Bank.ResizeBunchStreamEntries",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeBunchStreamEntriesTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x4e);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Bunch stream fixture"), Bank)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Bunch stream class id"), Actor.ClassId, int64(0x4e));
+    TestTrue(TEXT("Bunch stream data parses"), Actor.bHasBunchData);
+    TestEqual(TEXT("Bunch stream starts with two entries"), Actor.BunchStreamEntries.Num(), 2);
+    const int32 OriginalMesh = Actor.BunchMeshComponentId;
+    const float OriginalFieldFC8 = Actor.BunchFieldFC8;
+
+    FKyaActorPlacement Presentation = Actor;
+    FKyaBunchStreamEntry& WithBehaviour = Presentation.BunchStreamEntries.AddDefaulted_GetRef();
+    WithBehaviour.Field0 = 1101;
+    WithBehaviour.HasBehaviour = 1;
+    WithBehaviour.BehaviourId = 1102;
+    WithBehaviour.ZoneId = 1103;
+    WithBehaviour.FieldC = 1104;
+    FKyaBunchStreamEntry& WithoutBehaviour = Presentation.BunchStreamEntries.AddDefaulted_GetRef();
+    WithoutBehaviour.Field0 = 1105;
+    WithoutBehaviour.HasBehaviour = 0;
+    WithoutBehaviour.BehaviourId = -1;
+    WithoutBehaviour.ZoneId = 1106;
+    WithoutBehaviour.FieldC = 1107;
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    FKyaActorEditPatch Patch;
+    FString Error;
+    TestTrue(TEXT("Bunch stream Details patch builds"),
+        KyaMakePlacementPropertyPatch(Presentation,
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, BunchStreamEntries), Patch));
+    TestTrue(TEXT("Bunch stream Details patch applies"),
+        Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    Service.Reset();
+    if (!TestEqual(TEXT("Details Bunch stream resize applies"), Actor.BunchStreamEntries.Num(), 4))
+    {
+        AddError(Error);
+        return false;
+    }
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized Bunch stream entries"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Bunch stream resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized Bunch stream entries"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Bunch stream entry count round trips"), Result.BunchStreamEntries.Num(), 4);
+    TestEqual(TEXT("Bunch stream first entry round trips"), Result.BunchStreamEntries[0].Field0, 11);
+    TestEqual(TEXT("Bunch stream parsed behaviour entry round trips"),
+        Result.BunchStreamEntries[1].BehaviourId, 15);
+    const FKyaBunchStreamEntry& ResultWithBehaviour = Result.BunchStreamEntries[2];
+    TestEqual(TEXT("Bunch stream added behaviour entry field round trips"), ResultWithBehaviour.Field0, 1101);
+    TestEqual(TEXT("Bunch stream added behaviour flag round trips"), ResultWithBehaviour.HasBehaviour, 1);
+    TestEqual(TEXT("Bunch stream added behaviour id round trips"), ResultWithBehaviour.BehaviourId, 1102);
+    TestEqual(TEXT("Bunch stream added behaviour zone round trips"), ResultWithBehaviour.ZoneId, 1103);
+    TestEqual(TEXT("Bunch stream added behaviour field c round trips"), ResultWithBehaviour.FieldC, 1104);
+    const FKyaBunchStreamEntry& ResultWithout = Result.BunchStreamEntries[3];
+    TestEqual(TEXT("Bunch stream added plain entry round trips"), ResultWithout.Field0, 1105);
+    TestEqual(TEXT("Bunch stream plain entry has no behaviour"), ResultWithout.BehaviourId, -1);
+    TestEqual(TEXT("Bunch stream plain entry zone round trips"), ResultWithout.ZoneId, 1106);
+    TestEqual(TEXT("Bunch stream mesh id is preserved"), Result.BunchMeshComponentId, OriginalMesh);
+    TestEqual(TEXT("Bunch stream field fc8 is preserved"), Result.BunchFieldFC8, OriginalFieldFC8);
+
+    RoundTrip->SceneEnvironment.Actors[0].BunchStreamEntries.SetNum(2);
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk Bunch stream entries"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk Bunch stream entries"), ShrunkBank)) return false;
+    TestEqual(TEXT("Shrunk Bunch stream entry count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].BunchStreamEntries.Num(), 2);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealBunchStreamEntriesTest, "Kya.Bank.ResizeRealBunchStreamEntries",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealBunchStreamEntriesTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to the Kronos Bunch bank (LEVEL_9) to run this test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real Bunch stream bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real Bunch stream bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId == 0x4e && Candidate.bHasBunchData)
+        {
+            ActorIndex = Index;
+            break;
+        }
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no Bunch actor; skipping the real Bunch stream test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    const FString ActorName = Actor.Name;
+    const int32 OriginalEntries = Actor.BunchStreamEntries.Num();
+    const int32 OriginalMesh = Actor.BunchMeshComponentId;
+
+    FKyaBunchStreamEntry& Added = Actor.BunchStreamEntries.AddDefaulted_GetRef();
+    Added.Field0 = 1301;
+    Added.HasBehaviour = 1;
+    Added.BehaviourId = 1302;
+    Added.ZoneId = 1303;
+    Added.FieldC = 1304;
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real Bunch stream resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real Bunch stream resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real Bunch stream resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the Bunch actor"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real Bunch stream resize preserves the name"), Result.Name, ActorName);
+    TestEqual(TEXT("Real Bunch stream entry count round trips"),
+        Result.BunchStreamEntries.Num(), OriginalEntries + 1);
+    const FKyaBunchStreamEntry& ResultAdded = Result.BunchStreamEntries.Last();
+    TestEqual(TEXT("Real Bunch stream added field round trips"), ResultAdded.Field0, 1301);
+    TestEqual(TEXT("Real Bunch stream added behaviour round trips"), ResultAdded.BehaviourId, 1302);
+    TestEqual(TEXT("Real Bunch stream added zone round trips"), ResultAdded.ZoneId, 1303);
+    TestEqual(TEXT("Real Bunch stream added field c round trips"), ResultAdded.FieldC, 1304);
+    TestEqual(TEXT("Real Bunch stream mesh round trips"), Result.BunchMeshComponentId, OriginalMesh);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeBunchRepelTest, "Kya.Bank.ResizeBunchRepel",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeBunchRepelTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x4e);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Bunch repel fixture"), Bank)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    const int32 RepelIndex = Actor.Behaviours.IndexOfByPredicate(
+        [](const FKyaActorBehaviour& Behaviour) { return Behaviour.bHasTypedBunchRepel; });
+    if (!TestTrue(TEXT("Bunch fixture has a typed repel behaviour"), RepelIndex != INDEX_NONE)) return false;
+    FKyaActorBehaviour& Source = Actor.Behaviours[RepelIndex];
+    TestEqual(TEXT("Bunch repel starts with one index"), Source.BunchRepelIndices.Num(), 1);
+    const int32 OriginalWayPoint = Source.BunchRepelWayPointRef;
+    const float OriginalDamage = Source.BunchRepelDamage;
+    const int32 OriginalMesh = Source.BunchRepelMeshIndex;
+
+    FKyaActorPlacement Presentation = Actor;
+    Presentation.Behaviours[RepelIndex].BunchRepelIndices.Add(1101);
+    Presentation.Behaviours[RepelIndex].BunchRepelIndices.Add(1102);
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    FKyaActorEditPatch Patch;
+    FString Error;
+    TestTrue(TEXT("Bunch repel Details patch builds"),
+        KyaMakePlacementPropertyPatch(Presentation,
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Behaviours), Patch));
+    TestTrue(TEXT("Bunch repel Details patch applies"),
+        Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    Service.Reset();
+    TestEqual(TEXT("Details Bunch repel resize applies"),
+        Actor.Behaviours[RepelIndex].BunchRepelIndices.Num(), 3);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized Bunch repel"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Bunch repel resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized Bunch repel"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    const FKyaActorBehaviour& ResultRepel = Result.Behaviours[RepelIndex];
+    TestEqual(TEXT("Bunch repel index count round trips"), ResultRepel.BunchRepelIndices.Num(), 3);
+    TestEqual(TEXT("Bunch repel added index round trips"), ResultRepel.BunchRepelIndices.Last(), 1102);
+    TestEqual(TEXT("Bunch repel waypoint is preserved"), ResultRepel.BunchRepelWayPointRef, OriginalWayPoint);
+    TestEqual(TEXT("Bunch repel damage is preserved"), ResultRepel.BunchRepelDamage, OriginalDamage);
+    TestEqual(TEXT("Bunch repel mesh is preserved"), ResultRepel.BunchRepelMeshIndex, OriginalMesh);
+
+    RoundTrip->SceneEnvironment.Actors[0].Behaviours[RepelIndex].BunchRepelIndices.SetNum(1);
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk Bunch repel"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk Bunch repel"), ShrunkBank)) return false;
+    TestEqual(TEXT("Shrunk Bunch repel index count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].Behaviours[RepelIndex].BunchRepelIndices.Num(), 1);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealBunchRepelTest, "Kya.Bank.ResizeRealBunchRepel",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealBunchRepelTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to the Kronos Bunch bank (LEVEL_9) to run this test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real Bunch repel bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real Bunch repel bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    int32 BehaviourIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId != 0x4e) continue;
+        for (int32 Behaviour = 0; Behaviour < Candidate.Behaviours.Num(); ++Behaviour)
+        {
+            if (Candidate.Behaviours[Behaviour].bHasTypedBunchRepel)
+            {
+                ActorIndex = Index;
+                BehaviourIndex = Behaviour;
+                break;
+            }
+        }
+        if (ActorIndex != INDEX_NONE) break;
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no Bunch repel behaviour; skipping the real Bunch repel test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    FKyaActorBehaviour& Behaviour = Actor.Behaviours[BehaviourIndex];
+    const FString ActorName = Actor.Name;
+    const int32 OriginalIndices = Behaviour.BunchRepelIndices.Num();
+    const int32 OriginalWayPoint = Behaviour.BunchRepelWayPointRef;
+    const float OriginalDamage = Behaviour.BunchRepelDamage;
+
+    Behaviour.BunchRepelIndices.Add((ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num());
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real Bunch repel resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real Bunch repel resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real Bunch repel resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the Bunch actor"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& ResultActor = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real Bunch repel resize preserves the name"), ResultActor.Name, ActorName);
+    if (!TestTrue(TEXT("Reimported Bunch keeps the repel behaviour"),
+        ResultActor.Behaviours.IsValidIndex(BehaviourIndex))) return false;
+    const FKyaActorBehaviour& Result = ResultActor.Behaviours[BehaviourIndex];
+    TestEqual(TEXT("Real Bunch repel index count round trips"),
+        Result.BunchRepelIndices.Num(), OriginalIndices + 1);
+    TestEqual(TEXT("Real Bunch repel added index round trips"), Result.BunchRepelIndices.Last(),
+        (ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num());
+    TestEqual(TEXT("Real Bunch repel waypoint round trips"), Result.BunchRepelWayPointRef, OriginalWayPoint);
+    TestEqual(TEXT("Real Bunch repel damage round trips"), Result.BunchRepelDamage, OriginalDamage);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeBunchFenceTest, "Kya.Bank.ResizeBunchFence",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeBunchFenceTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x4e);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Bunch fixture"), Bank)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Bunch class id"), Actor.ClassId, int64(0x4e));
+    const int32 FenceIndex = Actor.Behaviours.IndexOfByPredicate(
+        [](const FKyaActorBehaviour& Behaviour) { return Behaviour.bHasTypedBunchFence; });
+    if (!TestTrue(TEXT("Bunch fixture has a typed fence behaviour"), FenceIndex != INDEX_NONE)) return false;
+    FKyaActorBehaviour& Source = Actor.Behaviours[FenceIndex];
+    TestEqual(TEXT("Bunch fence starts with two waypoints"), Source.BunchFenceWayPoints.Num(), 2);
+    TestEqual(TEXT("Bunch fence starts with one group"), Source.BunchFenceGroups.Num(), 1);
+    const int32 OriginalActorRef = Source.BunchFenceActorRef;
+    const int32 OriginalMesh = Source.BunchFenceMeshF0Mesh;
+    const int32 OriginalFx = Source.BunchFenceFxTypes[2];
+
+    FKyaActorPlacement Presentation = Actor;
+    Presentation.Behaviours[FenceIndex].BunchFenceWayPoints.Add(1001);
+    FKyaBunchFenceGroup& Added = Presentation.Behaviours[FenceIndex].BunchFenceGroups.AddDefaulted_GetRef();
+    Added.Field0 = 1002;
+    Added.Field4 = 1003;
+    FKyaBunchFenceEntry& Entry = Added.Entries.AddDefaulted_GetRef();
+    Entry.Ref = 1004;
+    Entry.Field4 = 1005;
+    Added.Entries.AddDefaulted();
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    FKyaActorEditPatch Patch;
+    FString Error;
+    TestTrue(TEXT("Bunch fence Details patch builds"),
+        KyaMakePlacementPropertyPatch(Presentation,
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Behaviours), Patch));
+    TestTrue(TEXT("Bunch fence Details patch applies"),
+        Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    Service.Reset();
+    TestEqual(TEXT("Details Bunch fence waypoint resize applies"),
+        Actor.Behaviours[FenceIndex].BunchFenceWayPoints.Num(), 3);
+    TestEqual(TEXT("Details Bunch fence group resize applies"),
+        Actor.Behaviours[FenceIndex].BunchFenceGroups.Num(), 2);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized Bunch fence"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Bunch fence resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized Bunch fence"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    const FKyaActorBehaviour& ResultFence = Result.Behaviours[FenceIndex];
+    TestEqual(TEXT("Bunch fence waypoint count round trips"), ResultFence.BunchFenceWayPoints.Num(), 3);
+    TestEqual(TEXT("Bunch fence added waypoint round trips"), ResultFence.BunchFenceWayPoints.Last(), 1001);
+    TestEqual(TEXT("Bunch fence group count round trips"), ResultFence.BunchFenceGroups.Num(), 2);
+    TestEqual(TEXT("Bunch fence actor ref is preserved"), ResultFence.BunchFenceActorRef, OriginalActorRef);
+    TestEqual(TEXT("Bunch fence mesh is preserved"), ResultFence.BunchFenceMeshF0Mesh, OriginalMesh);
+    TestEqual(TEXT("Bunch fence fx types are preserved"), ResultFence.BunchFenceFxTypes[2], OriginalFx);
+    const FKyaBunchFenceGroup& ResultAdded = ResultFence.BunchFenceGroups.Last();
+    TestEqual(TEXT("Bunch fence added group field 0 round trips"), ResultAdded.Field0, 1002);
+    TestEqual(TEXT("Bunch fence added group field 4 round trips"), ResultAdded.Field4, 1003);
+    TestEqual(TEXT("Bunch fence added group entry count round trips"), ResultAdded.Entries.Num(), 2);
+    TestEqual(TEXT("Bunch fence added entry ref round trips"), ResultAdded.Entries[0].Ref, 1004);
+    TestEqual(TEXT("Bunch fence added entry field round trips"), ResultAdded.Entries[0].Field4, 1005);
+
+    RoundTrip->SceneEnvironment.Actors[0].Behaviours[FenceIndex].BunchFenceWayPoints.SetNum(2);
+    RoundTrip->SceneEnvironment.Actors[0].Behaviours[FenceIndex].BunchFenceGroups.SetNum(1);
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk Bunch fence"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk Bunch fence"), ShrunkBank)) return false;
+    TestEqual(TEXT("Shrunk Bunch fence waypoint count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].Behaviours[FenceIndex].BunchFenceWayPoints.Num(), 2);
+    TestEqual(TEXT("Shrunk Bunch fence group count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].Behaviours[FenceIndex].BunchFenceGroups.Num(), 1);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealBunchFenceTest, "Kya.Bank.ResizeRealBunchFence",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealBunchFenceTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to the Kronos Bunch bank (LEVEL_9) to run this test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real Bunch bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real Bunch bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    int32 BehaviourIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId != 0x4e) continue;
+        for (int32 Behaviour = 0; Behaviour < Candidate.Behaviours.Num(); ++Behaviour)
+        {
+            if (Candidate.Behaviours[Behaviour].bHasTypedBunchFence)
+            {
+                ActorIndex = Index;
+                BehaviourIndex = Behaviour;
+                break;
+            }
+        }
+        if (ActorIndex != INDEX_NONE) break;
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no Bunch fence behaviour; skipping the real Bunch test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    FKyaActorBehaviour& Behaviour = Actor.Behaviours[BehaviourIndex];
+    const FString ActorName = Actor.Name;
+    const int32 OriginalWayPoints = Behaviour.BunchFenceWayPoints.Num();
+    const int32 OriginalGroups = Behaviour.BunchFenceGroups.Num();
+    const int32 OriginalActorRef = Behaviour.BunchFenceActorRef;
+    const int32 OriginalMesh = Behaviour.BunchFenceMeshF0Mesh;
+
+    Behaviour.BunchFenceWayPoints.Add((ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num());
+    FKyaBunchFenceGroup& Added = Behaviour.BunchFenceGroups.AddDefaulted_GetRef();
+    Added.Field0 = 1;
+    Added.Field4 = (ActorIndex + 2) % Bank->SceneEnvironment.Actors.Num();
+    FKyaBunchFenceEntry& Entry = Added.Entries.AddDefaulted_GetRef();
+    Entry.Ref = (ActorIndex + 3) % Bank->SceneEnvironment.Actors.Num();
+    Entry.Field4 = 1201;
+    Added.Entries.AddDefaulted();
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real Bunch fence resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real Bunch fence resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real Bunch fence resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the Bunch actor"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& ResultActor = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real Bunch resize preserves the name"), ResultActor.Name, ActorName);
+    if (!TestTrue(TEXT("Reimported Bunch keeps the fence behaviour"),
+        ResultActor.Behaviours.IsValidIndex(BehaviourIndex))) return false;
+    const FKyaActorBehaviour& Result = ResultActor.Behaviours[BehaviourIndex];
+    TestEqual(TEXT("Real Bunch fence waypoint count round trips"),
+        Result.BunchFenceWayPoints.Num(), OriginalWayPoints + 1);
+    TestEqual(TEXT("Real Bunch fence group count round trips"),
+        Result.BunchFenceGroups.Num(), OriginalGroups + 1);
+    TestEqual(TEXT("Real Bunch fence actor ref round trips"), Result.BunchFenceActorRef, OriginalActorRef);
+    TestEqual(TEXT("Real Bunch fence mesh round trips"), Result.BunchFenceMeshF0Mesh, OriginalMesh);
+    const FKyaBunchFenceGroup& ResultAdded = Result.BunchFenceGroups.Last();
+    TestEqual(TEXT("Real Bunch fence added entry count round trips"), ResultAdded.Entries.Num(), 2);
+    TestEqual(TEXT("Real Bunch fence added entry ref round trips"), ResultAdded.Entries[0].Ref,
+        (ActorIndex + 3) % Bank->SceneEnvironment.Actors.Num());
+    TestEqual(TEXT("Real Bunch fence added entry field round trips"), ResultAdded.Entries[0].Field4, 1201);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeCompanionAlertsTest, "Kya.Bank.ResizeCompanionAlerts",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeCompanionAlertsTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x19);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import companion fixture"), Bank)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Companion class id"), Actor.ClassId, int64(0x19));
+    const int32 AlertIndex = Actor.Behaviours.IndexOfByPredicate(
+        [](const FKyaActorBehaviour& Behaviour) { return Behaviour.bHasTypedCompanionBehaviour; });
+    if (!TestTrue(TEXT("Companion fixture has a typed alert behaviour"), AlertIndex != INDEX_NONE)) return false;
+    TestEqual(TEXT("Companion starts with one alert"),
+        Actor.Behaviours[AlertIndex].CompanionAlerts.Num(), 1);
+    const int32 OriginalFlags = Actor.Behaviours[AlertIndex].CompanionAlerts[0].Flags;
+    const int64 OriginalKey = Actor.Behaviours[AlertIndex].CompanionAlerts[0].LevelStringKey;
+    const int32 OriginalConditions = Actor.Behaviours[AlertIndex].CompanionAlerts[0].Conditions.Num();
+
+    FKyaActorPlacement Presentation = Actor;
+    FKyaCompanionAlert& Added = Presentation.Behaviours[AlertIndex].CompanionAlerts.AddDefaulted_GetRef();
+    Added.Flags = 801;
+    Added.Field08 = 802;
+    Added.Field10 = 803;
+    Added.Field14 = 804;
+    Added.Field18 = 5.5f;
+    Added.ActorRef = 805;
+    Added.Field20 = FVector(1.0, 2.0, 3.0);
+    Added.CameraRef = 806;
+    Added.Field34.Add(807);
+    Added.Field34.Add(808);
+    Added.LevelStringKey = 0x0102030405060708LL;
+    Added.Field50 = 6.5f;
+    Added.Field58 = 809;
+    Added.Field5C = 7.5f;
+    FKyaSwitchTarget& Target = Added.TargetSwitch.Targets.AddDefaulted_GetRef();
+    Target.TargetRef = 810;
+    Target.CutsceneId = 811;
+    Target.MessageId = 812;
+    Added.TargetSwitch.Camera.CameraIndex = 813;
+    Added.TargetSwitch.Camera.ActorRef = 814;
+    FKyaScenarioCondition& AddedCondition = Added.Conditions.AddDefaulted_GetRef();
+    AddedCondition.Combiner = 1;
+    AddedCondition.Variable = 2;
+    AddedCondition.Comparison = 3;
+    AddedCondition.Value = 4;
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    FKyaActorEditPatch Patch;
+    FString Error;
+    TestTrue(TEXT("Companion Details patch builds"),
+        KyaMakePlacementPropertyPatch(Presentation,
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Behaviours), Patch));
+    TestTrue(TEXT("Companion Details patch applies"),
+        Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    Service.Reset();
+    TestEqual(TEXT("Details companion alert resize applies"),
+        Actor.Behaviours[AlertIndex].CompanionAlerts.Num(), 2);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized companion alerts"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Companion resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized companion alerts"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Companion alert count round trips"),
+        Result.Behaviours[AlertIndex].CompanionAlerts.Num(), 2);
+    TestEqual(TEXT("Companion original flags are preserved"),
+        Result.Behaviours[AlertIndex].CompanionAlerts[0].Flags, OriginalFlags);
+    TestEqual(TEXT("Companion original key is preserved"),
+        Result.Behaviours[AlertIndex].CompanionAlerts[0].LevelStringKey, OriginalKey);
+    TestEqual(TEXT("Companion original conditions are preserved"),
+        Result.Behaviours[AlertIndex].CompanionAlerts[0].Conditions.Num(), OriginalConditions);
+    const FKyaCompanionAlert& ResultAdded = Result.Behaviours[AlertIndex].CompanionAlerts[1];
+    TestEqual(TEXT("Companion added flags round trips"), ResultAdded.Flags, 801);
+    TestEqual(TEXT("Companion added field 08 round trips"), ResultAdded.Field08, 802);
+    TestEqual(TEXT("Companion added field 10 round trips"), ResultAdded.Field10, 803);
+    TestEqual(TEXT("Companion added field 14 round trips"), ResultAdded.Field14, 804);
+    TestEqual(TEXT("Companion added field 18 round trips"), ResultAdded.Field18, 5.5f);
+    TestEqual(TEXT("Companion added actor ref round trips"), ResultAdded.ActorRef, 805);
+    TestTrue(TEXT("Companion added vector round trips"), ResultAdded.Field20.Equals(FVector(1.0, 2.0, 3.0)));
+    TestEqual(TEXT("Companion added camera ref round trips"), ResultAdded.CameraRef, 806);
+    TestEqual(TEXT("Companion added list count round trips"), ResultAdded.Field34.Num(), 2);
+    TestEqual(TEXT("Companion added list value round trips"), ResultAdded.Field34.Last(), 808);
+    TestEqual(TEXT("Companion added key round trips"),
+        ResultAdded.LevelStringKey, int64(0x0102030405060708LL));
+    TestEqual(TEXT("Companion added field 50 round trips"), ResultAdded.Field50, 6.5f);
+    TestEqual(TEXT("Companion added field 58 round trips"), ResultAdded.Field58, 809);
+    TestEqual(TEXT("Companion added field 5c round trips"), ResultAdded.Field5C, 7.5f);
+    TestEqual(TEXT("Companion added switch target count round trips"),
+        ResultAdded.TargetSwitch.Targets.Num(), 1);
+    TestEqual(TEXT("Companion added switch target round trips"),
+        ResultAdded.TargetSwitch.Targets[0].TargetRef, 810);
+    TestEqual(TEXT("Companion added switch camera round trips"),
+        ResultAdded.TargetSwitch.Camera.CameraIndex, 813);
+    TestEqual(TEXT("Companion added condition count round trips"), ResultAdded.Conditions.Num(), 1);
+    TestEqual(TEXT("Companion added condition value round trips"), ResultAdded.Conditions[0].Value, 4);
+
+    RoundTrip->SceneEnvironment.Actors[0].Behaviours[AlertIndex].CompanionAlerts.SetNum(1);
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk companion alerts"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk companion alerts"), ShrunkBank)) return false;
+    TestEqual(TEXT("Shrunk companion alert count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].Behaviours[AlertIndex].CompanionAlerts.Num(), 1);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealCompanionAlertTest, "Kya.Bank.ResizeRealCompanionAlert",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealCompanionAlertTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a bank with a companion actor to run this test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real companion bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real companion bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    int32 BehaviourIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId != 0x19) continue;
+        for (int32 Behaviour = 0; Behaviour < Candidate.Behaviours.Num(); ++Behaviour)
+        {
+            if (Candidate.Behaviours[Behaviour].Id == 3 &&
+                Candidate.Behaviours[Behaviour].bHasTypedCompanionBehaviour)
+            {
+                ActorIndex = Index;
+                BehaviourIndex = Behaviour;
+                break;
+            }
+        }
+        if (ActorIndex != INDEX_NONE) break;
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no companion alert behaviour; skipping the real companion test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    FKyaActorBehaviour& Behaviour = Actor.Behaviours[BehaviourIndex];
+    const FString ActorName = Actor.Name;
+    const int32 OriginalAlerts = Behaviour.CompanionAlerts.Num();
+    const int32 OriginalFlags = Behaviour.CompanionAlerts.IsEmpty() ? 0 : Behaviour.CompanionAlerts[0].Flags;
+
+    FKyaCompanionAlert& Added = Behaviour.CompanionAlerts.AddDefaulted_GetRef();
+    Added.Flags = 901;
+    Added.ActorRef = (ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num();
+    Added.Field18 = 8.5f;
+    Added.Field20 = FVector(4.0, 5.0, 6.0);
+    Added.LevelStringKey = 0x1112131415161718LL;
+    FKyaSwitchTarget& Target = Added.TargetSwitch.Targets.AddDefaulted_GetRef();
+    Target.TargetRef = 902;
+    Added.TargetSwitch.Camera.CameraIndex = 903;
+    FKyaScenarioCondition& AddedCondition = Added.Conditions.AddDefaulted_GetRef();
+    AddedCondition.Combiner = 1;
+    AddedCondition.Variable = 2;
+    AddedCondition.Comparison = 3;
+    AddedCondition.Value = 904;
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real companion-alert resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real companion resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real companion-alert resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the companion actor"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& ResultActor = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real companion resize preserves the name"), ResultActor.Name, ActorName);
+    if (!TestTrue(TEXT("Reimported companion keeps the alert behaviour"),
+        ResultActor.Behaviours.IsValidIndex(BehaviourIndex))) return false;
+    const FKyaActorBehaviour& Result = ResultActor.Behaviours[BehaviourIndex];
+    TestEqual(TEXT("Real companion alert count round trips"),
+        Result.CompanionAlerts.Num(), OriginalAlerts + 1);
+    if (OriginalAlerts > 0)
+        TestEqual(TEXT("Real companion first alert flags round trips"),
+            Result.CompanionAlerts[0].Flags, OriginalFlags);
+    const FKyaCompanionAlert& ResultAdded = Result.CompanionAlerts.Last();
+    TestEqual(TEXT("Real companion added flags round trips"), ResultAdded.Flags, 901);
+    TestEqual(TEXT("Real companion added field 18 round trips"), ResultAdded.Field18, 8.5f);
+    TestTrue(TEXT("Real companion added vector round trips"),
+        ResultAdded.Field20.Equals(FVector(4.0, 5.0, 6.0)));
+    TestEqual(TEXT("Real companion added key round trips"),
+        ResultAdded.LevelStringKey, int64(0x1112131415161718LL));
+    TestEqual(TEXT("Real companion added switch round trips"),
+        ResultAdded.TargetSwitch.Targets.Last().TargetRef, 902);
+    TestEqual(TEXT("Real companion added camera round trips"),
+        ResultAdded.TargetSwitch.Camera.CameraIndex, 903);
+    TestEqual(TEXT("Real companion added condition round trips"),
+        ResultAdded.Conditions.Last().Value, 904);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeWeaponRpgRefsTest, "Kya.Bank.ResizeWeaponRpgRefs",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeWeaponRpgRefsTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x20, false, false, false, false, true);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import weapon fixture"), Bank)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Weapon class id"), Actor.ClassId, int64(0x20));
+    const int32 RpgIndex = Actor.Behaviours.IndexOfByPredicate(
+        [](const FKyaActorBehaviour& Behaviour) { return Behaviour.Id == 6; });
+    if (!TestTrue(TEXT("Weapon fixture has an RPG behaviour"), RpgIndex != INDEX_NONE)) return false;
+    TestTrue(TEXT("Weapon RPG behaviour is typed"),
+        Actor.Behaviours[RpgIndex].bHasTypedWeaponBehaviour);
+    TestEqual(TEXT("Weapon RPG starts with four refs"),
+        Actor.Behaviours[RpgIndex].WeaponRpgActorRefs.Num(), 4);
+    const int32 OriginalFirst = Actor.Behaviours[RpgIndex].WeaponRpgActorRefs[0];
+    const float OriginalBurst0 = Actor.Behaviours[RpgIndex].WeaponBurst[0].Field0;
+
+    FKyaActorPlacement Presentation = Actor;
+    Presentation.Behaviours[RpgIndex].WeaponRpgActorRefs.Add(701);
+    Presentation.Behaviours[RpgIndex].WeaponRpgActorRefs.Add(702);
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    FKyaActorEditPatch Patch;
+    FString Error;
+    TestTrue(TEXT("Weapon RPG Details patch builds"),
+        KyaMakePlacementPropertyPatch(Presentation,
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Behaviours), Patch));
+    TestTrue(TEXT("Weapon RPG Details patch applies"),
+        Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    Service.Reset();
+    TestEqual(TEXT("Details weapon RPG resize applies"),
+        Actor.Behaviours[RpgIndex].WeaponRpgActorRefs.Num(), 6);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized weapon RPG refs"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Weapon RPG resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized weapon RPG refs"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Weapon RPG ref count round trips"),
+        Result.Behaviours[RpgIndex].WeaponRpgActorRefs.Num(), 6);
+    TestEqual(TEXT("Weapon RPG first ref round trips"),
+        Result.Behaviours[RpgIndex].WeaponRpgActorRefs[0], OriginalFirst);
+    TestEqual(TEXT("Weapon RPG added ref round trips"),
+        Result.Behaviours[RpgIndex].WeaponRpgActorRefs.Last(), 702);
+    TestEqual(TEXT("Weapon RPG burst block round trips"),
+        Result.Behaviours[RpgIndex].WeaponBurst.Num(), 2);
+    TestEqual(TEXT("Weapon RPG burst field round trips"),
+        Result.Behaviours[RpgIndex].WeaponBurst[0].Field0, OriginalBurst0);
+
+    RoundTrip->SceneEnvironment.Actors[0].Behaviours[RpgIndex].WeaponRpgActorRefs.SetNum(4);
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk weapon RPG refs"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk weapon RPG refs"), ShrunkBank)) return false;
+    TestEqual(TEXT("Shrunk weapon RPG count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].Behaviours[RpgIndex].WeaponRpgActorRefs.Num(), 4);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealWeaponRpgRefTest, "Kya.Bank.ResizeRealWeaponRpgRef",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealWeaponRpgRefTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a bank with an RPG weapon to run this test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real weapon bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real weapon bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    int32 BehaviourIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId != 0x20) continue;
+        for (int32 Behaviour = 0; Behaviour < Candidate.Behaviours.Num(); ++Behaviour)
+        {
+            if (Candidate.Behaviours[Behaviour].Id == 6 &&
+                Candidate.Behaviours[Behaviour].bHasTypedWeaponBehaviour)
+            {
+                ActorIndex = Index;
+                BehaviourIndex = Behaviour;
+                break;
+            }
+        }
+        if (ActorIndex != INDEX_NONE) break;
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no RPG weapon behaviour; skipping the real RPG test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    FKyaActorBehaviour& Behaviour = Actor.Behaviours[BehaviourIndex];
+    const FString ActorName = Actor.Name;
+    const int32 OriginalRefs = Behaviour.WeaponRpgActorRefs.Num();
+    const int32 OriginalFirst = Behaviour.WeaponRpgActorRefs.IsEmpty() ? 0 : Behaviour.WeaponRpgActorRefs[0];
+
+    Behaviour.WeaponRpgActorRefs.Add((ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num());
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real weapon RPG resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real weapon RPG resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real weapon RPG resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the weapon actor"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& ResultActor = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real weapon RPG resize preserves the name"), ResultActor.Name, ActorName);
+    if (!TestTrue(TEXT("Reimported weapon keeps the RPG behaviour"),
+        ResultActor.Behaviours.IsValidIndex(BehaviourIndex))) return false;
+    const FKyaActorBehaviour& Result = ResultActor.Behaviours[BehaviourIndex];
+    TestEqual(TEXT("Real weapon RPG count round trips"), Result.WeaponRpgActorRefs.Num(), OriginalRefs + 1);
+    if (OriginalRefs > 0)
+        TestEqual(TEXT("Real weapon RPG first ref round trips"),
+            Result.WeaponRpgActorRefs[0], OriginalFirst);
+    TestEqual(TEXT("Real weapon RPG burst count round trips"), Result.WeaponBurst.Num(), 2);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeFxListsTest, "Kya.Bank.ResizeFxLists",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeFxListsTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x2e);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import FX fixture"), Bank)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("FX class id"), Actor.ClassId, int64(0x2e));
+    const int32 ListIndex = Actor.Behaviours.IndexOfByPredicate(
+        [](const FKyaActorBehaviour& Behaviour) { return Behaviour.bHasTypedFxBehaviour && Behaviour.Id == 4; });
+    if (!TestTrue(TEXT("FX fixture has a typed integer list"), ListIndex != INDEX_NONE)) return false;
+    TestEqual(TEXT("FX list starts with two values"),
+        Actor.Behaviours[ListIndex].FxUnknownValues.Num(), 2);
+    const int32 OriginalFirst = Actor.Behaviours[ListIndex].FxUnknownValues[0];
+
+    FKyaActorPlacement Presentation = Actor;
+    Presentation.Behaviours[ListIndex].FxUnknownValues.Add(601);
+    Presentation.Behaviours[ListIndex].FxUnknownValues.Add(602);
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    FKyaActorEditPatch Patch;
+    FString Error;
+    TestTrue(TEXT("FX list Details patch builds"),
+        KyaMakePlacementPropertyPatch(Presentation,
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Behaviours), Patch));
+    TestTrue(TEXT("FX list Details patch applies"),
+        Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    Service.Reset();
+    TestEqual(TEXT("Details FX list resize applies"),
+        Actor.Behaviours[ListIndex].FxUnknownValues.Num(), 4);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized FX list"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("FX list resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized FX list"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("FX list value count round trips"),
+        Result.Behaviours[ListIndex].FxUnknownValues.Num(), 4);
+    TestEqual(TEXT("FX list first value round trips"),
+        Result.Behaviours[ListIndex].FxUnknownValues[0], OriginalFirst);
+    TestEqual(TEXT("FX list added value round trips"),
+        Result.Behaviours[ListIndex].FxUnknownValues.Last(), 602);
+    TestEqual(TEXT("FX path behaviour is preserved"),
+        Result.Behaviours[1].FxPathFollowIndex, Actor.Behaviours[1].FxPathFollowIndex);
+
+    RoundTrip->SceneEnvironment.Actors[0].Behaviours[ListIndex].FxUnknownValues.SetNum(2);
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk FX list"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk FX list"), ShrunkBank)) return false;
+    TestEqual(TEXT("Shrunk FX list count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].Behaviours[ListIndex].FxUnknownValues.Num(), 2);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeFogHierarchiesTest, "Kya.Bank.ResizeFogHierarchies",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeFogHierarchiesTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x3d);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import fog-hierarchy fixture"), Bank)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Fog-hierarchy class id"), Actor.ClassId, int64(0x3d));
+    TestTrue(TEXT("Fog-hierarchy data parses"), Actor.bHasFogData);
+    TestEqual(TEXT("Fog hierarchy starts with one record"), Actor.FogHierarchies.Num(), 1);
+    const int64 OriginalHash = Actor.FogHierarchies[0].Hash;
+    const float OriginalField20 = Actor.FogHierarchies[0].Field20;
+    const float OriginalField24 = Actor.FogHierarchies[0].Field24;
+
+    FKyaActorPlacement Presentation = Actor;
+    FKyaFogHierarchy& Added = Presentation.FogHierarchies.AddDefaulted_GetRef();
+    Added.Hash = 0x0102030405060708LL;
+    Added.Field20 = 7.5f;
+    Added.Field24 = 8.5f;
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    FKyaActorEditPatch Patch;
+    FString Error;
+    TestTrue(TEXT("Fog-hierarchy Details patch builds"),
+        KyaMakePlacementPropertyPatch(Presentation,
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, FogHierarchies), Patch));
+    TestTrue(TEXT("Fog-hierarchy Details patch applies"),
+        Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    Service.Reset();
+    TestEqual(TEXT("Details fog-hierarchy resize applies"), Actor.FogHierarchies.Num(), 2);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized fog hierarchies"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Fog-hierarchy resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized fog hierarchies"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Fog hierarchy count round trips"), Result.FogHierarchies.Num(), 2);
+    TestEqual(TEXT("Fog hierarchy original hash round trips"), Result.FogHierarchies[0].Hash, OriginalHash);
+    TestEqual(TEXT("Fog hierarchy original field 20 round trips"),
+        Result.FogHierarchies[0].Field20, OriginalField20);
+    TestEqual(TEXT("Fog hierarchy original field 24 round trips"),
+        Result.FogHierarchies[0].Field24, OriginalField24);
+    TestEqual(TEXT("Fog hierarchy added hash round trips"),
+        Result.FogHierarchies[1].Hash, int64(0x0102030405060708LL));
+    TestEqual(TEXT("Fog hierarchy added field 20 round trips"), Result.FogHierarchies[1].Field20, 7.5f);
+    TestEqual(TEXT("Fog hierarchy added field 24 round trips"), Result.FogHierarchies[1].Field24, 8.5f);
+    TestEqual(TEXT("Fog zone behaviour is preserved"), Result.Behaviours.Num() > 0, true);
+
+    RoundTrip->SceneEnvironment.Actors[0].FogHierarchies.SetNum(1);
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk fog hierarchies"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk fog hierarchies"), ShrunkBank)) return false;
+    TestEqual(TEXT("Shrunk fog hierarchy count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].FogHierarchies.Num(), 1);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealFogHierarchyTest, "Kya.Bank.ResizeRealFogHierarchy",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealFogHierarchyTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a fog bank (LEVEL_1/2/4) to run the real fog-hierarchy test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real fog-hierarchy bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real fog-hierarchy bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId == 0x3d && Candidate.bHasFogData)
+        {
+            ActorIndex = Index;
+            break;
+        }
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no fog manager; skipping the real fog-hierarchy test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    const FString ActorName = Actor.Name;
+    const int32 OriginalCount = Actor.FogHierarchies.Num();
+    const int64 OriginalHash = Actor.FogHierarchies.IsEmpty() ? 0 : Actor.FogHierarchies[0].Hash;
+    const float OriginalField20 = Actor.FogHierarchies.IsEmpty() ? 0.0f : Actor.FogHierarchies[0].Field20;
+
+    FKyaFogHierarchy& Added = Actor.FogHierarchies.AddDefaulted_GetRef();
+    Added.Hash = 0x0A0B0C0D0E0F1011LL;
+    Added.Field20 = 31.5f;
+    Added.Field24 = 32.5f;
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real fog-hierarchy resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real fog-hierarchy resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real fog-hierarchy resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the fog actor"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real fog-hierarchy resize preserves the name"), Result.Name, ActorName);
+    TestEqual(TEXT("Real fog-hierarchy count round trips"), Result.FogHierarchies.Num(), OriginalCount + 1);
+    if (OriginalCount > 0)
+    {
+        TestEqual(TEXT("Real fog-hierarchy original hash round trips"), Result.FogHierarchies[0].Hash, OriginalHash);
+        TestEqual(TEXT("Real fog-hierarchy original field 20 round trips"),
+            Result.FogHierarchies[0].Field20, OriginalField20);
+    }
+    TestEqual(TEXT("Real fog-hierarchy added hash round trips"),
+        Result.FogHierarchies.Last().Hash, int64(0x0A0B0C0D0E0F1011LL));
+    TestEqual(TEXT("Real fog-hierarchy added field 20 round trips"),
+        Result.FogHierarchies.Last().Field20, 31.5f);
+    TestEqual(TEXT("Real fog-hierarchy added field 24 round trips"),
+        Result.FogHierarchies.Last().Field24, 32.5f);
+    TestEqual(TEXT("Real fog behaviour is preserved"), Result.Behaviours.Num() > 0, true);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeNoseMonsterShotsTest, "Kya.Bank.ResizeNoseMonsterShots",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeNoseMonsterShotsTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x26);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Nose monster fixture"), Bank)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Nose monster class id"), Actor.ClassId, int64(0x26));
+    TestTrue(TEXT("Nose monster data parses"), Actor.bHasNoseMonsterData);
+    TestTrue(TEXT("Nose monster uses the versioned layout"), Actor.bNoseMonsterHasVersionFloats);
+    TestEqual(TEXT("Nose monster starts with one zone path"), Actor.NoseMonsterZonePathEntries.Num(), 1);
+    TestEqual(TEXT("Nose monster starts with two fire-shot refs"),
+        Actor.NoseMonsterFireShotActorRefs.Num(), 2);
+    const int32 OriginalZonePath = Actor.NoseMonsterZonePathEntries[0].ZoneRef;
+    const int32 OriginalShot = Actor.NoseMonsterFireShotActorRefs[0];
+    const int32 OriginalTargets = Actor.NoseMonsterSwitch.Targets.Num();
+    const float OriginalVersionFloat = Actor.NoseMonsterField378;
+
+    FKyaActorPlacement Presentation = Actor;
+    FKyaNoseMonsterZonePath& AddedZonePath = Presentation.NoseMonsterZonePathEntries.AddDefaulted_GetRef();
+    AddedZonePath.ZoneRef = 2501;
+    AddedZonePath.PathFollowRef = 2502;
+    Presentation.NoseMonsterFireShotActorRefs.Add(2503);
+    Presentation.NoseMonsterFireShotActorRefs.Add(2504);
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    const auto ApplyField = [&](FName PropertyName)
+    {
+        FKyaActorEditPatch Patch;
+        FString Error;
+        if (!TestTrue(TEXT("Nose monster Details patch builds"),
+            KyaMakePlacementPropertyPatch(Presentation, PropertyName, Patch))) return;
+        TestTrue(TEXT("Nose monster Details patch applies"),
+            Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    };
+    ApplyField(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, NoseMonsterZonePathEntries));
+    ApplyField(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, NoseMonsterFireShotActorRefs));
+    Service.Reset();
+    TestEqual(TEXT("Details Nose monster zone-path resize applies"),
+        Actor.NoseMonsterZonePathEntries.Num(), 2);
+    TestEqual(TEXT("Details Nose monster fire-shot resize applies"),
+        Actor.NoseMonsterFireShotActorRefs.Num(), 4);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized Nose monster lists"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Nose monster resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized Nose monster lists"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Nose monster zone-path count round trips"),
+        Result.NoseMonsterZonePathEntries.Num(), 2);
+    TestEqual(TEXT("Nose monster original zone path round trips"),
+        Result.NoseMonsterZonePathEntries[0].ZoneRef, OriginalZonePath);
+    TestEqual(TEXT("Nose monster added zone path round trips"),
+        Result.NoseMonsterZonePathEntries.Last().ZoneRef, 2501);
+    TestEqual(TEXT("Nose monster added path-follow round trips"),
+        Result.NoseMonsterZonePathEntries.Last().PathFollowRef, 2502);
+    TestEqual(TEXT("Nose monster fire-shot count round trips"),
+        Result.NoseMonsterFireShotActorRefs.Num(), 4);
+    TestEqual(TEXT("Nose monster original fire-shot ref round trips"),
+        Result.NoseMonsterFireShotActorRefs[0], OriginalShot);
+    TestEqual(TEXT("Nose monster added fire-shot ref round trips"),
+        Result.NoseMonsterFireShotActorRefs.Last(), 2504);
+    TestEqual(TEXT("Nose monster version layout is preserved"),
+        Result.bNoseMonsterHasVersionFloats, true);
+    TestEqual(TEXT("Nose monster version float is preserved"),
+        Result.NoseMonsterField378, OriginalVersionFloat);
+    TestEqual(TEXT("Nose monster switch count is preserved"),
+        Result.NoseMonsterSwitch.Targets.Num(), OriginalTargets);
+    TestEqual(TEXT("Nose monster switch camera is preserved"),
+        Result.NoseMonsterSwitch.Camera.CameraIndex, Actor.NoseMonsterSwitch.Camera.CameraIndex);
+
+    RoundTrip->SceneEnvironment.Actors[0].NoseMonsterZonePathEntries.SetNum(1);
+    RoundTrip->SceneEnvironment.Actors[0].NoseMonsterFireShotActorRefs.SetNum(2);
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk Nose monster lists"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk Nose monster lists"), ShrunkBank)) return false;
+    TestEqual(TEXT("Shrunk Nose monster zone-path count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].NoseMonsterZonePathEntries.Num(), 1);
+    TestEqual(TEXT("Shrunk Nose monster fire-shot count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].NoseMonsterFireShotActorRefs.Num(), 2);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealNoseMonsterShotsTest, "Kya.Bank.ResizeRealNoseMonsterShots",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealNoseMonsterShotsTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a bank with a Nose monster actor (LEVEL_2) to run this test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real Nose monster bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real Nose monster bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId == 0x26 && Candidate.bHasNoseMonsterData &&
+            !Candidate.NoseMonsterFireShotActorRefs.IsEmpty())
+        {
+            ActorIndex = Index;
+            break;
+        }
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no populated Nose monster fire-shot list; skipping the real test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    const FString ActorName = Actor.Name;
+    const int32 OriginalZonePaths = Actor.NoseMonsterZonePathEntries.Num();
+    const int32 OriginalShots = Actor.NoseMonsterFireShotActorRefs.Num();
+    const int32 OriginalShot = Actor.NoseMonsterFireShotActorRefs[0];
+    const int32 OriginalTargets = Actor.NoseMonsterSwitch.Targets.Num();
+    const bool bOriginalVersion = Actor.bNoseMonsterHasVersionFloats;
+
+    Actor.NoseMonsterZonePathEntries.AddDefaulted();
+    Actor.NoseMonsterZonePathEntries.Last().ZoneRef = (ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num();
+    Actor.NoseMonsterZonePathEntries.Last().PathFollowRef = 2601;
+    Actor.NoseMonsterFireShotActorRefs.Add((ActorIndex + 2) % Bank->SceneEnvironment.Actors.Num());
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real Nose monster resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real Nose monster resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real Nose monster resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the Nose monster actor"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real Nose monster resize preserves the name"), Result.Name, ActorName);
+    TestEqual(TEXT("Real Nose monster zone-path count round trips"),
+        Result.NoseMonsterZonePathEntries.Num(), OriginalZonePaths + 1);
+    TestEqual(TEXT("Real Nose monster added zone path round trips"),
+        Result.NoseMonsterZonePathEntries.Last().ZoneRef,
+        (ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num());
+    TestEqual(TEXT("Real Nose monster added path-follow round trips"),
+        Result.NoseMonsterZonePathEntries.Last().PathFollowRef, 2601);
+    TestEqual(TEXT("Real Nose monster fire-shot count round trips"),
+        Result.NoseMonsterFireShotActorRefs.Num(), OriginalShots + 1);
+    TestEqual(TEXT("Real Nose monster original fire-shot round trips"),
+        Result.NoseMonsterFireShotActorRefs[0], OriginalShot);
+    TestEqual(TEXT("Real Nose monster added fire-shot round trips"),
+        Result.NoseMonsterFireShotActorRefs.Last(),
+        (ActorIndex + 2) % Bank->SceneEnvironment.Actors.Num());
+    TestEqual(TEXT("Real Nose monster switch count round trips"),
+        Result.NoseMonsterSwitch.Targets.Num(), OriginalTargets);
+    TestEqual(TEXT("Real Nose monster version layout round trips"),
+        Result.bNoseMonsterHasVersionFloats, bOriginalVersion);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeAmortosCmdActorsTest, "Kya.Bank.ResizeAmortosCmdActors",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeAmortosCmdActorsTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x31);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Amortos command fixture"), Bank)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Amortos command class id"), Actor.ClassId, int64(0x31));
+    TestTrue(TEXT("Amortos command data parses"), Actor.bHasAmortosCmdData);
+    TestEqual(TEXT("Amortos command starts with two refs"), Actor.AmortosCmdActorRefs.Num(), 2);
+    const int32 OriginalFirst = Actor.AmortosCmdActorRefs[0];
+
+    FKyaActorPlacement Presentation = Actor;
+    Presentation.AmortosCmdActorRefs.Add(2401);
+    Presentation.AmortosCmdActorRefs.Add(2402);
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    FKyaActorEditPatch Patch;
+    FString Error;
+    TestTrue(TEXT("Amortos command Details patch builds"),
+        KyaMakePlacementPropertyPatch(Presentation,
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, AmortosCmdActorRefs), Patch));
+    TestTrue(TEXT("Amortos command Details patch applies"),
+        Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    Service.Reset();
+    TestEqual(TEXT("Details Amortos command resize applies"), Actor.AmortosCmdActorRefs.Num(), 4);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized Amortos command refs"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Amortos command resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized Amortos command refs"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Amortos command ref count round trips"), Result.AmortosCmdActorRefs.Num(), 4);
+    TestEqual(TEXT("Amortos command first ref round trips"), Result.AmortosCmdActorRefs[0], OriginalFirst);
+    TestEqual(TEXT("Amortos command added ref round trips"), Result.AmortosCmdActorRefs.Last(), 2402);
+
+    RoundTrip->SceneEnvironment.Actors[0].AmortosCmdActorRefs.SetNum(2);
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk Amortos command refs"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk Amortos command refs"), ShrunkBank)) return false;
+    TestEqual(TEXT("Shrunk Amortos command ref count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].AmortosCmdActorRefs.Num(), 2);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealAmortosCmdActorsTest, "Kya.Bank.ResizeRealAmortosCmdActors",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealAmortosCmdActorsTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a bank with an Amortos command actor (LEVEL_2) to run this test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real Amortos command bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real Amortos command bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId == 0x31 && Candidate.bHasAmortosCmdData &&
+            !Candidate.AmortosCmdActorRefs.IsEmpty())
+        {
+            ActorIndex = Index;
+            break;
+        }
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no populated Amortos command actor list; skipping the real test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    const FString ActorName = Actor.Name;
+    const int32 OriginalCount = Actor.AmortosCmdActorRefs.Num();
+    const int32 OriginalFirst = Actor.AmortosCmdActorRefs[0];
+
+    Actor.AmortosCmdActorRefs.Add((ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num());
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real Amortos command resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real Amortos command resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real Amortos command resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the Amortos command actor"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real Amortos command resize preserves the name"), Result.Name, ActorName);
+    TestEqual(TEXT("Real Amortos command ref count round trips"),
+        Result.AmortosCmdActorRefs.Num(), OriginalCount + 1);
+    TestEqual(TEXT("Real Amortos command first ref round trips"),
+        Result.AmortosCmdActorRefs[0], OriginalFirst);
+    TestEqual(TEXT("Real Amortos command added ref round trips"), Result.AmortosCmdActorRefs.Last(),
+        (ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num());
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizePunchingBallTrapsTest, "Kya.Bank.ResizePunchingBallTraps",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizePunchingBallTrapsTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x30);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Punching ball fixture"), Bank)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Punching ball class id"), Actor.ClassId, int64(0x30));
+    TestTrue(TEXT("Punching ball data parses"), Actor.bHasPunchingBallData);
+    TestEqual(TEXT("Punching ball starts with one trap entry"), Actor.PunchingBallTrapEntries.Num(), 1);
+    TestEqual(TEXT("Punching ball camera-fight floats"), Actor.PunchingBallCamFigFloats.Num(), 14);
+    const int32 OriginalTarget = Actor.PunchingBallTrapEntries[0].TargetRef;
+    const float OriginalCamFig = Actor.PunchingBallCamFigFloats[13];
+    const int32 OriginalRefA94 = Actor.PunchingBallActorRefA94;
+
+    FKyaActorPlacement Presentation = Actor;
+    FKyaPunchingBallTrapEntry& Added = Presentation.PunchingBallTrapEntries.AddDefaulted_GetRef();
+    Added.TargetRef = 2201;
+    Added.CutsceneId = 2202;
+    Added.Flags = 2203;
+    Added.MessageId = 2204;
+    Added.MessageFlags = 2205;
+    Added.Field14 = 2206;
+    Added.Field18 = 2207;
+    Added.Camera.CameraIndex = 2208;
+    Added.Camera.Flags = 2209;
+    Added.Camera.Field8 = 1.5f;
+    Added.Camera.FieldC = 2.5f;
+    Added.Camera.Field10 = 3.5f;
+    Added.Camera.ActorRef = 2210;
+    Added.Camera.ZoneRef = 2211;
+    Added.Camera.Field1C = 4.5f;
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    FKyaActorEditPatch Patch;
+    FString Error;
+    TestTrue(TEXT("Punching ball Details patch builds"),
+        KyaMakePlacementPropertyPatch(Presentation,
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, PunchingBallTrapEntries), Patch));
+    TestTrue(TEXT("Punching ball Details patch applies"),
+        Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    Service.Reset();
+    TestEqual(TEXT("Details Punching ball trap resize applies"), Actor.PunchingBallTrapEntries.Num(), 2);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized Punching ball traps"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Punching ball resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized Punching ball traps"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Punching ball trap count round trips"), Result.PunchingBallTrapEntries.Num(), 2);
+    TestEqual(TEXT("Punching ball original trap round trips"),
+        Result.PunchingBallTrapEntries[0].TargetRef, OriginalTarget);
+    TestEqual(TEXT("Punching ball camera-fight float count round trips"),
+        Result.PunchingBallCamFigFloats.Num(), 14);
+    TestEqual(TEXT("Punching ball camera-fight float round trips"),
+        Result.PunchingBallCamFigFloats[13], OriginalCamFig);
+    TestEqual(TEXT("Punching ball actor ref round trips"), Result.PunchingBallActorRefA94, OriginalRefA94);
+    const FKyaPunchingBallTrapEntry& ResultAdded = Result.PunchingBallTrapEntries[1];
+    TestEqual(TEXT("Punching ball added trap target round trips"), ResultAdded.TargetRef, 2201);
+    TestEqual(TEXT("Punching ball added trap cutscene round trips"), ResultAdded.CutsceneId, 2202);
+    TestEqual(TEXT("Punching ball added trap flags round trips"), ResultAdded.Flags, 2203);
+    TestEqual(TEXT("Punching ball added trap message round trips"), ResultAdded.MessageId, 2204);
+    TestEqual(TEXT("Punching ball added trap message flags round trips"), ResultAdded.MessageFlags, 2205);
+    TestEqual(TEXT("Punching ball added trap field 14 round trips"), ResultAdded.Field14, 2206);
+    TestEqual(TEXT("Punching ball added trap field 18 round trips"), ResultAdded.Field18, 2207);
+    TestEqual(TEXT("Punching ball added trap camera round trips"),
+        ResultAdded.Camera.CameraIndex, 2208);
+    TestEqual(TEXT("Punching ball added trap camera flags round trips"), ResultAdded.Camera.Flags, 2209);
+    TestEqual(TEXT("Punching ball added trap camera field 8 round trips"),
+        ResultAdded.Camera.Field8, 1.5f);
+    TestEqual(TEXT("Punching ball added trap camera field c round trips"),
+        ResultAdded.Camera.FieldC, 2.5f);
+    TestEqual(TEXT("Punching ball added trap camera field 10 round trips"),
+        ResultAdded.Camera.Field10, 3.5f);
+    TestEqual(TEXT("Punching ball added trap camera actor round trips"),
+        ResultAdded.Camera.ActorRef, 2210);
+    TestEqual(TEXT("Punching ball added trap camera zone round trips"),
+        ResultAdded.Camera.ZoneRef, 2211);
+    TestEqual(TEXT("Punching ball added trap camera field 1c round trips"),
+        ResultAdded.Camera.Field1C, 4.5f);
+
+    RoundTrip->SceneEnvironment.Actors[0].PunchingBallTrapEntries.SetNum(1);
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk Punching ball traps"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk Punching ball traps"), ShrunkBank)) return false;
+    TestEqual(TEXT("Shrunk Punching ball trap count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].PunchingBallTrapEntries.Num(), 1);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealPunchingBallTrapsTest, "Kya.Bank.ResizeRealPunchingBallTraps",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealPunchingBallTrapsTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a bank with a Punching ball actor (LEVEL_4) to run this test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real Punching ball bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real Punching ball bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId == 0x30 && Candidate.bHasPunchingBallData &&
+            !Candidate.PunchingBallTrapEntries.IsEmpty())
+        {
+            ActorIndex = Index;
+            break;
+        }
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no populated Punching ball trap list; skipping the real test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    const FString ActorName = Actor.Name;
+    const int32 OriginalCount = Actor.PunchingBallTrapEntries.Num();
+    const int32 OriginalTarget = Actor.PunchingBallTrapEntries[0].TargetRef;
+    const int32 OriginalCamFigCount = Actor.PunchingBallCamFigFloats.Num();
+    const float OriginalCamFig = Actor.PunchingBallCamFigFloats.IsEmpty()
+        ? 0.0f : Actor.PunchingBallCamFigFloats.Last();
+
+    FKyaPunchingBallTrapEntry& Added = Actor.PunchingBallTrapEntries.AddDefaulted_GetRef();
+    Added.TargetRef = (ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num();
+    Added.CutsceneId = 2301;
+    Added.MessageId = 2302;
+    Added.Camera.CameraIndex = 2303;
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real Punching ball trap resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real Punching ball resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real Punching ball trap resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the Punching ball actor"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real Punching ball resize preserves the name"), Result.Name, ActorName);
+    TestEqual(TEXT("Real Punching ball trap count round trips"),
+        Result.PunchingBallTrapEntries.Num(), OriginalCount + 1);
+    TestEqual(TEXT("Real Punching ball original trap round trips"),
+        Result.PunchingBallTrapEntries[0].TargetRef, OriginalTarget);
+    TestEqual(TEXT("Real Punching ball added trap target round trips"),
+        Result.PunchingBallTrapEntries.Last().TargetRef,
+        (ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num());
+    TestEqual(TEXT("Real Punching ball added trap cutscene round trips"),
+        Result.PunchingBallTrapEntries.Last().CutsceneId, 2301);
+    TestEqual(TEXT("Real Punching ball added trap camera round trips"),
+        Result.PunchingBallTrapEntries.Last().Camera.CameraIndex, 2303);
+    TestEqual(TEXT("Real Punching ball camera-fight float count round trips"),
+        Result.PunchingBallCamFigFloats.Num(), OriginalCamFigCount);
+    TestEqual(TEXT("Real Punching ball camera-fight float round trips"),
+        Result.PunchingBallCamFigFloats.Last(), OriginalCamFig);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeShipListsTest, "Kya.Bank.ResizeShipLists",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeShipListsTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x36);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Ship fixture"), Bank)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Ship class id"), Actor.ClassId, int64(0x36));
+    TestTrue(TEXT("Ship data parses"), Actor.bHasShipData);
+    TestEqual(TEXT("Ship starts with two care-boy refs"), Actor.ShipCareBoyActorRefs.Num(), 2);
+    TestEqual(TEXT("Ship starts with two FX integers"), Actor.ShipFxIntValues.Num(), 2);
+    const int32 OriginalFirstCareBoy = Actor.ShipCareBoyActorRefs[0];
+    const int32 OriginalFirstFx = Actor.ShipFxIntValues[0];
+    const int32 OriginalTargets = Actor.ShipSwitch.Targets.Num();
+    const int32 OriginalWord0 = Actor.ShipWords18C[0];
+
+    FKyaActorPlacement Presentation = Actor;
+    Presentation.ShipCareBoyActorRefs.Add(2001);
+    Presentation.ShipFxIntValues.Add(2002);
+    Presentation.ShipFxIntValues.Add(2003);
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    const auto ApplyField = [&](FName PropertyName)
+    {
+        FKyaActorEditPatch Patch;
+        FString Error;
+        if (!TestTrue(TEXT("Ship Details patch builds"),
+            KyaMakePlacementPropertyPatch(Presentation, PropertyName, Patch))) return;
+        TestTrue(TEXT("Ship Details patch applies"),
+            Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    };
+    ApplyField(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, ShipCareBoyActorRefs));
+    ApplyField(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, ShipFxIntValues));
+    Service.Reset();
+    TestEqual(TEXT("Details Ship care-boy resize applies"), Actor.ShipCareBoyActorRefs.Num(), 3);
+    TestEqual(TEXT("Details Ship FX resize applies"), Actor.ShipFxIntValues.Num(), 4);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized Ship lists"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Ship resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized Ship lists"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Ship care-boy count round trips"), Result.ShipCareBoyActorRefs.Num(), 3);
+    TestEqual(TEXT("Ship original care-boy round trips"),
+        Result.ShipCareBoyActorRefs[0], OriginalFirstCareBoy);
+    TestEqual(TEXT("Ship added care-boy round trips"), Result.ShipCareBoyActorRefs.Last(), 2001);
+    TestEqual(TEXT("Ship FX count round trips"), Result.ShipFxIntValues.Num(), 4);
+    TestEqual(TEXT("Ship original FX round trips"), Result.ShipFxIntValues[0], OriginalFirstFx);
+    TestEqual(TEXT("Ship added FX round trips"), Result.ShipFxIntValues.Last(), 2003);
+    TestEqual(TEXT("Ship switch count is preserved"), Result.ShipSwitch.Targets.Num(), OriginalTargets);
+    TestEqual(TEXT("Ship word block is preserved"), Result.ShipWords18C.Num(), 4);
+    TestEqual(TEXT("Ship first word is preserved"), Result.ShipWords18C[0], OriginalWord0);
+    TestEqual(TEXT("Ship hunter ref is preserved"), Result.ShipHunterRef, Actor.ShipHunterRef);
+    TestEqual(TEXT("Ship vision range is preserved"), Result.ShipVisionRange, Actor.ShipVisionRange);
+
+    RoundTrip->SceneEnvironment.Actors[0].ShipCareBoyActorRefs.SetNum(2);
+    RoundTrip->SceneEnvironment.Actors[0].ShipFxIntValues.SetNum(2);
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk Ship lists"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk Ship lists"), ShrunkBank)) return false;
+    TestEqual(TEXT("Shrunk Ship care-boy count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].ShipCareBoyActorRefs.Num(), 2);
+    TestEqual(TEXT("Shrunk Ship FX count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].ShipFxIntValues.Num(), 2);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealShipListsTest, "Kya.Bank.ResizeRealShipLists",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealShipListsTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a bank with a Ship actor (LEVEL_3) to run this test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real Ship bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real Ship bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId == 0x36 && Candidate.bHasShipData &&
+            (!Candidate.ShipCareBoyActorRefs.IsEmpty() || !Candidate.ShipFxIntValues.IsEmpty()))
+        {
+            ActorIndex = Index;
+            break;
+        }
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no populated Ship lists; skipping the real Ship test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    const FString ActorName = Actor.Name;
+    const int32 OriginalCareBoys = Actor.ShipCareBoyActorRefs.Num();
+    const int32 OriginalFx = Actor.ShipFxIntValues.Num();
+    const int32 OriginalFirstCareBoy = Actor.ShipCareBoyActorRefs.IsEmpty()
+        ? 0 : Actor.ShipCareBoyActorRefs[0];
+    const int32 OriginalTargets = Actor.ShipSwitch.Targets.Num();
+    const int32 OriginalWord0 = Actor.ShipWords18C.IsEmpty() ? 0 : Actor.ShipWords18C[0];
+
+    Actor.ShipCareBoyActorRefs.Add((ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num());
+    Actor.ShipFxIntValues.Add(2101);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real Ship list resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real Ship resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real Ship list resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the Ship actor"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real Ship resize preserves the name"), Result.Name, ActorName);
+    TestEqual(TEXT("Real Ship care-boy count round trips"),
+        Result.ShipCareBoyActorRefs.Num(), OriginalCareBoys + 1);
+    TestEqual(TEXT("Real Ship added care-boy round trips"), Result.ShipCareBoyActorRefs.Last(),
+        (ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num());
+    TestEqual(TEXT("Real Ship FX count round trips"), Result.ShipFxIntValues.Num(), OriginalFx + 1);
+    TestEqual(TEXT("Real Ship added FX round trips"), Result.ShipFxIntValues.Last(), 2101);
+    if (OriginalCareBoys > 0)
+        TestEqual(TEXT("Real Ship original care-boy round trips"),
+            Result.ShipCareBoyActorRefs[0], OriginalFirstCareBoy);
+    TestEqual(TEXT("Real Ship switch count round trips"),
+        Result.ShipSwitch.Targets.Num(), OriginalTargets);
+    TestEqual(TEXT("Real Ship word-block count round trips"), Result.ShipWords18C.Num(), 4);
+    if (!Actor.ShipWords18C.IsEmpty())
+        TestEqual(TEXT("Real Ship first word round trips"), Result.ShipWords18C[0], OriginalWord0);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeStillerActorsTest, "Kya.Bank.ResizeStillerActors",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeStillerActorsTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x4c);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Stiller fixture"), Bank)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Stiller class id"), Actor.ClassId, int64(0x4c));
+    TestTrue(TEXT("Stiller data parses"), Actor.bHasStillerData);
+    TestEqual(TEXT("Stiller starts with one actor ref"), Actor.StillerActorRefs.Num(), 1);
+    const int32 OriginalRef = Actor.StillerActorRefs[0];
+    const int32 OriginalField200 = Actor.StillerField200;
+    const int32 OriginalTargets = Actor.StillerSwitch208.Targets.Num();
+
+    FKyaActorPlacement Presentation = Actor;
+    Presentation.StillerActorRefs.Add(1901);
+    Presentation.StillerActorRefs.Add(1902);
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    FKyaActorEditPatch Patch;
+    FString Error;
+    TestTrue(TEXT("Stiller Details patch builds"),
+        KyaMakePlacementPropertyPatch(Presentation,
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, StillerActorRefs), Patch));
+    TestTrue(TEXT("Stiller Details patch applies"),
+        Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    Service.Reset();
+    TestEqual(TEXT("Details Stiller actor resize applies"), Actor.StillerActorRefs.Num(), 3);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized Stiller actors"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Stiller resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized Stiller actors"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Stiller actor count round trips"), Result.StillerActorRefs.Num(), 3);
+    TestEqual(TEXT("Stiller original actor ref round trips"), Result.StillerActorRefs[0], OriginalRef);
+    TestEqual(TEXT("Stiller added actor ref round trips"), Result.StillerActorRefs.Last(), 1902);
+    TestEqual(TEXT("Stiller field 200 round trips"), Result.StillerField200, OriginalField200);
+    TestEqual(TEXT("Stiller switch target count round trips"),
+        Result.StillerSwitch208.Targets.Num(), OriginalTargets);
+    TestEqual(TEXT("Stiller switch camera round trips"),
+        Result.StillerSwitch208.Camera.CameraIndex, Actor.StillerSwitch208.Camera.CameraIndex);
+    TestEqual(TEXT("Stiller life maximum round trips"), Result.StillerLifeMax, Actor.StillerLifeMax);
+
+    RoundTrip->SceneEnvironment.Actors[0].StillerActorRefs.SetNum(1);
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk Stiller actors"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk Stiller actors"), ShrunkBank)) return false;
+    TestEqual(TEXT("Shrunk Stiller actor count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].StillerActorRefs.Num(), 1);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealStillerActorsTest, "Kya.Bank.ResizeRealStillerActors",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealStillerActorsTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a bank with Stiller actors (LEVEL_5) to run this test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real Stiller bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real Stiller bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId == 0x4c && Candidate.bHasStillerData &&
+            !Candidate.StillerActorRefs.IsEmpty())
+        {
+            ActorIndex = Index;
+            break;
+        }
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no populated Stiller actor list; skipping the real Stiller test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    const FString ActorName = Actor.Name;
+    const int32 OriginalCount = Actor.StillerActorRefs.Num();
+    const int32 OriginalRef = Actor.StillerActorRefs[0];
+    const int32 OriginalTargets = Actor.StillerSwitch208.Targets.Num();
+    const int32 OriginalCamera = Actor.StillerSwitch208.Camera.CameraIndex;
+    const float OriginalLife = Actor.StillerLifeMax;
+
+    Actor.StillerActorRefs.Add((ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num());
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real Stiller actor resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real Stiller resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real Stiller actor resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the Stiller actor"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real Stiller resize preserves the name"), Result.Name, ActorName);
+    TestEqual(TEXT("Real Stiller actor count round trips"), Result.StillerActorRefs.Num(), OriginalCount + 1);
+    TestEqual(TEXT("Real Stiller original actor ref round trips"), Result.StillerActorRefs[0], OriginalRef);
+    TestEqual(TEXT("Real Stiller added actor ref round trips"), Result.StillerActorRefs.Last(),
+        (ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num());
+    TestEqual(TEXT("Real Stiller switch target count round trips"),
+        Result.StillerSwitch208.Targets.Num(), OriginalTargets);
+    TestEqual(TEXT("Real Stiller switch camera round trips"),
+        Result.StillerSwitch208.Camera.CameraIndex, OriginalCamera);
+    TestEqual(TEXT("Real Stiller life maximum round trips"), Result.StillerLifeMax, OriginalLife);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeAtonListsTest, "Kya.Bank.ResizeAtonLists",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeAtonListsTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x38);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Aton fixture"), Bank)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Aton class id"), Actor.ClassId, int64(0x38));
+    TestTrue(TEXT("Aton data parses"), Actor.bHasAtonData);
+    TestEqual(TEXT("Aton starts with one path plane"), Actor.AtonPathIndices.Num(), 1);
+    TestEqual(TEXT("Aton starts with one other sub-object"), Actor.AtonOtherSubObjs.Num(), 1);
+    TestEqual(TEXT("Aton starts with one Aton sub-object"), Actor.AtonSubObjs.Num(), 1);
+    TestEqual(TEXT("Aton other cinematic count"), Actor.AtonOtherSubObjs[0].CinematicIds.Num(), 1);
+    TestEqual(TEXT("Aton sub-object cinematic count"), Actor.AtonSubObjs[0].CinematicIds.Num(), 1);
+    const int32 OriginalPath = Actor.AtonPathIndices[0];
+    const int32 OriginalOtherCine = Actor.AtonOtherSubObjs[0].CinematicIds[0];
+    const int32 OriginalAtonField18 = Actor.AtonSubObjs[0].Field18;
+    const int64 OriginalLife = Actor.AtonLifeMax;
+    const int32 OriginalTrail = Actor.AtonTrailMaterialId;
+
+    FKyaActorPlacement Presentation = Actor;
+    Presentation.AtonPathIndices.Add(4101);
+    Presentation.AtonPathIndices.Add(4102);
+    FKyaAddOnSubObj& AddedOther = Presentation.AtonOtherSubObjs.AddDefaulted_GetRef();
+    AddedOther.Field0 = 4103;
+    AddedOther.CinematicIds.Add(4104);
+    AddedOther.CinematicIds.Add(4105);
+    Presentation.AtonOtherSubObjs[0].CinematicIds.Add(4106);
+    FKyaAtonSubObj& AddedAton = Presentation.AtonSubObjs.AddDefaulted_GetRef();
+    AddedAton.Field18 = 4107;
+    AddedAton.Field0 = 4108;
+    AddedAton.CinematicIds.Add(4109);
+    Presentation.AtonSubObjs[0].CinematicIds.Add(4110);
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    const auto ApplyField = [&](FName PropertyName)
+    {
+        FKyaActorEditPatch Patch;
+        FString Error;
+        if (!TestTrue(TEXT("Aton Details patch builds"),
+            KyaMakePlacementPropertyPatch(Presentation, PropertyName, Patch))) return;
+        TestTrue(TEXT("Aton Details patch applies"),
+            Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    };
+    ApplyField(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, AtonPathIndices));
+    ApplyField(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, AtonOtherSubObjs));
+    ApplyField(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, AtonSubObjs));
+    Service.Reset();
+    TestEqual(TEXT("Details Aton path resize applies"), Actor.AtonPathIndices.Num(), 3);
+    TestEqual(TEXT("Details Aton other resize applies"), Actor.AtonOtherSubObjs.Num(), 2);
+    TestEqual(TEXT("Details Aton sub-object resize applies"), Actor.AtonSubObjs.Num(), 2);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized Aton lists"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Aton resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized Aton lists"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Aton path count round trips"), Result.AtonPathIndices.Num(), 3);
+    TestEqual(TEXT("Aton original path round trips"), Result.AtonPathIndices[0], OriginalPath);
+    TestEqual(TEXT("Aton added path round trips"), Result.AtonPathIndices.Last(), 4102);
+    TestEqual(TEXT("Aton other count round trips"), Result.AtonOtherSubObjs.Num(), 2);
+    TestEqual(TEXT("Aton original other cinematic round trips"),
+        Result.AtonOtherSubObjs[0].CinematicIds[0], OriginalOtherCine);
+    TestEqual(TEXT("Aton added other cinematic round trips"),
+        Result.AtonOtherSubObjs[0].CinematicIds.Last(), 4106);
+    TestEqual(TEXT("Aton new other field round trips"), Result.AtonOtherSubObjs[1].Field0, 4103);
+    TestEqual(TEXT("Aton new other cinematic count round trips"),
+        Result.AtonOtherSubObjs[1].CinematicIds.Num(), 2);
+    TestEqual(TEXT("Aton new other last cinematic round trips"),
+        Result.AtonOtherSubObjs[1].CinematicIds.Last(), 4105);
+    TestEqual(TEXT("Aton sub-object count round trips"), Result.AtonSubObjs.Num(), 2);
+    TestEqual(TEXT("Aton original sub-object field 18 round trips"),
+        Result.AtonSubObjs[0].Field18, OriginalAtonField18);
+    TestEqual(TEXT("Aton added sub-object cinematic round trips"),
+        Result.AtonSubObjs[0].CinematicIds.Last(), 4110);
+    TestEqual(TEXT("Aton new sub-object field 18 round trips"), Result.AtonSubObjs[1].Field18, 4107);
+    TestEqual(TEXT("Aton new sub-object field 0 round trips"), Result.AtonSubObjs[1].Field0, 4108);
+    TestEqual(TEXT("Aton new sub-object cinematic round trips"),
+        Result.AtonSubObjs[1].CinematicIds.Last(), 4109);
+    TestEqual(TEXT("Aton life maximum is preserved"), Result.AtonLifeMax, OriginalLife);
+    TestEqual(TEXT("Aton trail material is preserved"), Result.AtonTrailMaterialId, OriginalTrail);
+
+    RoundTrip->SceneEnvironment.Actors[0].AtonPathIndices.SetNum(1);
+    RoundTrip->SceneEnvironment.Actors[0].AtonOtherSubObjs.SetNum(1);
+    RoundTrip->SceneEnvironment.Actors[0].AtonOtherSubObjs[0].CinematicIds.SetNum(1);
+    RoundTrip->SceneEnvironment.Actors[0].AtonSubObjs.SetNum(1);
+    RoundTrip->SceneEnvironment.Actors[0].AtonSubObjs[0].CinematicIds.SetNum(1);
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk Aton lists"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk Aton lists"), ShrunkBank)) return false;
+    TestEqual(TEXT("Shrunk Aton path count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].AtonPathIndices.Num(), 1);
+    TestEqual(TEXT("Shrunk Aton other count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].AtonOtherSubObjs.Num(), 1);
+    TestEqual(TEXT("Shrunk Aton sub-object count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].AtonSubObjs.Num(), 1);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealAtonListsTest, "Kya.Bank.ResizeRealAtonLists",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealAtonListsTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a bank with Aton actors (LEVEL_1) to run this test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real Aton bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real Aton bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId == 0x38 && Candidate.bHasAtonData &&
+            (!Candidate.AtonPathIndices.IsEmpty() || !Candidate.AtonOtherSubObjs.IsEmpty()))
+        {
+            ActorIndex = Index;
+            break;
+        }
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no populated Aton lists; skipping the real Aton test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    const FString ActorName = Actor.Name;
+    const int32 OriginalPaths = Actor.AtonPathIndices.Num();
+    const int32 OriginalOthers = Actor.AtonOtherSubObjs.Num();
+    const int32 OriginalAtons = Actor.AtonSubObjs.Num();
+    const int32 OriginalPath = Actor.AtonPathIndices.IsEmpty() ? 0 : Actor.AtonPathIndices[0];
+    const int64 OriginalLife = Actor.AtonLifeMax;
+
+    Actor.AtonPathIndices.Add((ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num());
+    FKyaAddOnSubObj& AddedOther = Actor.AtonOtherSubObjs.AddDefaulted_GetRef();
+    AddedOther.Field0 = 4201;
+    AddedOther.CinematicIds.Add(4202);
+    if (OriginalOthers > 0) Actor.AtonOtherSubObjs[0].CinematicIds.Add(4203);
+    FKyaAtonSubObj& AddedAton = Actor.AtonSubObjs.AddDefaulted_GetRef();
+    AddedAton.Field18 = 4204;
+    AddedAton.Field0 = 4205;
+    AddedAton.CinematicIds.Add(4206);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real Aton list resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real Aton resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real Aton list resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the Aton actor"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real Aton resize preserves the name"), Result.Name, ActorName);
+    TestEqual(TEXT("Real Aton path count round trips"), Result.AtonPathIndices.Num(), OriginalPaths + 1);
+    TestEqual(TEXT("Real Aton original path round trips"), Result.AtonPathIndices[0], OriginalPath);
+    TestEqual(TEXT("Real Aton added path round trips"), Result.AtonPathIndices.Last(),
+        (ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num());
+    TestEqual(TEXT("Real Aton other count round trips"), Result.AtonOtherSubObjs.Num(), OriginalOthers + 1);
+    TestEqual(TEXT("Real Aton new other field round trips"), Result.AtonOtherSubObjs.Last().Field0, 4201);
+    TestEqual(TEXT("Real Aton new other cinematic round trips"),
+        Result.AtonOtherSubObjs.Last().CinematicIds.Last(), 4202);
+    if (OriginalOthers > 0)
+        TestEqual(TEXT("Real Aton existing other cinematic round trips"),
+            Result.AtonOtherSubObjs[0].CinematicIds.Last(), 4203);
+    TestEqual(TEXT("Real Aton sub-object count round trips"), Result.AtonSubObjs.Num(), OriginalAtons + 1);
+    TestEqual(TEXT("Real Aton new sub-object field 18 round trips"), Result.AtonSubObjs.Last().Field18, 4204);
+    TestEqual(TEXT("Real Aton new sub-object field 0 round trips"), Result.AtonSubObjs.Last().Field0, 4205);
+    TestEqual(TEXT("Real Aton new sub-object cinematic round trips"),
+        Result.AtonSubObjs.Last().CinematicIds.Last(), 4206);
+    TestEqual(TEXT("Real Aton life maximum round trips"), Result.AtonLifeMax, OriginalLife);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeTeleporterListsTest, "Kya.Bank.ResizeTeleporterLists",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeTeleporterListsTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x24);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Teleporter fixture"), Bank)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Teleporter class id"), Actor.ClassId, int64(0x24));
+    TestTrue(TEXT("Teleporter data parses"), Actor.bHasTeleporterData);
+    TestEqual(TEXT("Teleporter starts with one destination"), Actor.TeleporterDestinations.Num(), 1);
+    const int32 OriginalLevel = Actor.TeleporterDestinations[0].LevelId;
+    const int32 OriginalWaypoints = Actor.TeleporterWaypoints.Num();
+    const int32 OriginalBlocks = Actor.TeleporterConditionedOperations.Num();
+    const int32 OriginalTargets = Actor.TeleporterSwitch170.Targets.Num();
+    const int64 OriginalHash = Actor.TeleporterHash;
+    const int32 OriginalFirstWaypoint = Actor.TeleporterWaypoints[0].ActorRef;
+    const int32 OriginalBlockOps = Actor.TeleporterConditionedOperations[0].Operations.Num();
+    const int32 OriginalBlockConds = Actor.TeleporterConditionedOperations[0].Conditions.Num();
+    const int32 OriginalBlockOpValue = Actor.TeleporterConditionedOperations[0].Operations[0].Value;
+
+    FKyaActorPlacement Presentation = Actor;
+    FKyaTeleporterDestination& Added = Presentation.TeleporterDestinations.AddDefaulted_GetRef();
+    Added.LevelId = 3301;
+    Added.ElevatorId = 3302;
+    Added.Field8 = 3303;
+    FKyaTeleporterDestination& Second = Presentation.TeleporterDestinations.AddDefaulted_GetRef();
+    Second.LevelId = 3304;
+    Second.ElevatorId = 3305;
+    Second.Field8 = 3306;
+
+    FKyaTeleporterWaypoint& AddedWaypoint = Presentation.TeleporterWaypoints.AddDefaulted_GetRef();
+    AddedWaypoint.ActorRef = 3310;
+    AddedWaypoint.WaypointRef = 3311;
+    FKyaTeleporterBlock& AddedBlock = Presentation.TeleporterConditionedOperations.AddDefaulted_GetRef();
+    FKyaTeleporterOperation& AddedOp = AddedBlock.Operations.AddDefaulted_GetRef();
+    AddedOp.ScenaricVariable = 3312;
+    AddedOp.Operation = 3313;
+    AddedOp.Value = 3314;
+    FKyaTeleporterOperation& AddedOp2 = AddedBlock.Operations.AddDefaulted_GetRef();
+    AddedOp2.ScenaricVariable = 3315;
+    AddedOp2.Operation = 3316;
+    AddedOp2.Value = 3317;
+    FKyaTeleporterCondition& AddedCond = AddedBlock.Conditions.AddDefaulted_GetRef();
+    AddedCond.Combine = 3318;
+    AddedCond.Variable = 3319;
+    AddedCond.Comparison = 3320;
+    AddedCond.Value = 3321;
+    FKyaTeleporterOperation& ExtraOp = Presentation.TeleporterConditionedOperations[0].Operations.AddDefaulted_GetRef();
+    ExtraOp.ScenaricVariable = 3322;
+    ExtraOp.Operation = 3323;
+    ExtraOp.Value = 3324;
+    FKyaTeleporterCondition& ExtraCond =
+        Presentation.TeleporterConditionedOperations[0].Conditions.AddDefaulted_GetRef();
+    ExtraCond.Combine = 3325;
+    ExtraCond.Variable = 3326;
+    ExtraCond.Comparison = 3327;
+    ExtraCond.Value = 3328;
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    const auto ApplyField = [&](FName PropertyName)
+    {
+        FKyaActorEditPatch Patch;
+        FString Error;
+        if (!TestTrue(TEXT("Teleporter Details patch builds"),
+            KyaMakePlacementPropertyPatch(Presentation, PropertyName, Patch))) return;
+        TestTrue(TEXT("Teleporter Details patch applies"),
+            Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    };
+    ApplyField(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, TeleporterDestinations));
+    ApplyField(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, TeleporterWaypoints));
+    ApplyField(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, TeleporterConditionedOperations));
+    Service.Reset();
+    TestEqual(TEXT("Details Teleporter destination resize applies"),
+        Actor.TeleporterDestinations.Num(), 3);
+    TestEqual(TEXT("Details Teleporter waypoint resize applies"),
+        Actor.TeleporterWaypoints.Num(), OriginalWaypoints + 1);
+    TestEqual(TEXT("Details Teleporter block resize applies"),
+        Actor.TeleporterConditionedOperations.Num(), OriginalBlocks + 1);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized Teleporter lists"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Teleporter resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized Teleporter lists"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Teleporter destination count round trips"), Result.TeleporterDestinations.Num(), 3);
+    TestEqual(TEXT("Teleporter original destination round trips"),
+        Result.TeleporterDestinations[0].LevelId, OriginalLevel);
+    TestEqual(TEXT("Teleporter added destination level round trips"),
+        Result.TeleporterDestinations[1].LevelId, 3301);
+    TestEqual(TEXT("Teleporter added destination elevator round trips"),
+        Result.TeleporterDestinations[1].ElevatorId, 3302);
+    TestEqual(TEXT("Teleporter added destination field round trips"),
+        Result.TeleporterDestinations[1].Field8, 3303);
+    TestEqual(TEXT("Teleporter second destination round trips"),
+        Result.TeleporterDestinations.Last().LevelId, 3304);
+    TestEqual(TEXT("Teleporter waypoint count round trips"),
+        Result.TeleporterWaypoints.Num(), OriginalWaypoints + 1);
+    TestEqual(TEXT("Teleporter original waypoint round trips"),
+        Result.TeleporterWaypoints[0].ActorRef, OriginalFirstWaypoint);
+    TestEqual(TEXT("Teleporter added waypoint actor round trips"),
+        Result.TeleporterWaypoints.Last().ActorRef, 3310);
+    TestEqual(TEXT("Teleporter added waypoint ref round trips"),
+        Result.TeleporterWaypoints.Last().WaypointRef, 3311);
+    TestEqual(TEXT("Teleporter conditioned-block count round trips"),
+        Result.TeleporterConditionedOperations.Num(), OriginalBlocks + 1);
+    TestEqual(TEXT("Teleporter original block op count round trips"),
+        Result.TeleporterConditionedOperations[0].Operations.Num(), OriginalBlockOps + 1);
+    TestEqual(TEXT("Teleporter original block cond count round trips"),
+        Result.TeleporterConditionedOperations[0].Conditions.Num(), OriginalBlockConds + 1);
+    TestEqual(TEXT("Teleporter original block op value round trips"),
+        Result.TeleporterConditionedOperations[0].Operations[0].Value, OriginalBlockOpValue);
+    TestEqual(TEXT("Teleporter added block op round trips"),
+        Result.TeleporterConditionedOperations[0].Operations.Last().Value, 3324);
+    TestEqual(TEXT("Teleporter added block condition round trips"),
+        Result.TeleporterConditionedOperations[0].Conditions.Last().Value, 3328);
+    const FKyaTeleporterBlock& ResultBlock = Result.TeleporterConditionedOperations.Last();
+    TestEqual(TEXT("Teleporter new block op count round trips"), ResultBlock.Operations.Num(), 2);
+    TestEqual(TEXT("Teleporter new block first op value round trips"), ResultBlock.Operations[0].Value, 3314);
+    TestEqual(TEXT("Teleporter new block second op variable round trips"),
+        ResultBlock.Operations[1].ScenaricVariable, 3315);
+    TestEqual(TEXT("Teleporter new block condition count round trips"), ResultBlock.Conditions.Num(), 1);
+    TestEqual(TEXT("Teleporter new block condition combine round trips"), ResultBlock.Conditions[0].Combine, 3318);
+    TestEqual(TEXT("Teleporter new block condition value round trips"), ResultBlock.Conditions[0].Value, 3321);
+    TestEqual(TEXT("Teleporter switch target count is preserved"),
+        Result.TeleporterSwitch170.Targets.Num(), OriginalTargets);
+    TestEqual(TEXT("Teleporter hash is preserved"), Result.TeleporterHash, OriginalHash);
+
+    RoundTrip->SceneEnvironment.Actors[0].TeleporterDestinations.SetNum(1);
+    RoundTrip->SceneEnvironment.Actors[0].TeleporterWaypoints.SetNum(OriginalWaypoints);
+    RoundTrip->SceneEnvironment.Actors[0].TeleporterConditionedOperations.SetNum(OriginalBlocks);
+    RoundTrip->SceneEnvironment.Actors[0].TeleporterConditionedOperations[0].Operations.SetNum(OriginalBlockOps);
+    RoundTrip->SceneEnvironment.Actors[0].TeleporterConditionedOperations[0].Conditions.SetNum(OriginalBlockConds);
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk Teleporter lists"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk Teleporter lists"), ShrunkBank)) return false;
+    TestEqual(TEXT("Shrunk Teleporter destination count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].TeleporterDestinations.Num(), 1);
+    TestEqual(TEXT("Shrunk Teleporter waypoint count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].TeleporterWaypoints.Num(), OriginalWaypoints);
+    TestEqual(TEXT("Shrunk Teleporter block count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].TeleporterConditionedOperations.Num(), OriginalBlocks);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealTeleporterListsTest, "Kya.Bank.ResizeRealTeleporterLists",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealTeleporterListsTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a bank with Teleporter actors (LEVEL_10) to run this test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real Teleporter bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real Teleporter bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId == 0x24 && Candidate.bHasTeleporterData &&
+            !Candidate.TeleporterDestinations.IsEmpty())
+        {
+            ActorIndex = Index;
+            break;
+        }
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no populated Teleporter destination list; skipping the real test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    const FString ActorName = Actor.Name;
+    const int32 OriginalCount = Actor.TeleporterDestinations.Num();
+    const int32 OriginalLevel = Actor.TeleporterDestinations[0].LevelId;
+    const int32 OriginalWaypoints = Actor.TeleporterWaypoints.Num();
+    const int32 OriginalBlocks = Actor.TeleporterConditionedOperations.Num();
+    const int64 OriginalHash = Actor.TeleporterHash;
+    const int32 OriginalFirstWaypoint = Actor.TeleporterWaypoints.IsEmpty()
+        ? 0 : Actor.TeleporterWaypoints[0].ActorRef;
+    const int32 OriginalFirstBlockOps = OriginalBlocks > 0
+        ? Actor.TeleporterConditionedOperations[0].Operations.Num() : 0;
+    const int32 OriginalFirstBlockConds = OriginalBlocks > 0
+        ? Actor.TeleporterConditionedOperations[0].Conditions.Num() : 0;
+
+    FKyaTeleporterDestination& Added = Actor.TeleporterDestinations.AddDefaulted_GetRef();
+    Added.LevelId = (ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num();
+    Added.ElevatorId = 3401;
+    Added.Field8 = 3402;
+
+    FKyaTeleporterWaypoint& AddedWaypoint = Actor.TeleporterWaypoints.AddDefaulted_GetRef();
+    AddedWaypoint.ActorRef = (ActorIndex + 2) % Bank->SceneEnvironment.Actors.Num();
+    AddedWaypoint.WaypointRef = 3501;
+
+    FKyaTeleporterBlock& AddedBlock = Actor.TeleporterConditionedOperations.AddDefaulted_GetRef();
+    FKyaTeleporterOperation& AddedOp = AddedBlock.Operations.AddDefaulted_GetRef();
+    AddedOp.ScenaricVariable = 3502;
+    AddedOp.Operation = 3503;
+    AddedOp.Value = 3504;
+    FKyaTeleporterCondition& AddedCond = AddedBlock.Conditions.AddDefaulted_GetRef();
+    AddedCond.Combine = 3505;
+    AddedCond.Variable = 3506;
+    AddedCond.Comparison = 3507;
+    AddedCond.Value = 3508;
+
+    if (OriginalBlocks > 0)
+    {
+        FKyaTeleporterOperation& ExtraOp =
+            Actor.TeleporterConditionedOperations[0].Operations.AddDefaulted_GetRef();
+        ExtraOp.ScenaricVariable = 3509;
+        ExtraOp.Operation = 3510;
+        ExtraOp.Value = 3511;
+        FKyaTeleporterCondition& ExtraCond =
+            Actor.TeleporterConditionedOperations[0].Conditions.AddDefaulted_GetRef();
+        ExtraCond.Combine = 3512;
+        ExtraCond.Variable = 3513;
+        ExtraCond.Comparison = 3514;
+        ExtraCond.Value = 3515;
+    }
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real Teleporter list resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real Teleporter resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real Teleporter list resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the Teleporter actor"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real Teleporter resize preserves the name"), Result.Name, ActorName);
+    TestEqual(TEXT("Real Teleporter destination count round trips"),
+        Result.TeleporterDestinations.Num(), OriginalCount + 1);
+    TestEqual(TEXT("Real Teleporter original destination round trips"),
+        Result.TeleporterDestinations[0].LevelId, OriginalLevel);
+    TestEqual(TEXT("Real Teleporter added destination level round trips"),
+        Result.TeleporterDestinations.Last().LevelId,
+        (ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num());
+    TestEqual(TEXT("Real Teleporter added destination elevator round trips"),
+        Result.TeleporterDestinations.Last().ElevatorId, 3401);
+    TestEqual(TEXT("Real Teleporter waypoint count round trips"),
+        Result.TeleporterWaypoints.Num(), OriginalWaypoints + 1);
+    if (OriginalWaypoints > 0)
+        TestEqual(TEXT("Real Teleporter original waypoint actor round trips"),
+            Result.TeleporterWaypoints[0].ActorRef, OriginalFirstWaypoint);
+    TestEqual(TEXT("Real Teleporter added waypoint actor round trips"),
+        Result.TeleporterWaypoints.Last().ActorRef,
+        (ActorIndex + 2) % Bank->SceneEnvironment.Actors.Num());
+    TestEqual(TEXT("Real Teleporter added waypoint ref round trips"),
+        Result.TeleporterWaypoints.Last().WaypointRef, 3501);
+    TestEqual(TEXT("Real Teleporter conditioned-block count round trips"),
+        Result.TeleporterConditionedOperations.Num(), OriginalBlocks + 1);
+    if (OriginalBlocks > 0)
+    {
+        TestEqual(TEXT("Real Teleporter original block op count round trips"),
+            Result.TeleporterConditionedOperations[0].Operations.Num(), OriginalFirstBlockOps + 1);
+        TestEqual(TEXT("Real Teleporter original block cond count round trips"),
+            Result.TeleporterConditionedOperations[0].Conditions.Num(), OriginalFirstBlockConds + 1);
+        TestEqual(TEXT("Real Teleporter extra block op round trips"),
+            Result.TeleporterConditionedOperations[0].Operations.Last().Value, 3511);
+        TestEqual(TEXT("Real Teleporter extra block condition round trips"),
+            Result.TeleporterConditionedOperations[0].Conditions.Last().Value, 3515);
+    }
+    const FKyaTeleporterBlock& ResultBlock = Result.TeleporterConditionedOperations.Last();
+    TestEqual(TEXT("Real Teleporter new block op count round trips"), ResultBlock.Operations.Num(), 1);
+    TestEqual(TEXT("Real Teleporter new block op variable round trips"),
+        ResultBlock.Operations[0].ScenaricVariable, 3502);
+    TestEqual(TEXT("Real Teleporter new block op value round trips"), ResultBlock.Operations[0].Value, 3504);
+    TestEqual(TEXT("Real Teleporter new block condition count round trips"), ResultBlock.Conditions.Num(), 1);
+    TestEqual(TEXT("Real Teleporter new block condition comparison round trips"),
+        ResultBlock.Conditions[0].Comparison, 3507);
+    TestEqual(TEXT("Real Teleporter hash round trips"), Result.TeleporterHash, OriginalHash);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeDcaShotsTest, "Kya.Bank.ResizeDcaShots",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeDcaShotsTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x1b);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import DCA fixture"), Bank)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("DCA class id"), Actor.ClassId, int64(0x1b));
+    TestTrue(TEXT("DCA data parses"), Actor.bHasDcaData);
+    TestEqual(TEXT("DCA starts with one shot ref"), Actor.DcaShotActorRefs.Num(), 1);
+    const int32 OriginalShot = Actor.DcaShotActorRefs[0];
+    const int32 OriginalField504 = Actor.DcaField504;
+    const float OriginalAim = Actor.DcaAimAdjustDegrees;
+    const int32 OriginalField450 = Actor.DcaField450;
+
+    FKyaActorPlacement Presentation = Actor;
+    Presentation.DcaShotActorRefs.Add(3101);
+    Presentation.DcaShotActorRefs.Add(3102);
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    FKyaActorEditPatch Patch;
+    FString Error;
+    TestTrue(TEXT("DCA Details patch builds"),
+        KyaMakePlacementPropertyPatch(Presentation,
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, DcaShotActorRefs), Patch));
+    TestTrue(TEXT("DCA Details patch applies"),
+        Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    Service.Reset();
+    TestEqual(TEXT("Details DCA shot resize applies"), Actor.DcaShotActorRefs.Num(), 3);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized DCA shots"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("DCA resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized DCA shots"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("DCA shot count round trips"), Result.DcaShotActorRefs.Num(), 3);
+    TestEqual(TEXT("DCA original shot ref round trips"), Result.DcaShotActorRefs[0], OriginalShot);
+    TestEqual(TEXT("DCA added shot ref round trips"), Result.DcaShotActorRefs.Last(), 3102);
+    TestEqual(TEXT("DCA field 504 is preserved"), Result.DcaField504, OriginalField504);
+    TestEqual(TEXT("DCA aim adjust is preserved"), Result.DcaAimAdjustDegrees, OriginalAim);
+    TestEqual(TEXT("DCA field 450 is preserved"), Result.DcaField450, OriginalField450);
+
+    RoundTrip->SceneEnvironment.Actors[0].DcaShotActorRefs.SetNum(1);
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk DCA shots"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk DCA shots"), ShrunkBank)) return false;
+    TestEqual(TEXT("Shrunk DCA shot count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].DcaShotActorRefs.Num(), 1);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealDcaShotsTest, "Kya.Bank.ResizeRealDcaShots",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealDcaShotsTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a bank with DCA actors (LEVEL_10) to run this test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real DCA bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real DCA bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId == 0x1b && Candidate.bHasDcaData &&
+            !Candidate.DcaShotActorRefs.IsEmpty())
+        {
+            ActorIndex = Index;
+            break;
+        }
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no populated DCA shot list; skipping the real DCA test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    const FString ActorName = Actor.Name;
+    const int32 OriginalCount = Actor.DcaShotActorRefs.Num();
+    const int32 OriginalShot = Actor.DcaShotActorRefs[0];
+    const int32 OriginalField504 = Actor.DcaField504;
+    const float OriginalAim = Actor.DcaAimAdjustDegrees;
+
+    Actor.DcaShotActorRefs.Add((ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num());
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real DCA shot resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real DCA resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real DCA shot resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the DCA actor"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real DCA resize preserves the name"), Result.Name, ActorName);
+    TestEqual(TEXT("Real DCA shot count round trips"),
+        Result.DcaShotActorRefs.Num(), OriginalCount + 1);
+    TestEqual(TEXT("Real DCA original shot ref round trips"), Result.DcaShotActorRefs[0], OriginalShot);
+    TestEqual(TEXT("Real DCA added shot ref round trips"), Result.DcaShotActorRefs.Last(),
+        (ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num());
+    TestEqual(TEXT("Real DCA field 504 round trips"), Result.DcaField504, OriginalField504);
+    TestEqual(TEXT("Real DCA aim adjust round trips"), Result.DcaAimAdjustDegrees, OriginalAim);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeAkasaListsTest, "Kya.Bank.ResizeAkasaLists",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeAkasaListsTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x0a, false, false, false, false, false, false,
+        false, false, true);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Akasa fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Akasa fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    const int32 AkasaIndex = Actor.Behaviours.IndexOfByPredicate([](const FKyaActorBehaviour& Behaviour) {
+        return Behaviour.bHasTypedNativBehaviour && Behaviour.Id == 8;
+    });
+    if (!TestTrue(TEXT("Akasa fixture has an Akasa behaviour"), AkasaIndex != INDEX_NONE)) return false;
+    FKyaAkasaBehaviour& Source = Actor.Behaviours[AkasaIndex].AkasaBehaviour;
+    TestTrue(TEXT("Akasa material flag parses"), Source.bHasMaterial);
+    TestEqual(TEXT("Akasa material id parses"), Source.MaterialId, 9);
+    TestEqual(TEXT("Akasa field 8 parses"), Source.Field8, int64(700));
+    if (!TestEqual(TEXT("Akasa tutorial count"), Source.Tutorials.Num(), 2)) return false;
+    if (!TestEqual(TEXT("Akasa add-on count"), Source.AddOnSubObjs.Num(), 2)) return false;
+    if (!TestEqual(TEXT("Akasa switch count"), Source.Switches.Num(), 4)) return false;
+    TestEqual(TEXT("Akasa first tutorial step count"), Source.Tutorials[0].Steps.Num(), 2);
+    TestEqual(TEXT("Akasa first step name count"), Source.Tutorials[0].Steps[0].ComboNames.Num(), 1);
+    TestEqual(TEXT("Akasa second step first name"), Source.Tutorials[0].Steps[1].ComboNames[0],
+        FString(TEXT("CD")));
+    const int32 OriginalFirstCinematic = Source.AddOnSubObjs[0].CinematicIds[0];
+    const int32 OriginalSwitchTarget = Source.Switches[0].Targets[0].TargetRef;
+
+    FKyaActorPlacement Presentation = Actor;
+    FKyaAkasaBehaviour& Edited = Presentation.Behaviours[AkasaIndex].AkasaBehaviour;
+    FKyaAkasaTutorial& AddedTutorial = Edited.Tutorials.AddDefaulted_GetRef();
+    FKyaAkasaStep& AddedStep = AddedTutorial.Steps.AddDefaulted_GetRef();
+    AddedStep.ComboNames.Add(TEXT("IJ"));
+    FKyaAkasaStep& ExtraStep = Edited.Tutorials[0].Steps.AddDefaulted_GetRef();
+    ExtraStep.ComboNames.Add(TEXT("MN"));
+    Edited.Tutorials[1].Steps[0].ComboNames.Add(TEXT("KL"));
+    FKyaAddOnSubObj& Added2 = Edited.AddOnSubObjs.AddDefaulted_GetRef();
+    Added2.Field0 = 75;
+    Added2.CinematicIds.Add(76);
+    Added2.CinematicIds.Add(77);
+    Edited.AddOnSubObjs[0].CinematicIds.Add(78);
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    FKyaActorEditPatch Patch;
+    FString Error;
+    TestTrue(TEXT("Akasa Details patch builds"),
+        KyaMakePlacementPropertyPatch(Presentation,
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Behaviours), Patch));
+    TestTrue(TEXT("Akasa Details patch applies"),
+        Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    Service.Reset();
+    TestEqual(TEXT("Details Akasa tutorial resize applies"),
+        Actor.Behaviours[AkasaIndex].AkasaBehaviour.Tutorials.Num(), 3);
+    TestEqual(TEXT("Details Akasa add-on resize applies"),
+        Actor.Behaviours[AkasaIndex].AkasaBehaviour.AddOnSubObjs.Num(), 3);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized Akasa lists"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Akasa resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized Akasa lists"), RoundTrip)) return false;
+    const FKyaActorBehaviour& ResultBehaviour = RoundTrip->SceneEnvironment.Actors[0].Behaviours[AkasaIndex];
+    const FKyaAkasaBehaviour& Result = ResultBehaviour.AkasaBehaviour;
+    TestTrue(TEXT("Akasa material flag round trips"), Result.bHasMaterial);
+    TestEqual(TEXT("Akasa material id round trips"), Result.MaterialId, 9);
+    TestEqual(TEXT("Akasa field 8 round trips"), Result.Field8, int64(700));
+    if (!TestEqual(TEXT("Akasa tutorial count round trips"), Result.Tutorials.Num(), 3)) return false;
+    if (!TestEqual(TEXT("Akasa add-on count round trips"), Result.AddOnSubObjs.Num(), 3)) return false;
+    TestEqual(TEXT("Akasa original tutorial steps round trips"), Result.Tutorials[0].Steps.Num(), 3);
+    TestEqual(TEXT("Akasa added step name round trips"),
+        Result.Tutorials[0].Steps.Last().ComboNames.Last(), FString(TEXT("MN")));
+    TestEqual(TEXT("Akasa tutorial 1 name round trips"),
+        Result.Tutorials[1].Steps[0].ComboNames.Last(), FString(TEXT("KL")));
+    TestEqual(TEXT("Akasa new tutorial step count round trips"),
+        Result.Tutorials.Last().Steps.Num(), 1);
+    TestEqual(TEXT("Akasa new tutorial combo round trips"),
+        Result.Tutorials.Last().Steps[0].ComboNames[0], FString(TEXT("IJ")));
+    TestEqual(TEXT("Akasa original add-on cinematic round trips"),
+        Result.AddOnSubObjs[0].CinematicIds[0], OriginalFirstCinematic);
+    TestEqual(TEXT("Akasa added add-on cinematic round trips"),
+        Result.AddOnSubObjs[0].CinematicIds.Last(), 78);
+    TestEqual(TEXT("Akasa new add-on field round trips"), Result.AddOnSubObjs.Last().Field0, 75);
+    TestEqual(TEXT("Akasa new add-on cinematic round trips"),
+        Result.AddOnSubObjs.Last().CinematicIds.Last(), 77);
+    TestEqual(TEXT("Akasa switch count is preserved"), Result.Switches.Num(), 4);
+    if (!TestTrue(TEXT("Akasa first switch keeps a target"),
+        Result.Switches.Num() == 4 && Result.Switches[0].Targets.Num() > 0)) return false;
+    TestEqual(TEXT("Akasa switch target is preserved"),
+        Result.Switches[0].Targets[0].TargetRef, OriginalSwitchTarget);
+
+    RoundTrip->SceneEnvironment.Actors[0].Behaviours[AkasaIndex].AkasaBehaviour.Tutorials.SetNum(2);
+    RoundTrip->SceneEnvironment.Actors[0].Behaviours[AkasaIndex].AkasaBehaviour.Tutorials[0].Steps.SetNum(2);
+    RoundTrip->SceneEnvironment.Actors[0].Behaviours[AkasaIndex].AkasaBehaviour.Tutorials[1].Steps[0]
+        .ComboNames.SetNum(0);
+    RoundTrip->SceneEnvironment.Actors[0].Behaviours[AkasaIndex].AkasaBehaviour.AddOnSubObjs.SetNum(2);
+    RoundTrip->SceneEnvironment.Actors[0].Behaviours[AkasaIndex].AkasaBehaviour.AddOnSubObjs[0]
+        .CinematicIds.SetNum(2);
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk Akasa lists"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk Akasa lists"), ShrunkBank)) return false;
+    const FKyaAkasaBehaviour& ShrunkAkasa =
+        ShrunkBank->SceneEnvironment.Actors[0].Behaviours[AkasaIndex].AkasaBehaviour;
+    TestEqual(TEXT("Shrunk Akasa tutorial count round trips"), ShrunkAkasa.Tutorials.Num(), 2);
+    TestEqual(TEXT("Shrunk Akasa add-on count round trips"), ShrunkAkasa.AddOnSubObjs.Num(), 2);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealAkasaListsTest, "Kya.Bank.ResizeRealAkasaLists",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealAkasaListsTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a bank with an Akasa Akasa behaviour (LEVEL_4) to run this test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real Akasa bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real Akasa bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    int32 BehaviourIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId != 0x0a) continue;
+        for (int32 Behaviour = 0; Behaviour < Candidate.Behaviours.Num(); ++Behaviour)
+        {
+            if (Candidate.Behaviours[Behaviour].bHasTypedNativBehaviour &&
+                Candidate.Behaviours[Behaviour].Id == 8)
+            {
+                ActorIndex = Index;
+                BehaviourIndex = Behaviour;
+                break;
+            }
+        }
+        if (ActorIndex != INDEX_NONE) break;
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no Akasa behaviour; skipping the real Akasa test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    FKyaAkasaBehaviour& Akasa = Actor.Behaviours[BehaviourIndex].AkasaBehaviour;
+    const FString ActorName = Actor.Name;
+    const int32 OriginalTutorials = Akasa.Tutorials.Num();
+    const int32 OriginalAddOns = Akasa.AddOnSubObjs.Num();
+    const int32 OriginalFirstSteps = OriginalTutorials > 0 ? Akasa.Tutorials[0].Steps.Num() : 0;
+    const int32 OriginalFirstCinematics = OriginalAddOns > 0
+        ? Akasa.AddOnSubObjs[0].CinematicIds.Num() : 0;
+    const int64 OriginalField8 = Akasa.Field8;
+    const bool bOriginalMaterial = Akasa.bHasMaterial;
+
+    FKyaAkasaTutorial& AddedTutorial = Akasa.Tutorials.AddDefaulted_GetRef();
+    FKyaAkasaStep& AddedStep = AddedTutorial.Steps.AddDefaulted_GetRef();
+    AddedStep.ComboNames.Add(TEXT("ZZ"));
+    if (OriginalTutorials > 0)
+    {
+        FKyaAkasaStep& ExtraStep = Akasa.Tutorials[0].Steps.AddDefaulted_GetRef();
+        ExtraStep.ComboNames.Add(TEXT("YY"));
+    }
+    FKyaAddOnSubObj& Added = Akasa.AddOnSubObjs.AddDefaulted_GetRef();
+    Added.Field0 = 9101;
+    Added.CinematicIds.Add(9102);
+    if (OriginalAddOns > 0) Akasa.AddOnSubObjs[0].CinematicIds.Add(9103);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real Akasa resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real Akasa resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real Akasa resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the Akasa actor"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& ResultActor = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real Akasa resize preserves the name"), ResultActor.Name, ActorName);
+    if (!TestTrue(TEXT("Reimported Akasa keeps the behaviour"),
+        ResultActor.Behaviours.IsValidIndex(BehaviourIndex))) return false;
+    const FKyaAkasaBehaviour& Result = ResultActor.Behaviours[BehaviourIndex].AkasaBehaviour;
+    TestEqual(TEXT("Real Akasa material flag round trips"), Result.bHasMaterial, bOriginalMaterial);
+    TestEqual(TEXT("Real Akasa field 8 round trips"), Result.Field8, OriginalField8);
+    TestEqual(TEXT("Real Akasa tutorial count round trips"), Result.Tutorials.Num(), OriginalTutorials + 1);
+    if (OriginalTutorials > 0)
+        TestEqual(TEXT("Real Akasa first tutorial step count round trips"),
+            Result.Tutorials[0].Steps.Num(), OriginalFirstSteps + 1);
+    TestEqual(TEXT("Real Akasa new tutorial combo round trips"),
+        Result.Tutorials.Last().Steps.Last().ComboNames.Last(), FString(TEXT("ZZ")));
+    TestEqual(TEXT("Real Akasa add-on count round trips"), Result.AddOnSubObjs.Num(), OriginalAddOns + 1);
+    if (OriginalAddOns > 0)
+        TestEqual(TEXT("Real Akasa existing add-on cinematic round trips"),
+            Result.AddOnSubObjs[0].CinematicIds.Num(), OriginalFirstCinematics + 1);
+    TestEqual(TEXT("Real Akasa new add-on field round trips"), Result.AddOnSubObjs.Last().Field0, 9101);
+    TestEqual(TEXT("Real Akasa new add-on cinematic round trips"),
+        Result.AddOnSubObjs.Last().CinematicIds.Last(), 9102);
+    TestEqual(TEXT("Real Akasa switch count round trips"), Result.Switches.Num(), 4);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeEggPathsTest, "Kya.Bank.ResizeEggPaths",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeEggPathsTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x2f);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Egg fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Egg fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Egg class id"), Actor.ClassId, int64(0x2f));
+    TestTrue(TEXT("Egg data parses"), Actor.bHasEggData);
+    if (!TestEqual(TEXT("Egg starts with two path planes"), Actor.EggPathIndices.Num(), 2)) return false;
+    const int32 OriginalFirst = Actor.EggPathIndices[0];
+    const float OriginalWeight = Actor.EggWeightB;
+    const float OriginalField1D8 = Actor.EggField1D8;
+    const int64 OriginalField1DC = Actor.EggField1DC;
+    const int64 OriginalField1E0 = Actor.EggField1E0;
+
+    FKyaActorPlacement Presentation = Actor;
+    Presentation.EggPathIndices.Add(4501);
+    Presentation.EggPathIndices.Add(4502);
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    FKyaActorEditPatch Patch;
+    FString Error;
+    TestTrue(TEXT("Egg Details patch builds"),
+        KyaMakePlacementPropertyPatch(Presentation,
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, EggPathIndices), Patch));
+    TestTrue(TEXT("Egg Details patch applies"),
+        Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    Service.Reset();
+    TestEqual(TEXT("Details Egg path resize applies"), Actor.EggPathIndices.Num(), 4);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized Egg paths"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Egg resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized Egg paths"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Egg path count round trips"), Result.EggPathIndices.Num(), 4);
+    TestEqual(TEXT("Egg original path round trips"), Result.EggPathIndices[0], OriginalFirst);
+    TestEqual(TEXT("Egg added path round trips"), Result.EggPathIndices.Last(), 4502);
+    TestEqual(TEXT("Egg weight is preserved"), Result.EggWeightB, OriginalWeight);
+    TestEqual(TEXT("Egg field 1d8 is preserved"), Result.EggField1D8, OriginalField1D8);
+    TestEqual(TEXT("Egg field 1dc is preserved"), Result.EggField1DC, OriginalField1DC);
+    TestEqual(TEXT("Egg field 1e0 is preserved"), Result.EggField1E0, OriginalField1E0);
+
+    RoundTrip->SceneEnvironment.Actors[0].EggPathIndices.SetNum(2);
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk Egg paths"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk Egg paths"), ShrunkBank)) return false;
+    TestEqual(TEXT("Shrunk Egg path count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].EggPathIndices.Num(), 2);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealEggPathsTest, "Kya.Bank.ResizeRealEggPaths",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealEggPathsTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a bank with an Egg actor (LEVEL_2) to run this test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real Egg bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real Egg bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId == 0x2f && Candidate.bHasEggData && !Candidate.EggPathIndices.IsEmpty())
+        {
+            ActorIndex = Index;
+            break;
+        }
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no populated Egg path-plane list; skipping the real Egg test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    const FString ActorName = Actor.Name;
+    const int32 OriginalCount = Actor.EggPathIndices.Num();
+    const int32 OriginalFirst = Actor.EggPathIndices[0];
+    const float OriginalWeight = Actor.EggWeightB;
+    const int64 OriginalField1DC = Actor.EggField1DC;
+
+    Actor.EggPathIndices.Add((ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num());
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real Egg path resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real Egg resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real Egg path resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the Egg actor"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real Egg resize preserves the name"), Result.Name, ActorName);
+    TestEqual(TEXT("Real Egg path count round trips"), Result.EggPathIndices.Num(), OriginalCount + 1);
+    TestEqual(TEXT("Real Egg original path round trips"), Result.EggPathIndices[0], OriginalFirst);
+    TestEqual(TEXT("Real Egg added path round trips"), Result.EggPathIndices.Last(),
+        (ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num());
+    TestEqual(TEXT("Real Egg weight round trips"), Result.EggWeightB, OriginalWeight);
+    TestEqual(TEXT("Real Egg field 1dc round trips"), Result.EggField1DC, OriginalField1DC);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeBlazerActorsTest, "Kya.Bank.ResizeBlazerActors",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeBlazerActorsTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x4d);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Blazer fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Blazer fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Blazer class id"), Actor.ClassId, int64(0x4d));
+    TestTrue(TEXT("Blazer data parses"), Actor.bHasBlazerData);
+    TestTrue(TEXT("Blazer fixture uses waypoint refs"), Actor.BlazerData.bHasWaypointRefs);
+    if (!TestEqual(TEXT("Blazer starts with two actor refs"), Actor.BlazerData.ActorRefs.Num(), 2)) return false;
+    const int32 OriginalFirst = Actor.BlazerData.ActorRefs[0];
+    const int64 OriginalLife = Actor.BlazerData.LifeMax;
+    const int32 OriginalWaypoint = Actor.BlazerData.Waypoint38C;
+    const float OriginalTilt = Actor.BlazerData.TiltSpringStrength;
+    const float OriginalAngle = Actor.BlazerData.Angle388Degrees;
+
+    FKyaActorPlacement Presentation = Actor;
+    Presentation.BlazerData.ActorRefs.Add(3601);
+    Presentation.BlazerData.ActorRefs.Add(3602);
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    FKyaActorEditPatch Patch;
+    FString Error;
+    TestTrue(TEXT("Blazer Details patch builds"),
+        KyaMakePlacementPropertyPatch(Presentation,
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, BlazerData), Patch));
+    TestTrue(TEXT("Blazer Details patch applies"),
+        Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    Service.Reset();
+    TestEqual(TEXT("Details Blazer actor resize applies"), Actor.BlazerData.ActorRefs.Num(), 4);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized Blazer actors"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Blazer resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized Blazer actors"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Blazer actor count round trips"), Result.BlazerData.ActorRefs.Num(), 4);
+    TestEqual(TEXT("Blazer original actor ref round trips"), Result.BlazerData.ActorRefs[0], OriginalFirst);
+    TestEqual(TEXT("Blazer added actor ref round trips"), Result.BlazerData.ActorRefs.Last(), 3602);
+    TestTrue(TEXT("Blazer waypoint layout is preserved"), Result.BlazerData.bHasWaypointRefs);
+    TestEqual(TEXT("Blazer waypoint ref is preserved"), Result.BlazerData.Waypoint38C, OriginalWaypoint);
+    TestEqual(TEXT("Blazer life maximum is preserved"), Result.BlazerData.LifeMax, OriginalLife);
+    TestEqual(TEXT("Blazer tilt spring is preserved"), Result.BlazerData.TiltSpringStrength, OriginalTilt);
+    TestEqual(TEXT("Blazer angle is preserved"), Result.BlazerData.Angle388Degrees, OriginalAngle);
+    TestEqual(TEXT("Blazer path index is preserved"), Result.BlazerData.PathIndex, Actor.BlazerData.PathIndex);
+
+    RoundTrip->SceneEnvironment.Actors[0].BlazerData.ActorRefs.SetNum(2);
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk Blazer actors"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk Blazer actors"), ShrunkBank)) return false;
+    TestEqual(TEXT("Shrunk Blazer actor count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].BlazerData.ActorRefs.Num(), 2);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealBlazerActorsTest, "Kya.Bank.ResizeRealBlazerActors",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealBlazerActorsTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a bank with a populated Blazer actor list to run this test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real Blazer bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real Blazer bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId == 0x4d && Candidate.bHasBlazerData &&
+            !Candidate.BlazerData.ActorRefs.IsEmpty())
+        {
+            ActorIndex = Index;
+            break;
+        }
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no populated Blazer actor list; skipping the real Blazer test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    const FString ActorName = Actor.Name;
+    const int32 OriginalCount = Actor.BlazerData.ActorRefs.Num();
+    const int32 OriginalFirst = Actor.BlazerData.ActorRefs[0];
+    const int64 OriginalLife = Actor.BlazerData.LifeMax;
+
+    Actor.BlazerData.ActorRefs.Add((ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num());
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real Blazer actor resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real Blazer resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real Blazer actor resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the Blazer actor"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real Blazer resize preserves the name"), Result.Name, ActorName);
+    TestEqual(TEXT("Real Blazer actor count round trips"),
+        Result.BlazerData.ActorRefs.Num(), OriginalCount + 1);
+    TestEqual(TEXT("Real Blazer original actor ref round trips"),
+        Result.BlazerData.ActorRefs[0], OriginalFirst);
+    TestEqual(TEXT("Real Blazer added actor ref round trips"), Result.BlazerData.ActorRefs.Last(),
+        (ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num());
+    TestEqual(TEXT("Real Blazer life maximum round trips"), Result.BlazerData.LifeMax, OriginalLife);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeWoofActorsTest, "Kya.Bank.ResizeWoofActors",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeWoofActorsTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x2a);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Woof fixture"), Bank)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Woof class id"), Actor.ClassId, int64(0x2a));
+    TestTrue(TEXT("Woof data parses"), Actor.bHasWoofData);
+    TestEqual(TEXT("Woof starts with two actor refs"), Actor.WoofData.ActorRefs.Num(), 2);
+    const int32 OriginalFirst = Actor.WoofData.ActorRefs[0];
+    const int64 OriginalLife = Actor.WoofData.LifeMax;
+    const float OriginalVision = Actor.WoofData.VisionRange;
+    const int32 OriginalWaypoint = Actor.WoofData.Waypoint3A4;
+
+    FKyaActorPlacement Presentation = Actor;
+    Presentation.WoofData.ActorRefs.Add(2901);
+    Presentation.WoofData.ActorRefs.Add(2902);
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    FKyaActorEditPatch Patch;
+    FString Error;
+    TestTrue(TEXT("Woof Details patch builds"),
+        KyaMakePlacementPropertyPatch(Presentation,
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, WoofData), Patch));
+    TestTrue(TEXT("Woof Details patch applies"),
+        Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    Service.Reset();
+    TestEqual(TEXT("Details Woof actor resize applies"), Actor.WoofData.ActorRefs.Num(), 4);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized Woof actors"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Woof resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized Woof actors"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Woof actor count round trips"), Result.WoofData.ActorRefs.Num(), 4);
+    TestEqual(TEXT("Woof original actor ref round trips"), Result.WoofData.ActorRefs[0], OriginalFirst);
+    TestEqual(TEXT("Woof added actor ref round trips"), Result.WoofData.ActorRefs.Last(), 2902);
+    TestEqual(TEXT("Woof life maximum is preserved"), Result.WoofData.LifeMax, OriginalLife);
+    TestEqual(TEXT("Woof vision range is preserved"), Result.WoofData.VisionRange, OriginalVision);
+    TestEqual(TEXT("Woof waypoint is preserved"), Result.WoofData.Waypoint3A4, OriginalWaypoint);
+    TestEqual(TEXT("Woof path index is preserved"), Result.WoofData.PathIndex, Actor.WoofData.PathIndex);
+
+    RoundTrip->SceneEnvironment.Actors[0].WoofData.ActorRefs.SetNum(2);
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk Woof actors"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk Woof actors"), ShrunkBank)) return false;
+    TestEqual(TEXT("Shrunk Woof actor count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].WoofData.ActorRefs.Num(), 2);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealWoofActorsTest, "Kya.Bank.ResizeRealWoofActors",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealWoofActorsTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a bank with Woof actors (LEVEL_3/13) to run this test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real Woof bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real Woof bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId == 0x2a && Candidate.bHasWoofData &&
+            !Candidate.WoofData.ActorRefs.IsEmpty())
+        {
+            ActorIndex = Index;
+            break;
+        }
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no populated Woof actor list; skipping the real Woof test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    const FString ActorName = Actor.Name;
+    const int32 OriginalCount = Actor.WoofData.ActorRefs.Num();
+    const int32 OriginalFirst = Actor.WoofData.ActorRefs[0];
+    const int64 OriginalLife = Actor.WoofData.LifeMax;
+    const float OriginalVision = Actor.WoofData.VisionRange;
+
+    Actor.WoofData.ActorRefs.Add((ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num());
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real Woof actor resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real Woof resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real Woof actor resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the Woof actor"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real Woof resize preserves the name"), Result.Name, ActorName);
+    TestEqual(TEXT("Real Woof actor count round trips"),
+        Result.WoofData.ActorRefs.Num(), OriginalCount + 1);
+    TestEqual(TEXT("Real Woof original actor ref round trips"),
+        Result.WoofData.ActorRefs[0], OriginalFirst);
+    TestEqual(TEXT("Real Woof added actor ref round trips"), Result.WoofData.ActorRefs.Last(),
+        (ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num());
+    TestEqual(TEXT("Real Woof life maximum round trips"), Result.WoofData.LifeMax, OriginalLife);
+    TestEqual(TEXT("Real Woof vision range round trips"), Result.WoofData.VisionRange, OriginalVision);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeNativSpeakSellerTest, "Kya.Bank.ResizeNativSpeakSeller",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeNativSpeakSellerTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x0a, false, false, false, false, false, false, false, true);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Nativ speak/seller fixture"), Bank)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Nativ speak/seller class id"), Actor.ClassId, int64(0x0a));
+    const int32 SpeakIndex = Actor.Behaviours.IndexOfByPredicate(
+        [](const FKyaActorBehaviour& Behaviour) {
+            return Behaviour.bHasTypedNativBehaviour && Behaviour.Id == 3;
+        });
+    const int32 SellerIndex = Actor.Behaviours.IndexOfByPredicate(
+        [](const FKyaActorBehaviour& Behaviour) {
+            return Behaviour.bHasTypedNativBehaviour && Behaviour.Id == 7;
+        });
+    if (!TestTrue(TEXT("Nativ fixture has a speak behaviour"), SpeakIndex != INDEX_NONE)) return false;
+    if (!TestTrue(TEXT("Nativ fixture has a seller behaviour"), SellerIndex != INDEX_NONE)) return false;
+    FKyaActorBehaviour& Source = Actor.Behaviours[SpeakIndex];
+    TestEqual(TEXT("Nativ speak starts with two values"), Source.NativSpeakValues.Num(), 2);
+    TestEqual(TEXT("Nativ seller starts with one sub-object"),
+        Actor.Behaviours[SellerIndex].NativSellerSubObjs.Num(), 1);
+    TestEqual(TEXT("Nativ seller starts with two cinematics"),
+        Actor.Behaviours[SellerIndex].NativSellerSubObjs[0].CinematicIds.Num(), 2);
+    const float OriginalX = Source.NativSpeakValues[0].X;
+    const float OriginalField8 = Actor.Behaviours[SellerIndex].NativSellerField8;
+
+    FKyaActorPlacement Presentation = Actor;
+    Presentation.Behaviours[SpeakIndex].NativSpeakValues.Add(FVector2D(6.5, 7.5));
+    FKyaAddOnSubObj& Added = Presentation.Behaviours[SellerIndex].NativSellerSubObjs.AddDefaulted_GetRef();
+    Added.Field0 = 2701;
+    Added.CinematicIds.Add(2702);
+    Added.CinematicIds.Add(2703);
+    Presentation.Behaviours[SellerIndex].NativSellerSubObjs[0].CinematicIds.Add(2704);
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    FKyaActorEditPatch Patch;
+    FString Error;
+    TestTrue(TEXT("Nativ speak/seller Details patch builds"),
+        KyaMakePlacementPropertyPatch(Presentation,
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Behaviours), Patch));
+    TestTrue(TEXT("Nativ speak/seller Details patch applies"),
+        Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    Service.Reset();
+    TestEqual(TEXT("Details Nativ speak resize applies"),
+        Actor.Behaviours[SpeakIndex].NativSpeakValues.Num(), 3);
+    TestEqual(TEXT("Details Nativ seller resize applies"),
+        Actor.Behaviours[SellerIndex].NativSellerSubObjs.Num(), 2);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized Nativ speak/seller lists"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Nativ speak/seller resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized Nativ speak/seller lists"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    const FKyaActorBehaviour& ResultSpeak = Result.Behaviours[SpeakIndex];
+    TestEqual(TEXT("Nativ speak count round trips"), ResultSpeak.NativSpeakValues.Num(), 3);
+    TestEqual(TEXT("Nativ original speak value round trips"),
+        float(ResultSpeak.NativSpeakValues[0].X), OriginalX);
+    TestTrue(TEXT("Nativ added speak value round trips"),
+        ResultSpeak.NativSpeakValues.Last().Equals(FVector2D(6.5, 7.5)));
+    const FKyaActorBehaviour& ResultSeller = Result.Behaviours[SellerIndex];
+    TestEqual(TEXT("Nativ seller sub-object count round trips"),
+        ResultSeller.NativSellerSubObjs.Num(), 2);
+    TestEqual(TEXT("Nativ seller field 8 is preserved"), ResultSeller.NativSellerField8, OriginalField8);
+    TestEqual(TEXT("Nativ seller first sub cinematic count round trips"),
+        ResultSeller.NativSellerSubObjs[0].CinematicIds.Num(), 3);
+    TestEqual(TEXT("Nativ seller added cinematic round trips"),
+        ResultSeller.NativSellerSubObjs[0].CinematicIds.Last(), 2704);
+    TestEqual(TEXT("Nativ seller new sub field round trips"),
+        ResultSeller.NativSellerSubObjs[1].Field0, 2701);
+    TestEqual(TEXT("Nativ seller new sub cinematic count round trips"),
+        ResultSeller.NativSellerSubObjs[1].CinematicIds.Num(), 2);
+    TestEqual(TEXT("Nativ seller new sub last cinematic round trips"),
+        ResultSeller.NativSellerSubObjs[1].CinematicIds.Last(), 2703);
+
+    RoundTrip->SceneEnvironment.Actors[0].Behaviours[SpeakIndex].NativSpeakValues.SetNum(2);
+    RoundTrip->SceneEnvironment.Actors[0].Behaviours[SellerIndex].NativSellerSubObjs.SetNum(1);
+    RoundTrip->SceneEnvironment.Actors[0].Behaviours[SellerIndex].NativSellerSubObjs[0].CinematicIds.SetNum(2);
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk Nativ speak/seller lists"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk Nativ speak/seller lists"), ShrunkBank)) return false;
+    TestEqual(TEXT("Shrunk Nativ speak count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].Behaviours[SpeakIndex].NativSpeakValues.Num(), 2);
+    TestEqual(TEXT("Shrunk Nativ seller count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].Behaviours[SellerIndex].NativSellerSubObjs.Num(), 1);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealNativSpeakTest, "Kya.Bank.ResizeRealNativSpeak",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealNativSpeakTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a bank with a Nativ speak behaviour (LEVEL_4) to run this test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real Nativ speak bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real Nativ speak bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    int32 BehaviourIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId != 0x0a) continue;
+        for (int32 Behaviour = 0; Behaviour < Candidate.Behaviours.Num(); ++Behaviour)
+        {
+            if (Candidate.Behaviours[Behaviour].bHasTypedNativBehaviour &&
+                Candidate.Behaviours[Behaviour].Id == 3)
+            {
+                ActorIndex = Index;
+                BehaviourIndex = Behaviour;
+                break;
+            }
+        }
+        if (ActorIndex != INDEX_NONE) break;
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no Nativ speak behaviour; skipping the real Nativ speak test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    FKyaActorBehaviour& Behaviour = Actor.Behaviours[BehaviourIndex];
+    const FString ActorName = Actor.Name;
+    const int32 OriginalCount = Behaviour.NativSpeakValues.Num();
+
+    Behaviour.NativSpeakValues.Add(FVector2D(2801.5, 2802.5));
+    Behaviour.NativSpeakValues.Add(FVector2D(2803.5, 2804.5));
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real Nativ speak resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real Nativ speak resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real Nativ speak resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the Nativ actor"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& ResultActor = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real Nativ speak resize preserves the name"), ResultActor.Name, ActorName);
+    if (!TestTrue(TEXT("Reimported Nativ keeps the speak behaviour"),
+        ResultActor.Behaviours.IsValidIndex(BehaviourIndex))) return false;
+    const FKyaActorBehaviour& Result = ResultActor.Behaviours[BehaviourIndex];
+    TestEqual(TEXT("Real Nativ speak count round trips"),
+        Result.NativSpeakValues.Num(), OriginalCount + 2);
+    TestTrue(TEXT("Real Nativ first added speak value round trips"),
+        Result.NativSpeakValues[OriginalCount].Equals(FVector2D(2801.5, 2802.5)));
+    TestTrue(TEXT("Real Nativ second added speak value round trips"),
+        Result.NativSpeakValues.Last().Equals(FVector2D(2803.5, 2804.5)));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeNativTrajectoriesTest, "Kya.Bank.ResizeNativTrajectories",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeNativTrajectoriesTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x0a);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Nativ fixture"), Bank)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Nativ class id"), Actor.ClassId, int64(0x0a));
+    const int32 TrajectoryIndex = Actor.Behaviours.IndexOfByPredicate(
+        [](const FKyaActorBehaviour& Behaviour) {
+            return Behaviour.bHasTypedNativBehaviour && Behaviour.Id == 6;
+        });
+    if (!TestTrue(TEXT("Nativ fixture has a take-and-put behaviour"), TrajectoryIndex != INDEX_NONE))
+        return false;
+    TestEqual(TEXT("Nativ starts with one trajectory"),
+        Actor.Behaviours[TrajectoryIndex].NativTrajectories.Num(), 1);
+    const int32 OriginalPath = Actor.Behaviours[TrajectoryIndex].NativTrajectories[0].PathFollowIndex;
+    const float OriginalTrajectoryField = Actor.Behaviours[TrajectoryIndex].NativTrajectories[0].Field0;
+    const int64 OriginalLifeMax = Actor.NativLifeMax;
+
+    FKyaActorPlacement Presentation = Actor;
+    FKyaNativTrajectory& Added = Presentation.Behaviours[TrajectoryIndex].NativTrajectories.AddDefaulted_GetRef();
+    Added.Field0 = 15.5f;
+    Added.PathFollowIndex = 1601;
+    Added.Field14 = 1602;
+    Added.Field18 = 16.5f;
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    FKyaActorEditPatch Patch;
+    FString Error;
+    TestTrue(TEXT("Nativ Details patch builds"),
+        KyaMakePlacementPropertyPatch(Presentation,
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Behaviours), Patch));
+    TestTrue(TEXT("Nativ Details patch applies"),
+        Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    Service.Reset();
+    TestEqual(TEXT("Details Nativ trajectory resize applies"),
+        Actor.Behaviours[TrajectoryIndex].NativTrajectories.Num(), 2);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized Nativ trajectories"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Nativ resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized Nativ trajectories"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Nativ trajectory count round trips"),
+        Result.Behaviours[TrajectoryIndex].NativTrajectories.Num(), 2);
+    TestEqual(TEXT("Nativ original trajectory path is preserved"),
+        Result.Behaviours[TrajectoryIndex].NativTrajectories[0].PathFollowIndex, OriginalPath);
+    TestEqual(TEXT("Nativ original trajectory field is preserved"),
+        Result.Behaviours[TrajectoryIndex].NativTrajectories[0].Field0, OriginalTrajectoryField);
+    const FKyaNativTrajectory& ResultAdded = Result.Behaviours[TrajectoryIndex].NativTrajectories[1];
+    TestEqual(TEXT("Nativ added trajectory field round trips"), ResultAdded.Field0, 15.5f);
+    TestEqual(TEXT("Nativ added trajectory path round trips"), ResultAdded.PathFollowIndex, 1601);
+    TestEqual(TEXT("Nativ added trajectory field 14 round trips"), ResultAdded.Field14, 1602);
+    TestEqual(TEXT("Nativ added trajectory field 18 round trips"), ResultAdded.Field18, 16.5f);
+    TestEqual(TEXT("Nativ life maximum is preserved"), Result.NativLifeMax, OriginalLifeMax);
+
+    RoundTrip->SceneEnvironment.Actors[0].Behaviours[TrajectoryIndex].NativTrajectories.SetNum(1);
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk Nativ trajectories"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk Nativ trajectories"), ShrunkBank)) return false;
+    TestEqual(TEXT("Shrunk Nativ trajectory count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].Behaviours[TrajectoryIndex].NativTrajectories.Num(), 1);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealNativTrajectoryTest, "Kya.Bank.ResizeRealNativTrajectory",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealNativTrajectoryTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a bank with Nativ trajectories (LEVEL_1/4) to run this test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real Nativ bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real Nativ bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    int32 BehaviourIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId != 0x0a) continue;
+        for (int32 Behaviour = 0; Behaviour < Candidate.Behaviours.Num(); ++Behaviour)
+        {
+            if (Candidate.Behaviours[Behaviour].bHasTypedNativBehaviour &&
+                Candidate.Behaviours[Behaviour].Id == 6 &&
+                !Candidate.Behaviours[Behaviour].NativTrajectories.IsEmpty())
+            {
+                ActorIndex = Index;
+                BehaviourIndex = Behaviour;
+                break;
+            }
+        }
+        if (ActorIndex != INDEX_NONE) break;
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no Nativ trajectory list; skipping the real Nativ test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    FKyaActorBehaviour& Behaviour = Actor.Behaviours[BehaviourIndex];
+    const FString ActorName = Actor.Name;
+    const int32 OriginalCount = Behaviour.NativTrajectories.Num();
+    const int32 OriginalPath = Behaviour.NativTrajectories[0].PathFollowIndex;
+    const int64 OriginalLifeMax = Actor.NativLifeMax;
+
+    FKyaNativTrajectory& Added = Behaviour.NativTrajectories.AddDefaulted_GetRef();
+    Added.Field0 = 21.5f;
+    Added.PathFollowIndex = (ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num();
+    Added.Field14 = 1701;
+    Added.Field18 = 22.5f;
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real Nativ trajectory resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real Nativ resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real Nativ trajectory resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the Nativ actor"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& ResultActor = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real Nativ resize preserves the name"), ResultActor.Name, ActorName);
+    if (!TestTrue(TEXT("Reimported Nativ keeps the take-and-put behaviour"),
+        ResultActor.Behaviours.IsValidIndex(BehaviourIndex))) return false;
+    const FKyaActorBehaviour& Result = ResultActor.Behaviours[BehaviourIndex];
+    TestEqual(TEXT("Real Nativ trajectory count round trips"),
+        Result.NativTrajectories.Num(), OriginalCount + 1);
+    TestEqual(TEXT("Real Nativ original trajectory path round trips"),
+        Result.NativTrajectories[0].PathFollowIndex, OriginalPath);
+    const FKyaNativTrajectory& ResultAdded = Result.NativTrajectories.Last();
+    TestEqual(TEXT("Real Nativ added trajectory field round trips"), ResultAdded.Field0, 21.5f);
+    TestEqual(TEXT("Real Nativ added trajectory path round trips"), ResultAdded.PathFollowIndex,
+        (ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num());
+    TestEqual(TEXT("Real Nativ added trajectory field 14 round trips"), ResultAdded.Field14, 1701);
+    TestEqual(TEXT("Real Nativ added trajectory field 18 round trips"), ResultAdded.Field18, 22.5f);
+    TestEqual(TEXT("Real Nativ life maximum round trips"), ResultActor.NativLifeMax, OriginalLifeMax);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeWindSwitchesTest, "Kya.Bank.ResizeWindSwitches",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeWindSwitchesTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x12, false, false, true);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Wind switch fixture"), Bank)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Wind switch class id"), Actor.ClassId, int64(0x12));
+    TestTrue(TEXT("Wind switch data parses"), Actor.bHasWindData);
+    TestEqual(TEXT("Wind switch 0 starts with one target"), Actor.WindSwitch1D0.Targets.Num(), 1);
+    TestEqual(TEXT("Wind switch 1 starts empty"), Actor.WindSwitch1D8.Targets.Num(), 0);
+    TestEqual(TEXT("Wind switch 2 starts empty"), Actor.WindSwitch1E0.Targets.Num(), 0);
+    const int32 OriginalTarget = Actor.WindSwitch1D0.Targets[0].TargetRef;
+    const int32 OriginalCamera = Actor.WindSwitch1D0.Camera.CameraIndex;
+    const int32 OriginalField160 = Actor.WindField160;
+    const float OriginalMaxWind = Actor.WindMaxWind;
+
+    FKyaActorPlacement Presentation = Actor;
+    FKyaSwitchTarget& Added = Presentation.WindSwitch1D0.Targets.AddDefaulted_GetRef();
+    Added.TargetRef = 1701;
+    Added.CutsceneId = 1702;
+    Added.Flags = 1703;
+    Added.MessageId = 1704;
+    Added.MessageFlags = 1705;
+    Added.Field14 = 1706;
+    Added.Field18 = 1707;
+    FKyaSwitchTarget& SecondSwitchTarget = Presentation.WindSwitch1D8.Targets.AddDefaulted_GetRef();
+    SecondSwitchTarget.TargetRef = 1708;
+    SecondSwitchTarget.CutsceneId = 1709;
+    Presentation.WindSwitch1E0.Camera.CameraIndex = 1710;
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    const auto ApplyField = [&](FName PropertyName)
+    {
+        FKyaActorEditPatch Patch;
+        FString Error;
+        if (!TestTrue(TEXT("Wind switch Details patch builds"),
+            KyaMakePlacementPropertyPatch(Presentation, PropertyName, Patch))) return;
+        TestTrue(TEXT("Wind switch Details patch applies"),
+            Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    };
+    ApplyField(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, WindSwitch1D0));
+    ApplyField(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, WindSwitch1D8));
+    ApplyField(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, WindSwitch1E0));
+    Service.Reset();
+    TestEqual(TEXT("Details Wind switch 0 resize applies"), Actor.WindSwitch1D0.Targets.Num(), 2);
+    TestEqual(TEXT("Details Wind switch 1 resize applies"), Actor.WindSwitch1D8.Targets.Num(), 1);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized Wind switches"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Wind switch resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized Wind switches"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Wind switch 0 target count round trips"), Result.WindSwitch1D0.Targets.Num(), 2);
+    TestEqual(TEXT("Wind switch 0 first target round trips"),
+        Result.WindSwitch1D0.Targets[0].TargetRef, OriginalTarget);
+    TestEqual(TEXT("Wind switch 0 camera index is preserved"),
+        Result.WindSwitch1D0.Camera.CameraIndex, OriginalCamera);
+    TestEqual(TEXT("Wind switch 1 target count round trips"), Result.WindSwitch1D8.Targets.Num(), 1);
+    TestEqual(TEXT("Wind switch 2 target count round trips"), Result.WindSwitch1E0.Targets.Num(), 0);
+    TestEqual(TEXT("Wind switch 2 edited camera round trips"),
+        Result.WindSwitch1E0.Camera.CameraIndex, 1710);
+    TestEqual(TEXT("Wind field 160 is preserved"), Result.WindField160, OriginalField160);
+    TestEqual(TEXT("Wind max wind is preserved"), Result.WindMaxWind, OriginalMaxWind);
+    const FKyaSwitchTarget& ResultAdded = Result.WindSwitch1D0.Targets.Last();
+    TestEqual(TEXT("Wind switch added target round trips"), ResultAdded.TargetRef, 1701);
+    TestEqual(TEXT("Wind switch added cutscene round trips"), ResultAdded.CutsceneId, 1702);
+    TestEqual(TEXT("Wind switch added flags round trips"), ResultAdded.Flags, 1703);
+    TestEqual(TEXT("Wind switch added message round trips"), ResultAdded.MessageId, 1704);
+    TestEqual(TEXT("Wind switch added message flags round trips"), ResultAdded.MessageFlags, 1705);
+    TestEqual(TEXT("Wind switch added field 14 round trips"), ResultAdded.Field14, 1706);
+    TestEqual(TEXT("Wind switch added field 18 round trips"), ResultAdded.Field18, 1707);
+    TestEqual(TEXT("Wind second switch added target round trips"),
+        Result.WindSwitch1D8.Targets[0].TargetRef, 1708);
+
+    RoundTrip->SceneEnvironment.Actors[0].WindSwitch1D0.Targets.SetNum(1);
+    RoundTrip->SceneEnvironment.Actors[0].WindSwitch1D8.Targets.Reset();
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk Wind switches"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk Wind switches"), ShrunkBank)) return false;
+    TestEqual(TEXT("Shrunk Wind switch 0 count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].WindSwitch1D0.Targets.Num(), 1);
+    TestEqual(TEXT("Shrunk Wind switch 1 count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].WindSwitch1D8.Targets.Num(), 0);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealWindSwitchTest, "Kya.Bank.ResizeRealWindSwitch",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealWindSwitchTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a bank with Wind switches to run this test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real Wind switch bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real Wind switch bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId != 0x12 || !Candidate.bHasWindData) continue;
+        const FKyaSwitch* Switches[] = { &Candidate.WindSwitch1D0, &Candidate.WindSwitch1D8,
+            &Candidate.WindSwitch1E0 };
+        bool bHasSwitchData = false;
+        for (int32 Switch = 0; Switch < 3 && !bHasSwitchData; ++Switch)
+            bHasSwitchData = !Switches[Switch]->Targets.IsEmpty() ||
+                Switches[Switch]->Camera.CameraIndex != 0 || Switches[Switch]->Camera.Flags != 0 ||
+                Switches[Switch]->Camera.ActorRef != 0 || Switches[Switch]->Camera.ZoneRef != 0;
+        if (bHasSwitchData)
+        {
+            ActorIndex = Index;
+            break;
+        }
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no Wind switch data; skipping the real Wind switch test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    const FString ActorName = Actor.Name;
+    const int32 Original0 = Actor.WindSwitch1D0.Targets.Num();
+    const int32 Original1 = Actor.WindSwitch1D8.Targets.Num();
+    const int32 Original2 = Actor.WindSwitch1E0.Targets.Num();
+    const int32 OriginalCamera = Actor.WindSwitch1D0.Camera.CameraIndex;
+    const int32 OriginalField160 = Actor.WindField160;
+
+    FKyaSwitchTarget& Added = Actor.WindSwitch1D0.Targets.AddDefaulted_GetRef();
+    Added.TargetRef = (ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num();
+    Added.CutsceneId = 1801;
+    Added.MessageId = 1802;
+    FKyaSwitchTarget& AddedSecond = Actor.WindSwitch1D8.Targets.AddDefaulted_GetRef();
+    AddedSecond.TargetRef = (ActorIndex + 2) % Bank->SceneEnvironment.Actors.Num();
+    AddedSecond.CutsceneId = 1803;
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real Wind switch resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real Wind switch resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real Wind switch resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the Wind actor"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real Wind switch resize preserves the name"), Result.Name, ActorName);
+    TestEqual(TEXT("Real Wind switch 0 count round trips"),
+        Result.WindSwitch1D0.Targets.Num(), Original0 + 1);
+    TestEqual(TEXT("Real Wind switch 1 count round trips"),
+        Result.WindSwitch1D8.Targets.Num(), Original1 + 1);
+    TestEqual(TEXT("Real Wind switch 2 count round trips"),
+        Result.WindSwitch1E0.Targets.Num(), Original2);
+    TestEqual(TEXT("Real Wind switch added target round trips"),
+        Result.WindSwitch1D0.Targets.Last().TargetRef,
+        (ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num());
+    TestEqual(TEXT("Real Wind switch added cutscene round trips"),
+        Result.WindSwitch1D0.Targets.Last().CutsceneId, 1801);
+    TestEqual(TEXT("Real Wind second switch added target round trips"),
+        Result.WindSwitch1D8.Targets.Last().TargetRef,
+        (ActorIndex + 2) % Bank->SceneEnvironment.Actors.Num());
+    TestEqual(TEXT("Real Wind switch camera round trips"),
+        Result.WindSwitch1D0.Camera.CameraIndex, OriginalCamera);
+    TestEqual(TEXT("Real Wind field 160 round trips"), Result.WindField160, OriginalField160);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeWindActorsTest, "Kya.Bank.ResizeWindActors",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeWindActorsTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x12);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Wind fixture"), Bank)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Wind class id"), Actor.ClassId, int64(0x12));
+    TestTrue(TEXT("Wind data parses"), Actor.bHasWindData);
+    TestEqual(TEXT("Wind starts without carried actors"), Actor.WindActorRefs.Num(), 0);
+    const int32 OriginalZone = Actor.WindActivationZoneIndex;
+    const float OriginalMax = Actor.WindMaxWind;
+
+    FKyaActorPlacement Presentation = Actor;
+    Presentation.WindActorRefs.Add(1601);
+    Presentation.WindActorRefs.Add(1602);
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    FKyaActorEditPatch Patch;
+    FString Error;
+    TestTrue(TEXT("Wind Details patch builds"),
+        KyaMakePlacementPropertyPatch(Presentation,
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, WindActorRefs), Patch));
+    TestTrue(TEXT("Wind Details patch applies"),
+        Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    Service.Reset();
+    TestEqual(TEXT("Details Wind actor resize applies"), Actor.WindActorRefs.Num(), 2);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized Wind actors"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Wind resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized Wind actors"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Wind actor count round trips"), Result.WindActorRefs.Num(), 2);
+    TestEqual(TEXT("Wind first actor ref round trips"), Result.WindActorRefs[0], 1601);
+    TestEqual(TEXT("Wind second actor ref round trips"), Result.WindActorRefs[1], 1602);
+    TestEqual(TEXT("Wind activation zone is preserved"), Result.WindActivationZoneIndex, OriginalZone);
+    TestEqual(TEXT("Wind max wind is preserved"), Result.WindMaxWind, OriginalMax);
+    TestEqual(TEXT("Wind switch targets are preserved"), Result.WindSwitch1D0.Targets.Num(),
+        Actor.WindSwitch1D0.Targets.Num());
+
+    RoundTrip->SceneEnvironment.Actors[0].WindActorRefs.Reset();
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk Wind actors"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk Wind actors"), ShrunkBank)) return false;
+    TestEqual(TEXT("Shrunk Wind actor count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].WindActorRefs.Num(), 0);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealWindActorsTest, "Kya.Bank.ResizeRealWindActors",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealWindActorsTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a bank with Wind actors to run this test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real Wind bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real Wind bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId == 0x12 && Candidate.bHasWindData && !Candidate.WindActorRefs.IsEmpty())
+        {
+            ActorIndex = Index;
+            break;
+        }
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no Wind actor with carried actors; skipping the real Wind test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    const FString ActorName = Actor.Name;
+    const int32 OriginalActors = Actor.WindActorRefs.Num();
+    const int32 OriginalFirst = Actor.WindActorRefs[0];
+    const int32 OriginalZone = Actor.WindActivationZoneIndex;
+
+    Actor.WindActorRefs.Add((ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num());
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real Wind actor resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real Wind resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real Wind actor resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the Wind actor"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real Wind resize preserves the name"), Result.Name, ActorName);
+    TestEqual(TEXT("Real Wind actor count round trips"), Result.WindActorRefs.Num(), OriginalActors + 1);
+    TestEqual(TEXT("Real Wind first actor ref round trips"), Result.WindActorRefs[0], OriginalFirst);
+    TestEqual(TEXT("Real Wind activation zone round trips"), Result.WindActivationZoneIndex, OriginalZone);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeShockerSwitchTest, "Kya.Bank.ResizeShockerSwitch",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeShockerSwitchTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x4b);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Shocker fixture"), Bank)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Shocker class id"), Actor.ClassId, int64(0x4b));
+    TestTrue(TEXT("Shocker data parses"), Actor.bHasShockerData);
+    TestEqual(TEXT("Shocker starts with one switch target"), Actor.ShockerSwitch.Targets.Num(), 1);
+    const int32 OriginalTarget = Actor.ShockerSwitch.Targets[0].TargetRef;
+    const int32 OriginalCamera = Actor.ShockerSwitch.Camera.CameraIndex;
+    const float OriginalZone = Actor.ShockerField350;
+    const int32 OriginalBone = Actor.ShockerBoneId;
+
+    FKyaActorPlacement Presentation = Actor;
+    FKyaSwitchTarget& Added = Presentation.ShockerSwitch.Targets.AddDefaulted_GetRef();
+    Added.TargetRef = 1401;
+    Added.CutsceneId = 1402;
+    Added.Flags = 1403;
+    Added.MessageId = 1404;
+    Added.MessageFlags = 1405;
+    Added.Field14 = 1406;
+    Added.Field18 = 1407;
+    Presentation.ShockerSwitch.Camera.CameraIndex = 1408;
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    FKyaActorEditPatch Patch;
+    FString Error;
+    TestTrue(TEXT("Shocker switch Details patch builds"),
+        KyaMakePlacementPropertyPatch(Presentation,
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, ShockerSwitch), Patch));
+    TestTrue(TEXT("Shocker switch Details patch applies"),
+        Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    Service.Reset();
+    TestEqual(TEXT("Details Shocker switch resize applies"), Actor.ShockerSwitch.Targets.Num(), 2);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized Shocker switch"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Shocker switch resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized Shocker switch"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Shocker switch target count round trips"), Result.ShockerSwitch.Targets.Num(), 2);
+    TestEqual(TEXT("Shocker first target is preserved"), Result.ShockerSwitch.Targets[0].TargetRef, OriginalTarget);
+    if (!TestEqual(TEXT("Shocker reimport has the added target"), Result.ShockerSwitch.Targets.Num(), 2))
+        return false;
+    const FKyaSwitchTarget& ResultAdded = Result.ShockerSwitch.Targets[1];
+    TestEqual(TEXT("Shocker added target round trips"), ResultAdded.TargetRef, 1401);
+    TestEqual(TEXT("Shocker added cutscene round trips"), ResultAdded.CutsceneId, 1402);
+    TestEqual(TEXT("Shocker added flags round trips"), ResultAdded.Flags, 1403);
+    TestEqual(TEXT("Shocker added message round trips"), ResultAdded.MessageId, 1404);
+    TestEqual(TEXT("Shocker added message flags round trips"), ResultAdded.MessageFlags, 1405);
+    TestEqual(TEXT("Shocker added field 14 round trips"), ResultAdded.Field14, 1406);
+    TestEqual(TEXT("Shocker added field 18 round trips"), ResultAdded.Field18, 1407);
+    TestEqual(TEXT("Shocker camera is preserved or edited"),
+        Result.ShockerSwitch.Camera.CameraIndex == OriginalCamera ||
+        Result.ShockerSwitch.Camera.CameraIndex == 1408, true);
+    TestEqual(TEXT("Shocker float payload is preserved"), Result.ShockerField350, OriginalZone);
+    TestEqual(TEXT("Shocker bone id is preserved"), Result.ShockerBoneId, OriginalBone);
+
+    RoundTrip->SceneEnvironment.Actors[0].ShockerSwitch.Targets.SetNum(1);
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk Shocker switch"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk Shocker switch"), ShrunkBank)) return false;
+    TestEqual(TEXT("Shrunk Shocker target count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].ShockerSwitch.Targets.Num(), 1);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealShockerSwitchTest, "Kya.Bank.ResizeRealShockerSwitch",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealShockerSwitchTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a bank with Shocker actors to run this test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real Shocker bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real Shocker bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId == 0x4b && Candidate.bHasShockerData)
+        {
+            ActorIndex = Index;
+            break;
+        }
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no Shocker actor; skipping the real Shocker test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    const FString ActorName = Actor.Name;
+    const int32 OriginalTargets = Actor.ShockerSwitch.Targets.Num();
+    const int32 OriginalCamera = Actor.ShockerSwitch.Camera.CameraIndex;
+    const float OriginalZone = Actor.ShockerField350;
+
+    FKyaSwitchTarget& Added = Actor.ShockerSwitch.Targets.AddDefaulted_GetRef();
+    Added.TargetRef = (ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num();
+    Added.CutsceneId = 1501;
+    Added.MessageId = 1502;
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real Shocker switch resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real Shocker resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real Shocker switch resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the Shocker actor"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real Shocker resize preserves the name"), Result.Name, ActorName);
+    TestEqual(TEXT("Real Shocker target count round trips"),
+        Result.ShockerSwitch.Targets.Num(), OriginalTargets + 1);
+    TestEqual(TEXT("Real Shocker added target round trips"), Result.ShockerSwitch.Targets.Last().TargetRef,
+        (ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num());
+    TestEqual(TEXT("Real Shocker added cutscene round trips"),
+        Result.ShockerSwitch.Targets.Last().CutsceneId, 1501);
+    TestEqual(TEXT("Real Shocker added message round trips"),
+        Result.ShockerSwitch.Targets.Last().MessageId, 1502);
+    TestEqual(TEXT("Real Shocker camera round trips"), Result.ShockerSwitch.Camera.CameraIndex, OriginalCamera);
+    TestEqual(TEXT("Real Shocker zone payload round trips"), Result.ShockerField350, OriginalZone);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeBrazulBSwitchTest, "Kya.Bank.ResizeBrazulBSwitch",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeBrazulBSwitchTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x4f);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Brazul B fixture"), Bank)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    const int32 BIndex = Actor.Behaviours.IndexOfByPredicate(
+        [](const FKyaActorBehaviour& Behaviour) { return Behaviour.bHasTypedBrazulB; });
+    if (!TestTrue(TEXT("Brazul fixture has a typed B behaviour"), BIndex != INDEX_NONE)) return false;
+    FKyaActorBehaviour& Source = Actor.Behaviours[BIndex];
+    TestEqual(TEXT("Brazul B starts with one switch target"), Source.BrazulBSwitch.Targets.Num(), 1);
+    const int32 OriginalWayPoint = Source.BrazulBWayPointRef;
+    const int32 OriginalTarget = Source.BrazulBSwitch.Targets[0].TargetRef;
+    const int32 OriginalCamera = Source.BrazulBSwitch.Camera.CameraIndex;
+
+    FKyaActorPlacement Presentation = Actor;
+    FKyaSwitchTarget& Added = Presentation.Behaviours[BIndex].BrazulBSwitch.Targets.AddDefaulted_GetRef();
+    Added.TargetRef = 1201;
+    Added.CutsceneId = 1202;
+    Added.Flags = 1203;
+    Added.MessageId = 1204;
+    Added.MessageFlags = 1205;
+    Added.Field14 = 1206;
+    Added.Field18 = 1207;
+    Presentation.Behaviours[BIndex].BrazulBSwitch.Camera.CameraIndex = 1208;
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    FKyaActorEditPatch Patch;
+    FString Error;
+    TestTrue(TEXT("Brazul B Details patch builds"),
+        KyaMakePlacementPropertyPatch(Presentation,
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Behaviours), Patch));
+    TestTrue(TEXT("Brazul B Details patch applies"),
+        Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    Service.Reset();
+    TestEqual(TEXT("Details Brazul B switch resize applies"),
+        Actor.Behaviours[BIndex].BrazulBSwitch.Targets.Num(), 2);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized Brazul B switch"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Brazul B resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized Brazul B switch"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    const FKyaActorBehaviour& ResultB = Result.Behaviours[BIndex];
+    TestEqual(TEXT("Brazul B target count round trips"), ResultB.BrazulBSwitch.Targets.Num(), 2);
+    TestEqual(TEXT("Brazul B waypoint is preserved"), ResultB.BrazulBWayPointRef, OriginalWayPoint);
+    TestEqual(TEXT("Brazul B first target is preserved"), ResultB.BrazulBSwitch.Targets[0].TargetRef, OriginalTarget);
+    const FKyaSwitchTarget& ResultAdded = ResultB.BrazulBSwitch.Targets[1];
+    TestEqual(TEXT("Brazul B added target round trips"), ResultAdded.TargetRef, 1201);
+    TestEqual(TEXT("Brazul B added cutscene round trips"), ResultAdded.CutsceneId, 1202);
+    TestEqual(TEXT("Brazul B added flags round trips"), ResultAdded.Flags, 1203);
+    TestEqual(TEXT("Brazul B added message round trips"), ResultAdded.MessageId, 1204);
+    TestEqual(TEXT("Brazul B added message flags round trips"), ResultAdded.MessageFlags, 1205);
+    TestEqual(TEXT("Brazul B added field 14 round trips"), ResultAdded.Field14, 1206);
+    TestEqual(TEXT("Brazul B added field 18 round trips"), ResultAdded.Field18, 1207);
+    TestEqual(TEXT("Brazul B camera is preserved"), ResultB.BrazulBSwitch.Camera.CameraIndex == OriginalCamera ||
+        ResultB.BrazulBSwitch.Camera.CameraIndex == 1208, true);
+
+    RoundTrip->SceneEnvironment.Actors[0].Behaviours[BIndex].BrazulBSwitch.Targets.SetNum(1);
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk Brazul B switch"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk Brazul B switch"), ShrunkBank)) return false;
+    TestEqual(TEXT("Shrunk Brazul B target count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].Behaviours[BIndex].BrazulBSwitch.Targets.Num(), 1);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealBrazulBSwitchTest, "Kya.Bank.ResizeRealBrazulBSwitch",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealBrazulBSwitchTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a Brazul bank (LEVEL_11/13) to run this test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real Brazul B bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real Brazul B bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    int32 BehaviourIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId != 0x4f) continue;
+        for (int32 Behaviour = 0; Behaviour < Candidate.Behaviours.Num(); ++Behaviour)
+        {
+            if (Candidate.Behaviours[Behaviour].bHasTypedBrazulB)
+            {
+                ActorIndex = Index;
+                BehaviourIndex = Behaviour;
+                break;
+            }
+        }
+        if (ActorIndex != INDEX_NONE) break;
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no Brazul B behaviour; skipping the real Brazul B test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    FKyaActorBehaviour& Behaviour = Actor.Behaviours[BehaviourIndex];
+    const FString ActorName = Actor.Name;
+    const int32 OriginalTargets = Behaviour.BrazulBSwitch.Targets.Num();
+    const int32 OriginalWayPoint = Behaviour.BrazulBWayPointRef;
+    const int32 OriginalCamera = Behaviour.BrazulBSwitch.Camera.CameraIndex;
+
+    FKyaSwitchTarget& Added = Behaviour.BrazulBSwitch.Targets.AddDefaulted_GetRef();
+    Added.TargetRef = (ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num();
+    Added.CutsceneId = 1301;
+    Added.MessageId = 1302;
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real Brazul B switch resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real Brazul B resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real Brazul B switch resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the Brazul actor"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& ResultActor = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real Brazul B resize preserves the name"), ResultActor.Name, ActorName);
+    if (!TestTrue(TEXT("Reimported Brazul keeps the B behaviour"),
+        ResultActor.Behaviours.IsValidIndex(BehaviourIndex))) return false;
+    const FKyaActorBehaviour& Result = ResultActor.Behaviours[BehaviourIndex];
+    TestEqual(TEXT("Real Brazul B target count round trips"),
+        Result.BrazulBSwitch.Targets.Num(), OriginalTargets + 1);
+    TestEqual(TEXT("Real Brazul B waypoint round trips"), Result.BrazulBWayPointRef, OriginalWayPoint);
+    TestEqual(TEXT("Real Brazul B added target round trips"), Result.BrazulBSwitch.Targets.Last().TargetRef,
+        (ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num());
+    TestEqual(TEXT("Real Brazul B added cutscene round trips"),
+        Result.BrazulBSwitch.Targets.Last().CutsceneId, 1301);
+    TestEqual(TEXT("Real Brazul B added message round trips"),
+        Result.BrazulBSwitch.Targets.Last().MessageId, 1302);
+    TestEqual(TEXT("Real Brazul B camera round trips"), Result.BrazulBSwitch.Camera.CameraIndex, OriginalCamera);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeBrazulSubObjsTest, "Kya.Bank.ResizeBrazulSubObjs",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeBrazulSubObjsTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x4f);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Brazul fixture"), Bank)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Brazul class id"), Actor.ClassId, int64(0x4f));
+    const int32 BrazulA = Actor.Behaviours.IndexOfByPredicate(
+        [](const FKyaActorBehaviour& Behaviour) { return Behaviour.bHasTypedBrazulA; });
+    if (!TestTrue(TEXT("Brazul fixture has a typed A behaviour"), BrazulA != INDEX_NONE)) return false;
+    FKyaActorBehaviour& Source = Actor.Behaviours[BrazulA];
+    TestEqual(TEXT("Brazul A starts with one sub-object"), Source.BrazulSubObjs.Num(), 1);
+    TestEqual(TEXT("Brazul A starts with two paths"), Source.BrazulSubObjs[0].PathIndices.Num(), 2);
+    const int32 OriginalField0 = Source.BrazulSubObjs[0].Field0;
+    const float OriginalField8 = Source.BrazulSubObjs[0].Field8;
+    const int32 OriginalPath = Source.BrazulSubObjs[0].PathIndices[0];
+
+    FKyaActorPlacement Presentation = Actor;
+    Presentation.Behaviours[BrazulA].BrazulSubObjs[0].PathIndices.Add(501);
+    FKyaBrazulSubObj& Added = Presentation.Behaviours[BrazulA].BrazulSubObjs.AddDefaulted_GetRef();
+    Added.Field0 = 502;
+    Added.Field4 = 503;
+    Added.Field8 = 4.5f;
+    Added.FieldC = 504;
+    Added.Field10 = 505;
+    Added.PathIndices.Add(506);
+    Added.PathIndices.Add(507);
+    Added.PathIndices.Add(508);
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    FKyaActorEditPatch Patch;
+    FString Error;
+    TestTrue(TEXT("Brazul A Details patch builds"),
+        KyaMakePlacementPropertyPatch(Presentation,
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Behaviours), Patch));
+    TestTrue(TEXT("Brazul A Details patch applies"),
+        Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    Service.Reset();
+    TestEqual(TEXT("Details Brazul A sub-object resize applies"),
+        Actor.Behaviours[BrazulA].BrazulSubObjs.Num(), 2);
+    TestEqual(TEXT("Details Brazul A path resize applies"),
+        Actor.Behaviours[BrazulA].BrazulSubObjs[0].PathIndices.Num(), 3);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized Brazul A payload"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Brazul A resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized Brazul A payload"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    const int32 ResultIndex = Result.Behaviours.IndexOfByPredicate(
+        [](const FKyaActorBehaviour& Behaviour) { return Behaviour.bHasTypedBrazulA; });
+    if (!TestTrue(TEXT("Reimported Brazul has a typed A behaviour"), ResultIndex != INDEX_NONE)) return false;
+    const FKyaActorBehaviour& ResultBehaviour = Result.Behaviours[ResultIndex];
+    TestEqual(TEXT("Brazul A sub-object count round trips"), ResultBehaviour.BrazulSubObjs.Num(), 2);
+    TestEqual(TEXT("Brazul A first field round trips"), ResultBehaviour.BrazulSubObjs[0].Field0, OriginalField0);
+    TestEqual(TEXT("Brazul A first float round trips"), ResultBehaviour.BrazulSubObjs[0].Field8, OriginalField8);
+    TestEqual(TEXT("Brazul A first path round trips"), ResultBehaviour.BrazulSubObjs[0].PathIndices[0], OriginalPath);
+    TestEqual(TEXT("Brazul A added path count round trips"),
+        ResultBehaviour.BrazulSubObjs[0].PathIndices.Num(), 3);
+    TestEqual(TEXT("Brazul A added path round trips"), ResultBehaviour.BrazulSubObjs[0].PathIndices.Last(), 501);
+    const FKyaBrazulSubObj& ResultAdded = ResultBehaviour.BrazulSubObjs[1];
+    TestEqual(TEXT("Brazul A new sub-object field0 round trips"), ResultAdded.Field0, 502);
+    TestEqual(TEXT("Brazul A new sub-object field4 round trips"), ResultAdded.Field4, 503);
+    TestEqual(TEXT("Brazul A new sub-object float round trips"), ResultAdded.Field8, 4.5f);
+    TestEqual(TEXT("Brazul A new sub-object fieldC round trips"), ResultAdded.FieldC, 504);
+    TestEqual(TEXT("Brazul A new sub-object field10 round trips"), ResultAdded.Field10, 505);
+    TestEqual(TEXT("Brazul A new sub-object path count round trips"), ResultAdded.PathIndices.Num(), 3);
+    TestEqual(TEXT("Brazul A new sub-object last path round trips"), ResultAdded.PathIndices.Last(), 508);
+
+    RoundTrip->SceneEnvironment.Actors[0].Behaviours[ResultIndex].BrazulSubObjs.SetNum(1);
+    RoundTrip->SceneEnvironment.Actors[0].Behaviours[ResultIndex].BrazulSubObjs[0].PathIndices.SetNum(2);
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk Brazul A payload"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk Brazul A payload"), ShrunkBank)) return false;
+    const FKyaActorPlacement& ShrunkResult = ShrunkBank->SceneEnvironment.Actors[0];
+    const int32 ShrunkIndex = ShrunkResult.Behaviours.IndexOfByPredicate(
+        [](const FKyaActorBehaviour& Behaviour) { return Behaviour.bHasTypedBrazulA; });
+    TestTrue(TEXT("Shrunk Brazul keeps the typed A behaviour"), ShrunkIndex != INDEX_NONE);
+    if (ShrunkIndex != INDEX_NONE)
+    {
+        TestEqual(TEXT("Shrunk Brazul A sub-object count round trips"),
+            ShrunkResult.Behaviours[ShrunkIndex].BrazulSubObjs.Num(), 1);
+        TestEqual(TEXT("Shrunk Brazul A path count round trips"),
+            ShrunkResult.Behaviours[ShrunkIndex].BrazulSubObjs[0].PathIndices.Num(), 2);
+    }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealBrazulSubObjTest, "Kya.Bank.ResizeRealBrazulSubObj",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealBrazulSubObjTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a Brazul bank (LEVEL_11/12/13) to run this test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real Brazul bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real Brazul bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    int32 BehaviourIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId != 0x4f) continue;
+        for (int32 Behaviour = 0; Behaviour < Candidate.Behaviours.Num(); ++Behaviour)
+        {
+            if (Candidate.Behaviours[Behaviour].bHasTypedBrazulA)
+            {
+                ActorIndex = Index;
+                BehaviourIndex = Behaviour;
+                break;
+            }
+        }
+        if (ActorIndex != INDEX_NONE) break;
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no Brazul A behaviour; skipping the real Brazul test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    FKyaActorBehaviour& Behaviour = Actor.Behaviours[BehaviourIndex];
+    const FString ActorName = Actor.Name;
+    const int32 OriginalSubObjs = Behaviour.BrazulSubObjs.Num();
+    const int32 OriginalPaths = Behaviour.BrazulSubObjs.IsEmpty()
+        ? 0 : Behaviour.BrazulSubObjs[0].PathIndices.Num();
+    const int32 OriginalField0 = Behaviour.BrazulSubObjs.IsEmpty()
+        ? 0 : Behaviour.BrazulSubObjs[0].Field0;
+
+    if (!Behaviour.BrazulSubObjs.IsEmpty())
+        Behaviour.BrazulSubObjs[0].PathIndices.Add(511);
+    FKyaBrazulSubObj& Added = Behaviour.BrazulSubObjs.AddDefaulted_GetRef();
+    Added.Field0 = 512;
+    Added.Field4 = 513;
+    Added.Field8 = 5.5f;
+    Added.FieldC = 514;
+    Added.Field10 = 515;
+    Added.PathIndices.Add(516);
+    Added.PathIndices.Add(517);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real Brazul A resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real Brazul A resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real Brazul A resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the Brazul actor"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& ResultActor = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real Brazul resize preserves the name"), ResultActor.Name, ActorName);
+    if (!TestTrue(TEXT("Reimported Brazul keeps the A behaviour"),
+        ResultActor.Behaviours.IsValidIndex(BehaviourIndex))) return false;
+    const FKyaActorBehaviour& Result = ResultActor.Behaviours[BehaviourIndex];
+    TestEqual(TEXT("Real Brazul A sub-object count round trips"),
+        Result.BrazulSubObjs.Num(), OriginalSubObjs + 1);
+    if (OriginalSubObjs > 0)
+    {
+        TestEqual(TEXT("Real Brazul A first field round trips"), Result.BrazulSubObjs[0].Field0, OriginalField0);
+        TestEqual(TEXT("Real Brazul A first path count round trips"),
+            Result.BrazulSubObjs[0].PathIndices.Num(), OriginalPaths + 1);
+        TestEqual(TEXT("Real Brazul A added path round trips"), Result.BrazulSubObjs[0].PathIndices.Last(), 511);
+    }
+    const FKyaBrazulSubObj& ResultAdded = Result.BrazulSubObjs.Last();
+    TestEqual(TEXT("Real Brazul A new field0 round trips"), ResultAdded.Field0, 512);
+    TestEqual(TEXT("Real Brazul A new float round trips"), ResultAdded.Field8, 5.5f);
+    TestEqual(TEXT("Real Brazul A new path count round trips"), ResultAdded.PathIndices.Num(), 2);
+    TestEqual(TEXT("Real Brazul A new last path round trips"), ResultAdded.PathIndices.Last(), 517);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeFogZonesTest, "Kya.Bank.ResizeFogZones",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeFogZonesTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x3d);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import fog fixture"), Bank)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Fog class id"), Actor.ClassId, int64(0x3d));
+    if (!TestTrue(TEXT("Fog fixture has a behaviour"), Actor.Behaviours.Num() > 0)) return false;
+    TestTrue(TEXT("Fog behaviour is typed"), Actor.Behaviours[0].bHasTypedFogBehaviour);
+    TestEqual(TEXT("Fog starts with one zone"), Actor.Behaviours[0].FogZones.Num(), 1);
+    const int32 OriginalFlags = Actor.Behaviours[0].FogZones[0].Flags;
+    const int32 OriginalZoneRef = Actor.Behaviours[0].FogZones[0].ZoneRef;
+    const float OriginalClip = Actor.Behaviours[0].FogZones[0].ClipValue;
+    const int32 OriginalRgba = Actor.Behaviours[0].FogZones[0].FogRGBA;
+
+    FKyaActorPlacement Presentation = Actor;
+    Presentation.Behaviours[0].FogZones[0].ClipValue = 12.5f;
+    FKyaFogZone& Added = Presentation.Behaviours[0].FogZones.AddDefaulted_GetRef();
+    Added.Flags = 7;
+    Added.ZoneRef = 401;
+    Added.ClipValue = 13.5f;
+    Added.Field4 = 14.5f;
+    Added.FogRGBA = 0x0A0B0C0D;
+    Added.FogFlags = 15;
+    Added.Field18 = 16.5f;
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    FKyaActorEditPatch Patch;
+    FString Error;
+    TestTrue(TEXT("Fog Details patch builds"),
+        KyaMakePlacementPropertyPatch(Presentation,
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Behaviours), Patch));
+    TestTrue(TEXT("Fog Details patch applies"),
+        Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    Service.Reset();
+    TestEqual(TEXT("Details fog zone resize applies"), Actor.Behaviours[0].FogZones.Num(), 2);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized fog zones"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Fog resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized fog zones"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    if (!TestTrue(TEXT("Reimported fog actor has a behaviour"), Result.Behaviours.Num() > 0)) return false;
+    TestEqual(TEXT("Fog zone count round trips"), Result.Behaviours[0].FogZones.Num(), 2);
+    const FKyaFogZone& FirstZone = Result.Behaviours[0].FogZones[0];
+    TestEqual(TEXT("Fog zone flags are preserved"), FirstZone.Flags, OriginalFlags);
+    TestEqual(TEXT("Fog zone ref is preserved"), FirstZone.ZoneRef, OriginalZoneRef);
+    TestEqual(TEXT("Fog zone rgba is preserved"), FirstZone.FogRGBA, OriginalRgba);
+    TestEqual(TEXT("Fog zone edited clip round trips"), FirstZone.ClipValue, 12.5f);
+    const FKyaFogZone& ResultAdded = Result.Behaviours[0].FogZones[1];
+    TestEqual(TEXT("Fog added zone flags round trips"), ResultAdded.Flags, 7);
+    TestEqual(TEXT("Fog added zone ref round trips"), ResultAdded.ZoneRef, 401);
+    TestEqual(TEXT("Fog added zone clip round trips"), ResultAdded.ClipValue, 13.5f);
+    TestEqual(TEXT("Fog added zone field 4 round trips"), ResultAdded.Field4, 14.5f);
+    TestEqual(TEXT("Fog added zone rgba round trips"), ResultAdded.FogRGBA, 0x0A0B0C0D);
+    TestEqual(TEXT("Fog added zone flags round trips"), ResultAdded.FogFlags, 15);
+    TestEqual(TEXT("Fog added zone field 18 round trips"), ResultAdded.Field18, 16.5f);
+    TestEqual(TEXT("Fog original clip differs from the edit"), OriginalClip != 12.5f, true);
+
+    RoundTrip->SceneEnvironment.Actors[0].Behaviours[0].FogZones.SetNum(1);
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk fog zones"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk fog zones"), ShrunkBank)) return false;
+    TestEqual(TEXT("Shrunk fog zone count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].Behaviours[0].FogZones.Num(), 1);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealFogZoneTest, "Kya.Bank.ResizeRealFogZone",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealFogZoneTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a bank with a fog manager (LEVEL_1) to run the real fog-zone test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real fog bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real fog bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    int32 BehaviourIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId != 0x3d) continue;
+        for (int32 Behaviour = 0; Behaviour < Candidate.Behaviours.Num(); ++Behaviour)
+        {
+            if (Candidate.Behaviours[Behaviour].bHasTypedFogBehaviour)
+            {
+                ActorIndex = Index;
+                BehaviourIndex = Behaviour;
+                break;
+            }
+        }
+        if (ActorIndex != INDEX_NONE) break;
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no fog manager behaviour; skipping the real fog-zone test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    FKyaActorBehaviour& Behaviour = Actor.Behaviours[BehaviourIndex];
+    const FString ActorName = Actor.Name;
+    const int32 OriginalZones = Behaviour.FogZones.Num();
+    const int32 OriginalFlags = Behaviour.FogZones.IsEmpty() ? 0 : Behaviour.FogZones[0].Flags;
+
+    FKyaFogZone& Added = Behaviour.FogZones.AddDefaulted_GetRef();
+    Added.Flags = 3;
+    Added.ZoneRef = (ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num();
+    Added.ClipValue = 21.5f;
+    Added.Field4 = 22.5f;
+    Added.FogRGBA = 0x0D0C0B0A;
+    Added.FogFlags = 23;
+    Added.Field18 = 24.5f;
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real fog-zone resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real fog resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real fog-zone resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the fog actor"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& ResultActor = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real fog resize preserves the name"), ResultActor.Name, ActorName);
+    if (!TestTrue(TEXT("Reimported fog actor keeps the behaviour"),
+        ResultActor.Behaviours.IsValidIndex(BehaviourIndex))) return false;
+    const FKyaActorBehaviour& Result = ResultActor.Behaviours[BehaviourIndex];
+    TestEqual(TEXT("Real fog zone count round trips"), Result.FogZones.Num(), OriginalZones + 1);
+    if (OriginalZones > 0)
+        TestEqual(TEXT("Real fog first zone flags round trips"), Result.FogZones[0].Flags, OriginalFlags);
+    const FKyaFogZone& ResultAdded = Result.FogZones.Last();
+    TestEqual(TEXT("Real fog added zone ref round trips"), ResultAdded.ZoneRef,
+        (ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num());
+    TestEqual(TEXT("Real fog added zone clip round trips"), ResultAdded.ClipValue, 21.5f);
+    TestEqual(TEXT("Real fog added zone rgba round trips"), ResultAdded.FogRGBA, 0x0D0C0B0A);
+    TestEqual(TEXT("Real fog added zone field 18 round trips"), ResultAdded.Field18, 24.5f);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeClusterZonesTest, "Kya.Bank.ResizeClusterZones",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeClusterZonesTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x18);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import clusteriser fixture"), Bank)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Clusteriser class id"), Actor.ClassId, int64(0x18));
+    if (!TestTrue(TEXT("Clusteriser fixture has a behaviour"), Actor.Behaviours.Num() > 0)) return false;
+    TestTrue(TEXT("Clusteriser behaviour is typed"), Actor.Behaviours[0].bHasTypedClusterZones);
+    TestEqual(TEXT("Clusteriser starts with one zone"), Actor.Behaviours[0].ClusterZones.Num(), 1);
+    TestEqual(TEXT("Cluster zone starts with one actor"), Actor.Behaviours[0].ClusterZones[0].Actors.Num(), 1);
+    const int64 OriginalFlags = Actor.Behaviours[0].ClusterZones[0].Flags;
+    const int32 OriginalZoneRef = Actor.Behaviours[0].ClusterZones[0].ZoneRef;
+    const int64 OriginalHash = Actor.Behaviours[0].ClusterZones[0].Hashes[0];
+
+    FKyaActorPlacement Presentation = Actor;
+    Presentation.Behaviours[0].ClusterZones[0].Actors.Add(301);
+    Presentation.Behaviours[0].ClusterZones[0].OtherActors.Add(302);
+    Presentation.Behaviours[0].ClusterZones[0].Cameras.Add(303);
+    Presentation.Behaviours[0].ClusterZones[0].Lights.Add(304);
+    Presentation.Behaviours[0].ClusterZones[0].Hashes.Add(0x0102030405060708LL);
+    FKyaClusterZone& NewZone = Presentation.Behaviours[0].ClusterZones.AddDefaulted_GetRef();
+    NewZone.Flags = 2;
+    NewZone.ZoneRef = 305;
+    NewZone.Actors.Add(306);
+    NewZone.Hashes.Add(0x1112131415161718LL);
+    NewZone.OtherZoneRef = 307;
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    FKyaActorEditPatch Patch;
+    FString Error;
+    TestTrue(TEXT("Cluster Details patch builds"),
+        KyaMakePlacementPropertyPatch(Presentation,
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Behaviours), Patch));
+    TestTrue(TEXT("Cluster Details patch applies"),
+        Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    Service.Reset();
+    TestEqual(TEXT("Details cluster zone resize applies"), Actor.Behaviours[0].ClusterZones.Num(), 2);
+    TestEqual(TEXT("Details cluster actor resize applies"),
+        Actor.Behaviours[0].ClusterZones[0].Actors.Num(), 2);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized cluster zones"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Cluster resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized cluster zones"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    if (!TestTrue(TEXT("Reimported clusteriser has a behaviour"), Result.Behaviours.Num() > 0)) return false;
+    const FKyaActorBehaviour& ResultBehaviour = Result.Behaviours[0];
+    TestEqual(TEXT("Cluster zone count round trips"), ResultBehaviour.ClusterZones.Num(), 2);
+    const FKyaClusterZone& ResultZone = ResultBehaviour.ClusterZones[0];
+    TestEqual(TEXT("Cluster zone flags are preserved"), ResultZone.Flags, OriginalFlags);
+    TestEqual(TEXT("Cluster zone ref is preserved"), ResultZone.ZoneRef, OriginalZoneRef);
+    TestEqual(TEXT("Cluster actor count round trips"), ResultZone.Actors.Num(), 2);
+    TestEqual(TEXT("Cluster added actor round trips"), ResultZone.Actors.Last(), 301);
+    TestEqual(TEXT("Cluster other-actor count round trips"), ResultZone.OtherActors.Num(), 1);
+    TestEqual(TEXT("Cluster camera count round trips"), ResultZone.Cameras.Num(), 2);
+    TestEqual(TEXT("Cluster light count round trips"), ResultZone.Lights.Num(), 1);
+    TestEqual(TEXT("Cluster hash count round trips"), ResultZone.Hashes.Num(), 2);
+    TestEqual(TEXT("Cluster original hash round trips"), ResultZone.Hashes[0], OriginalHash);
+    TestEqual(TEXT("Cluster added hash round trips"), ResultZone.Hashes[1], int64(0x0102030405060708LL));
+    const FKyaClusterZone& ResultNewZone = ResultBehaviour.ClusterZones[1];
+    TestEqual(TEXT("Cluster new zone ref round trips"), ResultNewZone.ZoneRef, 305);
+    TestEqual(TEXT("Cluster new zone actor round trips"), ResultNewZone.Actors.Last(), 306);
+    TestEqual(TEXT("Cluster new zone hash round trips"), ResultNewZone.Hashes.Last(),
+        int64(0x1112131415161718LL));
+    TestEqual(TEXT("Cluster new zone tail ref round trips"), ResultNewZone.OtherZoneRef, 307);
+
+    RoundTrip->SceneEnvironment.Actors[0].Behaviours[0].ClusterZones.SetNum(1);
+    RoundTrip->SceneEnvironment.Actors[0].Behaviours[0].ClusterZones[0].Actors.SetNum(1);
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk cluster zones"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk cluster zones"), ShrunkBank)) return false;
+    TestEqual(TEXT("Shrunk cluster zone count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].Behaviours[0].ClusterZones.Num(), 1);
+    TestEqual(TEXT("Shrunk cluster actor count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].Behaviours[0].ClusterZones[0].Actors.Num(), 1);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealClusterZoneTest, "Kya.Bank.ResizeRealClusterZone",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealClusterZoneTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a bank with a clusteriser actor to run the real cluster-zone test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real cluster bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real cluster bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    int32 BehaviourIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId != 0x18) continue;
+        for (int32 Behaviour = 0; Behaviour < Candidate.Behaviours.Num(); ++Behaviour)
+        {
+            if (Candidate.Behaviours[Behaviour].bHasTypedClusterZones)
+            {
+                ActorIndex = Index;
+                BehaviourIndex = Behaviour;
+                break;
+            }
+        }
+        if (ActorIndex != INDEX_NONE) break;
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no clusteriser zones; skipping the real cluster-zone test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    FKyaActorBehaviour& Behaviour = Actor.Behaviours[BehaviourIndex];
+    const FString ActorName = Actor.Name;
+    const int32 OriginalZones = Behaviour.ClusterZones.Num();
+    const int32 OriginalActors = Behaviour.ClusterZones.IsEmpty()
+        ? 0 : Behaviour.ClusterZones[0].Actors.Num();
+    const int64 OriginalFlags = Behaviour.ClusterZones.IsEmpty()
+        ? 0 : Behaviour.ClusterZones[0].Flags;
+
+    if (!Behaviour.ClusterZones.IsEmpty())
+        Behaviour.ClusterZones[0].Actors.Add((ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num());
+    FKyaClusterZone& Added = Behaviour.ClusterZones.AddDefaulted_GetRef();
+    Added.Flags = 1;
+    Added.ZoneRef = (ActorIndex + 2) % Bank->SceneEnvironment.Actors.Num();
+    Added.Actors.Add((ActorIndex + 3) % Bank->SceneEnvironment.Actors.Num());
+    Added.Hashes.Add(0x2122232425262728LL);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real cluster-zone resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real cluster resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real cluster-zone resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the clusteriser actor"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& ResultActor = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real cluster resize preserves the name"), ResultActor.Name, ActorName);
+    if (!TestTrue(TEXT("Reimported clusteriser keeps the behaviour"),
+        ResultActor.Behaviours.IsValidIndex(BehaviourIndex))) return false;
+    const FKyaActorBehaviour& Result = ResultActor.Behaviours[BehaviourIndex];
+    TestEqual(TEXT("Real cluster zone count round trips"), Result.ClusterZones.Num(), OriginalZones + 1);
+    if (OriginalZones > 0)
+    {
+        TestEqual(TEXT("Real cluster first zone flags round trips"), Result.ClusterZones[0].Flags, OriginalFlags);
+        TestEqual(TEXT("Real cluster first zone actor count round trips"),
+            Result.ClusterZones[0].Actors.Num(), OriginalActors + 1);
+    }
+    const FKyaClusterZone& ResultNew = Result.ClusterZones.Last();
+    TestEqual(TEXT("Real cluster new zone ref round trips"), ResultNew.ZoneRef,
+        (ActorIndex + 2) % Bank->SceneEnvironment.Actors.Num());
+    TestEqual(TEXT("Real cluster new zone actor round trips"), ResultNew.Actors.Last(),
+        (ActorIndex + 3) % Bank->SceneEnvironment.Actors.Num());
+    TestEqual(TEXT("Real cluster new zone hash round trips"), ResultNew.Hashes.Last(),
+        int64(0x2122232425262728LL));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeShootFireBehaviourTest, "Kya.Bank.ResizeShootFireBehaviour",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeShootFireBehaviourTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x3e);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import shoot fixture"), Bank)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Shoot class id"), Actor.ClassId, int64(0x3e));
+    if (!TestTrue(TEXT("Shoot fixture has a fire behaviour"), Actor.Behaviours.Num() > 0)) return false;
+    TestTrue(TEXT("Shoot fire behaviour is typed"), Actor.Behaviours[0].bHasTypedShootFireBehaviour);
+    TestEqual(TEXT("Shoot fire starts with three refs"), Actor.Behaviours[0].ShootFireActorRefs.Num(), 3);
+    const int32 OriginalField2B0 = Actor.Behaviours[0].ShootFireField2B0;
+    const float OriginalField8 = Actor.Behaviours[0].ShootFireField8;
+    const float OriginalField2B4 = Actor.Behaviours[0].ShootFireField2B4;
+
+    // Grow the fire-ref list through the Details patch path (the whole Behaviours
+    // property is written, so the nested typed value is what the writer reads).
+    FKyaActorPlacement Presentation = Actor;
+    Presentation.Behaviours[0].ShootFireActorRefs.Add(201);
+    Presentation.Behaviours[0].ShootFireActorRefs.Add(202);
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    FKyaActorEditPatch Patch;
+    FString Error;
+    TestTrue(TEXT("Shoot fire Details patch builds"),
+        KyaMakePlacementPropertyPatch(Presentation,
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Behaviours), Patch));
+    TestTrue(TEXT("Shoot fire Details patch applies"),
+        Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    Service.Reset();
+    TestEqual(TEXT("Details shoot fire-ref resize applies"),
+        Actor.Behaviours[0].ShootFireActorRefs.Num(), 5);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized shoot fire refs"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Shoot fire resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized shoot fire refs"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    if (!TestTrue(TEXT("Reimported shoot actor has a fire behaviour"), Result.Behaviours.Num() > 0)) return false;
+    TestEqual(TEXT("Shoot fire-ref count round trips"),
+        Result.Behaviours[0].ShootFireActorRefs.Num(), 5);
+    TestEqual(TEXT("Shoot fire first ref round trips"), Result.Behaviours[0].ShootFireActorRefs[0], 21);
+    TestEqual(TEXT("Shoot fire added ref round trips"), Result.Behaviours[0].ShootFireActorRefs.Last(), 202);
+    TestEqual(TEXT("Shoot fire field 2b0 is preserved"),
+        Result.Behaviours[0].ShootFireField2B0, OriginalField2B0);
+    TestEqual(TEXT("Shoot fire field 8 is preserved"), Result.Behaviours[0].ShootFireField8, OriginalField8);
+    TestEqual(TEXT("Shoot fire field 2b4 is preserved"), Result.Behaviours[0].ShootFireField2B4, OriginalField2B4);
+    TestEqual(TEXT("Shoot wave values are preserved"), Result.Behaviours[1].ShootWaveValues.Num(), 7);
+
+    RoundTrip->SceneEnvironment.Actors[0].Behaviours[0].ShootFireActorRefs.SetNum(3);
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk shoot fire refs"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk shoot fire refs"), ShrunkBank)) return false;
+    TestEqual(TEXT("Shrunk shoot fire-ref count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].Behaviours[0].ShootFireActorRefs.Num(), 3);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealShootFireBehaviourTest, "Kya.Bank.ResizeRealShootFireBehaviour",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealShootFireBehaviourTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a bank with a shoot actor to run the real fire-behaviour test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real shoot bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real shoot bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    int32 BehaviourIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId != 0x3e) continue;
+        for (int32 Behaviour = 0; Behaviour < Candidate.Behaviours.Num(); ++Behaviour)
+        {
+            if (Candidate.Behaviours[Behaviour].bHasTypedShootFireBehaviour)
+            {
+                ActorIndex = Index;
+                BehaviourIndex = Behaviour;
+                break;
+            }
+        }
+        if (ActorIndex != INDEX_NONE) break;
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no shoot fire behaviour; skipping the real fire-behaviour test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    FKyaActorBehaviour& Behaviour = Actor.Behaviours[BehaviourIndex];
+    const FString ActorName = Actor.Name;
+    const int32 OriginalRefs = Behaviour.ShootFireActorRefs.Num();
+    const int32 OriginalField2B0 = Behaviour.ShootFireField2B0;
+
+    Behaviour.ShootFireActorRefs.Add((ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num());
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real shoot fire-ref resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real shoot fire resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real shoot fire-ref resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the shoot actor"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real shoot resize preserves the name"), Result.Name, ActorName);
+    TestEqual(TEXT("Real shoot resize preserves the class"), Result.ClassId, int64(0x3e));
+    if (!TestTrue(TEXT("Reimported shoot actor keeps the fire behaviour"),
+        Result.Behaviours.IsValidIndex(BehaviourIndex))) return false;
+    TestEqual(TEXT("Real shoot fire-ref count round trips"),
+        Result.Behaviours[BehaviourIndex].ShootFireActorRefs.Num(), OriginalRefs + 1);
+    TestEqual(TEXT("Real shoot fire field 2b0 round trips"),
+        Result.Behaviours[BehaviourIndex].ShootFireField2B0, OriginalField2B0);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizePatternCmdArraysTest, "Kya.Bank.ResizePatternCmdArrays",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizePatternCmdArraysTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x40);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import pattern-command fixture"), Bank)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Pattern-command class id"), Actor.ClassId, int64(0x40));
+    TestTrue(TEXT("Pattern-command data parses"), Actor.bHasPatternCmdData);
+    TestEqual(TEXT("Pattern-command starts with two actor refs"), Actor.PatternCmdActorRefs.Num(), 2);
+    const int64 OriginalField164 = Actor.PatternCmdField164;
+    const int64 OriginalField160 = Actor.PatternCmdField160;
+    const int32 OriginalMaterial = Actor.PatternCmdPattern.MaterialId;
+    const int32 OriginalField28 = Actor.PatternCmdPattern.Field28;
+    const bool bOriginalHasField24 = Actor.PatternCmdPattern.bHasField24;
+
+    FKyaActorPlacement Presentation = Actor;
+    Presentation.PatternCmdActorRefs.Add(51);
+    Presentation.PatternCmdActorRefs.Add(52);
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    FKyaActorEditPatch Patch;
+    FString Error;
+    TestTrue(TEXT("Pattern-command Details patch builds"),
+        KyaMakePlacementPropertyPatch(Presentation,
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, PatternCmdActorRefs), Patch));
+    TestTrue(TEXT("Pattern-command Details patch applies"),
+        Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    Service.Reset();
+    TestEqual(TEXT("Details pattern-command resize applies"),
+        Actor.PatternCmdActorRefs.Num(), 4);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized pattern-command refs"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Pattern-command resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized pattern-command refs"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Pattern-command ref count round trips"), Result.PatternCmdActorRefs.Num(), 4);
+    TestEqual(TEXT("Pattern-command first ref round trips"), Result.PatternCmdActorRefs[0], 41);
+    TestEqual(TEXT("Pattern-command added ref round trips"), Result.PatternCmdActorRefs.Last(), 52);
+    TestEqual(TEXT("Pattern-command field 164 is preserved"),
+        Result.PatternCmdField164, OriginalField164);
+    TestEqual(TEXT("Pattern-command field 160 is preserved"),
+        Result.PatternCmdField160, OriginalField160);
+    TestEqual(TEXT("Pattern-command material is preserved"),
+        Result.PatternCmdPattern.MaterialId, OriginalMaterial);
+    TestEqual(TEXT("Pattern-command field 28 is preserved"),
+        Result.PatternCmdPattern.Field28, OriginalField28);
+    TestEqual(TEXT("Pattern-command CPatternPart version is preserved"),
+        Result.PatternCmdPattern.bHasField24, bOriginalHasField24);
+
+    RoundTrip->SceneEnvironment.Actors[0].PatternCmdActorRefs.SetNum(2);
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk pattern-command refs"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk pattern-command refs"), ShrunkBank)) return false;
+    TestEqual(TEXT("Shrunk pattern-command ref count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].PatternCmdActorRefs.Num(), 2);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealPatternCmdArrayTest, "Kya.Bank.ResizeRealPatternCmdArray",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealPatternCmdArrayTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a bank with a pattern-command actor (LEVEL_5) to run this test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real pattern-command bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real pattern-command bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId == 0x40 && Candidate.bHasPatternCmdData)
+        {
+            ActorIndex = Index;
+            break;
+        }
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no pattern-command actor; skipping the real pattern-command test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    const FString ActorName = Actor.Name;
+    const int32 OriginalRefs = Actor.PatternCmdActorRefs.Num();
+    const int64 OriginalField164 = Actor.PatternCmdField164;
+    const int64 OriginalField160 = Actor.PatternCmdField160;
+    const int32 OriginalMaterial = Actor.PatternCmdPattern.MaterialId;
+
+    Actor.PatternCmdActorRefs.Add((ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num());
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real pattern-command resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real pattern-command resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real pattern-command resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the pattern-command actor index"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real pattern-command resize preserves the name"), Result.Name, ActorName);
+    TestEqual(TEXT("Real pattern-command resize preserves the class"), Result.ClassId, int64(0x40));
+    TestEqual(TEXT("Real pattern-command ref count round trips"),
+        Result.PatternCmdActorRefs.Num(), OriginalRefs + 1);
+    TestEqual(TEXT("Real pattern-command field 164 round trips"),
+        Result.PatternCmdField164, OriginalField164);
+    TestEqual(TEXT("Real pattern-command field 160 round trips"),
+        Result.PatternCmdField160, OriginalField160);
+    TestEqual(TEXT("Real pattern-command material round trips"),
+        Result.PatternCmdPattern.MaterialId, OriginalMaterial);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeKimCamerasTest, "Kya.Bank.ResizeKimCameras",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeKimCamerasTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x06);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Kim camera fixture"), Bank)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Kim camera fixture class id"), Actor.ClassId, int64(0x06));
+    TestTrue(TEXT("Kim camera fixture parses"), Actor.bHasKimData);
+    const int32 OriginalCameras = Actor.KimCameras.Num();
+    const int32 OriginalProjectiles = Actor.KimProjectileZones.Num();
+    const int32 OriginalPairs = Actor.KimBoomyZonePairs.Num();
+    const int32 OriginalClimb = Actor.KimClimbZones.Num();
+
+    FKyaActorPlacement Presentation = Actor;
+    FKyaActorCamera& First = Presentation.KimCameras.AddDefaulted_GetRef();
+    First.Fov = 1.25f;
+    First.Position = FVector(1.0, 2.0, 3.0);
+    First.LookAt = FVector(4.0, 5.0, 6.0);
+    First.Up = FVector(0.0, 0.0, 1.0);
+    First.SectorId = 121;
+    First.Field08 = 122;
+    First.ConfigFlags = 123;
+    FKyaActorCamera& Second = Presentation.KimCameras.AddDefaulted_GetRef();
+    Second.Fov = 2.25f;
+    Second.SectorId = 124;
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    FKyaActorEditPatch Patch;
+    FString Error;
+    TestTrue(TEXT("Kim camera Details patch builds"),
+        KyaMakePlacementPropertyPatch(Presentation,
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, KimCameras), Patch));
+    TestTrue(TEXT("Kim camera Details patch applies"),
+        Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    Service.Reset();
+    TestEqual(TEXT("Details Kim camera resize applies"),
+        Actor.KimCameras.Num(), OriginalCameras + 2);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized Kim cameras"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Kim camera resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized Kim cameras"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Kim camera count round trips"), Result.KimCameras.Num(), OriginalCameras + 2);
+    const FKyaActorCamera& ResultFirst = Result.KimCameras[OriginalCameras];
+    TestEqual(TEXT("Kim camera fov round trips"), ResultFirst.Fov, 1.25f);
+    TestTrue(TEXT("Kim camera position round trips"), ResultFirst.Position.Equals(FVector(1.0, 2.0, 3.0)));
+    TestTrue(TEXT("Kim camera look-at round trips"), ResultFirst.LookAt.Equals(FVector(4.0, 5.0, 6.0)));
+    TestEqual(TEXT("Kim camera sector round trips"), ResultFirst.SectorId, 121);
+    TestEqual(TEXT("Kim camera field 08 round trips"), ResultFirst.Field08, 122);
+    TestEqual(TEXT("Kim camera config flags round trips"), ResultFirst.ConfigFlags, 123);
+    const FKyaActorCamera& ResultSecond = Result.KimCameras[OriginalCameras + 1];
+    TestEqual(TEXT("Kim camera second fov round trips"), ResultSecond.Fov, 2.25f);
+    TestEqual(TEXT("Kim camera second sector round trips"), ResultSecond.SectorId, 124);
+    TestEqual(TEXT("Kim projectile count is preserved"), Result.KimProjectileZones.Num(), OriginalProjectiles);
+    TestEqual(TEXT("Kim pair count is preserved"), Result.KimBoomyZonePairs.Num(), OriginalPairs);
+    TestEqual(TEXT("Kim climb count is preserved"), Result.KimClimbZones.Num(), OriginalClimb);
+
+    RoundTrip->SceneEnvironment.Actors[0].KimCameras.SetNum(OriginalCameras);
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk Kim cameras"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk Kim cameras"), ShrunkBank)) return false;
+    TestEqual(TEXT("Shrunk Kim camera count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].KimCameras.Num(), OriginalCameras);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealKimCameraTest, "Kya.Bank.ResizeRealKimCamera",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealKimCameraTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a bank with a Kim actor to run the real camera test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real Kim camera bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real Kim camera bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId == 0x06 && Candidate.bHasKimData)
+        {
+            ActorIndex = Index;
+            break;
+        }
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no Kim actor; skipping the real camera test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    const FString ActorName = Actor.Name;
+    const int32 OriginalCameras = Actor.KimCameras.Num();
+    const int32 OriginalProjectiles = Actor.KimProjectileZones.Num();
+    const int32 OriginalTutorials = Actor.KimTutorialZones.Num();
+    const int32 OriginalClimb = Actor.KimClimbZones.Num();
+
+    FKyaActorCamera& Camera = Actor.KimCameras.AddDefaulted_GetRef();
+    Camera.Fov = 3.75f;
+    Camera.Position = FVector(7.0, 8.0, 9.0);
+    Camera.LookAt = FVector(10.0, 11.0, 12.0);
+    Camera.Up = FVector(0.0, 1.0, 0.0);
+    Camera.SectorId = (ActorIndex + 5) % Bank->SceneEnvironment.Actors.Num();
+    Camera.Field08 = 131;
+    Camera.ConfigFlags = 132;
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real Kim camera resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real Kim camera resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real Kim camera resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the Kim camera actor index"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real Kim camera resize preserves the name"), Result.Name, ActorName);
+    TestEqual(TEXT("Real Kim camera count round trips"), Result.KimCameras.Num(), OriginalCameras + 1);
+    const FKyaActorCamera& ResultCamera = Result.KimCameras.Last();
+    TestEqual(TEXT("Real Kim camera fov round trips"), ResultCamera.Fov, 3.75f);
+    TestTrue(TEXT("Real Kim camera position round trips"),
+        ResultCamera.Position.Equals(FVector(7.0, 8.0, 9.0)));
+    TestTrue(TEXT("Real Kim camera look-at round trips"),
+        ResultCamera.LookAt.Equals(FVector(10.0, 11.0, 12.0)));
+    TestEqual(TEXT("Real Kim camera field 08 round trips"), ResultCamera.Field08, 131);
+    TestEqual(TEXT("Real Kim camera config flags round trips"), ResultCamera.ConfigFlags, 132);
+    TestEqual(TEXT("Real Kim projectile count round trips"),
+        Result.KimProjectileZones.Num(), OriginalProjectiles);
+    TestEqual(TEXT("Real Kim tutorial count round trips"),
+        Result.KimTutorialZones.Num(), OriginalTutorials);
+    TestEqual(TEXT("Real Kim climb count round trips"), Result.KimClimbZones.Num(), OriginalClimb);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeKimProjectileZonesTest, "Kya.Bank.ResizeKimProjectileZones",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeKimProjectileZonesTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x06);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Kim projectile fixture"), Bank)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Kim projectile fixture class id"), Actor.ClassId, int64(0x06));
+    TestTrue(TEXT("Kim projectile fixture parses"), Actor.bHasKimData);
+    const int32 OriginalProjectiles = Actor.KimProjectileZones.Num();
+    const int32 OriginalTutorials = Actor.KimTutorialZones.Num();
+    const int32 OriginalCameras = Actor.KimCameras.Num();
+    const int32 OriginalPairs = Actor.KimBoomyZonePairs.Num();
+
+    FKyaActorPlacement Presentation = Actor;
+    FKyaHeroProjectileZone& Zone = Presentation.KimProjectileZones.AddDefaulted_GetRef();
+    Zone.ZoneRef = 101;
+    Zone.ProjectileType = 102;
+    Zone.Damage = 7.5f;
+    Zone.WaypointIndex = 103;
+    Zone.Force = 8.5f;
+    Zone.SampleCount = 104;
+    Zone.SectorId = 105;
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    FKyaActorEditPatch Patch;
+    FString Error;
+    TestTrue(TEXT("Kim projectile Details patch builds"),
+        KyaMakePlacementPropertyPatch(Presentation,
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, KimProjectileZones), Patch));
+    TestTrue(TEXT("Kim projectile Details patch applies"),
+        Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    Service.Reset();
+    TestEqual(TEXT("Details Kim projectile resize applies"),
+        Actor.KimProjectileZones.Num(), OriginalProjectiles + 1);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized Kim projectile zones"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Kim projectile resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized Kim projectile zones"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Kim projectile count round trips"),
+        Result.KimProjectileZones.Num(), OriginalProjectiles + 1);
+    const FKyaHeroProjectileZone& ResultZone = Result.KimProjectileZones.Last();
+    TestEqual(TEXT("Kim projectile zone ref round trips"), ResultZone.ZoneRef, 101);
+    TestEqual(TEXT("Kim projectile type round trips"), ResultZone.ProjectileType, 102);
+    TestEqual(TEXT("Kim projectile damage round trips"), ResultZone.Damage, 7.5f);
+    TestEqual(TEXT("Kim projectile waypoint round trips"), ResultZone.WaypointIndex, 103);
+    TestEqual(TEXT("Kim projectile force round trips"), ResultZone.Force, 8.5f);
+    TestEqual(TEXT("Kim projectile sample count round trips"), ResultZone.SampleCount, 104);
+    TestEqual(TEXT("Kim projectile sector round trips"), ResultZone.SectorId, 105);
+    TestEqual(TEXT("Kim tutorial list is preserved"), Result.KimTutorialZones.Num(), OriginalTutorials);
+    TestEqual(TEXT("Kim pair list is preserved"), Result.KimBoomyZonePairs.Num(), OriginalPairs);
+    TestEqual(TEXT("Kim camera list is preserved"), Result.KimCameras.Num(), OriginalCameras);
+
+    RoundTrip->SceneEnvironment.Actors[0].KimProjectileZones.SetNum(OriginalProjectiles);
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk Kim projectile zones"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk Kim projectile zones"), ShrunkBank)) return false;
+    TestEqual(TEXT("Shrunk Kim projectile count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].KimProjectileZones.Num(), OriginalProjectiles);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealKimProjectileZoneTest, "Kya.Bank.ResizeRealKimProjectileZone",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealKimProjectileZoneTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a bank with a Kim actor to run the real projectile-zone test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real Kim projectile bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real Kim projectile bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId == 0x06 && Candidate.bHasKimData)
+        {
+            ActorIndex = Index;
+            break;
+        }
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no Kim actor; skipping the real projectile-zone test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    const FString ActorName = Actor.Name;
+    const int32 OriginalProjectiles = Actor.KimProjectileZones.Num();
+    const int32 OriginalTutorials = Actor.KimTutorialZones.Num();
+    const int32 OriginalCameras = Actor.KimCameras.Num();
+    const int32 OriginalPairs = Actor.KimBoomyZonePairs.Num();
+    const int32 OriginalClimb = Actor.KimClimbZones.Num();
+
+    FKyaHeroProjectileZone& Zone = Actor.KimProjectileZones.AddDefaulted_GetRef();
+    Zone.ZoneRef = (ActorIndex + 4) % Bank->SceneEnvironment.Actors.Num();
+    Zone.ProjectileType = 111;
+    Zone.Damage = 9.5f;
+    Zone.WaypointIndex = 112;
+    Zone.Force = 10.5f;
+    Zone.SampleCount = 113;
+    Zone.SectorId = 114;
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real Kim projectile-zone resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real Kim projectile resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real Kim projectile-zone resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the Kim projectile actor index"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real Kim projectile resize preserves the name"), Result.Name, ActorName);
+    TestEqual(TEXT("Real Kim projectile count round trips"),
+        Result.KimProjectileZones.Num(), OriginalProjectiles + 1);
+    const FKyaHeroProjectileZone& ResultZone = Result.KimProjectileZones.Last();
+    TestEqual(TEXT("Real Kim projectile type round trips"), ResultZone.ProjectileType, 111);
+    TestEqual(TEXT("Real Kim projectile damage round trips"), ResultZone.Damage, 9.5f);
+    TestEqual(TEXT("Real Kim projectile waypoint round trips"), ResultZone.WaypointIndex, 112);
+    TestEqual(TEXT("Real Kim projectile force round trips"), ResultZone.Force, 10.5f);
+    TestEqual(TEXT("Real Kim projectile sector round trips"), ResultZone.SectorId, 114);
+    TestEqual(TEXT("Real Kim tutorial count round trips"),
+        Result.KimTutorialZones.Num(), OriginalTutorials);
+    TestEqual(TEXT("Real Kim pair count round trips"), Result.KimBoomyZonePairs.Num(), OriginalPairs);
+    TestEqual(TEXT("Real Kim climb count round trips"), Result.KimClimbZones.Num(), OriginalClimb);
+    TestEqual(TEXT("Real Kim camera count round trips"), Result.KimCameras.Num(), OriginalCameras);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeKimTutorialZonesTest, "Kya.Bank.ResizeKimTutorialZones",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeKimTutorialZonesTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x06);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Kim tutorial fixture"), Bank)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Kim tutorial fixture class id"), Actor.ClassId, int64(0x06));
+    TestTrue(TEXT("Kim tutorial fixture parses"), Actor.bHasKimData);
+    const int32 OriginalTutorials = Actor.KimTutorialZones.Num();
+    const int32 OriginalClimb = Actor.KimClimbZones.Num();
+    const int32 OriginalProjectiles = Actor.KimProjectileZones.Num();
+    const int32 OriginalCameras = Actor.KimCameras.Num();
+
+    FKyaActorPlacement Presentation = Actor;
+    FKyaHeroTutorialZone& Zone = Presentation.KimTutorialZones.AddDefaulted_GetRef();
+    Zone.ZoneRef = 81;
+    Zone.MessageKey = 0x1122334455667788LL;
+    Zone.Flags = 82;
+    Zone.Action = 83;
+    Zone.Duration = 4.5f;
+    FKyaSwitchTarget& Target = Zone.Targets.AddDefaulted_GetRef();
+    Target.TargetRef = 84;
+    Target.CutsceneId = 85;
+    FKyaSwitchTarget& SecondTarget = Zone.Targets.AddDefaulted_GetRef();
+    SecondTarget.TargetRef = 86;
+    Zone.Camera.CameraIndex = 87;
+    Zone.Camera.ActorRef = 88;
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    FKyaActorEditPatch Patch;
+    FString Error;
+    TestTrue(TEXT("Kim tutorial Details patch builds"),
+        KyaMakePlacementPropertyPatch(Presentation,
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, KimTutorialZones), Patch));
+    TestTrue(TEXT("Kim tutorial Details patch applies"),
+        Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    Service.Reset();
+    TestEqual(TEXT("Details Kim tutorial resize applies"),
+        Actor.KimTutorialZones.Num(), OriginalTutorials + 1);
+    TestEqual(TEXT("Details Kim tutorial target resize applies"),
+        Actor.KimTutorialZones.Last().Targets.Num(), 2);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized Kim tutorial zones"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Kim tutorial resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized Kim tutorial zones"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Kim tutorial count round trips"),
+        Result.KimTutorialZones.Num(), OriginalTutorials + 1);
+    const FKyaHeroTutorialZone& ResultZone = Result.KimTutorialZones.Last();
+    TestEqual(TEXT("Kim tutorial zone ref round trips"), ResultZone.ZoneRef, 81);
+    TestEqual(TEXT("Kim tutorial message key round trips"), ResultZone.MessageKey, int64(0x1122334455667788LL));
+    TestEqual(TEXT("Kim tutorial flags round trips"), ResultZone.Flags, 82);
+    TestEqual(TEXT("Kim tutorial action round trips"), ResultZone.Action, 83);
+    TestEqual(TEXT("Kim tutorial duration round trips"), ResultZone.Duration, 4.5f);
+    TestEqual(TEXT("Kim tutorial target count round trips"), ResultZone.Targets.Num(), 2);
+    TestEqual(TEXT("Kim tutorial target ref round trips"), ResultZone.Targets[0].TargetRef, 84);
+    TestEqual(TEXT("Kim tutorial target cutscene round trips"), ResultZone.Targets[0].CutsceneId, 85);
+    TestEqual(TEXT("Kim tutorial second target round trips"), ResultZone.Targets[1].TargetRef, 86);
+    TestEqual(TEXT("Kim tutorial camera index round trips"), ResultZone.Camera.CameraIndex, 87);
+    TestEqual(TEXT("Kim tutorial camera actor round trips"), ResultZone.Camera.ActorRef, 88);
+    TestEqual(TEXT("Kim climb stream is preserved"), Result.KimClimbZones.Num(), OriginalClimb);
+    TestEqual(TEXT("Kim projectile list is preserved"), Result.KimProjectileZones.Num(), OriginalProjectiles);
+    TestEqual(TEXT("Kim camera list is preserved"), Result.KimCameras.Num(), OriginalCameras);
+
+    // Shrink the tutorial list back to its original size.
+    RoundTrip->SceneEnvironment.Actors[0].KimTutorialZones.SetNum(OriginalTutorials);
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk Kim tutorial zones"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk Kim tutorial zones"), ShrunkBank)) return false;
+    TestEqual(TEXT("Shrunk Kim tutorial count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].KimTutorialZones.Num(), OriginalTutorials);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealKimTutorialZoneTest, "Kya.Bank.ResizeRealKimTutorialZone",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealKimTutorialZoneTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a bank with a Kim actor to run the real tutorial-zone test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real Kim tutorial bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real Kim tutorial bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId == 0x06 && Candidate.bHasKimData)
+        {
+            ActorIndex = Index;
+            break;
+        }
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no Kim actor; skipping the real tutorial-zone test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    const FString ActorName = Actor.Name;
+    const int32 OriginalTutorials = Actor.KimTutorialZones.Num();
+    const int32 OriginalProjectiles = Actor.KimProjectileZones.Num();
+    const int32 OriginalCameras = Actor.KimCameras.Num();
+
+    FKyaHeroTutorialZone& Zone = Actor.KimTutorialZones.AddDefaulted_GetRef();
+    Zone.ZoneRef = (ActorIndex + 3) % Bank->SceneEnvironment.Actors.Num();
+    Zone.MessageKey = 0x0708090A0B0C0D0ELL;
+    Zone.Flags = 91;
+    Zone.Action = 92;
+    Zone.Duration = 6.5f;
+    FKyaSwitchTarget& Target = Zone.Targets.AddDefaulted_GetRef();
+    Target.TargetRef = 93;
+    Target.MessageId = 94;
+    Zone.Targets.AddDefaulted();
+    Zone.Camera.CameraIndex = 95;
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real Kim tutorial-zone resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real Kim tutorial resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real Kim tutorial-zone resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the Kim tutorial actor index"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real Kim tutorial resize preserves the name"), Result.Name, ActorName);
+    TestEqual(TEXT("Real Kim tutorial count round trips"),
+        Result.KimTutorialZones.Num(), OriginalTutorials + 1);
+    const FKyaHeroTutorialZone& ResultZone = Result.KimTutorialZones.Last();
+    TestEqual(TEXT("Real Kim tutorial zone ref round trips"), ResultZone.ZoneRef,
+        (ActorIndex + 3) % Bank->SceneEnvironment.Actors.Num());
+    TestEqual(TEXT("Real Kim tutorial message key round trips"),
+        ResultZone.MessageKey, int64(0x0708090A0B0C0D0ELL));
+    TestEqual(TEXT("Real Kim tutorial duration round trips"), ResultZone.Duration, 6.5f);
+    TestEqual(TEXT("Real Kim tutorial target count round trips"), ResultZone.Targets.Num(), 2);
+    TestEqual(TEXT("Real Kim tutorial target ref round trips"), ResultZone.Targets[0].TargetRef, 93);
+    TestEqual(TEXT("Real Kim tutorial camera index round trips"), ResultZone.Camera.CameraIndex, 95);
+    TestEqual(TEXT("Real Kim projectile count round trips"),
+        Result.KimProjectileZones.Num(), OriginalProjectiles);
+    TestEqual(TEXT("Real Kim camera count round trips"), Result.KimCameras.Num(), OriginalCameras);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeKimZoneStreamsTest, "Kya.Bank.ResizeKimZoneStreams",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeKimZoneStreamsTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x06);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Kim zone fixture"), Bank)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Kim zone fixture class id"), Actor.ClassId, int64(0x06));
+    TestTrue(TEXT("Kim zone fixture parses"), Actor.bHasKimData);
+    const int32 OriginalClimb = Actor.KimClimbZones.Num();
+    const int32 OriginalPairs = Actor.KimBoomyZonePairs.Num();
+    const int32 OriginalZones = Actor.KimZoneStream.Num();
+    const int32 OriginalTutorials = Actor.KimTutorialZones.Num();
+    const int32 OriginalCameras = Actor.KimCameras.Num();
+
+    FKyaActorPlacement Presentation = Actor;
+    Presentation.KimClimbZones.Add(61);
+    FKyaHeroZonePair& Pair = Presentation.KimBoomyZonePairs.AddDefaulted_GetRef();
+    Pair.ZoneRef = 62;
+    Pair.Field4 = 63;
+    Presentation.KimZoneStream.Add(64);
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    const auto ApplyField = [&](FName PropertyName)
+    {
+        FKyaActorEditPatch Patch;
+        FString Error;
+        if (!TestTrue(TEXT("Kim stream Details patch builds"),
+            KyaMakePlacementPropertyPatch(Presentation, PropertyName, Patch))) return;
+        TestTrue(TEXT("Kim stream Details patch applies"),
+            Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    };
+    ApplyField(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, KimClimbZones));
+    ApplyField(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, KimBoomyZonePairs));
+    ApplyField(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, KimZoneStream));
+    Service.Reset();
+    TestEqual(TEXT("Details Kim climb resize applies"), Actor.KimClimbZones.Num(), OriginalClimb + 1);
+    TestEqual(TEXT("Details Kim pair resize applies"), Actor.KimBoomyZonePairs.Num(), OriginalPairs + 1);
+    TestEqual(TEXT("Details Kim zone resize applies"), Actor.KimZoneStream.Num(), OriginalZones + 1);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized Kim streams"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Kim stream resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized Kim streams"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Kim climb count round trips"), Result.KimClimbZones.Num(), OriginalClimb + 1);
+    TestEqual(TEXT("Kim climb value round trips"), Result.KimClimbZones.Last(), 61);
+    TestEqual(TEXT("Kim pair count round trips"), Result.KimBoomyZonePairs.Num(), OriginalPairs + 1);
+    TestEqual(TEXT("Kim pair zone round trips"), Result.KimBoomyZonePairs.Last().ZoneRef, 62);
+    TestEqual(TEXT("Kim pair field round trips"), Result.KimBoomyZonePairs.Last().Field4, 63);
+    TestEqual(TEXT("Kim zone count round trips"), Result.KimZoneStream.Num(), OriginalZones + 1);
+    TestEqual(TEXT("Kim zone value round trips"), Result.KimZoneStream.Last(), 64);
+    TestEqual(TEXT("Kim tutorial count is preserved"), Result.KimTutorialZones.Num(), OriginalTutorials);
+    TestEqual(TEXT("Kim camera count is preserved"), Result.KimCameras.Num(), OriginalCameras);
+
+    // Shrink each supported Kim stream again.
+    FKyaActorPlacement& ShrinkSource = RoundTrip->SceneEnvironment.Actors[0];
+    ShrinkSource.KimClimbZones.SetNum(OriginalClimb);
+    ShrinkSource.KimBoomyZonePairs.SetNum(OriginalPairs);
+    ShrinkSource.KimZoneStream.SetNum(OriginalZones);
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk Kim streams"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk Kim streams"), ShrunkBank)) return false;
+    const FKyaActorPlacement& ShrunkResult = ShrunkBank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Shrunk Kim climb count round trips"), ShrunkResult.KimClimbZones.Num(), OriginalClimb);
+    TestEqual(TEXT("Shrunk Kim pair count round trips"),
+        ShrunkResult.KimBoomyZonePairs.Num(), OriginalPairs);
+    TestEqual(TEXT("Shrunk Kim zone count round trips"), ShrunkResult.KimZoneStream.Num(), OriginalZones);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealKimZoneStreamTest, "Kya.Bank.ResizeRealKimZoneStream",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealKimZoneStreamTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a bank with a Kim actor to run the real zone-stream test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real Kim bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real Kim bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId == 0x06 && Candidate.bHasKimData)
+        {
+            ActorIndex = Index;
+            break;
+        }
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no Kim actor; skipping the real zone-stream test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    const FString ActorName = Actor.Name;
+    const int32 OriginalClimb = Actor.KimClimbZones.Num();
+    const int32 OriginalPairs = Actor.KimBoomyZonePairs.Num();
+    const int32 OriginalZones = Actor.KimZoneStream.Num();
+    const int32 OriginalCameras = Actor.KimCameras.Num();
+
+    Actor.KimClimbZones.Add(71);
+    FKyaHeroZonePair& Pair = Actor.KimBoomyZonePairs.AddDefaulted_GetRef();
+    Pair.ZoneRef = 72;
+    Pair.Field4 = 73;
+    Actor.KimZoneStream.Add(74);
+    Actor.KimZoneStream.Add(75);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real Kim zone-stream resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real Kim resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real Kim zone-stream resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the Kim actor index"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real Kim resize preserves the name"), Result.Name, ActorName);
+    TestEqual(TEXT("Real Kim resize preserves the class"), Result.ClassId, int64(0x06));
+    TestEqual(TEXT("Real Kim climb count round trips"), Result.KimClimbZones.Num(), OriginalClimb + 1);
+    TestEqual(TEXT("Real Kim climb value round trips"), Result.KimClimbZones.Last(), 71);
+    TestEqual(TEXT("Real Kim pair count round trips"),
+        Result.KimBoomyZonePairs.Num(), OriginalPairs + 1);
+    TestEqual(TEXT("Real Kim pair zone round trips"), Result.KimBoomyZonePairs.Last().ZoneRef, 72);
+    TestEqual(TEXT("Real Kim zone count round trips"), Result.KimZoneStream.Num(), OriginalZones + 2);
+    TestEqual(TEXT("Real Kim zone value round trips"), Result.KimZoneStream.Last(), 75);
+    TestEqual(TEXT("Real Kim camera count round trips"), Result.KimCameras.Num(), OriginalCameras);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeBoxArraysTest, "Kya.Bank.ResizeBoxArrays",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeBoxArraysTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x35);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import box fixture"), Bank)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Box class id"), Actor.ClassId, int64(0x35));
+    TestTrue(TEXT("Box data parses"), Actor.bHasBoxData);
+    TestEqual(TEXT("Box starts with one actor ref"), Actor.BoxActorRefs.Num(), 1);
+    const int32 OriginalTargets = Actor.BoxSwitch.Targets.Num();
+    const int32 OriginalField350 = Actor.BoxField350;
+
+    FKyaActorPlacement Presentation = Actor;
+    Presentation.BoxActorRefs.Add(41);
+    Presentation.BoxActorRefs.Add(42);
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    FKyaActorEditPatch Patch;
+    FString Error;
+    TestTrue(TEXT("Box Details patch builds"),
+        KyaMakePlacementPropertyPatch(Presentation,
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, BoxActorRefs), Patch));
+    TestTrue(TEXT("Box Details patch applies"),
+        Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    Service.Reset();
+    TestEqual(TEXT("Details box actor-ref resize applies"), Actor.BoxActorRefs.Num(), 3);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized box actor refs"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Box resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized box actor refs"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Box actor-ref count round trips"), Result.BoxActorRefs.Num(), 3);
+    TestEqual(TEXT("Box first actor ref round trips"), Result.BoxActorRefs[0], 21);
+    TestEqual(TEXT("Box added actor ref round trips"), Result.BoxActorRefs.Last(), 42);
+    TestEqual(TEXT("Box switch count is preserved"), Result.BoxSwitch.Targets.Num(), OriginalTargets);
+    TestEqual(TEXT("Box field 0x350 is preserved"), Result.BoxField350, OriginalField350);
+
+    // Shrink back to a single actor reference.
+    FKyaActorPlacement& ShrinkSource = RoundTrip->SceneEnvironment.Actors[0];
+    ShrinkSource.BoxActorRefs.SetNum(1);
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk box actor refs"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk box actor refs"), ShrunkBank)) return false;
+    TestEqual(TEXT("Shrunk box actor-ref count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].BoxActorRefs.Num(), 1);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealBoxArrayTest, "Kya.Bank.ResizeRealBoxArray",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealBoxArrayTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a bank with a box actor to run the real box actor-stream test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real box bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real box bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId == 0x35 && Candidate.bHasBoxData)
+        {
+            ActorIndex = Index;
+            break;
+        }
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no box actor; skipping the real box actor-stream test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    const FString ActorName = Actor.Name;
+    const int32 OriginalActorRefs = Actor.BoxActorRefs.Num();
+    const int32 OriginalTargets = Actor.BoxSwitch.Targets.Num();
+    const int32 OriginalField350 = Actor.BoxField350;
+
+    Actor.BoxActorRefs.Add((ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num());
+    Actor.BoxActorRefs.Add((ActorIndex + 2) % Bank->SceneEnvironment.Actors.Num());
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real box actor-stream resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real box resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real box actor-stream resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the box actor index"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real box resize preserves the name"), Result.Name, ActorName);
+    TestEqual(TEXT("Real box resize preserves the class"), Result.ClassId, int64(0x35));
+    TestEqual(TEXT("Real box actor-ref count round trips"),
+        Result.BoxActorRefs.Num(), OriginalActorRefs + 2);
+    TestEqual(TEXT("Real box switch count round trips"),
+        Result.BoxSwitch.Targets.Num(), OriginalTargets);
+    TestEqual(TEXT("Real box field 0x350 round trips"), Result.BoxField350, OriginalField350);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeBasicBoxArraysTest, "Kya.Bank.ResizeBasicBoxArrays",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeBasicBoxArraysTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x39);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import basic box fixture"), Bank)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Basic box class id"), Actor.ClassId, int64(0x39));
+    TestTrue(TEXT("Basic box data parses"), Actor.bHasBasicBoxData);
+    TestEqual(TEXT("Basic box starts with one actor ref"), Actor.BasicBoxActorRefs.Num(), 1);
+    const int32 OriginalTargets = Actor.BasicBoxSwitch.Targets.Num();
+    const int64 OriginalLifeMax = Actor.BasicBoxLifeMax;
+
+    FKyaActorPlacement Presentation = Actor;
+    Presentation.BasicBoxActorRefs.Add(31);
+    Presentation.BasicBoxActorRefs.Add(32);
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    FKyaActorEditPatch Patch;
+    FString Error;
+    TestTrue(TEXT("Basic box Details patch builds"),
+        KyaMakePlacementPropertyPatch(Presentation,
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, BasicBoxActorRefs), Patch));
+    TestTrue(TEXT("Basic box Details patch applies"),
+        Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    Service.Reset();
+    TestEqual(TEXT("Details basic box actor-ref resize applies"), Actor.BasicBoxActorRefs.Num(), 3);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized basic box actor refs"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Basic box resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized basic box actor refs"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Basic box actor-ref count round trips"), Result.BasicBoxActorRefs.Num(), 3);
+    TestEqual(TEXT("Basic box first actor ref round trips"), Result.BasicBoxActorRefs[0], 21);
+    TestEqual(TEXT("Basic box added actor ref round trips"), Result.BasicBoxActorRefs.Last(), 32);
+    TestEqual(TEXT("Basic box switch count is preserved"), Result.BasicBoxSwitch.Targets.Num(),
+        OriginalTargets);
+    TestEqual(TEXT("Basic box life maximum is preserved"), Result.BasicBoxLifeMax, OriginalLifeMax);
+    TestEqual(TEXT("Basic box vibration is preserved"), Result.BasicBoxVibration3,
+        Actor.BasicBoxVibration3);
+
+    // Shrink back to a single actor reference.
+    FKyaActorPlacement& ShrinkSource = RoundTrip->SceneEnvironment.Actors[0];
+    ShrinkSource.BasicBoxActorRefs.SetNum(1);
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk basic box actor refs"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk basic box actor refs"), ShrunkBank)) return false;
+    TestEqual(TEXT("Shrunk basic box actor-ref count round trips"),
+        ShrunkBank->SceneEnvironment.Actors[0].BasicBoxActorRefs.Num(), 1);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealBasicBoxArrayTest, "Kya.Bank.ResizeRealBasicBoxArray",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealBasicBoxArrayTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a bank with a basic-box actor to run the real actor-stream test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real basic box bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real basic box bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId == 0x39 && Candidate.bHasBasicBoxData)
+        {
+            ActorIndex = Index;
+            break;
+        }
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no basic-box actor; skipping the real actor-stream test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    const FString ActorName = Actor.Name;
+    const int32 OriginalActorRefs = Actor.BasicBoxActorRefs.Num();
+    const int32 OriginalTargets = Actor.BasicBoxSwitch.Targets.Num();
+    const int64 OriginalLifeMax = Actor.BasicBoxLifeMax;
+    const int64 OriginalField160 = Actor.BasicBoxField160;
+
+    Actor.BasicBoxActorRefs.Add((ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num());
+    Actor.BasicBoxActorRefs.Add((ActorIndex + 2) % Bank->SceneEnvironment.Actors.Num());
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real basic-box actor-stream resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real basic-box resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real basic-box actor-stream resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the basic-box actor index"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real basic-box resize preserves the name"), Result.Name, ActorName);
+    TestEqual(TEXT("Real basic-box resize preserves the class"), Result.ClassId, int64(0x39));
+    TestEqual(TEXT("Real basic-box actor-ref count round trips"),
+        Result.BasicBoxActorRefs.Num(), OriginalActorRefs + 2);
+    TestEqual(TEXT("Real basic-box switch count round trips"),
+        Result.BasicBoxSwitch.Targets.Num(), OriginalTargets);
+    TestEqual(TEXT("Real basic-box life maximum round trips"), Result.BasicBoxLifeMax, OriginalLifeMax);
+    TestEqual(TEXT("Real basic-box field 160 round trips"), int64(Result.BasicBoxField160), OriginalField160);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeShockerCmdArraysTest, "Kya.Bank.ResizeShockerCmdArrays",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeShockerCmdArraysTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x50);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import ShockerCmd fixture"), Bank)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("ShockerCmd class id"), Actor.ClassId, int64(0x50));
+    TestTrue(TEXT("ShockerCmd data parses"), Actor.bHasShockerCmdData);
+    TestEqual(TEXT("ShockerCmd field 168"), Actor.ShockerCmdField168, int64(0x1234));
+    TestEqual(TEXT("ShockerCmd starts with one sequence"), Actor.ShockerCmdSequences.Num(), 1);
+    TestEqual(TEXT("ShockerCmd first value count"), Actor.ShockerCmdSequences[0].Values.Num(), 2);
+
+    FKyaActorPlacement Presentation = Actor;
+    Presentation.ShockerCmdSequences[0].Values.Add(5.5f);
+    FKyaShockerCmdSequence& Added = Presentation.ShockerCmdSequences.AddDefaulted_GetRef();
+    Added.ActorRef = 11;
+    Added.Values.Add(3.5f);
+    Added.Values.Add(4.5f);
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    FKyaActorEditPatch Patch;
+    FString Error;
+    TestTrue(TEXT("ShockerCmd Details patch builds"),
+        KyaMakePlacementPropertyPatch(Presentation,
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, ShockerCmdSequences), Patch));
+    TestTrue(TEXT("ShockerCmd Details patch applies"),
+        Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    Service.Reset();
+    TestEqual(TEXT("Details ShockerCmd sequence resize applies"), Actor.ShockerCmdSequences.Num(), 2);
+    TestEqual(TEXT("Details ShockerCmd value resize applies"),
+        Actor.ShockerCmdSequences[0].Values.Num(), 3);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized ShockerCmd arrays"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("ShockerCmd resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized ShockerCmd arrays"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("ShockerCmd sequence count round trips"), Result.ShockerCmdSequences.Num(), 2);
+    TestEqual(TEXT("ShockerCmd first value count round trips"),
+        Result.ShockerCmdSequences[0].Values.Num(), 3);
+    TestEqual(TEXT("ShockerCmd added value round trips"), Result.ShockerCmdSequences[0].Values.Last(), 5.5f);
+    TestEqual(TEXT("ShockerCmd added sequence actor round trips"),
+        Result.ShockerCmdSequences[1].ActorRef, 11);
+    TestEqual(TEXT("ShockerCmd added sequence value round trips"),
+        Result.ShockerCmdSequences[1].Values[1], 4.5f);
+    TestEqual(TEXT("ShockerCmd field 168 round trips"), Result.ShockerCmdField168, int64(0x1234));
+
+    // Shrink the sequence list and its value list.
+    FKyaActorPlacement& ShrinkSource = RoundTrip->SceneEnvironment.Actors[0];
+    ShrinkSource.ShockerCmdSequences.SetNum(1);
+    ShrinkSource.ShockerCmdSequences[0].Values.SetNum(1);
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk ShockerCmd arrays"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk ShockerCmd arrays"), ShrunkBank)) return false;
+    const FKyaActorPlacement& ShrunkResult = ShrunkBank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Shrunk ShockerCmd sequence count round trips"),
+        ShrunkResult.ShockerCmdSequences.Num(), 1);
+    TestEqual(TEXT("Shrunk ShockerCmd value count round trips"),
+        ShrunkResult.ShockerCmdSequences[0].Values.Num(), 1);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeFighterArraysTest, "Kya.Bank.ResizeFighterArrays",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeFighterArraysTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x09);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import fighter resize fixture"), Bank)) return false;
+    if (!TestEqual(TEXT("Fighter resize fixture actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Fighter class id"), Actor.ClassId, int64(0x09));
+    TestTrue(TEXT("Wolfen data parses"), Actor.bHasWolfenData);
+    TestEqual(TEXT("Fighter starts without blows"), Actor.FighterBlows.Num(), 0);
+    TestEqual(TEXT("Fighter starts without grabs"), Actor.FighterGrabs.Num(), 0);
+    TestEqual(TEXT("Fighter starts without grab reacts"), Actor.FighterGrabReacts.Num(), 0);
+    TestEqual(TEXT("Fighter starts without combos"), Actor.FighterCombos.Num(), 0);
+
+    FKyaActorPlacement Presentation = Actor;
+    FKyaFighterBlow& Blow = Presentation.FighterBlows.AddDefaulted_GetRef();
+    Blow.Name = TEXT("TEST_BLOW");
+    FKyaFighterGrab& Grab = Presentation.FighterGrabs.AddDefaulted_GetRef();
+    Grab.Name = TEXT("TEST_GRAB");
+    FKyaFighterGrabReact& React = Presentation.FighterGrabReacts.AddDefaulted_GetRef();
+    React.Name = TEXT("TEST_REACT");
+    FKyaFighterCombo& Combo = Presentation.FighterCombos.AddDefaulted_GetRef();
+    Combo.Name = TEXT("TEST_COMBO");
+    Combo.Action = TEXT("ACT");
+    Combo.Inputs.Add(7);
+    Combo.Branches.Add(TEXT("BRANCH"));
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    const auto ApplyField = [&](FName PropertyName)
+    {
+        FKyaActorEditPatch Patch;
+        FString Error;
+        if (!TestTrue(TEXT("Fighter array Details patch builds"),
+            KyaMakePlacementPropertyPatch(Presentation, PropertyName, Patch))) return;
+        TestTrue(TEXT("Fighter array Details patch applies"),
+            Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    };
+    ApplyField(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, FighterBlows));
+    ApplyField(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, FighterGrabs));
+    ApplyField(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, FighterGrabReacts));
+    ApplyField(GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, FighterCombos));
+    Service.Reset();
+    TestEqual(TEXT("Details blow resize applies"), Actor.FighterBlows.Num(), 1);
+    TestEqual(TEXT("Details grab resize applies"), Actor.FighterGrabs.Num(), 1);
+    TestEqual(TEXT("Details grab-react resize applies"), Actor.FighterGrabReacts.Num(), 1);
+    TestEqual(TEXT("Details combo resize applies"), Actor.FighterCombos.Num(), 1);
+    TestEqual(TEXT("New blow receives three stages"), Actor.FighterBlows[0].Stages.Num(), 3);
+    TestEqual(TEXT("New grab receives five stages"), Actor.FighterGrabs[0].Stages.Num(), 5);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized fighter arrays"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Fighter resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized fighter arrays"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Fighter blow count round trips"), Result.FighterBlows.Num(), 1);
+    TestEqual(TEXT("Fighter blow name round trips"), Result.FighterBlows[0].Name, FString(TEXT("TEST_BLOW")));
+    TestEqual(TEXT("Fighter blow stages round trip"), Result.FighterBlows[0].Stages.Num(), 3);
+    TestEqual(TEXT("Fighter grab count round trips"), Result.FighterGrabs.Num(), 1);
+    TestEqual(TEXT("Fighter grab name round trips"), Result.FighterGrabs[0].Name, FString(TEXT("TEST_GRAB")));
+    TestEqual(TEXT("Fighter grab stages round trip"), Result.FighterGrabs[0].Stages.Num(), 5);
+    TestEqual(TEXT("Fighter grab-react count round trips"), Result.FighterGrabReacts.Num(), 1);
+    TestEqual(TEXT("Fighter grab-react name round trips"),
+        Result.FighterGrabReacts[0].Name, FString(TEXT("TEST_REACT")));
+    TestEqual(TEXT("Fighter combo count round trips"), Result.FighterCombos.Num(), 1);
+    TestEqual(TEXT("Fighter combo name round trips"), Result.FighterCombos[0].Name, FString(TEXT("TEST_COMBO")));
+    TestEqual(TEXT("Fighter combo action round trips"), Result.FighterCombos[0].Action, FString(TEXT("ACT")));
+    TestEqual(TEXT("Fighter combo input round trips"), Result.FighterCombos[0].Inputs.Num(), 1);
+    TestEqual(TEXT("Fighter combo branch round trips"), Result.FighterCombos[0].Branches.Num(), 1);
+    TestEqual(TEXT("Wolfen class payload round trips"), Result.WolfenWalkSpeed, Actor.WolfenWalkSpeed);
+
+    // Shrink every fighter database back to empty.
+    FKyaActorPlacement& ShrinkSource = RoundTrip->SceneEnvironment.Actors[0];
+    ShrinkSource.FighterBlows.Reset();
+    ShrinkSource.FighterGrabs.Reset();
+    ShrinkSource.FighterGrabReacts.Reset();
+    ShrinkSource.FighterCombos.Reset();
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk fighter arrays"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk fighter arrays"), ShrunkBank)) return false;
+    const FKyaActorPlacement& ShrunkResult = ShrunkBank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Shrunk fighter blows round trip"), ShrunkResult.FighterBlows.Num(), 0);
+    TestEqual(TEXT("Shrunk fighter grabs round trip"), ShrunkResult.FighterGrabs.Num(), 0);
+    TestEqual(TEXT("Shrunk fighter grab reacts round trip"), ShrunkResult.FighterGrabReacts.Num(), 0);
+    TestEqual(TEXT("Shrunk fighter combos round trip"), ShrunkResult.FighterCombos.Num(), 0);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeWolfenFightArraysTest, "Kya.Bank.ResizeWolfenFightArrays",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeWolfenFightArraysTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x09);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Wolfen fight fixture"), Bank)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Wolfen fight class id"), Actor.ClassId, int64(0x09));
+    TestEqual(TEXT("Fixture has three capabilities"), Actor.WolfenFightParamData.Capabilities.Num(), 3);
+    TestEqual(TEXT("Fixture combo list 1"), Actor.WolfenFightParamData.ComboList1.Num(), 1);
+    TestEqual(TEXT("Fixture combo list 2"), Actor.WolfenFightParamData.ComboList2.Num(), 1);
+
+    FKyaActorPlacement Presentation = Actor;
+    Presentation.WolfenFightParamData.ComboList1.Add(99);
+    Presentation.WolfenFightParamData.ComboList2.Add(98);
+    FKyaWolfenCapabilityItem& Item = Presentation.WolfenFightParamData.Capabilities[0].Items.AddDefaulted_GetRef();
+    Item.Field0 = 1.5f;
+    Item.Field4 = 2.5f;
+    Item.Chains.Add(7);
+    Item.Chains.Add(8);
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    FKyaActorEditPatch Patch;
+    FString Error;
+    TestTrue(TEXT("Wolfen fight Details patch builds"),
+        KyaMakePlacementPropertyPatch(Presentation,
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, WolfenFightParamData), Patch));
+    TestTrue(TEXT("Wolfen fight Details patch applies"),
+        Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error));
+    Service.Reset();
+    TestEqual(TEXT("Details combo list 1 resize applies"), Actor.WolfenFightParamData.ComboList1.Num(), 2);
+    TestEqual(TEXT("Details combo list 2 resize applies"), Actor.WolfenFightParamData.ComboList2.Num(), 2);
+    TestEqual(TEXT("Details capability items resize applies"),
+        Actor.WolfenFightParamData.Capabilities[0].Items.Num(), 1);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized Wolfen fight arrays"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Wolfen fight resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized Wolfen fight arrays"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Combo list 1 count round trips"), Result.WolfenFightParamData.ComboList1.Num(), 2);
+    TestEqual(TEXT("Combo list 1 value round trips"), Result.WolfenFightParamData.ComboList1[1], 99);
+    TestEqual(TEXT("Combo list 2 count round trips"), Result.WolfenFightParamData.ComboList2.Num(), 2);
+    TestEqual(TEXT("Combo list 2 value round trips"), Result.WolfenFightParamData.ComboList2[1], 98);
+    TestEqual(TEXT("Capability item count round trips"),
+        Result.WolfenFightParamData.Capabilities[0].Items.Num(), 1);
+    TestEqual(TEXT("Capability item chain count round trips"),
+        Result.WolfenFightParamData.Capabilities[0].Items[0].Chains.Num(), 2);
+    TestEqual(TEXT("Capability item chain value round trips"),
+        Result.WolfenFightParamData.Capabilities[0].Items[0].Chains[1], 8);
+    TestEqual(TEXT("Capability item float round trips"),
+        Result.WolfenFightParamData.Capabilities[0].Items[0].Field0, 1.5f);
+    TestEqual(TEXT("Wolfen payload round trips"), Result.WolfenWalkSpeed, Actor.WolfenWalkSpeed);
+
+    // Shrink the variable Wolfen fight arrays again.
+    FKyaActorPlacement& ShrinkSource = RoundTrip->SceneEnvironment.Actors[0];
+    ShrinkSource.WolfenFightParamData.ComboList1.SetNum(1);
+    ShrinkSource.WolfenFightParamData.ComboList2.SetNum(1);
+    ShrinkSource.WolfenFightParamData.Capabilities[0].Items.Reset();
+    TArray<uint8> Shrunk;
+    FMemoryWriter ShrunkWriter(Shrunk);
+    if (!TestTrue(TEXT("Export shrunk Wolfen fight arrays"),
+        Exporter->ExportBinary(RoundTrip, TEXT("bnk"), ShrunkWriter, GWarn))) return false;
+    const uint8* ShrunkCursor = Shrunk.GetData();
+    UKyaLevelBank* ShrunkBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ShrunkCursor,
+        Shrunk.GetData() + Shrunk.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport shrunk Wolfen fight arrays"), ShrunkBank)) return false;
+    const FKyaActorPlacement& ShrunkResult = ShrunkBank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Shrunk combo list 1 round trips"), ShrunkResult.WolfenFightParamData.ComboList1.Num(), 1);
+    TestEqual(TEXT("Shrunk combo list 2 round trips"), ShrunkResult.WolfenFightParamData.ComboList2.Num(), 1);
+    TestEqual(TEXT("Shrunk capability items round trip"),
+        ShrunkResult.WolfenFightParamData.Capabilities[0].Items.Num(), 0);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeKimFighterArrayTest, "Kya.Bank.ResizeKimFighterArray",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeKimFighterArrayTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    const TArray<uint8> Input = Builder.Build(0x06);
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Kim fighter fixture"), Bank)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Kim class id"), Actor.ClassId, int64(0x06));
+    TestTrue(TEXT("Kim data parses"), Actor.bHasKimData);
+
+    FKyaFighterBlow& Blow = Actor.FighterBlows.AddDefaulted_GetRef();
+    Blow.Name = TEXT("KIM_BLOW");
+    FKyaFighterCombo& Combo = Actor.FighterCombos.AddDefaulted_GetRef();
+    Combo.Name = TEXT("KIM_COMBO");
+    Combo.Action = TEXT("ACT");
+    Combo.Inputs.Add(1);
+    Combo.Branches.Add(TEXT("BRANCH"));
+    KyaEnsureFighterArrayShapes(Actor);
+    TestEqual(TEXT("Kim blow stages normalized"), Actor.FighterBlows[0].Stages.Num(), 3);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export resized Kim fighter arrays"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport resized Kim fighter arrays"), RoundTrip)) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Kim blow count round trips"), Result.FighterBlows.Num(), 1);
+    TestEqual(TEXT("Kim blow name round trips"), Result.FighterBlows[0].Name, FString(TEXT("KIM_BLOW")));
+    TestEqual(TEXT("Kim blow stages round trip"), Result.FighterBlows[0].Stages.Num(), 3);
+    TestEqual(TEXT("Kim combo count round trips"), Result.FighterCombos.Num(), 1);
+    TestEqual(TEXT("Kim combo name round trips"), Result.FighterCombos[0].Name, FString(TEXT("KIM_COMBO")));
+    TestEqual(TEXT("Kim combo input round trips"), Result.FighterCombos[0].Inputs.Num(), 1);
+    TestEqual(TEXT("Kim combo branch round trips"), Result.FighterCombos[0].Branches.Num(), 1);
+    TestEqual(TEXT("Kim payload round trips"), Result.KimJokeWarnRadius, Actor.KimJokeWarnRadius);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealActorArraysTest, "Kya.Bank.ResizeRealActorArrays",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealActorArraysTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a bank with GRUNT_02_BASIC to run the real array resize test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real resize bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real resize bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+        if (Bank->SceneEnvironment.Actors[Index].Name == TEXT("GRUNT_02_BASIC"))
+        {
+            ActorIndex = Index;
+            break;
+        }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank does not contain GRUNT_02_BASIC; skipping the real array resize test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    TestTrue(TEXT("Real resize actor has class data"), Actor.bHasWolfenData);
+    const FString ActorName = Actor.Name;
+    const int64 ActorClassId = Actor.ClassId;
+    const int32 OriginalMacros = Actor.MacroAnimations.Num();
+    const int32 OriginalModels = Actor.Models.Num();
+    const int32 OriginalBehaviours = Actor.Behaviours.Num();
+    const int32 OriginalConditions = Actor.Conditions.Num();
+    const float OriginalWalkSpeed = Actor.WolfenWalkSpeed;
+
+    if (OriginalMacros > 0) Actor.MacroAnimations.RemoveAt(OriginalMacros - 1);
+    FKyaActorMacroAnimation& AddedMacro = Actor.MacroAnimations.AddDefaulted_GetRef();
+    AddedMacro.AnimationType = 0x1234;
+    AddedMacro.MacroAnimationId = 0x5678;
+    FKyaActorModelReference& AddedModel = Actor.Models.AddDefaulted_GetRef();
+    AddedModel.MeshName = TEXT("REAL_TEST_MESH");
+    AddedModel.TextureName = TEXT("REAL_TEST_TEX");
+    FKyaActorBehaviour& AddedBehaviour = Actor.Behaviours.AddDefaulted_GetRef();
+    AddedBehaviour.Id = 0;
+    FKyaScenarioCondition& AddedCondition = Actor.Conditions.AddDefaulted_GetRef();
+    AddedCondition.Combiner = 1;
+    AddedCondition.Variable = 2;
+    AddedCondition.Comparison = 3;
+    AddedCondition.Value = 4;
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real array resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real resize export changes the bank size"), Exported.Num() != Input.Num());
+    TestTrue(TEXT("Real resize export does not mutate source bytes"), Bank->BankBytes == Input);
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real array resize"), RoundTrip)) return false;
+
+    int32 RoundTripIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < RoundTrip->SceneEnvironment.Actors.Num(); ++Index)
+        if (RoundTrip->SceneEnvironment.Actors[Index].Name == ActorName)
+        {
+            RoundTripIndex = Index;
+            break;
+        }
+    if (!TestTrue(TEXT("Reimported bank contains the resized actor"), RoundTripIndex != INDEX_NONE))
+        return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[RoundTripIndex];
+    TestEqual(TEXT("Real resize preserves the class"), Result.ClassId, ActorClassId);
+    TestEqual(TEXT("Real resize macro count round trips"), Result.MacroAnimations.Num(),
+        OriginalMacros > 0 ? OriginalMacros : 1);
+    TestEqual(TEXT("Real resize added macro type round trips"),
+        Result.MacroAnimations.Last().AnimationType, 0x1234);
+    TestEqual(TEXT("Real resize added macro id round trips"),
+        Result.MacroAnimations.Last().MacroAnimationId, 0x5678);
+    TestEqual(TEXT("Real resize model count round trips"), Result.Models.Num(), OriginalModels + 1);
+    TestEqual(TEXT("Real resize added model mesh round trips"),
+        Result.Models.Last().MeshName, FString(TEXT("REAL_TEST_MESH")));
+    TestEqual(TEXT("Real resize added model texture round trips"),
+        Result.Models.Last().TextureName, FString(TEXT("REAL_TEST_TEX")));
+    TestEqual(TEXT("Real resize behaviour count round trips"), Result.Behaviours.Num(),
+        OriginalBehaviours + 1);
+    TestEqual(TEXT("Real resize added behaviour id round trips"), Result.Behaviours.Last().Id, 0);
+    TestEqual(TEXT("Real resize condition count round trips"), Result.Conditions.Num(),
+        OriginalConditions + 1);
+    TestEqual(TEXT("Real resize condition value round trips"), Result.Conditions.Last().Value, 4);
+    TestTrue(TEXT("Real resize preserves the Wolfen class payload"), Result.bHasWolfenData);
+    TestEqual(TEXT("Real resize preserves the Wolfen walk speed"), Result.WolfenWalkSpeed,
+        OriginalWalkSpeed);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealTrapArrayTest, "Kya.Bank.ResizeRealTrapArray",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealTrapArrayTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a bank with a trap actor to run the real trap-array test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real trap bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real trap bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId == 0x2c && Candidate.bHasTrapData)
+        {
+            ActorIndex = Index;
+            break;
+        }
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no trap actor; skipping the real trap-array test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    const FString ActorName = Actor.Name;
+    const int32 OriginalActorRefs = Actor.TrapActorRefs.Num();
+    const int32 OriginalEntries = Actor.TrapStreamEntries.Num();
+    const float OriginalWeight = Actor.TrapWeightB;
+    const int32 OriginalRequiredEscapes = Actor.TrapRequiredEscapeAttempts;
+
+    Actor.TrapActorRefs.Add((ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num());
+    FKyaTrapStreamEntry& AddedEntry = Actor.TrapStreamEntries.AddDefaulted_GetRef();
+    AddedEntry.Target.TargetRef = 41;
+    AddedEntry.Camera.CameraIndex = 42;
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real trap-array resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real trap resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real trap-array resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the trap actor index"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real trap resize preserves the name"), Result.Name, ActorName);
+    TestEqual(TEXT("Real trap resize preserves the class"), Result.ClassId, int64(0x2c));
+    TestEqual(TEXT("Real trap actor reference count round trips"), Result.TrapActorRefs.Num(),
+        OriginalActorRefs + 1);
+    TestEqual(TEXT("Real trap stream count round trips"), Result.TrapStreamEntries.Num(),
+        OriginalEntries + 1);
+    TestEqual(TEXT("Real trap added target ref round trips"), Result.TrapStreamEntries.Last().Target.TargetRef,
+        41);
+    TestEqual(TEXT("Real trap added camera index round trips"),
+        Result.TrapStreamEntries.Last().Camera.CameraIndex, 42);
+    TestEqual(TEXT("Real trap weight round trips"), Result.TrapWeightB, OriginalWeight);
+    TestEqual(TEXT("Real trap required escapes round trips"), Result.TrapRequiredEscapeAttempts,
+        OriginalRequiredEscapes);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealFighterArrayTest, "Kya.Bank.ResizeRealFighterArray",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealFighterArrayTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a bank with a Wolfen actor to run the real fighter-array test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real fighter bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real fighter bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId == 0x09 && Candidate.bHasWolfenData)
+        {
+            ActorIndex = Index;
+            break;
+        }
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no Wolfen actor; skipping the real fighter-array test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    const FString ActorName = Actor.Name;
+    const int32 OriginalBlows = Actor.FighterBlows.Num();
+    const int32 OriginalGrabs = Actor.FighterGrabs.Num();
+    const int32 OriginalReacts = Actor.FighterGrabReacts.Num();
+    const int32 OriginalCombos = Actor.FighterCombos.Num();
+    const float OriginalWalkSpeed = Actor.WolfenWalkSpeed;
+
+    FKyaFighterBlow& Blow = Actor.FighterBlows.AddDefaulted_GetRef();
+    Blow.Name = TEXT("REAL_BLOW");
+    Blow.Stages.SetNum(3);
+    FKyaFighterGrab& Grab = Actor.FighterGrabs.AddDefaulted_GetRef();
+    Grab.Name = TEXT("REAL_GRAB");
+    Grab.Stages.SetNum(5);
+    FKyaFighterGrabReact& React = Actor.FighterGrabReacts.AddDefaulted_GetRef();
+    React.Name = TEXT("REAL_REACT");
+    FKyaFighterCombo& Combo = Actor.FighterCombos.AddDefaulted_GetRef();
+    Combo.Name = TEXT("REAL_COMBO");
+    Combo.Action = TEXT("ACT");
+    Combo.Inputs.Add(1);
+    Combo.Branches.Add(TEXT("BRANCH"));
+    KyaEnsureFighterArrayShapes(Actor);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real fighter-array resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real fighter resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real fighter-array resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the fighter actor index"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real fighter resize preserves the name"), Result.Name, ActorName);
+    TestEqual(TEXT("Real fighter resize preserves the class"), Result.ClassId, int64(0x09));
+    TestEqual(TEXT("Real blow count round trips"), Result.FighterBlows.Num(), OriginalBlows + 1);
+    TestEqual(TEXT("Real blow name round trips"), Result.FighterBlows.Last().Name, FString(TEXT("REAL_BLOW")));
+    TestEqual(TEXT("Real blow stages round trip"), Result.FighterBlows.Last().Stages.Num(), 3);
+    TestEqual(TEXT("Real grab count round trips"), Result.FighterGrabs.Num(), OriginalGrabs + 1);
+    TestEqual(TEXT("Real grab name round trips"), Result.FighterGrabs.Last().Name, FString(TEXT("REAL_GRAB")));
+    TestEqual(TEXT("Real grab stages round trip"), Result.FighterGrabs.Last().Stages.Num(), 5);
+    TestEqual(TEXT("Real grab-react count round trips"), Result.FighterGrabReacts.Num(), OriginalReacts + 1);
+    TestEqual(TEXT("Real grab-react name round trips"),
+        Result.FighterGrabReacts.Last().Name, FString(TEXT("REAL_REACT")));
+    TestEqual(TEXT("Real combo count round trips"), Result.FighterCombos.Num(), OriginalCombos + 1);
+    TestEqual(TEXT("Real combo name round trips"), Result.FighterCombos.Last().Name, FString(TEXT("REAL_COMBO")));
+    TestEqual(TEXT("Real combo input round trips"), Result.FighterCombos.Last().Inputs.Num(), 1);
+    TestEqual(TEXT("Real combo branch round trips"), Result.FighterCombos.Last().Branches.Num(), 1);
+    TestEqual(TEXT("Real Wolfen walk speed round trips"), Result.WolfenWalkSpeed, OriginalWalkSpeed);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealWolfenFightArrayTest, "Kya.Bank.ResizeRealWolfenFightArray",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealWolfenFightArrayTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a bank with a Wolfen actor to run the real fight-array test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real Wolfen fight bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real Wolfen fight bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId == 0x09 && Candidate.bHasWolfenData)
+        {
+            ActorIndex = Index;
+            break;
+        }
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no Wolfen actor; skipping the real fight-array test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    const FString ActorName = Actor.Name;
+    const int32 OriginalCombo1 = Actor.WolfenFightParamData.ComboList1.Num();
+    const int32 OriginalCombo2 = Actor.WolfenFightParamData.ComboList2.Num();
+    const int32 OriginalItems = Actor.WolfenFightParamData.Capabilities[0].Items.Num();
+    const float OriginalWalkSpeed = Actor.WolfenWalkSpeed;
+
+    Actor.WolfenFightParamData.ComboList1.Add(101);
+    Actor.WolfenFightParamData.ComboList2.Add(102);
+    FKyaWolfenCapabilityItem& Item = Actor.WolfenFightParamData.Capabilities[0].Items.AddDefaulted_GetRef();
+    Item.Field0 = 3.5f;
+    Item.Field4 = 4.5f;
+    Item.Chains.Add(51);
+    Item.Chains.Add(52);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real Wolfen fight-array resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real Wolfen fight resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real Wolfen fight-array resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the Wolfen actor index"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real Wolfen fight resize preserves the name"), Result.Name, ActorName);
+    TestEqual(TEXT("Real Wolfen combo list 1 count round trips"),
+        Result.WolfenFightParamData.ComboList1.Num(), OriginalCombo1 + 1);
+    TestEqual(TEXT("Real Wolfen combo list 1 value round trips"),
+        Result.WolfenFightParamData.ComboList1.Last(), 101);
+    TestEqual(TEXT("Real Wolfen combo list 2 count round trips"),
+        Result.WolfenFightParamData.ComboList2.Num(), OriginalCombo2 + 1);
+    TestEqual(TEXT("Real Wolfen combo list 2 value round trips"),
+        Result.WolfenFightParamData.ComboList2.Last(), 102);
+    TestEqual(TEXT("Real Wolfen capability item count round trips"),
+        Result.WolfenFightParamData.Capabilities[0].Items.Num(), OriginalItems + 1);
+    TestEqual(TEXT("Real Wolfen capability item chain count round trips"),
+        Result.WolfenFightParamData.Capabilities[0].Items.Last().Chains.Num(), 2);
+    TestEqual(TEXT("Real Wolfen capability item chain value round trips"),
+        Result.WolfenFightParamData.Capabilities[0].Items.Last().Chains[1], 52);
+    TestEqual(TEXT("Real Wolfen capability item float round trips"),
+        Result.WolfenFightParamData.Capabilities[0].Items.Last().Field0, 3.5f);
+    TestEqual(TEXT("Real Wolfen walk speed round trips"), Result.WolfenWalkSpeed, OriginalWalkSpeed);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealShockerCmdArrayTest, "Kya.Bank.ResizeRealShockerCmdArray",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealShockerCmdArrayTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a bank with a ShockerCmd actor to run the real command-array test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real ShockerCmd bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real ShockerCmd bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId == 0x50 && Candidate.bHasShockerCmdData)
+        {
+            ActorIndex = Index;
+            break;
+        }
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no ShockerCmd actor; skipping the real command-array test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    const FString ActorName = Actor.Name;
+    const int64 OriginalField168 = Actor.ShockerCmdField168;
+    const int32 OriginalSequences = Actor.ShockerCmdSequences.Num();
+    const int32 OriginalValues = Actor.ShockerCmdSequences.IsEmpty()
+        ? 0 : Actor.ShockerCmdSequences[0].Values.Num();
+
+    if (!Actor.ShockerCmdSequences.IsEmpty()) Actor.ShockerCmdSequences[0].Values.Add(6.5f);
+    FKyaShockerCmdSequence& Added = Actor.ShockerCmdSequences.AddDefaulted_GetRef();
+    Added.ActorRef = 12;
+    Added.Values.Add(7.5f);
+    Added.Values.Add(8.5f);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real ShockerCmd-array resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real ShockerCmd resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real ShockerCmd-array resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the ShockerCmd actor index"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real ShockerCmd resize preserves the name"), Result.Name, ActorName);
+    TestEqual(TEXT("Real ShockerCmd sequence count round trips"),
+        Result.ShockerCmdSequences.Num(), OriginalSequences + 1);
+    TestEqual(TEXT("Real ShockerCmd added sequence actor round trips"),
+        Result.ShockerCmdSequences.Last().ActorRef, 12);
+    TestEqual(TEXT("Real ShockerCmd added sequence values round trips"),
+        Result.ShockerCmdSequences.Last().Values.Num(), 2);
+    TestEqual(TEXT("Real ShockerCmd added sequence value round trips"),
+        Result.ShockerCmdSequences.Last().Values[1], 8.5f);
+    if (OriginalSequences > 0)
+        TestEqual(TEXT("Real ShockerCmd first value count round trips"),
+            Result.ShockerCmdSequences[0].Values.Num(), OriginalValues + 1);
+    TestEqual(TEXT("Real ShockerCmd field 168 round trips"), Result.ShockerCmdField168, OriginalField168);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaResizeRealPlatformArrayTest, "Kya.Bank.ResizeRealPlatformArray",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaResizeRealPlatformArrayTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a bank with a moving-platform actor to run the real class-array test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real platform bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real platform bank"), Bank)) return false;
+
+    int32 ActorIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Candidate = Bank->SceneEnvironment.Actors[Index];
+        if (Candidate.ClassId == 0x0d && Candidate.bHasPlatformPrefix)
+        {
+            ActorIndex = Index;
+            break;
+        }
+    }
+    if (ActorIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank has no moving-platform actor with a prefix; skipping the real class-array test."));
+        return true;
+    }
+
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+    const FString ActorName = Actor.Name;
+    const int32 OriginalActors = Actor.PlatformActors.Num();
+    const int32 OriginalZones = Actor.PlatformZones.Num();
+    const int32 OriginalNoFriction = Actor.PlatformNoFrictionZones.Num();
+    const int32 OriginalCameras = Actor.PlatformCameras.Num();
+    const int32 OriginalSoundsA = Actor.PlatformSoundsA.Num();
+    const int32 OriginalSoundsB = Actor.PlatformSoundsB.Num();
+    const float OriginalWeight = Actor.PlatformWeight;
+    const int64 OriginalFlags = Actor.PlatformProperties.PlatformFlags;
+    const bool bHasDetails = Actor.bHasPlatformDetails;
+
+    FKyaPlatformActor& AddedActor = Actor.PlatformActors.AddDefaulted_GetRef();
+    AddedActor.ActorRef = (ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num();
+    AddedActor.CarryMethod = 5;
+    Actor.PlatformZones.Add(11);
+    FKyaPlatformNoFrictionZone& AddedZone = Actor.PlatformNoFrictionZones.AddDefaulted_GetRef();
+    AddedZone.ZoneRef = 12;
+    AddedZone.Actors.Add(13);
+    AddedZone.Actors.Add(14);
+    if (bHasDetails)
+    {
+        FKyaPlatformCamera& AddedCamera = Actor.PlatformCameras.AddDefaulted_GetRef();
+        AddedCamera.EventType = 1;
+        FKyaPlatformSound& AddedSound = Actor.PlatformSoundsA.AddDefaulted_GetRef();
+        AddedSound.SoundRef = 15;
+    }
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real platform class-array resize"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real platform resize changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+        Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real platform class-array resize"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps the platform actor index"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(ActorIndex))) return false;
+    const FKyaActorPlacement& Result = RoundTrip->SceneEnvironment.Actors[ActorIndex];
+    TestEqual(TEXT("Real platform resize preserves the name"), Result.Name, ActorName);
+    TestEqual(TEXT("Real platform resize preserves the class"), Result.ClassId, int64(0x0d));
+    TestEqual(TEXT("Real platform actor count round trips"), Result.PlatformActors.Num(), OriginalActors + 1);
+    TestEqual(TEXT("Real platform added actor ref round trips"), Result.PlatformActors.Last().ActorRef,
+        (ActorIndex + 1) % Bank->SceneEnvironment.Actors.Num());
+    TestEqual(TEXT("Real platform added carry method round trips"),
+        Result.PlatformActors.Last().CarryMethod, 5);
+    TestEqual(TEXT("Real platform zone count round trips"), Result.PlatformZones.Num(), OriginalZones + 1);
+    TestEqual(TEXT("Real platform added zone round trips"), Result.PlatformZones.Last(), 11);
+    TestEqual(TEXT("Real platform no-friction count round trips"),
+        Result.PlatformNoFrictionZones.Num(), OriginalNoFriction + 1);
+    TestEqual(TEXT("Real platform added no-friction ref round trips"),
+        Result.PlatformNoFrictionZones.Last().ZoneRef, 12);
+    TestEqual(TEXT("Real platform added no-friction actors round trips"),
+        Result.PlatformNoFrictionZones.Last().Actors.Num(), 2);
+    TestEqual(TEXT("Real platform weight round trips"), Result.PlatformWeight, OriginalWeight);
+    TestEqual(TEXT("Real platform flags round trips"), Result.PlatformProperties.PlatformFlags,
+        OriginalFlags);
+    if (bHasDetails)
+    {
+        TestTrue(TEXT("Real platform details survive"), Result.bHasPlatformDetails);
+        TestEqual(TEXT("Real platform camera count round trips"), Result.PlatformCameras.Num(),
+            OriginalCameras + 1);
+        TestEqual(TEXT("Real platform sound count round trips"), Result.PlatformSoundsA.Num(),
+            OriginalSoundsA + 1);
+        TestEqual(TEXT("Real platform unchanged sound stream round trips"),
+            Result.PlatformSoundsB.Num(), OriginalSoundsB);
+    }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaActorCopyPropertiesRealActorTypesTest,
+    "Kya.Bank.ActorCopyBetweenRealActorTypes",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaActorCopyPropertiesRealActorTypesTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to a bank with GRUNT_02_BASIC and "
+            "SCRAWNY_01_FIRE_WEAPON_01_L9 to run the real actor-type copy test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read real actor-type bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import real actor-type bank"), Bank)) return false;
+
+    int32 SourceIndex = INDEX_NONE;
+    int32 DestinationIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FString& Name = Bank->SceneEnvironment.Actors[Index].Name;
+        if (Name == TEXT("GRUNT_02_BASIC")) SourceIndex = Index;
+        else if (Name == TEXT("SCRAWNY_01_FIRE_WEAPON_01_L9")) DestinationIndex = Index;
+    }
+    if (SourceIndex == INDEX_NONE || DestinationIndex == INDEX_NONE)
+    {
+        AddWarning(TEXT("This bank does not contain GRUNT_02_BASIC and "
+            "SCRAWNY_01_FIRE_WEAPON_01_L9; skipping the real actor-type copy test."));
+        return true;
+    }
+
+    FKyaActorPlacement& SourceActor = Bank->SceneEnvironment.Actors[SourceIndex];
+    FKyaActorPlacement& DestinationActor = Bank->SceneEnvironment.Actors[DestinationIndex];
+    TestEqual(TEXT("Both real actors are class 9"), SourceActor.ClassId, int64(9));
+    TestEqual(TEXT("Destination is class 9"), DestinationActor.ClassId, int64(9));
+    TestTrue(TEXT("The real actors have different macro counts"),
+        SourceActor.MacroAnimations.Num() != DestinationActor.MacroAnimations.Num());
+    const FString DestinationName = DestinationActor.Name;
+    const int64 DestinationClassId = DestinationActor.ClassId;
+    const int32 SourceMacroCount = SourceActor.MacroAnimations.Num();
+    const int32 SourceModelCount = SourceActor.Models.Num();
+    const int32 SourceBehaviourCount = SourceActor.Behaviours.Num();
+    const int32 SourceBehaviourId = SourceActor.DefaultBehaviourId;
+    const FVector SourcePosition = SourceActor.Position;
+
+    FKyaActorEditPatch Patch;
+    if (!TestTrue(TEXT("Build the real actor-type copy patch"),
+        BuildKyaActorCopyPropertiesPatch(SourceActor, Patch))) return false;
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    FString Error;
+    if (!TestTrue(TEXT("Apply the real actor-type copy"),
+        Service.Apply(Service.MakeKey(Bank, DestinationIndex), Patch, EKyaEditNotify::Silent, &Error)))
+    {
+        AddError(Error);
+        return false;
+    }
+
+    TestEqual(TEXT("Real copy preserves the name"), DestinationActor.Name, DestinationName);
+    TestEqual(TEXT("Real copy preserves the class"), DestinationActor.ClassId, DestinationClassId);
+    TestEqual(TEXT("Real copy takes the source macro count"),
+        DestinationActor.MacroAnimations.Num(), SourceMacroCount);
+    TestEqual(TEXT("Real copy takes the source model count"),
+        DestinationActor.Models.Num(), SourceModelCount);
+    TestEqual(TEXT("Real copy takes the source behaviour count"),
+        DestinationActor.Behaviours.Num(), SourceBehaviourCount);
+    TestEqual(TEXT("Real copy takes the source behaviour id"),
+        DestinationActor.DefaultBehaviourId, SourceBehaviourId);
+    TestTrue(TEXT("Real copy transfers the common transform"),
+        DestinationActor.Position.Equals(SourcePosition));
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Exported;
+    FMemoryWriter Writer(Exported);
+    if (!TestTrue(TEXT("Export the real actor-type copy"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), Writer, GWarn))) return false;
+    TestTrue(TEXT("Real copy changes the bank size"), Exported.Num() != Input.Num());
+
+    const uint8* ExportedCursor = Exported.GetData();
+    UKyaLevelBank* RoundTrip = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(
+        UKyaLevelBank::StaticClass(), GetTransientPackage(), NAME_None, RF_Transient, nullptr,
+        TEXT("bnk"), ExportedCursor, Exported.GetData() + Exported.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the real actor-type copy"), RoundTrip)) return false;
+    if (!TestTrue(TEXT("Reimported bank keeps both actors"),
+        RoundTrip->SceneEnvironment.Actors.IsValidIndex(DestinationIndex))) return false;
+    const FKyaActorPlacement& RoundTripActor = RoundTrip->SceneEnvironment.Actors[DestinationIndex];
+    TestEqual(TEXT("Real reimport preserves the name"), RoundTripActor.Name, DestinationName);
+    TestEqual(TEXT("Real reimport preserves the class"), RoundTripActor.ClassId, DestinationClassId);
+    TestEqual(TEXT("Real reimport keeps the source macro count"),
+        RoundTripActor.MacroAnimations.Num(), SourceMacroCount);
+    TestEqual(TEXT("Real reimport keeps the source model count"), RoundTripActor.Models.Num(), SourceModelCount);
+    TestEqual(TEXT("Real reimport keeps the source behaviour count"),
+        RoundTripActor.Behaviours.Num(), SourceBehaviourCount);
+    TestEqual(TEXT("Real reimport keeps the source behaviour id"),
+        RoundTripActor.DefaultBehaviourId, SourceBehaviourId);
+    TestTrue(TEXT("Real reimport preserves the copied transform"),
+        RoundTripActor.Position.Equals(SourcePosition));
     return true;
 }
 
@@ -2090,10 +10067,17 @@ bool FKyaMovingPlatformFixtureRoundTripTest::RunTest(const FString& Parameters)
         EditedActor.Behaviours[0].PlatformBehaviour.PathIndex, 44);
 
     Actor.PlatformNoFrictionZones.AddDefaulted();
-    TArray<uint8> Rejected;
-    FMemoryWriter RejectedWriter(Rejected);
-    TestFalse(TEXT("Exporter rejects a changed no-friction zone count"),
-        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    TArray<uint8> ResizedZones;
+    FMemoryWriter ResizedZonesWriter(ResizedZones);
+    if (!TestTrue(TEXT("Exporter rebuilds a changed no-friction zone count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), ResizedZonesWriter, GWarn))) return false;
+    const uint8* ResizedZonesCursor = ResizedZones.GetData();
+    UKyaLevelBank* ResizedZonesBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(
+        UKyaLevelBank::StaticClass(), GetTransientPackage(), NAME_None, RF_Transient, nullptr,
+        TEXT("bnk"), ResizedZonesCursor, ResizedZones.GetData() + ResizedZones.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the changed no-friction zone count"), ResizedZonesBank)) return false;
+    TestEqual(TEXT("Reimported no-friction zone count"),
+        ResizedZonesBank->SceneEnvironment.Actors[0].PlatformNoFrictionZones.Num(), 2);
     return true;
 }
 
@@ -2269,10 +10253,20 @@ bool FKyaWindFixtureRoundTripTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Edited wind field 1ac round trips"), EditedActor.WindField1AC, 43.0f);
 
     Actor.WindActorRefs.Add(9);
-    TArray<uint8> Rejected;
-    FMemoryWriter RejectedWriter(Rejected);
-    TestFalse(TEXT("Exporter rejects a changed wind actor count"),
-        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    const int32 ResizedWindActors = Actor.WindActorRefs.Num();
+    TArray<uint8> Resized;
+    FMemoryWriter ResizedWriter(Resized);
+    if (!TestTrue(TEXT("Exporter rebuilds a changed wind actor count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), ResizedWriter, GWarn))) return false;
+    const uint8* ResizedCursor = Resized.GetData();
+    UKyaLevelBank* ResizedBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(
+        UKyaLevelBank::StaticClass(), GetTransientPackage(), NAME_None, RF_Transient, nullptr,
+        TEXT("bnk"), ResizedCursor, Resized.GetData() + Resized.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the changed wind actor count"), ResizedBank)) return false;
+    TestEqual(TEXT("Reimported wind actor count"),
+        ResizedBank->SceneEnvironment.Actors[0].WindActorRefs.Num(), ResizedWindActors);
+    TestEqual(TEXT("Reimported wind added actor ref"),
+        ResizedBank->SceneEnvironment.Actors[0].WindActorRefs.Last(), 9);
     return true;
 }
 
@@ -2358,10 +10352,18 @@ bool FKyaTrapFixtureRoundTripTest::RunTest(const FString& Parameters)
         EditedActor.Behaviours[1].TrapBehaviourField8, 95);
 
     Actor.TrapStreamEntries.AddDefaulted();
-    TArray<uint8> Rejected;
-    FMemoryWriter RejectedWriter(Rejected);
-    TestFalse(TEXT("Exporter rejects a changed trap stream count"),
-        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    const int32 ResizedEntryCount = Actor.TrapStreamEntries.Num();
+    TArray<uint8> Resized;
+    FMemoryWriter ResizedWriter(Resized);
+    if (!TestTrue(TEXT("Exporter rebuilds a changed trap stream count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), ResizedWriter, GWarn))) return false;
+    const uint8* ResizedCursor = Resized.GetData();
+    UKyaLevelBank* ResizedBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(
+        UKyaLevelBank::StaticClass(), GetTransientPackage(), NAME_None, RF_Transient, nullptr,
+        TEXT("bnk"), ResizedCursor, Resized.GetData() + Resized.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the changed trap stream count"), ResizedBank)) return false;
+    TestEqual(TEXT("Reimported trap stream count"),
+        ResizedBank->SceneEnvironment.Actors[0].TrapStreamEntries.Num(), ResizedEntryCount);
     return true;
 }
 
@@ -2443,10 +10445,21 @@ bool FKyaWeaponFixtureRoundTripTest::RunTest(const FString& Parameters)
         EditedActor.Behaviours[0].WeaponBurst[0].Field4, 94);
 
     Actor.Behaviours[2].WeaponRpgActorRefs.Add(99);
-    TArray<uint8> Rejected;
-    FMemoryWriter RejectedWriter(Rejected);
-    TestFalse(TEXT("Exporter rejects a changed weapon RPG count"),
-        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    const int32 ResizedRpgRefs = Actor.Behaviours[2].WeaponRpgActorRefs.Num();
+    TArray<uint8> Resized;
+    FMemoryWriter ResizedWriter(Resized);
+    if (!TestTrue(TEXT("Exporter rebuilds a changed weapon RPG count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), ResizedWriter, GWarn))) return false;
+    const uint8* ResizedCursor = Resized.GetData();
+    UKyaLevelBank* ResizedBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(
+        UKyaLevelBank::StaticClass(), GetTransientPackage(), NAME_None, RF_Transient, nullptr,
+        TEXT("bnk"), ResizedCursor, Resized.GetData() + Resized.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the changed weapon RPG count"), ResizedBank)) return false;
+    const FKyaActorPlacement& ResizedActor = ResizedBank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Reimported weapon RPG count"),
+        ResizedActor.Behaviours[2].WeaponRpgActorRefs.Num(), ResizedRpgRefs);
+    TestEqual(TEXT("Reimported weapon RPG added ref"),
+        ResizedActor.Behaviours[2].WeaponRpgActorRefs.Last(), 99);
     return true;
 }
 
@@ -2696,10 +10709,18 @@ bool FKyaTeleporterFixtureRoundTripTest::RunTest(const FString& Parameters)
         EditedActor.TeleporterConditionedOperations[0].Conditions[0].Value, 96);
 
     Actor.TeleporterDestinations.AddDefaulted();
-    TArray<uint8> Rejected;
-    FMemoryWriter RejectedWriter(Rejected);
-    TestFalse(TEXT("Exporter rejects a changed teleporter destination count"),
-        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    const int32 ResizedDestinations = Actor.TeleporterDestinations.Num();
+    TArray<uint8> Resized;
+    FMemoryWriter ResizedWriter(Resized);
+    if (!TestTrue(TEXT("Exporter rebuilds a changed teleporter destination count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), ResizedWriter, GWarn))) return false;
+    const uint8* ResizedCursor = Resized.GetData();
+    UKyaLevelBank* ResizedBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(
+        UKyaLevelBank::StaticClass(), GetTransientPackage(), NAME_None, RF_Transient, nullptr,
+        TEXT("bnk"), ResizedCursor, Resized.GetData() + Resized.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the changed teleporter destination count"), ResizedBank)) return false;
+    TestEqual(TEXT("Reimported teleporter destination count"),
+        ResizedBank->SceneEnvironment.Actors[0].TeleporterDestinations.Num(), ResizedDestinations);
     return true;
 }
 
@@ -2881,10 +10902,20 @@ bool FKyaDcaFixtureRoundTripTest::RunTest(const FString& Parameters)
         EditedActor.Behaviours[2].DcaTrajectoryField18, 26.5f);
 
     Actor.DcaShotActorRefs.Add(99);
-    TArray<uint8> Rejected;
-    FMemoryWriter RejectedWriter(Rejected);
-    TestFalse(TEXT("Exporter rejects a changed DCA shot count"),
-        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    const int32 ResizedShots = Actor.DcaShotActorRefs.Num();
+    TArray<uint8> Resized;
+    FMemoryWriter ResizedWriter(Resized);
+    if (!TestTrue(TEXT("Exporter rebuilds a changed DCA shot count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), ResizedWriter, GWarn))) return false;
+    const uint8* ResizedCursor = Resized.GetData();
+    UKyaLevelBank* ResizedBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(
+        UKyaLevelBank::StaticClass(), GetTransientPackage(), NAME_None, RF_Transient, nullptr,
+        TEXT("bnk"), ResizedCursor, Resized.GetData() + Resized.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the changed DCA shot count"), ResizedBank)) return false;
+    TestEqual(TEXT("Reimported DCA shot count"),
+        ResizedBank->SceneEnvironment.Actors[0].DcaShotActorRefs.Num(), ResizedShots);
+    TestEqual(TEXT("Reimported DCA added shot ref"),
+        ResizedBank->SceneEnvironment.Actors[0].DcaShotActorRefs.Last(), 99);
     return true;
 }
 
@@ -3086,10 +11117,19 @@ bool FKyaNativFixtureRoundTripTest::RunTest(const FString& Parameters)
     Actor.NativLifeMax = 4000000000ll;
 
     Actor.Behaviours[1].NativTrajectories.AddDefaulted();
-    TArray<uint8> Rejected;
-    FMemoryWriter RejectedWriter(Rejected);
-    TestFalse(TEXT("Exporter rejects a changed Nativ trajectory count"),
-        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    const int32 ResizedTrajectories = Actor.Behaviours[1].NativTrajectories.Num();
+    TArray<uint8> Resized;
+    FMemoryWriter ResizedWriter(Resized);
+    if (!TestTrue(TEXT("Exporter rebuilds a changed Nativ trajectory count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), ResizedWriter, GWarn))) return false;
+    const uint8* ResizedCursor = Resized.GetData();
+    UKyaLevelBank* ResizedBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(
+        UKyaLevelBank::StaticClass(), GetTransientPackage(), NAME_None, RF_Transient, nullptr,
+        TEXT("bnk"), ResizedCursor, Resized.GetData() + Resized.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the changed Nativ trajectory count"), ResizedBank)) return false;
+    TestEqual(TEXT("Reimported Nativ trajectory count"),
+        ResizedBank->SceneEnvironment.Actors[0].Behaviours[1].NativTrajectories.Num(),
+        ResizedTrajectories);
     return true;
 }
 
@@ -3200,10 +11240,20 @@ bool FKyaWolfenFixtureRoundTripTest::RunTest(const FString& Parameters)
         EditedActor.Behaviours[2].WolfenBehaviour.AvoidField84, 97.5f);
 
     Actor.WolfenFightParamData.ComboList1.Add(99);
-    TArray<uint8> Rejected;
-    FMemoryWriter RejectedWriter(Rejected);
-    TestFalse(TEXT("Exporter rejects a changed Wolfen combo list count"),
-        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    TArray<uint8> Resized;
+    FMemoryWriter ResizedWriter(Resized);
+    if (!TestTrue(TEXT("Exporter rebuilds a changed Wolfen combo list count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), ResizedWriter, GWarn))) return false;
+    const uint8* ResizedCursor = Resized.GetData();
+    UKyaLevelBank* ResizedBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(
+        UKyaLevelBank::StaticClass(), GetTransientPackage(), NAME_None, RF_Transient, nullptr,
+        TEXT("bnk"), ResizedCursor, Resized.GetData() + Resized.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the changed Wolfen combo list count"), ResizedBank)) return false;
+    TestEqual(TEXT("Reimported Wolfen combo list count"),
+        ResizedBank->SceneEnvironment.Actors[0].WolfenFightParamData.ComboList1.Num(),
+        Actor.WolfenFightParamData.ComboList1.Num());
+    TestEqual(TEXT("Reimported Wolfen combo list value"),
+        ResizedBank->SceneEnvironment.Actors[0].WolfenFightParamData.ComboList1.Last(), 99);
     return true;
 }
 
@@ -3378,10 +11428,20 @@ bool FKyaKimFixtureRoundTripTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Edited Kim fx handle round trips"), EditedActor.KimFxHandleTypes[1], 98);
 
     Actor.KimZoneStream.Add(99);
-    TArray<uint8> Rejected;
-    FMemoryWriter RejectedWriter(Rejected);
-    TestFalse(TEXT("Exporter rejects a changed Kim zone-stream count"),
-        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    const int32 ResizedZoneCount = Actor.KimZoneStream.Num();
+    TArray<uint8> Resized;
+    FMemoryWriter ResizedWriter(Resized);
+    if (!TestTrue(TEXT("Exporter rebuilds a changed Kim zone-stream count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), ResizedWriter, GWarn))) return false;
+    const uint8* ResizedCursor = Resized.GetData();
+    UKyaLevelBank* ResizedBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(
+        UKyaLevelBank::StaticClass(), GetTransientPackage(), NAME_None, RF_Transient, nullptr,
+        TEXT("bnk"), ResizedCursor, Resized.GetData() + Resized.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the changed Kim zone-stream count"), ResizedBank)) return false;
+    TestEqual(TEXT("Reimported Kim zone-stream count"),
+        ResizedBank->SceneEnvironment.Actors[0].KimZoneStream.Num(), ResizedZoneCount);
+    TestEqual(TEXT("Reimported Kim added zone"),
+        ResizedBank->SceneEnvironment.Actors[0].KimZoneStream.Last(), 99);
     return true;
 }
 
@@ -3603,10 +11663,19 @@ bool FKyaAtonFixtureRoundTripTest::RunTest(const FString& Parameters)
     Actor.AtonLifeMax = 4000000000ll;
 
     Actor.AtonSubObjs[0].CinematicIds.Add(99);
-    TArray<uint8> Rejected;
-    FMemoryWriter RejectedWriter(Rejected);
-    TestFalse(TEXT("Exporter rejects a changed Aton cinematic count"),
-        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    const int32 ResizedAtonCinematics = Actor.AtonSubObjs[0].CinematicIds.Num();
+    TArray<uint8> Resized;
+    FMemoryWriter ResizedWriter(Resized);
+    if (!TestTrue(TEXT("Exporter rebuilds a changed Aton cinematic count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), ResizedWriter, GWarn))) return false;
+    const uint8* ResizedCursor = Resized.GetData();
+    UKyaLevelBank* ResizedBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(
+        UKyaLevelBank::StaticClass(), GetTransientPackage(), NAME_None, RF_Transient, nullptr,
+        TEXT("bnk"), ResizedCursor, Resized.GetData() + Resized.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the changed Aton cinematic count"), ResizedBank)) return false;
+    TestEqual(TEXT("Reimported Aton cinematic count"),
+        ResizedBank->SceneEnvironment.Actors[0].AtonSubObjs[0].CinematicIds.Num(),
+        ResizedAtonCinematics);
     return true;
 }
 
@@ -4179,10 +12248,18 @@ bool FKyaFogFixtureRoundTripTest::RunTest(const FString& Parameters)
         EditedActor.Behaviours[0].FogZones[0].Field18, 96.5f);
 
     Actor.FogHierarchies.AddDefaulted();
-    TArray<uint8> Rejected;
-    FMemoryWriter RejectedWriter(Rejected);
-    TestFalse(TEXT("Exporter rejects a changed fog hierarchy count"),
-        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    const int32 ResizedHierarchies = Actor.FogHierarchies.Num();
+    TArray<uint8> Resized;
+    FMemoryWriter ResizedWriter(Resized);
+    if (!TestTrue(TEXT("Exporter rebuilds a changed fog hierarchy count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), ResizedWriter, GWarn))) return false;
+    const uint8* ResizedCursor = Resized.GetData();
+    UKyaLevelBank* ResizedBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(
+        UKyaLevelBank::StaticClass(), GetTransientPackage(), NAME_None, RF_Transient, nullptr,
+        TEXT("bnk"), ResizedCursor, Resized.GetData() + Resized.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the changed fog hierarchy count"), ResizedBank)) return false;
+    TestEqual(TEXT("Reimported fog hierarchy count"),
+        ResizedBank->SceneEnvironment.Actors[0].FogHierarchies.Num(), ResizedHierarchies);
     return true;
 }
 
@@ -4283,10 +12360,23 @@ bool FKyaShootFixtureRoundTripTest::RunTest(const FString& Parameters)
         EditedActor.Behaviours[1].ShootWaveValues[3], 97.5f);
 
     Actor.Behaviours[0].ShootFireActorRefs.Add(99);
-    TArray<uint8> Rejected;
-    FMemoryWriter RejectedWriter(Rejected);
-    TestFalse(TEXT("Exporter rejects a changed shoot fire-ref count"),
-        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    const int32 ResizedFireRefCount = Actor.Behaviours[0].ShootFireActorRefs.Num();
+    TArray<uint8> Resized;
+    FMemoryWriter ResizedWriter(Resized);
+    if (!TestTrue(TEXT("Exporter rebuilds a changed shoot fire-ref count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), ResizedWriter, GWarn))) return false;
+    const uint8* ResizedCursor = Resized.GetData();
+    UKyaLevelBank* ResizedBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(
+        UKyaLevelBank::StaticClass(), GetTransientPackage(), NAME_None, RF_Transient, nullptr,
+        TEXT("bnk"), ResizedCursor, Resized.GetData() + Resized.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the changed shoot fire-ref count"), ResizedBank)) return false;
+    const FKyaActorPlacement& ResizedActor = ResizedBank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Reimported shoot fire-ref count"),
+        ResizedActor.Behaviours[0].ShootFireActorRefs.Num(), ResizedFireRefCount);
+    TestEqual(TEXT("Reimported shoot added fire ref"),
+        ResizedActor.Behaviours[0].ShootFireActorRefs.Last(), 99);
+    TestEqual(TEXT("Reimported shoot fire header is preserved"),
+        ResizedActor.Behaviours[0].ShootFireField2B0, Actor.Behaviours[0].ShootFireField2B0);
     return true;
 }
 
@@ -4438,10 +12528,23 @@ bool FKyaBoxFixtureRoundTripTest::RunTest(const FString& Parameters)
         EditedActor.BoxAddOn.SubObjFieldC, 97.5f);
 
     Actor.BoxActorRefs.Add(99);
-    TArray<uint8> Rejected;
-    FMemoryWriter RejectedWriter(Rejected);
-    TestFalse(TEXT("Exporter rejects a changed box actor-ref count"),
-        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    const int32 ResizedRefCount = Actor.BoxActorRefs.Num();
+    TArray<uint8> Resized;
+    FMemoryWriter ResizedWriter(Resized);
+    if (!TestTrue(TEXT("Exporter rebuilds a changed box actor-ref count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), ResizedWriter, GWarn))) return false;
+    const uint8* ResizedCursor = Resized.GetData();
+    UKyaLevelBank* ResizedBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(
+        UKyaLevelBank::StaticClass(), GetTransientPackage(), NAME_None, RF_Transient, nullptr,
+        TEXT("bnk"), ResizedCursor, Resized.GetData() + Resized.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the changed box actor-ref count"), ResizedBank)) return false;
+    const FKyaActorPlacement& ResizedActor = ResizedBank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Reimported box actor-ref count"), ResizedActor.BoxActorRefs.Num(), ResizedRefCount);
+    TestEqual(TEXT("Reimported box added actor ref"), ResizedActor.BoxActorRefs.Last(), 99);
+    TestEqual(TEXT("Reimported box switch count"),
+        ResizedActor.BoxSwitch.Targets.Num(), Actor.BoxSwitch.Targets.Num());
+    TestEqual(TEXT("Reimported box field 0x350"),
+        ResizedActor.BoxField350, Actor.BoxField350);
     return true;
 }
 
@@ -4516,10 +12619,21 @@ bool FKyaFxFixtureRoundTripTest::RunTest(const FString& Parameters)
         EditedActor.Behaviours[2].FxUnknownValues[1], 95);
 
     Actor.Behaviours[2].FxUnknownValues.Add(99);
-    TArray<uint8> Rejected;
-    FMemoryWriter RejectedWriter(Rejected);
-    TestFalse(TEXT("Exporter rejects a changed FX unknown-value count"),
-        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    const int32 ResizedFxValues = Actor.Behaviours[2].FxUnknownValues.Num();
+    TArray<uint8> Resized;
+    FMemoryWriter ResizedWriter(Resized);
+    if (!TestTrue(TEXT("Exporter rebuilds a changed FX unknown-value count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), ResizedWriter, GWarn))) return false;
+    const uint8* ResizedCursor = Resized.GetData();
+    UKyaLevelBank* ResizedBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(
+        UKyaLevelBank::StaticClass(), GetTransientPackage(), NAME_None, RF_Transient, nullptr,
+        TEXT("bnk"), ResizedCursor, Resized.GetData() + Resized.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the changed FX unknown-value count"), ResizedBank)) return false;
+    const FKyaActorPlacement& ResizedActor = ResizedBank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Reimported FX unknown-value count"),
+        ResizedActor.Behaviours[2].FxUnknownValues.Num(), ResizedFxValues);
+    TestEqual(TEXT("Reimported FX added unknown value"),
+        ResizedActor.Behaviours[2].FxUnknownValues.Last(), 99);
     return true;
 }
 
@@ -4594,10 +12708,21 @@ bool FKyaClusteriserFixtureRoundTripTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Edited cluster other ref round trips"), EditedZone.OtherZoneRef, 95);
 
     Actor.Behaviours[0].ClusterZones[0].Actors.Add(99);
-    TArray<uint8> Rejected;
-    FMemoryWriter RejectedWriter(Rejected);
-    TestFalse(TEXT("Exporter rejects a changed cluster actor count"),
-        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    const int32 ResizedActors = Actor.Behaviours[0].ClusterZones[0].Actors.Num();
+    TArray<uint8> Resized;
+    FMemoryWriter ResizedWriter(Resized);
+    if (!TestTrue(TEXT("Exporter rebuilds a changed cluster actor count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), ResizedWriter, GWarn))) return false;
+    const uint8* ResizedCursor = Resized.GetData();
+    UKyaLevelBank* ResizedBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(
+        UKyaLevelBank::StaticClass(), GetTransientPackage(), NAME_None, RF_Transient, nullptr,
+        TEXT("bnk"), ResizedCursor, Resized.GetData() + Resized.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the changed cluster actor count"), ResizedBank)) return false;
+    const FKyaActorPlacement& ResizedActor = ResizedBank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Reimported cluster actor count"),
+        ResizedActor.Behaviours[0].ClusterZones[0].Actors.Num(), ResizedActors);
+    TestEqual(TEXT("Reimported cluster added actor"),
+        ResizedActor.Behaviours[0].ClusterZones[0].Actors.Last(), 99);
     return true;
 }
 
@@ -4689,10 +12814,19 @@ bool FKyaCompanionFixtureRoundTripTest::RunTest(const FString& Parameters)
         EditedActor.Behaviours[0].CompanionAlerts[0].TargetSwitch.Camera.CameraIndex, 96);
 
     Actor.Behaviours[0].CompanionAlerts.AddDefaulted();
-    TArray<uint8> Rejected;
-    FMemoryWriter RejectedWriter(Rejected);
-    TestFalse(TEXT("Exporter rejects a changed companion alert count"),
-        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    const int32 ResizedAlerts = Actor.Behaviours[0].CompanionAlerts.Num();
+    TArray<uint8> Resized;
+    FMemoryWriter ResizedWriter(Resized);
+    if (!TestTrue(TEXT("Exporter rebuilds a changed companion alert count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), ResizedWriter, GWarn))) return false;
+    const uint8* ResizedCursor = Resized.GetData();
+    UKyaLevelBank* ResizedBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(
+        UKyaLevelBank::StaticClass(), GetTransientPackage(), NAME_None, RF_Transient, nullptr,
+        TEXT("bnk"), ResizedCursor, Resized.GetData() + Resized.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the changed companion alert count"), ResizedBank)) return false;
+    const FKyaActorPlacement& ResizedActor = ResizedBank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Reimported companion alert count"),
+        ResizedActor.Behaviours[0].CompanionAlerts.Num(), ResizedAlerts);
     return true;
 }
 
@@ -5014,10 +13148,25 @@ bool FKyaBasicBoxFixtureRoundTripTest::RunTest(const FString& Parameters)
         EditedActor.BasicBoxAddOn.SubObjFieldC, 97.5f);
 
     Actor.BasicBoxActorRefs.Add(99);
-    TArray<uint8> Rejected;
-    FMemoryWriter RejectedWriter(Rejected);
-    TestFalse(TEXT("Exporter rejects a changed basic box actor-ref count"),
-        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    const int32 ResizedRefCount = Actor.BasicBoxActorRefs.Num();
+    TArray<uint8> Resized;
+    FMemoryWriter ResizedWriter(Resized);
+    if (!TestTrue(TEXT("Exporter rebuilds a changed basic box actor-ref count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), ResizedWriter, GWarn))) return false;
+    const uint8* ResizedCursor = Resized.GetData();
+    UKyaLevelBank* ResizedBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(
+        UKyaLevelBank::StaticClass(), GetTransientPackage(), NAME_None, RF_Transient, nullptr,
+        TEXT("bnk"), ResizedCursor, Resized.GetData() + Resized.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the changed basic box actor-ref count"), ResizedBank)) return false;
+    const FKyaActorPlacement& ResizedActor = ResizedBank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Reimported basic box actor-ref count"), ResizedActor.BasicBoxActorRefs.Num(),
+        ResizedRefCount);
+    TestEqual(TEXT("Reimported basic box added actor ref"),
+        ResizedActor.BasicBoxActorRefs.Last(), 99);
+    TestEqual(TEXT("Reimported basic box switch count"),
+        ResizedActor.BasicBoxSwitch.Targets.Num(), Actor.BasicBoxSwitch.Targets.Num());
+    TestEqual(TEXT("Reimported basic box life maximum"),
+        ResizedActor.BasicBoxLifeMax, Actor.BasicBoxLifeMax);
     return true;
 }
 
@@ -5325,10 +13474,18 @@ bool FKyaShockerFixtureRoundTripTest::RunTest(const FString& Parameters)
         EditedActor.Behaviours[0].ShockerWave.MaterialId, 98);
 
     Actor.ShockerSwitch.Targets.AddDefaulted();
-    TArray<uint8> Rejected;
-    FMemoryWriter RejectedWriter(Rejected);
-    TestFalse(TEXT("Exporter rejects a changed shocker switch count"),
-        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    const int32 ResizedShockerTargets = Actor.ShockerSwitch.Targets.Num();
+    TArray<uint8> Resized;
+    FMemoryWriter ResizedWriter(Resized);
+    if (!TestTrue(TEXT("Exporter rebuilds a changed shocker switch count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), ResizedWriter, GWarn))) return false;
+    const uint8* ResizedCursor = Resized.GetData();
+    UKyaLevelBank* ResizedBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(
+        UKyaLevelBank::StaticClass(), GetTransientPackage(), NAME_None, RF_Transient, nullptr,
+        TEXT("bnk"), ResizedCursor, Resized.GetData() + Resized.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the changed shocker switch count"), ResizedBank)) return false;
+    TestEqual(TEXT("Reimported shocker switch count"),
+        ResizedBank->SceneEnvironment.Actors[0].ShockerSwitch.Targets.Num(), ResizedShockerTargets);
     return true;
 }
 
@@ -5511,11 +13668,19 @@ bool FKyaPunchingBallFixtureRoundTripTest::RunTest(const FString& Parameters)
         EditedActor.PunchingBallCamFigFloats[13], 95.5f);
 
     Actor.PunchingBallTrapEntries.AddDefaulted();
-    TArray<uint8> Rejected;
-    FMemoryWriter RejectedWriter(Rejected);
-    TestFalse(TEXT("Exporter rejects a changed punching ball trap count"),
-        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
-    Actor.PunchingBallTrapEntries.RemoveAt(1);
+    const int32 ResizedTraps = Actor.PunchingBallTrapEntries.Num();
+    TArray<uint8> Resized;
+    FMemoryWriter ResizedWriter(Resized);
+    if (!TestTrue(TEXT("Exporter rebuilds a changed punching ball trap count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), ResizedWriter, GWarn))) return false;
+    const uint8* ResizedCursor = Resized.GetData();
+    UKyaLevelBank* ResizedBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(
+        UKyaLevelBank::StaticClass(), GetTransientPackage(), NAME_None, RF_Transient, nullptr,
+        TEXT("bnk"), ResizedCursor, Resized.GetData() + Resized.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the changed punching ball trap count"), ResizedBank)) return false;
+    TestEqual(TEXT("Reimported punching ball trap count"),
+        ResizedBank->SceneEnvironment.Actors[0].PunchingBallTrapEntries.Num(), ResizedTraps);
+    Actor.PunchingBallTrapEntries.SetNum(1);
     Actor.PunchingBallCamFigFloats.RemoveAt(13);
     TArray<uint8> RejectedFloats;
     FMemoryWriter RejectedFloatsWriter(RejectedFloats);
@@ -5622,10 +13787,18 @@ bool FKyaNoseMonsterFixtureRoundTripTest::RunTest(const FString& Parameters)
         Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedVersionWriter, GWarn));
     Actor.bNoseMonsterHasVersionFloats = true;
     Actor.NoseMonsterZonePathEntries.AddDefaulted();
-    TArray<uint8> Rejected;
-    FMemoryWriter RejectedWriter(Rejected);
-    TestFalse(TEXT("Exporter rejects a changed nose monster zone-path count"),
-        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    const int32 ResizedZonePaths = Actor.NoseMonsterZonePathEntries.Num();
+    TArray<uint8> Resized;
+    FMemoryWriter ResizedWriter(Resized);
+    if (!TestTrue(TEXT("Exporter rebuilds a changed nose monster zone-path count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), ResizedWriter, GWarn))) return false;
+    const uint8* ResizedCursor = Resized.GetData();
+    UKyaLevelBank* ResizedBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(
+        UKyaLevelBank::StaticClass(), GetTransientPackage(), NAME_None, RF_Transient, nullptr,
+        TEXT("bnk"), ResizedCursor, Resized.GetData() + Resized.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the changed nose monster zone-path count"), ResizedBank)) return false;
+    TestEqual(TEXT("Reimported nose monster zone-path count"),
+        ResizedBank->SceneEnvironment.Actors[0].NoseMonsterZonePathEntries.Num(), ResizedZonePaths);
     return true;
 }
 
@@ -5822,11 +13995,21 @@ bool FKyaShipFixtureRoundTripTest::RunTest(const FString& Parameters)
         EditedActor.ShipSwitch.Camera.CameraIndex, 97);
 
     Actor.ShipCareBoyActorRefs.Add(98);
-    TArray<uint8> Rejected;
-    FMemoryWriter RejectedWriter(Rejected);
-    TestFalse(TEXT("Exporter rejects a changed ship care-boy count"),
-        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
-    Actor.ShipCareBoyActorRefs.RemoveAt(2);
+    const int32 ResizedCareBoys = Actor.ShipCareBoyActorRefs.Num();
+    TArray<uint8> Resized;
+    FMemoryWriter ResizedWriter(Resized);
+    if (!TestTrue(TEXT("Exporter rebuilds a changed ship care-boy count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), ResizedWriter, GWarn))) return false;
+    const uint8* ResizedCursor = Resized.GetData();
+    UKyaLevelBank* ResizedBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(
+        UKyaLevelBank::StaticClass(), GetTransientPackage(), NAME_None, RF_Transient, nullptr,
+        TEXT("bnk"), ResizedCursor, Resized.GetData() + Resized.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the changed ship care-boy count"), ResizedBank)) return false;
+    TestEqual(TEXT("Reimported ship care-boy count"),
+        ResizedBank->SceneEnvironment.Actors[0].ShipCareBoyActorRefs.Num(), ResizedCareBoys);
+    TestEqual(TEXT("Reimported ship added care-boy ref"),
+        ResizedBank->SceneEnvironment.Actors[0].ShipCareBoyActorRefs.Last(), 98);
+    Actor.ShipCareBoyActorRefs.SetNum(2);
     Actor.ShipWords18C.RemoveAt(3);
     TArray<uint8> RejectedWords;
     FMemoryWriter RejectedWordsWriter(RejectedWords);
@@ -5962,16 +14145,36 @@ bool FKyaBunchFixtureRoundTripTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Edited bunch fence fx round trips"), EditedActor.Behaviours[4].BunchFenceFxTypes[2], 99);
 
     Actor.BunchStreamEntries.AddDefaulted();
-    TArray<uint8> Rejected;
-    FMemoryWriter RejectedWriter(Rejected);
-    TestFalse(TEXT("Exporter rejects a changed bunch entry count"),
-        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    const int32 ResizedStreamEntries = Actor.BunchStreamEntries.Num();
+    TArray<uint8> ResizedStream;
+    FMemoryWriter ResizedStreamWriter(ResizedStream);
+    if (!TestTrue(TEXT("Exporter rebuilds a changed bunch entry count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), ResizedStreamWriter, GWarn))) return false;
+    const uint8* ResizedStreamCursor = ResizedStream.GetData();
+    UKyaLevelBank* ResizedStreamBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(
+        UKyaLevelBank::StaticClass(), GetTransientPackage(), NAME_None, RF_Transient, nullptr,
+        TEXT("bnk"), ResizedStreamCursor, ResizedStream.GetData() + ResizedStream.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the changed bunch entry count"), ResizedStreamBank)) return false;
+    TestEqual(TEXT("Reimported bunch stream-entry count"),
+        ResizedStreamBank->SceneEnvironment.Actors[0].BunchStreamEntries.Num(), ResizedStreamEntries);
     Actor.BunchStreamEntries.RemoveAt(2);
     Actor.Behaviours[3].BunchRepelIndices.Add(100);
-    TArray<uint8> RejectedIndices;
-    FMemoryWriter RejectedIndicesWriter(RejectedIndices);
-    TestFalse(TEXT("Exporter rejects a changed bunch repel index count"),
-        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedIndicesWriter, GWarn));
+    const int32 ResizedIndexCount = Actor.Behaviours[3].BunchRepelIndices.Num();
+    TArray<uint8> ResizedIndicesBytes;
+    FMemoryWriter ResizedIndicesWriter(ResizedIndicesBytes);
+    if (!TestTrue(TEXT("Exporter rebuilds a changed bunch repel index count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), ResizedIndicesWriter, GWarn))) return false;
+    const uint8* ResizedIndicesCursor = ResizedIndicesBytes.GetData();
+    UKyaLevelBank* ResizedIndicesBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(
+        UKyaLevelBank::StaticClass(), GetTransientPackage(), NAME_None, RF_Transient, nullptr,
+        TEXT("bnk"), ResizedIndicesCursor,
+        ResizedIndicesBytes.GetData() + ResizedIndicesBytes.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the changed bunch repel index count"), ResizedIndicesBank)) return false;
+    const FKyaActorPlacement& ResizedIndicesActor = ResizedIndicesBank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Reimported bunch repel index count"),
+        ResizedIndicesActor.Behaviours[3].BunchRepelIndices.Num(), ResizedIndexCount);
+    TestEqual(TEXT("Reimported bunch repel added index"),
+        ResizedIndicesActor.Behaviours[3].BunchRepelIndices.Last(), 100);
     return true;
 }
 
@@ -6086,10 +14289,21 @@ bool FKyaBrazulFixtureRoundTripTest::RunTest(const FString& Parameters)
         Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
     Actor.BrazulFxHandles.Add(100);
     Actor.Behaviours[3].BrazulSubObjs[0].PathIndices.Add(101);
-    TArray<uint8> RejectedPath;
-    FMemoryWriter RejectedPathWriter(RejectedPath);
-    TestFalse(TEXT("Exporter rejects a changed Brazul A path count"),
-        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedPathWriter, GWarn));
+    const int32 ResizedPaths = Actor.Behaviours[3].BrazulSubObjs[0].PathIndices.Num();
+    TArray<uint8> ResizedPath;
+    FMemoryWriter ResizedPathWriter(ResizedPath);
+    if (!TestTrue(TEXT("Exporter rebuilds a changed Brazul A path count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), ResizedPathWriter, GWarn))) return false;
+    const uint8* ResizedPathCursor = ResizedPath.GetData();
+    UKyaLevelBank* ResizedPathBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(
+        UKyaLevelBank::StaticClass(), GetTransientPackage(), NAME_None, RF_Transient, nullptr,
+        TEXT("bnk"), ResizedPathCursor, ResizedPath.GetData() + ResizedPath.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport the changed Brazul A path count"), ResizedPathBank)) return false;
+    const FKyaActorPlacement& ResizedActor = ResizedPathBank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Reimported Brazul A path count"),
+        ResizedActor.Behaviours[3].BrazulSubObjs[0].PathIndices.Num(), ResizedPaths);
+    TestEqual(TEXT("Reimported Brazul A added path"),
+        ResizedActor.Behaviours[3].BrazulSubObjs[0].PathIndices.Last(), 101);
     return true;
 }
 

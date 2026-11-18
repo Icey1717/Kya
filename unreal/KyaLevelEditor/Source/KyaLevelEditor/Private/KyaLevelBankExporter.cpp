@@ -194,16 +194,42 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
     }
     for (int32 Index = 0; Index < Actors.Num(); ++Index)
     {
-        if (Bank->SceneEnvironment.Actors[Index].Conditions.Num() == Actors[Index].ConditionCount) continue;
+        const FKyaActorOffsets& ActorOffsets = Actors[Index];
+        if (ActorOffsets.ClassData < 0 || ActorOffsets.ClassDataSize < 0 ||
+            ActorOffsets.ClassData + ActorOffsets.ClassDataSize > Bytes.Num())
+        {
+            Diagnostics.FailedActorIndex = Index;
+            Diagnostics.Errors.Add(TEXT("The actor class data lies outside the bank bytes."));
+            return false;
+        }
+        const TConstArrayView<uint8> ClassData(Bytes.GetData() + ActorOffsets.ClassData,
+            ActorOffsets.ClassDataSize);
+        if (!KyaActorChunkNeedsRebuild(Bank->SceneEnvironment.Actors[Index], ActorOffsets, ClassData))
+            continue;
         // Relocate a temporary bank so exporting does not mutate the asset or its undo history.
         TStrongObjectPtr<UKyaLevelBank> Resized(DuplicateObject<UKyaLevelBank>(Bank, GetTransientPackage()));
         bool bChanged = false;
         FString Error;
-        if (!KyaResizeActorConditions(*Resized.Get(), bChanged, Error))
+        if (!KyaRebuildActorChunks(*Resized.Get(), bChanged, Error))
         {
+            Diagnostics.FailedActorIndex = Index;
             Diagnostics.Errors.Add(Error);
             return false;
         }
+        if (!bChanged)
+        {
+            Diagnostics.FailedActorIndex = Index;
+            Diagnostics.Errors.Add(TEXT("The actor array sizes still differ after rebuilding the actor chunk."));
+            return false;
+        }
+        static int32 RebuildDepth = 0;
+        if (RebuildDepth >= 8)
+        {
+            Diagnostics.FailedActorIndex = Index;
+            Diagnostics.Errors.Add(TEXT("Actor chunk rebuilding exceeded its recursion limit."));
+            return false;
+        }
+        TGuardValue<int32> RebuildGuard(RebuildDepth, RebuildDepth + 1);
         return KyaBuildBankExportBytes(Resized.Get(), OutBytes, Diagnostics);
     }
     for (int32 Index = 0; Index < Actors.Num(); ++Index)

@@ -22,7 +22,7 @@ const FKyaActorFamilyBehaviour PunchingBallBehaviours[] = {
 
 extern const FKyaActorFamily GKyaPunchingBallActorFamily = {
     0x30, TEXT("CActorPunchingBall"), TEXT("Punching ball"),
-    TEXT("fighter prefix, tuning floats, trap stream, actor refs and camera fight data"),
+    TEXT("fighter prefix, tuning floats, trap stream (rebuilt on export), actor refs and camera fight data"),
     MakeArrayView(PunchingBallBehaviours),
     TConstArrayView<FKyaActorFamilyReference>(),
 };
