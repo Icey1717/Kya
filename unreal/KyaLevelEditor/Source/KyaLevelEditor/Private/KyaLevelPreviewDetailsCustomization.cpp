@@ -5,6 +5,7 @@
 #include "DetailWidgetRow.h"
 #include "KyaLevelBank.h"
 #include "KyaLevelPreview.h"
+#include "KyaGeometryWorkingActor.h"
 #include "ScopedTransaction.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 #include "Widgets/Input/SCheckBox.h"
@@ -109,6 +110,22 @@ void FKyaLevelPreviewDetailsCustomization::CustomizeDetails(IDetailLayoutBuilder
                         return FReply::Handled();
                     })
                 ]
+                + SHorizontalBox::Slot().AutoWidth().Padding(8, 0, 0, 0)
+                [SNew(SButton).Text(FText::FromString(TEXT("Edit Sector Geometry")))
+                    .OnClicked_Lambda([WeakPreview, Id]() {
+                        if (WeakPreview.IsValid())
+                            for (UKyaLevelBank* Sector : WeakPreview->SectorBanks)
+                                if (Sector && WeakPreview->ResolveSectorId(*Sector) == Id) { AKyaGeometryWorkingActor::Open(WeakPreview.Get(), Sector, false); break; }
+                        return FReply::Handled();
+                    })]
+                + SHorizontalBox::Slot().AutoWidth().Padding(8, 0, 0, 0)
+                [SNew(SButton).Text(FText::FromString(TEXT("Edit Sector Collision")))
+                    .OnClicked_Lambda([WeakPreview, Id]() {
+                        if (WeakPreview.IsValid())
+                            for (UKyaLevelBank* Sector : WeakPreview->SectorBanks)
+                                if (Sector && WeakPreview->ResolveSectorId(*Sector) == Id) { AKyaGeometryWorkingActor::Open(WeakPreview.Get(), Sector, true); break; }
+                        return FReply::Handled();
+                    })]
             ];
     }
     if (Ids.IsEmpty())

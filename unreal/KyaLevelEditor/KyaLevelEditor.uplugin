@@ -6,7 +6,8 @@
   "Description": "Native editing tools for Kya level data.",
   "Category": "Editor",
   "CanContainContent": true,
-  "Plugins": [ { "Name": "ProceduralMeshComponent", "Enabled": true } ],
+  "Plugins": [ { "Name": "ProceduralMeshComponent", "Enabled": true },
+    { "Name": "ModelingToolsEditorMode", "Enabled": true } ],
   "Modules": [
     { "Name": "KyaLevel", "Type": "Runtime", "LoadingPhase": "Default" },
     { "Name": "KyaLevelEditor", "Type": "Editor", "LoadingPhase": "Default" }

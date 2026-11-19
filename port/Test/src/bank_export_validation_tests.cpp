@@ -11,6 +11,14 @@
 #include "ActorFactory.h"
 #include "MemoryStream.h"
 #include "edBank/edBankFile.h"
+#include "edCollision/edCollisions.h"
+#include "edCollision/OBBTree.h"
+#include "ed3D.h"
+#include "Mesh.h"
+#include "renderer.h"
+#include "port/pointer_conv.h"
+
+int* ed3DPreparePointer(char* pFileBufferA, int lengthA, char* pFileBufferB, int lengthB);
 
 namespace
 {
@@ -162,4 +170,46 @@ TEST(RunningPortExport, ValidatesEditedBank)
 	EXPECT_NEAR(Actor->pCinData->position.z, EnvNumber("KYA_VALIDATION_POSITION_Z"), 1e-3);
 	EXPECT_NEAR(Actor->subObjA->visibilityDistance, EnvNumber("KYA_VALIDATION_VISIBILITY"), 1e-3);
 	EXPECT_NEAR(Actor->subObjA->cullingDistance, EnvNumber("KYA_VALIDATION_CULLING"), 1e-3);
+}
+
+// Uses actual runtime relocation, mesh preprocessing, collision installation and
+// native OBB traversal on the shared-session fixture exported by Unreal.
+TEST(RunningPortExport, ValidatesEditedSectorGeometry)
+{
+	const std::string Filename = EnvString("KYA_GEOMETRY_EXPORT_BANK");
+	if (Filename.empty()) GTEST_SKIP() << "Set KYA_GEOMETRY_EXPORT_BANK to the shared-session export fixture.";
+	std::ifstream Input(Filename, std::ios::binary);
+	ASSERT_TRUE(Input.good());
+	std::vector<std::uint8_t> Bytes((std::istreambuf_iterator<char>(Input)), {});
+	ASSERT_GE(Bytes.size(), sizeof(edCFiler_Bnk_static_header));
+	auto* Header = &reinterpret_cast<edCFiler_Bnk_static_header*>(Bytes.data())->fileHeader;
+	char* Mesh = nullptr; int MeshSize = 0; char* Collision = nullptr; int CollisionSize = 0;
+	for (unsigned Index = 0; Index < Header->fileCount; ++Index)
+	{
+		const auto* Type = Header->get_entry_typepair(Index);
+		const auto* Entry = Header->get_entry(Index);
+		ASSERT_GE(Entry->offset, 0); ASSERT_GE(Entry->size, 0);
+		ASSERT_LE(std::uint64_t(Entry->offset) + Entry->size, Bytes.size());
+		if (Type->type == 4 && Type->stype == 1) { Mesh = Header->get_entry_data(Index); MeshSize = Entry->size; }
+		if (Type->type == 7 && Type->stype == 1) { Collision = Header->get_entry_data(Index); CollisionSize = Entry->size; }
+	}
+	ASSERT_NE(Mesh, nullptr); ASSERT_NE(Collision, nullptr); ASSERT_GT(MeshSize, 288);
+	ASSERT_NE(ed3DPreparePointer(Mesh + 16, MeshSize - 16, Mesh + 16, MeshSize - 16), nullptr);
+	Renderer::Kya::G3D::Strip NativeStrip;
+	NativeStrip.pStrip = reinterpret_cast<ed_3d_strip*>(Mesh + 224);
+	GIFReg::GSPrim Prim{}; Prim.PRIM = Renderer::GS_TRIANGLESTRIP;
+	Renderer::SimpleMesh NativeMesh("Unreal geometry fixture", Prim, 0);
+	NativeStrip.PreProcessVertices(0, &NativeMesh);
+	EXPECT_EQ(NativeMesh.GetVertexBufferData().GetIndexTail(), 6u) << "Both authored triangles reach the native renderer.";
+	auto* Tree = edColLoadStatic(Collision, CollisionSize, 0);
+	ASSERT_NE(Tree, nullptr); EXPECT_EQ(Tree->nbTriangles, 1);
+	auto* Triangles = LOAD_POINTER_CAST(edF32TRIANGLE4*, Tree->aTriangles);
+	ASSERT_NE(Triangles, nullptr);
+	const auto* Moved = LOAD_POINTER_CAST(edF32VECTOR4*, Triangles[0].p2);
+	EXPECT_NEAR(Moved->x, 1.f, 1.e-6f); EXPECT_NEAR(Moved->y, .2f, 1.e-6f);
+	edF32VECTOR4 Start = { .25f, .25f, 1.f, 1.f }, Direction = { 0, 0, -1, 0 };
+	edColRAY_OBB_IN Ray{}; Ray.pLocation = &Start; Ray.pLeadVector = &Direction; Ray.lengthA = 10;
+	void* Hit = nullptr; uint Type = 0;
+	const float Distance = edObbIntersectObbTreeRayPrim(&Hit, &Type, LOAD_POINTER_CAST(edObbTREE_DYN*, Tree->pObbTree), &Ray);
+	EXPECT_NEAR(Distance, 1.f, 1.e-4f); EXPECT_NE(Hit, nullptr); EXPECT_EQ(Type, COL_TYPE_TRIANGLE);
 }

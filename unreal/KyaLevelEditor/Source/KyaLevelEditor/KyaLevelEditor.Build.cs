@@ -7,6 +7,8 @@ public class KyaLevelEditor : ModuleRules
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
         PrivateDependencyModuleNames.AddRange(new[] { "Core", "CoreUObject", "Engine", "KyaLevel", "UnrealEd",
             "ProceduralMeshComponent", "AssetRegistry", "AssetTools", "ToolMenus", "Slate", "SlateCore",
-            "PropertyEditor", "MessageLog", "InputCore", "DesktopPlatform", "ApplicationCore" });
+            "PropertyEditor", "MessageLog", "InputCore", "DesktopPlatform", "ApplicationCore",
+            "GeometryFramework", "GeometryCore", "DynamicMesh", "ModelingToolsEditorMode", "ModelingComponents",
+            "InteractiveToolsFramework", "EditorInteractiveToolsFramework" });
     }
 }

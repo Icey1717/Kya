@@ -2,6 +2,7 @@
 
 #include "KyaBankExport.h"
 #include "KyaLevelBank.h"
+#include "KyaGeometryEncoding.h"
 #include "UObject/Class.h"
 
 bool KyaSectorBankSupportsExport(const UKyaLevelBank& Bank, FString& OutReason)
@@ -87,6 +88,7 @@ bool KyaBuildSectorBankExportBytes(const UKyaLevelBank& Bank, TArray<uint8>& Out
     }
     TArray<uint8> Bytes = Bank.BankBytes;
     if (!KyaPatchBankLights(Bank, Bytes, Diagnostics)) return false;
+    if (!KyaGeometry::ValidateAppliedGeometry(Bank, Bytes, Reason)) { Diagnostics.Errors.Add(Reason); return false; }
     Diagnostics.SupportedEdits.Add(FString::Printf(
         TEXT("Sector bank: %d entries preserved, including meshes, textures, collision and animation; %d light record(s) patched in place. "
             "Scene and actor records belong to the main level bank. Hierarchy transforms are preserved."),

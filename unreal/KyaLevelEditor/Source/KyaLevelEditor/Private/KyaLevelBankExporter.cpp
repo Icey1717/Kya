@@ -21,6 +21,7 @@
 #include "KyaActorCatalog.h"
 #include "KyaBankExport.h"
 #include "KyaSectorBankExport.h"
+#include "KyaGeometryEncoding.h"
 #include "KyaCameraStream.h"
 #include "Actors/KyaEventGenerator.h"
 #include "Actors/KyaExplosiveDistributor.h"
@@ -2167,6 +2168,8 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
         bHasBaseline ? *FString::Printf(TEXT("%d actor record(s) differ from the imported baseline"), ChangedActors)
                      : TEXT("change count unavailable: no imported baseline")));
 
+    FString GeometryError;
+    if (!KyaGeometry::ValidateAppliedGeometry(*Bank, Bytes, GeometryError)) { Diagnostics.Errors.Add(GeometryError); return false; }
     OutBytes = MoveTemp(Bytes);
     return true;
 }

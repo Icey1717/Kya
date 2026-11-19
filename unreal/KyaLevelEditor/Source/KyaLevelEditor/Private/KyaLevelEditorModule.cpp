@@ -12,6 +12,8 @@
 #include "KyaActorDetailsCustomization.h"
 #include "KyaActorHandle.h"
 #include "KyaHierarchyDetailsCustomization.h"
+#include "KyaGeometryDetailsCustomization.h"
+#include "KyaGeometryWorkingActor.h"
 #include "KyaHierarchyHandle.h"
 #include "KyaSceneVisualizer.h"
 #include "KyaSceneVisualizerDetailsCustomization.h"
@@ -527,6 +529,8 @@ public:
             FOnGetDetailCustomizationInstance::CreateStatic(&FKyaSpatialRecordDetailsCustomization::MakeInstance));
         PropertyModule.RegisterCustomClassLayout(AKyaHierarchyHandle::StaticClass()->GetFName(),
             FOnGetDetailCustomizationInstance::CreateStatic(&FKyaHierarchyDetailsCustomization::MakeInstance));
+        PropertyModule.RegisterCustomClassLayout(AKyaGeometryWorkingActor::StaticClass()->GetFName(),
+            FOnGetDetailCustomizationInstance::CreateStatic(&FKyaGeometryDetailsCustomization::MakeInstance));
         PropertyModule.RegisterCustomClassLayout(AKyaSceneVisualizer::StaticClass()->GetFName(),
             FOnGetDetailCustomizationInstance::CreateStatic(&FKyaSceneVisualizerDetailsCustomization::MakeInstance));
         PropertyModule.RegisterCustomClassLayout(UKyaLevelSettings::StaticClass()->GetFName(),
@@ -602,6 +606,7 @@ public:
             PropertyModule->UnregisterCustomClassLayout(AKyaLevelPreview::StaticClass()->GetFName());
             PropertyModule->UnregisterCustomClassLayout(AKyaSpatialRecordHandle::StaticClass()->GetFName());
             PropertyModule->UnregisterCustomClassLayout(AKyaHierarchyHandle::StaticClass()->GetFName());
+            PropertyModule->UnregisterCustomClassLayout(AKyaGeometryWorkingActor::StaticClass()->GetFName());
             PropertyModule->UnregisterCustomClassLayout(AKyaSceneVisualizer::StaticClass()->GetFName());
             PropertyModule->UnregisterCustomClassLayout(UKyaLevelSettings::StaticClass()->GetFName());
         }

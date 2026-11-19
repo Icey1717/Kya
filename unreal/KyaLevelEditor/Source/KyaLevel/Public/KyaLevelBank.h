@@ -2516,6 +2516,16 @@ struct FKyaSceneEnvironment
     UPROPERTY(EditAnywhere, EditFixedSize, Category="Actors") TArray<FKyaActorPlacement> Actors;
 };
 
+/** Export validation provenance, scoped to the current imported entry topology. */
+USTRUCT()
+struct FKyaAppliedGeometryResource
+{
+    GENERATED_BODY()
+    UPROPERTY() int32 EntryIndex = INDEX_NONE;
+    UPROPERTY() int32 ResourceIndex = INDEX_NONE;
+    UPROPERTY() bool bCollision = false;
+};
+
 /** Original bank bytes are retained so that unimplemented records are not lost. */
 UCLASS(BlueprintType)
 class KYALEVEL_API UKyaLevelBank : public UDataAsset
@@ -2606,4 +2616,9 @@ public:
 
     UPROPERTY()
     TArray<uint8> BankBytes;
+
+    /** Applied native geometry is in BankBytes. These identities request repeat
+     * validation before publishing; reimport resets them to the new baseline. */
+    UPROPERTY()
+    TArray<FKyaAppliedGeometryResource> AppliedGeometryResources;
 };

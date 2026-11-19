@@ -277,6 +277,7 @@ UObject* UKyaLevelBankFactory::FactoryCreateBinary(UClass* InClass, UObject* InP
     Bank->ImportSchemaVersion = UKyaLevelBank::CurrentImportSchemaVersion;
     Bank->SourceFilename = CurrentFilename;
     Bank->BumpEditGeneration();
+    Bank->AppliedGeometryResources.Reset();
     Bank->AssetImportData = NewObject<UAssetImportData>(Bank);
     if (!CurrentFilename.IsEmpty()) Bank->AssetImportData->Update(CurrentFilename);
     Bank->EntryCount = int32(Count);
