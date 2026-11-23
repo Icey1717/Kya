@@ -65,6 +65,9 @@ To begin working with the decompiled code:
 
 4. **Run and Test**
 
+   Extract the ISO of the game in the same folder of `kya_Release.exe` (or `Kya_Debug.exe`).  
+   The program will open the necessary files and the game will start.  
+
 ---
 
 ## 🤝 Contributing
