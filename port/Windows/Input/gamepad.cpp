@@ -177,9 +177,9 @@ namespace GamepadImpl
 			return -static_cast<float>(reading.RightThumbstickY);
 		case ROUTE_R_ANALOG_LEFT:
 			// Remap to positive range
-			return -static_cast<float>(reading.RightThumbstickX);
-		case ROUTE_R_ANALOG_RIGHT:
 			return static_cast<float>(reading.RightThumbstickX);
+		case ROUTE_R_ANALOG_RIGHT:
+			return -static_cast<float>(reading.RightThumbstickX);
 
 			// Buttons return binary [0.0 or 1.0]
 		case ROUTE_UP:
